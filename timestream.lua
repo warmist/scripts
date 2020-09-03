@@ -1,5 +1,11 @@
 -- Multiplies the speed of calendar time by the specified value.  The parameter can be any positive number, though going over 10 is likely to cause bugs.  1 is normal speed.
 
+[===[ Values below or equal to zero will cause the calendar to run at dynamic speeds such that it progresses at the same speed it would were the game being played at a constant frame rate. Example:
+
+timestream -1 100     <-  Will cause the calendar to run as though the game was being played at 100 FPS.
+
+]===]
+
 args={...}
 local rate=tonumber(args[1])
 local desired_fps = tonumber(args[2])
