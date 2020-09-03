@@ -174,8 +174,10 @@ function update()
                 local current_time = df.global.enabler.clock
                 local current_fps = (desired_fps/(current_time - prev_time))*1000
                 rate = desired_fps/current_fps
-                print("current_time: "..current_time..", prev_frames: "..prev_frames..", current_fps: " ..current_fps.. ", current_time - prev_time: "..(current_time - prev_time).. ", rate: "..rate)
-                prev_time = current_time
+		if debug_mode then
+                    print("current_time: "..current_time..", prev_frames: "..prev_frames..", current_fps: " ..current_fps.. ", current_time - prev_time: "..(current_time - prev_time).. ", rate: "..rate)
+                end
+		prev_time = current_time
                 prev_frames = df.global.world.frame_counter
             end
         end
