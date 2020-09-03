@@ -4,20 +4,22 @@ Multiplies the speed of calendar time by the specified value.  The parameter can
 
 The below is experimental.
 
-Values below 1 will cause the calendar to run at dynamic speeds such that it progresses at the same speed it would were the game being played at a constant frame rate. Example:
+Values below 1 will cause the calendar to run at dynamic speeds such that it progresses at the same speed it would were the game being played at a constant frame rate.
 
-timestream -1 100     <-  Will cause the calendar to run as though the game was being played at 100 FPS.
-timestream -1 100 1   <-  Will cause both calendar and creatures to behave as though the game was being played at 100 FPS, very crudely.
+Examples:
+
+timestream 2            <- Calendar only will run at x2 speed.
+timestream -1 100       <- Will cause the calendar to run as though the game was being played at 100 FPS.
+timestream -1 100 1     <- Will cause both calendar and creatures to behave as though the game was being played at 100 FPS.
 
 --]]
 
 args={...}
 local rate=tonumber(args[1])
 local desired_fps = tonumber(args[2])
-local simulating_units = tonumber(args[3])
+local simulating_units = tonumber(args[3])  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
 local debug_mode = tonumber(args[4])
 
-turbo_on = false -- Used to differentiate between external and internal debug_turbospeed
 local prev_tick = 0
 local ticks_left = 0
 local simulating_desired_fps = false
@@ -26,12 +28,7 @@ local prev_frames = df.global.world.frame_counter
 local frame_sum = 0
 local avg_fps = desired_fps
 local last_frame_sped_up = 0
-local splicing_threshold = 0.25 -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not.
-
-if turbo_on then
-    df.global.debug_turbospeed = false
-    turbo_on = false
-end
+local splicing_threshold = 0.25 -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
 
 if rate == nil then
 	rate = 1
@@ -48,12 +45,6 @@ if debug_mode == nil or debug_mode ~= 1 then
     debug_mode = false
 else
     debug_mode = true
-end
-
-if simulating_units == 1 then
-    simulating_units = true
-else
-    simulating_units = false
 end
 
 eventNow = false
@@ -81,8 +72,11 @@ dfhack.onStateChange.loadTimestream = function(code)
                 simulating_desired_fps = true
                 prev_frames = df.global.world.frame_counter
                 rate = 1
-                if simulating_units then
+                if simulating_units == 1 or simulating_units == 2 then
                     print("Unit simulation is on.")
+                    if simulating_units ~= 2 then
+                        df.global.debug_turbospeed = false
+                    end
                 end
             end
             ticks_left = rate - 1
@@ -104,6 +98,7 @@ dfhack.onStateChange.loadTimestream = function(code)
 		else
 			print('Time set to normal speed.')
 			loaded = false
+            df.global.debug_turbospeed = false
 		end
             if debug_mode then
             print("Debug mode is on.")
@@ -135,8 +130,6 @@ function update()
             timestream = timestream + 1
         end
 		--end
-        ticks_left = ticks_left - math.floor(ticks_left)
-		
 		eventFound = false
 		for i=0,#df.global.timed_events-1,1 do
 			event=df.global.timed_events[i]
@@ -198,7 +191,7 @@ function update()
 				end
 			end
 		end
-        ticks_left = ticks_left + rate
+        
         if simulating_desired_fps then
             local counted_frames = df.global.world.frame_counter - prev_frames
             frame_sum = frame_sum + df.global.enabler.calculated_fps
@@ -213,23 +206,60 @@ function update()
                 prev_frames = df.global.world.frame_counter
                 frame_sum = 0
             end
-            if simulating_units and avg_fps > 0 and avg_fps <= desired_fps then  -- God forbid avg_fps is not positive...
-                local missing_frames = desired_fps - avg_fps
-                local speedy_frame_delta = desired_fps/missing_frames
-                local speedy_frame = counted_frames/speedy_frame_delta
-                if speedy_frame - math.floor(speedy_frame) <= splicing_threshold and last_frame_sped_up ~= df.global.world.frame_counter then
-                    if debug_mode then
-                        print("avg_fps: ".. avg_fps .. ", speedy_frame_delta: "..speedy_frame_delta..", speedy_frame: "..counted_frames.."/"..desired_fps)
+            if avg_fps > 0 and avg_fps < desired_fps then -- God forbid avg_fps is not positive...
+                if simulating_units == 2 then
+                    local missing_frames = desired_fps - avg_fps
+                    local speedy_frame_delta = desired_fps/missing_frames
+                    local speedy_frame = counted_frames/speedy_frame_delta
+                    if speedy_frame - math.floor(speedy_frame) <= splicing_threshold and last_frame_sped_up ~= df.global.world.frame_counter then
+                        if debug_mode then
+                            print("avg_fps: ".. avg_fps .. ", speedy_frame_delta: "..speedy_frame_delta..", speedy_frame: "..counted_frames.."/"..desired_fps)
+                        end
+                        df.global.debug_turbospeed = true
+                        last_frame_sped_up = df.global.world.frame_counter
+                    else 
+                        df.global.debug_turbospeed = false
                     end
-                    df.global.debug_turbospeed = true
-                    turbo_on = true
-                    last_frame_sped_up = df.global.world.frame_counter
-                else 
-                    df.global.debug_turbospeed = false
-                    turbo_on = false
+                elseif simulating_units == 1 then
+                    local dec = math.floor(ticks_left) - 1
+                    for k1, unit in pairs(df.global.world.units.active) do
+                        if dfhack.units.isActive(unit) then
+                            for k2, action in pairs(unit.actions) do
+                                if action.type == df.unit_action_type.Move then
+                                    action.data.move.timer = action.data.move.timer - dec
+                                elseif action.type == df.unit_action_type.Attack then
+                                    action.data.attack.timer1 = action.data.attack.timer1 - dec
+                                    action.data.attack.timer2 = action.data.attack.timer2 - dec
+                                elseif action.type == df.unit_action_type.HoldTerrain then
+                                    action.data.holdterrain.timer = action.data.holdterrain.timer - dec
+                                elseif action.type == df.unit_action_type.Climb then
+                                    action.data.climb.timer = action.data.climb.timer - dec
+                                elseif action.type == df.unit_action_type.Job then
+                                    action.data.job.timer = action.data.job.timer - dec
+                                elseif action.type == df.unit_action_type.Talk then
+                                    action.data.talk.timer = action.data.talk.timer - dec
+                                elseif action.type == df.unit_action_type.Unsteady then
+                                    action.data.unsteady.timer = action.data.unsteady.timer - dec
+                                elseif action.type == df.unit_action_type.Dodge then
+                                    action.data.dodge.timer = action.data.doge.timer - dec
+                                elseif action.type == df.unit_action_type.StandUp then
+                                    action.data.standup.timer = action.data.standup.timer - dec
+                                elseif action.type == df.unit_action_type.LieDown then
+                                    action.data.liedown.timer = action.data.liedown.timer - dec
+                                elseif action.type == df.unit_action_type.Job2 then
+                                    action.data.liedown.timer = action.data.liedown.timer - dec
+                                elseif action.type == df.unit_action_type.PushObject then
+                                    action.data.pushobject.timer = action.data.pushobject.timer - dec
+                                elseif action.type == df.unit_action_type.SuckBlood then
+                                    action.data.suckblood.timer = action.data.suckblood.timer - dec
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
+        ticks_left = ticks_left - math.floor(ticks_left) + rate
         dfhack.timeout(1,"ticks",function() update() end)
 	end
 end
