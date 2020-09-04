@@ -1,18 +1,18 @@
---[[
+-- speeds up the calendar, units, or both
 
-Multiplies the speed of calendar time by the specified value.  The parameter can be any positive number, though going over 10 is likely to cause bugs.  1 is normal speed.
+--[====[
 
-The below is experimental.
-
-Values below 1 will cause the calendar to run at dynamic speeds such that it progresses at the same speed it would were the game being played at a constant frame rate.
-
+timestream
+==========
+Usage:
+:timestream <scalar> <fps> <simulate units y/n>
 Examples:
 
-timestream 2            <- Calendar only will run at x2 speed.
-timestream -1 100       <- Will cause the calendar to run as though the game was being played at 100 FPS.
-timestream -1 100 1     <- Will cause both calendar and creatures to behave as though the game was being played at 100 FPS.
+:timestream     2:          Calendar runs at x2 normal speed
+:timestream    -1 100:      Calendar runs at dynamic speed to simulate 100 FPS
+:timestream    -1 100 1:    Calendar & units are simulated at 100 FPS
 
---]]
+]====]
 
 args={...}
 local rate=tonumber(args[1])
