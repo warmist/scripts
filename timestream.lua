@@ -20,15 +20,19 @@ local desired_fps = tonumber(args[2])
 local simulating_units = tonumber(args[3])  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
 local debug_mode = tonumber(args[4])
 
+local fps_samples = 10   -- Controls how many frames (fps_samples * desired_fps) inside each frame sum that are used to calculate avg_fps.
+local minimal_fps = 10 -- This ensures you won't get crazy values on pausing/saving, or other artefacts on extremely low FPS.
+local splicing_threshold = 0.25 -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
+
+local sample_counter = 0
 local prev_tick = 0
 local ticks_left = 0
 local simulating_desired_fps = false
-local minimal_fps = 10 -- This ensures you won't get crazy values on pausing/saving.
 local prev_frames = df.global.world.frame_counter
 local frame_sum = 0
+local last_frame_sum = desired_fps * desired_fps * fps_samples
 local avg_fps = desired_fps
 local last_frame_sped_up = 0
-local splicing_threshold = 0.25 -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
 
 if rate == nil then
     rate = 1
@@ -68,7 +72,6 @@ dfhack.onStateChange.loadTimestream = function(code)
                 print('Time running at x'..rate..".")
             else
                 print('Time running dynamically to simulate '..desired_fps..' FPS.')
-                prev_time = df.global.enabler.clock
                 simulating_desired_fps = true
                 prev_frames = df.global.world.frame_counter
                 rate = 1
@@ -196,17 +199,24 @@ function update()
             local counted_frames = df.global.world.frame_counter - prev_frames
             frame_sum = frame_sum + df.global.enabler.calculated_fps
             if counted_frames >= desired_fps then
-                avg_fps = frame_sum/counted_frames
+                avg_fps = (frame_sum + last_frame_sum)/(counted_frames + desired_fps * (sample_counter + fps_samples))
                 if avg_fps <= desired_fps then
                     rate = desired_fps/avg_fps  -- We don't want to slow down the game
+                else
+                    rate = 1
                 end
                 if debug_mode then
                     print("prev_frame: "..prev_frames..", avg_fps: " ..avg_fps.. ", rate: "..rate)
                 end
                 prev_frames = df.global.world.frame_counter
-                frame_sum = 0
+                sample_counter = sample_counter + 1
+                if sample_counter >= fps_samples - 1 then
+                    last_frame_sum = frame_sum
+                    frame_sum = 0
+                    sample_counter = 0
+                end
             end
-            if avg_fps > 0 and avg_fps < desired_fps then -- God forbid avg_fps is not positive...
+            if avg_fps > 0 then -- God forbid avg_fps is not positive...
                 if simulating_units == 2 then
                     local missing_frames = desired_fps - avg_fps
                     local speedy_frame_delta = desired_fps/missing_frames
