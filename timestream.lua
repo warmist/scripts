@@ -16,14 +16,19 @@ Examples:
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
 
+
+local MINIMAL_FPS           = 10    -- This ensures you won't get crazy values on pausing/saving, or other artefacts on extremely low FPS.
+local SPLICING_THRESHOLD    = 0.25  -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
+local DEFAULT_MAX_FPS       = 100
+
+
+--- DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU'RE DOING ---
+
 args={...}
 local rate=tonumber(args[1])
 local desired_fps = tonumber(args[2])
 local simulating_units = tonumber(args[3])  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
 local debug_mode = tonumber(args[4])
-
-local minimal_fps = 10 -- This ensures you won't get crazy values on pausing/saving, or other artefacts on extremely low FPS.
-local splicing_threshold = 0.25 -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
 
 local current_fps = desired_fps
 local prev_tick = 0
@@ -33,7 +38,10 @@ local prev_frames = df.global.world.frame_counter
 local last_frame = df.global.world.frame_counter
 local prev_time = df.global.enabler.clock
 
-print("timestream: Will start when fortress mode is loaded.") 
+local SEASON_LEN = 3360
+local YEAR_LEN = 403200
+
+print("timestream: Will start when fortress mode is loaded.")
 
 if rate == nil then
     rate = 1
@@ -42,7 +50,7 @@ elseif rate < 0 then
 end
 
 if desired_fps == nil or desired_fps <= 0 then
-    desired_fps = 100
+    desired_fps = DEFAULT_MAX_FPS
     current_fps = desired_fps
     simulating_desired_fps = false
 end
@@ -57,9 +65,9 @@ eventNow = false
 seasonNow = false
 timestream = 0
 counter = 0
-if df.global.cur_season_tick < 3360 then
+if df.global.cur_season_tick < SEASON_LEN then
     month = 1
-elseif df.global.cur_season_tick < 6720 then
+elseif df.global.cur_season_tick < SEASON_LEN * 2 then
     month = 2
 else
     month = 3
@@ -90,9 +98,9 @@ dfhack.onStateChange.loadTimestream = function(code)
             eventNow = false
             seasonNow = false
             timestream = 0
-            if df.global.cur_season_tick < 3360 then
+            if df.global.cur_season_tick < SEASON_LEN then
                 month = 1
-            elseif df.global.cur_season_tick < 6720 then
+            elseif df.global.cur_season_tick < SEASON_LEN * 2 then
                 month = 2
             else
                 month = 3
@@ -152,23 +160,23 @@ function update()
             end
             if eventFound == false then eventNow = false end
 
-            if df.global.cur_season_tick >= 3359 and df.global.cur_season_tick < 6719 and month == 1 then
+            if df.global.cur_season_tick >= SEASON_LEN - 1 and df.global.cur_season_tick < SEASON_LEN * 2 - 1 and month == 1 then
                 seasonNow = true
                 month = 2
-                if df.global.cur_season_tick > 3359 then
-                    df.global.cur_season_tick = 3360
+                if df.global.cur_season_tick > SEASON_LEN - 1 then
+                    df.global.cur_season_tick = SEASON_LEN
                 end
-            elseif df.global.cur_season_tick >= 6719 and df.global.cur_season_tick < 10079 and month == 2 then
+            elseif df.global.cur_season_tick >= SEASON_LEN * 2 - 1 and df.global.cur_season_tick < SEASON_LEN * 3 - 1 and month == 2 then
                 seasonNow = true
                 month = 3
-                if df.global.cur_season_tick > 6719 then
-                    df.global.cur_season_tick = 6720
+                if df.global.cur_season_tick > SEASON_LEN * 2 - 1 then
+                    df.global.cur_season_tick = SEASON_LEN * 2
                 end
-            elseif df.global.cur_season_tick >= 10079 then
+            elseif df.global.cur_season_tick >= SEASON_LEN * 3 - 1 then
                 seasonNow = true
                 month = 1
-                if df.global.cur_season_tick > 10080 then
-                    df.global.cur_season_tick = 10079
+                if df.global.cur_season_tick > SEASON_LEN * 3 then
+                    df.global.cur_season_tick = SEASON_LEN * 3 - 1
                 end
             else
                 seasonNow = false
@@ -177,13 +185,13 @@ function update()
             if df.global.cur_year > 0 then
                 if timestream ~= 0 then
                     if df.global.cur_season_tick < 0 then
-                        df.global.cur_season_tick = df.global.cur_season_tick + 10080
+                        df.global.cur_season_tick = df.global.cur_season_tick + SEASON_LEN * 3
                         df.global.cur_season = df.global.cur_season-1
                         eventNow = true
                     end
                     if df.global.cur_season < 0 then
                         df.global.cur_season = df.global.cur_season + 4
-                        df.global.cur_year_tick = df.global.cur_year_tick + 403200
+                        df.global.cur_year_tick = df.global.cur_year_tick + YEAR_LEN
                         df.global.cur_year = df.global.cur_year - 1
                         eventNow = true
                     end
@@ -191,10 +199,10 @@ function update()
                         if timestream > 0 then
                             df.global.cur_season_tick=df.global.cur_season_tick + timestream
                             remainder = df.global.cur_year_tick - math.floor(df.global.cur_year_tick/10)*10
-                            df.global.cur_year_tick=(df.global.cur_season_tick*10)+((df.global.cur_season)*100800) + remainder
+                            df.global.cur_year_tick=(df.global.cur_season_tick*10)+((df.global.cur_season)*(SEASON_LEN * 3 * 10)) + remainder
                         elseif timestream < 0 then
                             df.global.cur_season_tick=df.global.cur_season_tick
-                            df.global.cur_year_tick=(df.global.cur_season_tick*10)+((df.global.cur_season)*100800)
+                            df.global.cur_year_tick=(df.global.cur_season_tick*10)+((df.global.cur_season)*(SEASON_LEN * 3 * 10))
                         end
                     end
                 end
@@ -212,8 +220,8 @@ function update()
                     end
                     prev_frames = df.global.world.frame_counter
                     prev_time = df.global.enabler.clock
-                    if current_fps < minimal_fps then
-                        current_fps = minimal_fps
+                    if current_fps < MINIMAL_FPS then
+                        current_fps = MINIMAL_FPS
                     end
                     if debug_mode then
                         print("prev_frames: " .. prev_frames .. ", current_fps: ".. current_fps.. ", rate: " .. rate)
@@ -224,7 +232,7 @@ function update()
                     local missing_frames = desired_fps - current_fps
                     local speedy_frame_delta = desired_fps/missing_frames
                     local speedy_frame = counted_frames/speedy_frame_delta
-                    if speedy_frame - math.floor(speedy_frame) <= splicing_threshold and last_frame_sped_up ~= df.global.world.frame_counter then
+                    if speedy_frame - math.floor(speedy_frame) <= SPLICING_THRESHOLD and last_frame_sped_up ~= df.global.world.frame_counter then
                         if debug_mode then
                             print("speedy_frame_delta: "..speedy_frame_delta..", speedy_frame: "..counted_frames.."/"..desired_fps)
                         end
