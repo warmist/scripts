@@ -4,16 +4,16 @@
 
 timestream
 ==========
-This is only for fortress mode.
+This is only affects fortress mode.
 
 Usage:
 :timestream <scalar> <fps> <simulate units y/n>
 Examples:
-
 :timestream     2:          Calendar runs at x2 normal speed
 :timestream    -1 100:      Calendar runs at dynamic speed to simulate 100 FPS
 :timestream    -1 100 1:    Calendar & units are simulated at 100 FPS
 
+Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
 
 args={...}
@@ -33,6 +33,8 @@ local prev_frames = df.global.world.frame_counter
 local last_frame = df.global.world.frame_counter
 local prev_time = df.global.enabler.clock
 
+print("timestream: Will start when fortress mode is loaded.") 
+
 if rate == nil then
     rate = 1
 elseif rate < 0 then
@@ -42,6 +44,7 @@ end
 if desired_fps == nil or desired_fps <= 0 then
     desired_fps = 100
     current_fps = desired_fps
+    simulating_desired_fps = false
 end
 
 if debug_mode == nil or debug_mode ~= 1 then
@@ -64,20 +67,19 @@ end
 
 dfhack.onStateChange.loadTimestream = function(code)
     if code==SC_MAP_LOADED then
-        simulating_desired_fps = false
         if rate ~= 1 then
             last_frame = df.global.world.frame_counter - 1
             --if rate > 0 then            -- Won't behave well with unit simulation
-            if rate > 1 then
-                print('Time running at x'..rate..".")
+            if rate > 1 and not simulating_desired_fps then
+                print('timestream: Time running at x'..rate..".")
             else
-                print('Time running dynamically to simulate '..desired_fps..' FPS.')
+                print('timestream: Time running dynamically to simulate '..desired_fps..' FPS.')
                 simulating_desired_fps = true
                 prev_frames = df.global.world.frame_counter
                 prev_time = df.global.enabler.clock
                 rate = 1
                 if simulating_units == 1 or simulating_units == 2 then
-                    print("Unit simulation is on.")
+                    print("timestream: Unit simulation is on.")
                     if simulating_units ~= 2 then
                         df.global.debug_turbospeed = false
                     end
@@ -105,15 +107,16 @@ dfhack.onStateChange.loadTimestream = function(code)
             df.global.debug_turbospeed = false
         end
             if debug_mode then
-            print("Debug mode is on.")
+            print("timestream: Debug mode is on.")
         end
     elseif code==SC_MAP_UNLOADED then
     end
 end
 
 function update()
+    loaded = false
     prev_tick = df.global.cur_year_tick
-    if rate ~= 1 or simulating_desired_fps then
+    if (rate ~= 1 or simulating_desired_fps) and dfhack.world.isFortressMode() then
         if last_frame + 1 == df.global.world.frame_counter then
             timestream = 0
 
@@ -213,7 +216,7 @@ function update()
                         current_fps = minimal_fps
                     end
                     if debug_mode then
-                        print("prev_frames: " .. prev_frames .. ", current_fps: ".. current_fps)
+                        print("prev_frames: " .. prev_frames .. ", current_fps: ".. current_fps.. ", rate: " .. rate)
                     end
                 end
 
@@ -241,7 +244,7 @@ function update()
                                         d = 1
                                     end
                                     action.data.move.timer = d
-                                    
+
                                 elseif action.type == df.unit_action_type.Attack then
                                     local d = action.data.attack.timer1 - dec
                                     if d <= 1 then
@@ -328,6 +331,7 @@ function update()
             prev_time = df.global.enabler.clock
             prev_frames = df.global.world.frame_counter
         end
+        loaded = true
         dfhack.timeout(1,"frames",function() update() end)
     end
 end
