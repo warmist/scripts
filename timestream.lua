@@ -113,8 +113,8 @@ end
 
 function update()
     prev_tick = df.global.cur_year_tick
-    if last_frame + 1 == df.global.world.frame_counter then
-        if rate ~= 1 or simulating_desired_fps then
+    if rate ~= 1 or simulating_desired_fps then
+        if last_frame + 1 == df.global.world.frame_counter then
             timestream = 0
 
             --[[if rate < 1 then
@@ -236,32 +236,83 @@ function update()
                         if dfhack.units.isActive(unit) then
                             for k2, action in pairs(unit.actions) do
                                 if action.type == df.unit_action_type.Move then
-                                    action.data.move.timer = action.data.move.timer - dec
+                                    local d = action.data.move.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.move.timer = d
+                                    
                                 elseif action.type == df.unit_action_type.Attack then
-                                    action.data.attack.timer1 = action.data.attack.timer1 - dec
-                                    action.data.attack.timer2 = action.data.attack.timer2 - dec
+                                    local d = action.data.attack.timer1 - dec
+                                    if d <= 1 then
+                                        d = 1
+                                        action.data.attack.timer2 = 1   -- I don't know why, but if I don't add this line then there's a bug where people just dogpile each other and don't fight.
+                                    end
+                                    d = action.data.attack.timer2 - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.attack.timer2 = d
                                 elseif action.type == df.unit_action_type.HoldTerrain then
-                                    action.data.holdterrain.timer = action.data.holdterrain.timer - dec
+                                    local d = action.data.holdterrain.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.holdterrain.timer = d
                                 elseif action.type == df.unit_action_type.Climb then
-                                    action.data.climb.timer = action.data.climb.timer - dec
+                                    local d = action.data.climb.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.climb.timer = d
                                 elseif action.type == df.unit_action_type.Job then
-                                    action.data.job.timer = action.data.job.timer - dec
+                                    local d = action.data.job.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.job.timer = d
                                 elseif action.type == df.unit_action_type.Talk then
-                                    action.data.talk.timer = action.data.talk.timer - dec
+                                    local d = action.data.talk.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.talk.timer = d
                                 elseif action.type == df.unit_action_type.Unsteady then
-                                    action.data.unsteady.timer = action.data.unsteady.timer - dec
-                                elseif action.type == df.unit_action_type.Dodge then
-                                    action.data.dodge.timer = action.data.doge.timer - dec
+                                    local d = action.data.unsteady.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.unsteady.timer = d
                                 elseif action.type == df.unit_action_type.StandUp then
-                                    action.data.standup.timer = action.data.standup.timer - dec
+                                    local d = action.data.standup.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.standup.timer = d
                                 elseif action.type == df.unit_action_type.LieDown then
-                                    action.data.liedown.timer = action.data.liedown.timer - dec
+                                    local d = action.data.liedown.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.liedown.timer = d
                                 elseif action.type == df.unit_action_type.Job2 then
-                                    action.data.liedown.timer = action.data.liedown.timer - dec
+                                    local d = action.data.job2.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.job2.timer = d
                                 elseif action.type == df.unit_action_type.PushObject then
-                                    action.data.pushobject.timer = action.data.pushobject.timer - dec
+                                    local d = action.data.pushobject.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.pushobject.timer = d
                                 elseif action.type == df.unit_action_type.SuckBlood then
-                                    action.data.suckblood.timer = action.data.suckblood.timer - dec
+                                    local d = action.data.suckblood.timer - dec
+                                    if d < 1 then
+                                        d = 1
+                                    end
+                                    action.data.suckblood.timer = d
                                 end
                             end
                         end
@@ -269,16 +320,16 @@ function update()
                 end
             end
             ticks_left = ticks_left - math.floor(ticks_left) + rate
+            last_frame = df.global.world.frame_counter
+        else
+            if debug_mode then
+                print("last_frame("..last_frame..") + 1 != df.global.world.frame_counter("..df.global.world.frame_counter.."), resetting fps count")
+            end
+            prev_time = df.global.enabler.clock
+            prev_frames = df.global.world.frame_counter
         end
-        last_frame = df.global.world.frame_counter
-    else
-        if debug_mode then
-            print("last_frame("..last_frame..") + 1 != df.global.world.frame_counter("..df.global.world.frame_counter.."), resetting fps count")
-        end
-        prev_time = df.global.enabler.clock
-        prev_frames = df.global.world.frame_counter
+        dfhack.timeout(1,"frames",function() update() end)
     end
-    dfhack.timeout(1,"frames",function() update() end)
 end
 
 --Initial call
