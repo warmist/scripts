@@ -4,7 +4,7 @@
 
 timestream
 ==========
-This is only affects fortress mode.
+This only affects fortress mode.
 
 Usage:
 :timestream <scalar> <fps> <simulate units y/n>
@@ -37,11 +37,15 @@ local simulating_desired_fps = false
 local prev_frames = df.global.world.frame_counter
 local last_frame = df.global.world.frame_counter
 local prev_time = df.global.enabler.clock
+local ui_main = df.global.ui.main
+local saved_game_frame = -1
 
 local SEASON_LEN = 3360
 local YEAR_LEN = 403200
 
-print("timestream: Will start when fortress mode is loaded.")
+if not dfhack.world.isFortressMode() then
+    print("timestream: Will start when fortress mode is loaded.")
+end
 
 if rate == nil then
     rate = 1
@@ -76,15 +80,14 @@ end
 dfhack.onStateChange.loadTimestream = function(code)
     if code==SC_MAP_LOADED then
         if rate ~= 1 then
-            last_frame = df.global.world.frame_counter - 1
+            last_frame = df.global.world.frame_counter
             --if rate > 0 then            -- Won't behave well with unit simulation
             if rate > 1 and not simulating_desired_fps then
                 print('timestream: Time running at x'..rate..".")
             else
                 print('timestream: Time running dynamically to simulate '..desired_fps..' FPS.')
+                reset_frame_count()
                 simulating_desired_fps = true
-                prev_frames = df.global.world.frame_counter
-                prev_time = df.global.enabler.clock
                 rate = 1
                 if simulating_units == 1 or simulating_units == 2 then
                     print("timestream: Unit simulation is on.")
@@ -124,8 +127,9 @@ end
 function update()
     loaded = false
     prev_tick = df.global.cur_year_tick
+    local current_frame = df.global.world.frame_counter
     if (rate ~= 1 or simulating_desired_fps) and dfhack.world.isFortressMode() then
-        if last_frame + 1 == df.global.world.frame_counter then
+        if last_frame + 1 == current_frame then
             timestream = 0
 
             --[[if rate < 1 then
@@ -209,8 +213,14 @@ function update()
             end
 
             if simulating_desired_fps then
-
-                local counted_frames = df.global.world.frame_counter - prev_frames
+                if saved_game_frame ~= -1 and saved_game_frame + 2 == current_frame then
+                    if debug_mode then
+                        print("Game was saved two ticks ago (saved_game_frame(".. saved_game_frame .. ") + 2 == current_frame(" .. current_frame ..")")
+                    end
+                    reset_frame_count()
+                    saved_game = -1
+                end
+                local counted_frames = current_frame - prev_frames
                 if counted_frames >= desired_fps then
                     current_fps = 1000 * desired_fps / (df.global.enabler.clock - prev_time)
                     if current_fps < desired_fps then
@@ -218,8 +228,7 @@ function update()
                     else
                         rate = 1     -- We don't want to slow down the game
                     end
-                    prev_frames = df.global.world.frame_counter
-                    prev_time = df.global.enabler.clock
+                    reset_frame_count()
                     if current_fps < MINIMAL_FPS then
                         current_fps = MINIMAL_FPS
                     end
@@ -232,12 +241,12 @@ function update()
                     local missing_frames = desired_fps - current_fps
                     local speedy_frame_delta = desired_fps/missing_frames
                     local speedy_frame = counted_frames/speedy_frame_delta
-                    if speedy_frame - math.floor(speedy_frame) <= SPLICING_THRESHOLD and last_frame_sped_up ~= df.global.world.frame_counter then
+                    if speedy_frame - math.floor(speedy_frame) <= SPLICING_THRESHOLD and last_frame_sped_up ~= current_frame then
                         if debug_mode then
                             print("speedy_frame_delta: "..speedy_frame_delta..", speedy_frame: "..counted_frames.."/"..desired_fps)
                         end
                         df.global.debug_turbospeed = true
-                        last_frame_sped_up = df.global.world.frame_counter
+                        last_frame_sped_up = current_frame
                     else
                         df.global.debug_turbospeed = false
                     end
@@ -246,14 +255,15 @@ function update()
                     for k1, unit in pairs(df.global.world.units.active) do
                         if dfhack.units.isActive(unit) then
                             for k2, action in pairs(unit.actions) do
-                                if action.type == df.unit_action_type.Move then
+                                local action_type = action.type
+                                if action_type == df.unit_action_type.Move then
                                     local d = action.data.move.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.move.timer = d
 
-                                elseif action.type == df.unit_action_type.Attack then
+                                elseif action_type == df.unit_action_type.Attack then
                                     local d = action.data.attack.timer1 - dec
                                     if d <= 1 then
                                         d = 1
@@ -264,61 +274,61 @@ function update()
                                         d = 1
                                     end
                                     action.data.attack.timer2 = d
-                                elseif action.type == df.unit_action_type.HoldTerrain then
+                                elseif action_type == df.unit_action_type.HoldTerrain then
                                     local d = action.data.holdterrain.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.holdterrain.timer = d
-                                elseif action.type == df.unit_action_type.Climb then
+                                elseif action_type == df.unit_action_type.Climb then
                                     local d = action.data.climb.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.climb.timer = d
-                                elseif action.type == df.unit_action_type.Job then
+                                elseif action_type == df.unit_action_type.Job then
                                     local d = action.data.job.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.job.timer = d
-                                elseif action.type == df.unit_action_type.Talk then
+                                elseif action_type == df.unit_action_type.Talk then
                                     local d = action.data.talk.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.talk.timer = d
-                                elseif action.type == df.unit_action_type.Unsteady then
+                                elseif action_type == df.unit_action_type.Unsteady then
                                     local d = action.data.unsteady.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.unsteady.timer = d
-                                elseif action.type == df.unit_action_type.StandUp then
+                                elseif action_type == df.unit_action_type.StandUp then
                                     local d = action.data.standup.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.standup.timer = d
-                                elseif action.type == df.unit_action_type.LieDown then
+                                elseif action_type == df.unit_action_type.LieDown then
                                     local d = action.data.liedown.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.liedown.timer = d
-                                elseif action.type == df.unit_action_type.Job2 then
+                                elseif action_type == df.unit_action_type.Job2 then
                                     local d = action.data.job2.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.job2.timer = d
-                                elseif action.type == df.unit_action_type.PushObject then
+                                elseif action_type == df.unit_action_type.PushObject then
                                     local d = action.data.pushobject.timer - dec
                                     if d < 1 then
                                         d = 1
                                     end
                                     action.data.pushobject.timer = d
-                                elseif action.type == df.unit_action_type.SuckBlood then
+                                elseif action_type == df.unit_action_type.SuckBlood then
                                     local d = action.data.suckblood.timer - dec
                                     if d < 1 then
                                         d = 1
@@ -331,17 +341,32 @@ function update()
                 end
             end
             ticks_left = ticks_left - math.floor(ticks_left) + rate
-            last_frame = df.global.world.frame_counter
+            last_frame = current_frame
         else
             if debug_mode then
-                print("last_frame("..last_frame..") + 1 != df.global.world.frame_counter("..df.global.world.frame_counter.."), resetting fps count")
+                print("last_frame("..last_frame..") + 1 != current_frame("..current_frame..")")
             end
-            prev_time = df.global.enabler.clock
-            prev_frames = df.global.world.frame_counter
+            reset_frame_count()
         end
-        loaded = true
-        dfhack.timeout(1,"frames",function() update() end)
+        if ui_main.autosave_request then
+            if debug_mode then
+                print("Save state detected")
+            end
+            saved_game_frame = current_frame
+        end
+        if not loaded then
+            loaded = true
+            dfhack.timeout(1,"frames",function() update() end)
+        end
     end
+end
+
+function reset_frame_count()
+    if debug_mode then
+        print("Resetting frame count")
+    end
+    prev_time = df.global.enabler.clock
+    prev_frames = df.global.world.frame_counter
 end
 
 --Initial call
