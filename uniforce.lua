@@ -104,7 +104,6 @@ function get_item_pos(item)
     return nil
   end
 
-  -- TODO: Base this on valid world positions.
   if not dfhack.maps.isValidTilePos(x,y,z) then
     dfhack.println("NOT VALID TILE")
     return nil
@@ -113,10 +112,6 @@ function get_item_pos(item)
     dfhack.println("NOT VISIBLE TILE")
     return nil
   end
---  if x < -2000 or y < -2000 or z < -2000 or
---     x >  2000 or y >  2000 or z >  2000 then
---     return nil 
---  end
   return {x=x, y=y, z=z}
 end
 
@@ -146,6 +141,7 @@ function body_part_to_body_position(part)
   return PART_TO_POSITION[ part ]
 end
 
+-- Will figure out which items need to be moved to the floor, returns an item_id:item map
 function process(unit, multi, silent)
   silent = silent or false
   local unit_name = dfhack.TranslateName( dfhack.units.getVisibleName(unit) )
