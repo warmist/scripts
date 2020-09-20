@@ -1,4 +1,4 @@
--- Force units to take on their uniform.
+-- Prompt units to adjust their uniform.
 local help = [====[
 
 uniforce
@@ -22,13 +22,13 @@ left/right distinctions when dropping items.
 In no cases should it cause a uniform item to be removed/dropped. 
 
 Targets:
-:(no target) Force the selected dwarf to put on their uniform.
-:-all        Force the uniform on all military dwarves
+:(no target): Force the selected dwarf to put on their uniform.
+:-all:        Force the uniform on all military dwarves
 
 Options:
-:(none)      Will simply show identified issues (dry-run)
-:-drop       Will cause offending items to be placed on ground under unit
-:-multi      Be more agressive in removing items, best for when uniforms have muliple items per body part
+:(none):      Will simply show identified issues (dry-run)
+:-drop:       Will cause offending items to be placed on ground under unit
+:-multi:      Be more agressive in removing items, best for when uniforms have muliple items per body part
 ]====]
 
 local utils = require('utils')
