@@ -151,12 +151,11 @@ function process(unit, args)
   local missing_locs = {} -- map of armor locations to true/nil
   for u_id, loc in pairs(assigned_items) do
     if worn_items[ u_id ] == nil then
-      dfhack.println("Unit "..unit_name.." is missing an assigned "..loc.." item")
+      local item = find_item_by_ID( u_id )
+      dfhack.println("Unit "..unit_name.." is missing an assigned "..loc.." item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
       missing_ids[ u_id ] = loc
       missing_locs[ loc ] = true
       if args.free then
-        local item = find_item_by_ID( u_id )
-        dfhack.println("The "..loc.." item #"..u_id.." '"..utils.getItemDescription(item).."' needed by "..unit_name.." will be freed.")
         to_drop[ u_id ] = item
       end
     else
