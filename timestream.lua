@@ -18,7 +18,6 @@ Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d
 
 
 local MINIMAL_FPS           = 10    -- This ensures you won't get crazy values on pausing/saving, or other artefacts on extremely low FPS.
-local SPLICING_THRESHOLD    = 0.25  -- This controls how generously the script decides to speed up units. Higher values mean that units will be sped up more often than not. This is only for when using debug_turbospeed.
 local DEFAULT_MAX_FPS       = 100
 
 
@@ -39,6 +38,8 @@ local last_frame = df.global.world.frame_counter
 local prev_time = df.global.enabler.clock
 local ui_main = df.global.ui.main
 local saved_game_frame = -1
+local frames_until_speeding = 0
+local speedy_frame_delta = desired_fps
 
 local SEASON_LEN = 3360
 local YEAR_LEN = 403200
@@ -232,28 +233,44 @@ function update()
                     if current_fps < MINIMAL_FPS then
                         current_fps = MINIMAL_FPS
                     end
+                    local missing_frames = desired_fps - current_fps
+                    speedy_frame_delta = desired_fps/missing_frames
+                    if missing_frames == 0 then
+                        speedy_frame_delta = desired_fps
+                    end
                     if debug_mode then
                         print("prev_frames: " .. prev_frames .. ", current_fps: ".. current_fps.. ", rate: " .. rate)
                     end
                 end
 
                 if simulating_units == 2 then
-                    local missing_frames = desired_fps - current_fps
-                    local speedy_frame_delta = desired_fps/missing_frames
-                    local speedy_frame = counted_frames/speedy_frame_delta
-                    if speedy_frame - math.floor(speedy_frame) <= SPLICING_THRESHOLD and last_frame_sped_up ~= current_frame then
+                    if frames_until_speeding <= 0 then
+                        frames_until_speeding = frames_until_speeding + speedy_frame_delta
                         if debug_mode then
                             print("speedy_frame_delta: "..speedy_frame_delta..", speedy_frame: "..counted_frames.."/"..desired_fps)
                         end
                         df.global.debug_turbospeed = true
                         last_frame_sped_up = current_frame
                     else
-                        df.global.debug_turbospeed = false
+                        frames_until_speeding = frames_until_speeding - 1
+                        if df.global.debug_turbospeed then
+                            df.global.debug_turbospeed = false
+                        end
                     end
                 elseif simulating_units == 1 then
-                    local dec = math.floor(ticks_left) - 1
+                    local dec = math.floor(ticks_left) - 1  -- A value used to determine how much more to decrement from the timers per tick.
                     for k1, unit in pairs(df.global.world.units.active) do
                         if dfhack.units.isActive(unit) then
+                            if unit.sex == 0 then   -- Check to see if unit is female.
+                                local ptimer = unit.pregnancy_timer
+                                if ptimer > 0 then
+                                    ptimer = ptimer - dec
+                                    if ptimer < 1 then
+                                        ptimer = 1
+                                    end
+                                    unit.pregnancy_timer = ptimer
+                                end
+                            end     
                             for k2, action in pairs(unit.actions) do
                                 local action_type = action.type
                                 if action_type == df.unit_action_type.Move then
