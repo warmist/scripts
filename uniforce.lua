@@ -8,7 +8,7 @@ Prompt units to reevaluate their uniform, by removing/dropping potentially confl
 
 Unlike a "replace clothing" designation, it won't remove additional clothing
 if it's coexisting with a uniform item already on that body part.
-It also won't remove clothing (e.g. shoes, trousers) if the unit has yet to claim an 
+It also won't remove clothing (e.g. shoes, trousers) if the unit has yet to claim an
 armor item for that bodypart. (e.g. if you're still manufacturing them.)
 
 By default it simply prints info about the currently selected unit,
@@ -23,7 +23,7 @@ In some cases, an assigned armor item can't be put on because someone else is we
 The -free option will cause the assigned item to be removed from the container/dwarven inventory
 and placed onto the ground, ready for pickup.
 
-In no cases should the command cause a uniform item that is being properly worn to be removed/dropped. 
+In no cases should the command cause a uniform item that is being properly worn to be removed/dropped.
 
 Targets:
 :(no target): Force the selected dwarf to put on their uniform.
@@ -94,7 +94,7 @@ PART_TO_POSITION[ 8]="gloves" -- also shield and weapon
 PART_TO_POSITION[ 9]="gloves" -- also shield and weapon
 PART_TO_POSITION[14]="shoes"
 PART_TO_POSITION[15]="shoes"
- 
+
 -- Convert the unit.inventory.body_part_id to a squad_position.uniform body position
 function body_part_to_body_position(part)
   return PART_TO_POSITION[ part ]
@@ -105,7 +105,7 @@ function process(unit, args)
   silent = args.all -- Don't print details if we're iterating through all dwarves
   local unit_name = dfhack.df2console( dfhack.TranslateName( dfhack.units.getVisibleName(unit) ) )
 
-  if not silent then 
+  if not silent then
     dfhack.println("Processing unit "..unit_name)
   end
 
@@ -139,7 +139,7 @@ function process(unit, args)
     for i, spec in pairs(specs) do
       for i, assigned in pairs( spec.assigned ) do
         -- Include weapon and shield so we don't drop them later
-      	assigned_items[ assigned ] = loc
+        assigned_items[ assigned ] = loc
       end
     end
   end
@@ -172,7 +172,7 @@ function process(unit, args)
     if loc ~= 'shield' and loc ~= "weapon" then -- shields and weapons don't "cover" the bodypart they're assigned to.
      covered[ worn_parts[ id ] ] = id
     end
-  end 
+  end
 
   if multi then
     covered = {} -- Don't consider current covers - drop for anything which is missing
@@ -194,11 +194,11 @@ function process(unit, args)
     if assigned_items[ w_id ] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
       if uncovered[ worn_parts[ w_id ] ] then
         dfhack.println("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking their uniform "..PART_TO_POSITION[ worn_parts[ w_id ] ])
-        if args.drop then 
+        if args.drop then
           to_drop[ w_id ] = item
         end
       end
-    end 
+    end
   end
 
   return to_drop
@@ -244,9 +244,9 @@ if args.all then
   for k,unit in ipairs(df.global.world.units.active) do
     if dfhack.units.isCitizen(unit) then
       local to_drop = process(unit,args)
-      do_drop( to_drop ) 
+      do_drop( to_drop )
     end
-  end  
+  end
 else
   local unit=dfhack.gui.getSelectedUnit(true)
   if df.isvalid(unit) then
