@@ -150,7 +150,7 @@ end
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
 function process(unit, args)
   silent = args.all -- Don't print details if we're iterating through all dwarves
-  local unit_name = dfhack.TranslateName( dfhack.units.getVisibleName(unit) )
+  local unit_name = dfhack.df2console( dfhack.TranslateName( dfhack.units.getVisibleName(unit) ) )
 
   if not silent then 
     dfhack.println("Processing unit "..unit_name)
