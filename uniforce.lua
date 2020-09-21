@@ -46,53 +46,6 @@ local validArgs = utils.invert({
   'help'
 })
 
----- Debugging function
-
-local dumper = require('dumper')
-
-function debug_print_light(entry)
-  dfhack.println("----------------")
-  dfhack.println(tostring(entry))
-  for k,v in pairs(entry) do
-    dfhack.println('    '..k)
-  end
-  dfhack.println("----------------")
-end
-
-function debug_print(entry)
-  dfhack.println("----------------")
-  dfhack.println(tostring(entry))
-  for k,v in pairs(entry) do
-    dfhack.println('    '..k..':  '..tostring(v))
-  end
-  dfhack.println("----------------")
-end
-
-function print_item_list(vector)
-  for i,v in pairs(vector) do
-    local item = find_item_by_ID(v)
-    dfhack.println(i.."  "..v.."   "..tostring(item).."  "..utils.getItemDescription(item))
-  end
-end
-
-function print_item_list_verbose(vector)
-  for i,v in pairs(vector) do
-    local item = find_item_by_ID(v)
-    debug_print_light(item)
-  end
-end
-
--- Unused utility functions
-
-function val_in_vector( vector, value )
-  for i,v in pairs(vector) do
-    if v == value then
-      return true
-    end
-  end
-  return false
-end
-
 -- Functions
 
 function get_item_pos(item)
@@ -179,11 +132,6 @@ function process(unit, args)
    end
   end
 
---  dfhack.println("====== Worn items for "..unit_name)
---  debug_print(worn_items)
---  debug_print(worn_parts)
-
-
   -- Now get info about which items have been assigned as part of the uniform
   local assigned_items = {} -- assigned item ids mapped to their armor location
 
@@ -195,9 +143,6 @@ function process(unit, args)
       end
     end
   end
-
---  dfhack.println("====== Assigned items for "..unit_name)
---  debug_print(assigned_items)
 
   -- Figure out which assigned items are currently not being worn
 
@@ -219,10 +164,6 @@ function process(unit, args)
     end
   end
 
---  dfhack.println("====== Missing items for "..unit_name)
---  debug_print(missing_ids)
---  debug_print(missing_locs)
-
   -- Figure out which worn items should be dropped
 
   -- First, figure out which body parts are covered by the uniform pieces we have.
@@ -238,9 +179,6 @@ function process(unit, args)
     covered = {} -- Don't consider current covers - drop for anything which is missing
   end
 
---  dfhack.println("====== Uniform-covered body parts for  "..unit_name)
---  debug_print(covered)
-
   -- Figure out body parts which should be covered but aren'y
   local uncovered = {}
   for part, loc in pairs( PART_TO_POSITION ) do
@@ -251,9 +189,6 @@ function process(unit, args)
       end
     end
   end
-
---  dfhack.println("====== Uniform-uncovered body parts for  "..unit_name)
---  debug_print(uncovered)
 
   -- Drop everything (except uniform pieces) from body parts which should be covered but aren't
   for w_id, item in pairs(worn_items) do
