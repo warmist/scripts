@@ -19,16 +19,21 @@ which means that it may miss cases where one piece of armor is blocked but the o
 is present. The -multi option can possibly get around this, but at the cost of ignoring
 left/right distinctions when dropping items.
 
-In no cases should it cause a uniform item to be removed/dropped. 
+In some cases, an assigned armor item can't be put on because someone else is wearing/holding it.
+The -free option will cause the assigned item to be removed from the container/dwarven inventory
+and placed onto the ground, ready for pickup.
+
+In no cases should the command cause a uniform item that is being properly worn to be removed/dropped. 
 
 Targets:
 :(no target): Force the selected dwarf to put on their uniform.
-:-all:        Force the uniform on all military dwarves
+:-all:        Force the uniform on all military dwarves.
 
 Options:
-:(none):      Will simply show identified issues (dry-run)
-:-drop:       Will cause offending items to be placed on ground under unit
-:-multi:      Be more agressive in removing items, best for when uniforms have muliple items per body part
+:(none):      Simply show identified issues (dry-run).
+:-drop:       Cause offending worn items to be placed on ground under unit.
+:-free:       Remove to-equip items from containers or other's inventories, and place on ground.
+:-multi:      Be more agressive in removing items, best for when uniforms have muliple items per body part.
 ]====]
 
 local utils = require('utils')
@@ -36,6 +41,7 @@ local utils = require('utils')
 local validArgs = utils.invert({
   'all',
   'drop',
+  'free',
   'multi',
   'help'
 })
@@ -60,15 +66,6 @@ function debug_print(entry)
     dfhack.println('    '..k..':  '..tostring(v))
   end
   dfhack.println("----------------")
-end
-
-function find_item_by_ID(id)
-  for k,v in pairs(df.global.world.items.all) do
-    if v.id == id then
-      return v
-    end
-  end
-  return nil
 end
 
 function print_item_list(vector)
@@ -115,6 +112,15 @@ function get_item_pos(item)
   return {x=x, y=y, z=z}
 end
 
+function find_item_by_ID(id)
+  for k,v in pairs(df.global.world.items.all) do
+    if v.id == id then
+      return v
+    end
+  end
+  return nil
+end
+
 function find_squad_position(unit)
   for i, squad in pairs( df.global.world.squads.all ) do
     for i, position in pairs( squad.positions ) do
@@ -142,13 +148,16 @@ function body_part_to_body_position(part)
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
-function process(unit, multi, silent)
-  silent = silent or false
+function process(unit, args)
+  silent = args.all -- Don't print details if we're iterating through all dwarves
   local unit_name = dfhack.TranslateName( dfhack.units.getVisibleName(unit) )
 
   if not silent then 
     dfhack.println("Processing unit "..unit_name)
   end
+
+  -- The return value
+  local to_drop = {} -- item id to item object
 
   -- First get squad position for an early-out for non-military dwarves
   local squad_position = find_squad_position(unit)
@@ -200,6 +209,11 @@ function process(unit, multi, silent)
       dfhack.println("Unit "..unit_name.." is missing an assigned "..loc.." item")
       missing_ids[ u_id ] = loc
       missing_locs[ loc ] = true
+      if args.free then
+        local item = find_item_by_ID( u_id )
+        dfhack.println("The "..loc.." item #"..u_id.." '"..utils.getItemDescription(item).."' needed by "..unit_name.." will be freed.")
+        to_drop[ u_id ] = item
+      end
     else
       present_ids[ u_id ] = worn_items[ u_id ]
     end
@@ -241,14 +255,14 @@ function process(unit, multi, silent)
 --  dfhack.println("====== Uniform-uncovered body parts for  "..unit_name)
 --  debug_print(uncovered)
 
-  local to_drop = {} -- item id to item object
-
   -- Drop everything (except uniform pieces) from body parts which should be covered but aren't
   for w_id, item in pairs(worn_items) do
     if assigned_items[ w_id ] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
       if uncovered[ worn_parts[ w_id ] ] then
         dfhack.println("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking their uniform "..PART_TO_POSITION[ worn_parts[ w_id ] ])
-        to_drop[ w_id ] = item
+        if args.drop then 
+          to_drop[ w_id ] = item
+        end
       end
     end 
   end
@@ -287,27 +301,23 @@ if args.help then
     return
 end
 
-if args.drop and df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
-  dfhack.println("Error: Cannot actually drop items when view-unit sidebar is open.")
+if (args.drop or args.free) and df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
+  dfhack.println("Error: Cannot actually drop/free items when view-unit sidebar is open.")
   return
 end
 
 if args.all then
   for k,unit in ipairs(df.global.world.units.active) do
     if dfhack.units.isCitizen(unit) then
-      local to_drop = process(unit,args.multi,true)
-      if args.drop then
-        do_drop( to_drop ) 
-      end
+      local to_drop = process(unit,args)
+      do_drop( to_drop ) 
     end
   end  
 else
   local unit=dfhack.gui.getSelectedUnit(true)
   if df.isvalid(unit) then
-    local to_drop = process(unit,args.multi,false)
-    if args.drop then
-      do_drop( to_drop )
-    end
+    local to_drop = process(unit,args)
+    do_drop( to_drop )
   else
     dfhack.println("No unit is selected")
   end
