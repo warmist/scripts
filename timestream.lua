@@ -4,17 +4,21 @@
 
 timestream
 ==========
-This only affects fortress mode.
+Controls the speed of the calendar and creatures. Fortress mode only. Experimental.
+
+The script is also capable of dynamically speeding up the game based on your current FPS to mitigate the effects of FPS death. See examples below to see how.
 
 Usage::
 
-    timestream <scalar> <fps> <simulate units y/n>
+    timestream <rate> <desired fps> <simulate units 1/0>
 
 Examples:
 
-:timestream     2:          Calendar runs at x2 normal speed
-:timestream    -1 100:      Calendar runs at dynamic speed to simulate 100 FPS
-:timestream    -1 100 1:    Calendar & units are simulated at 100 FPS
+    timestream     2:           Calendar runs at x2 normal speed, units run at normal speed
+    timestream    -1 100:       Calendar runs at dynamic speed to simulate 100 FPS, units normal
+    timestream    -1 100 1:     Calendar & units are simulated at 100 FPS
+    timestream     1:           Resets everything back to normal, regardless of other arguments
+    timestream     1 50 1:      Same as above
 
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
@@ -57,11 +61,14 @@ elseif rate < 0 then
     rate = 0
 end
 
-if desired_fps == nil or desired_fps <= 0 then
+simulating_desired_fps = true
+if desired_fps == nil then
     desired_fps = DEFAULT_MAX_FPS
-    current_fps = desired_fps
     simulating_desired_fps = false
+elseif desired_fps < MINIMAL_FPS then
+    desired_fps = MINIMAL_FPS
 end
+current_fps = desired_fps
 
 if debug_mode == nil or debug_mode ~= 1 then
     debug_mode = false
@@ -90,8 +97,10 @@ dfhack.onStateChange.loadTimestream = function(code)
                 print('timestream: Time running at x'..rate..".")
             else
                 print('timestream: Time running dynamically to simulate '..desired_fps..' FPS.')
+                if rate ~= 0 then
+                    print('timestream: Rate setting ignored.')
+                end
                 reset_frame_count()
-                simulating_desired_fps = true
                 rate = 1
                 if simulating_units == 1 or simulating_units == 2 then
                     print("timestream: Unit simulation is on.")
@@ -117,14 +126,13 @@ dfhack.onStateChange.loadTimestream = function(code)
                 loaded = true
             end
         else
-            print('Time set to normal speed.')
+            print('timestream: Time set to normal speed.')
             loaded = false
             df.global.debug_turbospeed = false
         end
-            if debug_mode then
+        if debug_mode then
             print("timestream: Debug mode is on.")
         end
-    elseif code==SC_MAP_UNLOADED then
     end
 end
 
@@ -273,7 +281,7 @@ function update()
                                     end
                                     unit.pregnancy_timer = ptimer
                                 end
-                            end     
+                            end
                             for k2, action in pairs(unit.actions) do
                                 local action_type = action.type
                                 if action_type == df.unit_action_type.Move then
