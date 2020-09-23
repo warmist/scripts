@@ -6,9 +6,12 @@ timestream
 ==========
 This only affects fortress mode.
 
-Usage:
-:timestream <scalar> <fps> <simulate units y/n>
+Usage::
+
+    timestream <scalar> <fps> <simulate units y/n>
+
 Examples:
+
 :timestream     2:          Calendar runs at x2 normal speed
 :timestream    -1 100:      Calendar runs at dynamic speed to simulate 100 FPS
 :timestream    -1 100 1:    Calendar & units are simulated at 100 FPS
