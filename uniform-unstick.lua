@@ -117,7 +117,7 @@ function process(unit, args)
   local worn_parts = {} -- map of item ids to body part ids
   for k, inv_item in pairs(unit.inventory) do
    local item = inv_item.item
-   if inv_item.mode == 2 or inv_item.mode == 1 or inv_item.mode == 4 then -- mode == 2 is worn, mode == 1 is weapon, mode == 4 is flask
+   if inv_item.mode == df.unit_inventory_item.T_mode.Worn or inv_item.mode == df.unit_inventory_item.T_mode.Weapon then -- Include weapons for the check of if we have them.
      worn_items[ item.id ] = item
      worn_parts[ item.id ] = inv_item.body_part_id
    end
