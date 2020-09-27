@@ -237,11 +237,11 @@ function do_drop( item_list )
   for id, item in pairs(item_list) do
     local pos = get_item_pos(item)
     if pos == nil then
-      print("Could not find drop location for item #"..id.."  "..utils.getItemDescription(item))
+      dfhack.printerr("Could not find drop location for item #"..id.."  "..utils.getItemDescription(item))
     else
       local retval = dfhack.items.moveToGround( item, pos )
       if retval == false then
-        print("Could not drop object #"..id.."  "..utils.getItemDescription(item))
+        dfhack.printerr("Could not drop object #"..id.."  "..utils.getItemDescription(item))
       else
         print("Dropped item #"..id.." '"..utils.getItemDescription(item).."'")
       end
