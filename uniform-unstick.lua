@@ -234,6 +234,12 @@ function do_drop( item_list )
     return nil
   end
 
+  local mode_swap = false
+  if df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
+    df.global.ui.main.mode = df.ui_sidebar_mode.Default
+    mode_swap = true
+  end
+
   for id, item in pairs(item_list) do
     local pos = get_item_pos(item)
     if pos == nil then
@@ -247,6 +253,10 @@ function do_drop( item_list )
       end
     end
   end
+
+  if mode_swap then
+    df.global.ui.main.mode = df.ui_sidebar_mode.ViewUnits
+  end
 end
 
 
@@ -257,11 +267,6 @@ local args = utils.processArgs({...}, validArgs)
 if args.help then
     print(help)
     return
-end
-
-if (args.drop or args.free) and df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
-  qerror("Error: Cannot actually drop/free items when view-unit sidebar is open.")
-  return
 end
 
 if args.all then
@@ -278,4 +283,3 @@ else
     do_drop( to_drop )
   end
 end
-
