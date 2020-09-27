@@ -1,8 +1,8 @@
 -- Prompt units to adjust their uniform.
 local help = [====[
 
-uniforce
-========
+uniform-unstick
+===============
 
 Prompt units to reevaluate their uniform, by removing/dropping potentially conflicting worn items.
 
