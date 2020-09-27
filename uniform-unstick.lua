@@ -46,6 +46,18 @@ local validArgs = utils.invert({
   'help'
 })
 
+
+-- Debugging function
+
+function debug_print(entry)
+  dfhack.println("----------------")
+  dfhack.println(tostring(entry))
+  for k,v in pairs(entry) do
+    dfhack.println('    '..k..':  '..tostring(v))
+  end
+  dfhack.println("----------------")
+end
+
 -- Functions
 
 function get_item_pos(item)
@@ -76,19 +88,46 @@ function find_squad_position(unit)
   return nil
 end
 
--- This should be okay for dwarves, not sure if valid for others.
-PART_TO_POSITION = {}
-PART_TO_POSITION[ 0]="body"
-PART_TO_POSITION[ 1]="pants"
-PART_TO_POSITION[ 3]="head"
-PART_TO_POSITION[ 8]="gloves" -- also shield and weapon
-PART_TO_POSITION[ 9]="gloves" -- also shield and weapon
-PART_TO_POSITION[14]="shoes"
-PART_TO_POSITION[15]="shoes"
+function bodyparts_that_can_wear(unit, item)
 
--- Convert the unit.inventory.body_part_id to a squad_position.uniform body position
-function body_part_to_body_position(part)
-  return PART_TO_POSITION[ part ]
+  local bodyparts = {}
+  local unitparts = df.creature_raw.find(unit.race).caste[unit.caste].body_info.body_parts
+
+  if item._type == df.item_helmst then
+    for index, part in pairs(unitparts) do
+      if part.flags.HEAD then
+        bodyparts[#bodyparts+1] = index
+      end
+    end
+  elseif item._type == df.item_armorst then
+    for index, part in pairs(unitparts) do
+      if part.flags.UPPERBODY then
+        bodyparts[#bodyparts+1] = index
+      end
+    end
+  elseif item._type == df.item_glovesst then
+    for index, part in pairs(unitparts) do
+      if part.flags.GRASP then
+        bodyparts[#bodyparts+1] = index
+      end
+    end
+  elseif item._type == df.item_pantsst then
+    for index, part in pairs(unitparts) do
+      if part.flags.LOWERBODY then
+        bodyparts[#bodyparts+1] = index
+      end
+    end
+  elseif item._type == df.item_shoesst then
+    for index, part in pairs(unitparts) do
+      if part.flags.STANCE then
+        bodyparts[#bodyparts+1] = index
+      end
+    end
+  else
+    -- print("Ignoring item type for "..utils.getItemDescription(item) )
+  end
+
+  return bodyparts
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
@@ -117,20 +156,19 @@ function process(unit, args)
   local worn_parts = {} -- map of item ids to body part ids
   for k, inv_item in pairs(unit.inventory) do
    local item = inv_item.item
-   if inv_item.mode == df.unit_inventory_item.T_mode.Worn or inv_item.mode == df.unit_inventory_item.T_mode.Weapon then -- Include weapons for the check of if we have them.
+   if inv_item.mode == df.unit_inventory_item.T_mode.Worn or inv_item.mode == df.unit_inventory_item.T_mode.Weapon then -- Include weapons so we can check we have them later
      worn_items[ item.id ] = item
      worn_parts[ item.id ] = inv_item.body_part_id
    end
   end
 
   -- Now get info about which items have been assigned as part of the uniform
-  local assigned_items = {} -- assigned item ids mapped to their armor location
-
-  for loc, specs in pairs( squad_position.uniform ) do -- indexed by armor location
+  local assigned_items = {} -- assigned item ids mapped to item objects
+  for loc, specs in pairs( squad_position.uniform ) do
     for i, spec in pairs(specs) do
       for i, assigned in pairs( spec.assigned ) do
-        -- Include weapon and shield so we don't drop them later
-        assigned_items[ assigned ] = loc
+        -- Include weapon and shield so we can avoid dropping them, or pull them out of container/inventory later
+        assigned_items[ assigned ] = df.item.find( assigned )
       end
     end
   end
@@ -138,19 +176,16 @@ function process(unit, args)
   -- Figure out which assigned items are currently not being worn
 
   local present_ids = {} -- map of item ID to item object
-  local missing_ids = {} -- map of item ID to armor location
-  local missing_locs = {} -- map of armor locations to true/nil
-  for u_id, loc in pairs(assigned_items) do
+  local missing_ids = {} -- map of item ID to item object
+  for u_id, item in pairs(assigned_items) do
     if worn_items[ u_id ] == nil then
-      local item = df.item.find( u_id )
-      print("Unit "..unit_name.." is missing an assigned "..loc.." item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
-      missing_ids[ u_id ] = loc
-      missing_locs[ loc ] = true
+      print("Unit "..unit_name.." is missing an assigned item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
+      missing_ids[ u_id ] = item
       if args.free then
         to_drop[ u_id ] = item
       end
     else
-      present_ids[ u_id ] = worn_items[ u_id ]
+      present_ids[ u_id ] = item
     end
   end
 
@@ -159,9 +194,8 @@ function process(unit, args)
   -- First, figure out which body parts are covered by the uniform pieces we have.
   local covered = {} -- map of body part id to true/nil
   for id, item in pairs( present_ids ) do
-    local loc = assigned_items[ id ]
-    if loc ~= 'shield' and loc ~= "weapon" then -- shields and weapons don't "cover" the bodypart they're assigned to.
-     covered[ worn_parts[ id ] ] = id
+    if item._type ~= df.item_weaponst and item._type ~= df.item_shieldst then -- weapons and shields don't "cover" the bodypart they're assigned to. (Needed to figure out if we're missing gloves.)
+      covered[ worn_parts[ id ] ] = true
     end
   end
 
@@ -171,11 +205,10 @@ function process(unit, args)
 
   -- Figure out body parts which should be covered but aren't
   local uncovered = {}
-  for part, loc in pairs( PART_TO_POSITION ) do
-    if not covered[ part ] then
-      -- Only mark it "uncovered" if we're nominally supposed to have something there.
-      if missing_locs[ loc ] then
-        uncovered[ part ] = true
+  for id, item in pairs(missing_ids) do
+    for i, bp in pairs( bodyparts_that_can_wear(unit, item) ) do
+      if not covered[bp] then
+        uncovered[bp] = true
       end
     end
   end
@@ -184,7 +217,7 @@ function process(unit, args)
   for w_id, item in pairs(worn_items) do
     if assigned_items[ w_id ] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
       if uncovered[ worn_parts[ w_id ] ] then
-        print("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking their uniform "..PART_TO_POSITION[ worn_parts[ w_id ] ])
+        print("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking a missing uniform item.")
         if args.drop then
           to_drop[ w_id ] = item
         end
