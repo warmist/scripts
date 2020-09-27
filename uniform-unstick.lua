@@ -62,16 +62,7 @@ function get_item_pos(item)
     print("NOT VISIBLE TILE")
     return nil
   end
-  return {x=x, y=y, z=z}
-end
-
-function find_item_by_ID(id)
-  for k,v in pairs(df.global.world.items.all) do
-    if v.id == id then
-      return v
-    end
-  end
-  return nil
+  return xyz2pos(x, y, z)
 end
 
 function find_squad_position(unit)
@@ -151,7 +142,7 @@ function process(unit, args)
   local missing_locs = {} -- map of armor locations to true/nil
   for u_id, loc in pairs(assigned_items) do
     if worn_items[ u_id ] == nil then
-      local item = find_item_by_ID( u_id )
+      local item = df.item.find( u_id )
       print("Unit "..unit_name.." is missing an assigned "..loc.." item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
       missing_ids[ u_id ] = loc
       missing_locs[ loc ] = true
