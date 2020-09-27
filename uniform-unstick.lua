@@ -46,18 +46,6 @@ local validArgs = utils.invert({
   'help'
 })
 
-
--- Debugging function
-
-function debug_print(entry)
-  dfhack.println("----------------")
-  dfhack.println(tostring(entry))
-  for k,v in pairs(entry) do
-    dfhack.println('    '..k..':  '..tostring(v))
-  end
-  dfhack.println("----------------")
-end
-
 -- Functions
 
 function get_item_pos(item)
