@@ -55,11 +55,11 @@ function get_item_pos(item)
   end
 
   if not dfhack.maps.isValidTilePos(x,y,z) then
-    dfhack.println("NOT VALID TILE")
+    print("NOT VALID TILE")
     return nil
   end
   if not dfhack.maps.isTileVisible(x,y,z) then
-    dfhack.println("NOT VISIBLE TILE")
+    print("NOT VISIBLE TILE")
     return nil
   end
   return {x=x, y=y, z=z}
@@ -106,7 +106,7 @@ function process(unit, args)
   local unit_name = dfhack.df2console( dfhack.TranslateName( dfhack.units.getVisibleName(unit) ) )
 
   if not silent then
-    dfhack.println("Processing unit "..unit_name)
+    print("Processing unit "..unit_name)
   end
 
   -- The return value
@@ -116,7 +116,7 @@ function process(unit, args)
   local squad_position = find_squad_position(unit)
   if squad_position == nil then
     if not silent then
-      dfhack.println("Unit "..unit_name.." does not have a military uniform.")
+      print("Unit "..unit_name.." does not have a military uniform.")
     end
     return nil
   end
@@ -152,7 +152,7 @@ function process(unit, args)
   for u_id, loc in pairs(assigned_items) do
     if worn_items[ u_id ] == nil then
       local item = find_item_by_ID( u_id )
-      dfhack.println("Unit "..unit_name.." is missing an assigned "..loc.." item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
+      print("Unit "..unit_name.." is missing an assigned "..loc.." item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
       missing_ids[ u_id ] = loc
       missing_locs[ loc ] = true
       if args.free then
@@ -193,7 +193,7 @@ function process(unit, args)
   for w_id, item in pairs(worn_items) do
     if assigned_items[ w_id ] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
       if uncovered[ worn_parts[ w_id ] ] then
-        dfhack.println("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking their uniform "..PART_TO_POSITION[ worn_parts[ w_id ] ])
+        print("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking their uniform "..PART_TO_POSITION[ worn_parts[ w_id ] ])
         if args.drop then
           to_drop[ w_id ] = item
         end
@@ -213,13 +213,13 @@ function do_drop( item_list )
   for id, item in pairs(item_list) do
     local pos = get_item_pos(item)
     if pos == nil then
-      dfhack.println("Could not find drop location for item #"..id.."  "..utils.getItemDescription(item))
+      print("Could not find drop location for item #"..id.."  "..utils.getItemDescription(item))
     else
       local retval = dfhack.items.moveToGround( item, pos )
       if retval == false then
-        dfhack.println("Could not drop object #"..id.."  "..utils.getItemDescription(item))
+        print("Could not drop object #"..id.."  "..utils.getItemDescription(item))
       else
-        dfhack.println("Dropped item #"..id.." '"..utils.getItemDescription(item).."'")
+        print("Dropped item #"..id.." '"..utils.getItemDescription(item).."'")
       end
     end
   end
@@ -236,7 +236,7 @@ if args.help then
 end
 
 if (args.drop or args.free) and df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
-  dfhack.println("Error: Cannot actually drop/free items when view-unit sidebar is open.")
+  qerror("Error: Cannot actually drop/free items when view-unit sidebar is open.")
   return
 end
 
