@@ -102,7 +102,7 @@ end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
 function process(unit, args)
-  silent = args.all -- Don't print details if we're iterating through all dwarves
+  local silent = args.all -- Don't print details if we're iterating through all dwarves
   local unit_name = dfhack.df2console( dfhack.TranslateName( dfhack.units.getVisibleName(unit) ) )
 
   if not silent then
@@ -178,7 +178,7 @@ function process(unit, args)
     covered = {} -- Don't consider current covers - drop for anything which is missing
   end
 
-  -- Figure out body parts which should be covered but aren'y
+  -- Figure out body parts which should be covered but aren't
   local uncovered = {}
   for part, loc in pairs( PART_TO_POSITION ) do
     if not covered[ part ] then
