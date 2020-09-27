@@ -248,12 +248,10 @@ if args.all then
     end
   end
 else
-  local unit=dfhack.gui.getSelectedUnit(true)
-  if df.isvalid(unit) then
+  local unit=dfhack.gui.getSelectedUnit()
+  if unit then
     local to_drop = process(unit,args)
     do_drop( to_drop )
-  else
-    dfhack.println("No unit is selected")
   end
 end
 
