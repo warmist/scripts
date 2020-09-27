@@ -48,6 +48,10 @@ local validArgs = utils.invert({
 
 -- Functions
 
+function item_description(item)
+  return dfhack.df2console( dfhack.items.getDescription(item, 0, true) )
+end
+
 function get_item_pos(item)
   local x, y, z = dfhack.items.getPosition(item)
   if x == nil or y == nil or z == nil then
@@ -112,7 +116,7 @@ function bodyparts_that_can_wear(unit, item)
       end
     end
   else
-    -- print("Ignoring item type for "..utils.getItemDescription(item) )
+    -- print("Ignoring item type for "..item_description(item) )
   end
 
   return bodyparts
@@ -167,7 +171,7 @@ function process(unit, args)
   local missing_ids = {} -- map of item ID to item object
   for u_id, item in pairs(assigned_items) do
     if worn_items[ u_id ] == nil then
-      print("Unit "..unit_name.." is missing an assigned item, object #"..u_id.." '"..utils.getItemDescription(item).."'" )
+      print("Unit "..unit_name.." is missing an assigned item, object #"..u_id.." '"..item_description(item).."'" )
       missing_ids[ u_id ] = item
       if args.free then
         to_drop[ u_id ] = item
@@ -205,7 +209,7 @@ function process(unit, args)
   for w_id, item in pairs(worn_items) do
     if assigned_items[ w_id ] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
       if uncovered[ worn_parts[ w_id ] ] then
-        print("Unit "..unit_name.." potentially has object #"..w_id.." '"..utils.getItemDescription(item).."' blocking a missing uniform item.")
+        print("Unit "..unit_name.." potentially has object #"..w_id.." '"..item_description(item).."' blocking a missing uniform item.")
         if args.drop then
           to_drop[ w_id ] = item
         end
@@ -231,13 +235,13 @@ function do_drop( item_list )
   for id, item in pairs(item_list) do
     local pos = get_item_pos(item)
     if pos == nil then
-      dfhack.printerr("Could not find drop location for item #"..id.."  "..utils.getItemDescription(item))
+      dfhack.printerr("Could not find drop location for item #"..id.."  "..item_description(item))
     else
       local retval = dfhack.items.moveToGround( item, pos )
       if retval == false then
-        dfhack.printerr("Could not drop object #"..id.."  "..utils.getItemDescription(item))
+        dfhack.printerr("Could not drop object #"..id.."  "..item_description(item))
       else
-        print("Dropped item #"..id.." '"..utils.getItemDescription(item).."'")
+        print("Dropped item #"..id.." '"..utils.item_description(item).."'")
       end
     end
   end
