@@ -17,11 +17,12 @@ upper-left cell of the spreadsheet (e.g.: ``#dig`` in cell ``A1``).
 You can create these blueprints by hand or by using any spreadsheet application,
 saving them as ``.xlsx`` or ``.csv`` files. You can also build your plan "for
 real" in Dwarf Fortress, and then export your map using the DFHack
-`blueprint plugin`_ for later replay. Blueprint files should go in the
+`blueprint` plugin for later replay. Blueprint files should go in the
 ``blueprints`` subfolder in the main DF folder.
 
-For more details on blueprint file syntax, see the `Blueprints Guidebook`_ or
-browse through the ready-to-use examples in the `blueprints/library`_ folder.
+For more details on blueprint file syntax, see the `quickfort-user-guide` or
+browse through the ready-to-use examples in the :source:`blueprints/library
+<data/blueprints/library>` folder.
 
 Usage:
 
@@ -102,16 +103,12 @@ configuration stored in the file:
     normally *decreases* the efficiency of your fort.
 
 There is one other configuration file in the ``dfhack-config/quickfort`` folder:
-`aliases.txt`_. It defines keycode shortcuts for query blueprints. The format
-for this file is described in the file itself, and default aliases that all
-players can use and build on is stored in
-`hack/data/quickfort/aliases-common.txt`_.
+:source:`aliases.txt <dfhack-config/quickfort/aliases.txt>`. It defines keycode
+shortcuts for query blueprints. The format for this file is described in the
+file itself, and default aliases that all players can use and build on is stored in
+:source:`hack/data/quickfort/aliases-common.txt <data/quickfort/aliases-common.txt>`.
 
-.. _blueprint plugin: https://docs.dfhack.org/en/stable/docs/Plugins.html#blueprint
-.. _Blueprints Guidebook: https://github.com/DFHack/dfhack/tree/develop/data/blueprints
 .. _blueprints/library: https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library
-.. _aliases.txt: https://github.com/DFHack/dfhack/tree/develop/dfhack-config/quickfort/aliases.txt
-.. _hack/data/quickfort/aliases-common.txt: https://github.com/DFHack/dfhack/tree/develop/data/quickfort/aliases-common.txt
 ]====]
 
 -- reqscript all internal files here, even if they're not directly used by this
