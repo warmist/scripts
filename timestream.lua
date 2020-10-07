@@ -14,11 +14,16 @@ Usage::
 
 Examples:
 
-    timestream -rate 2:         Calendar runs at x2 normal speed, units run at normal speed
-    timestream -fps 100:        Calendar runs at dynamic speed to simulate 100 FPS, units normal
-    timestream -fps 100 -units: Calendar & units are simulated at 100 FPS
-    timestream -rate 1:         Resets everything back to normal, regardless of other arguments
-    timestream -rate 1 -fps 50 -units:  Same as above
+- ``timestream -rate 2``:
+    Calendar runs at x2 normal speed, units run at normal speed
+- ``timestream -fps 100``:
+    Calendar runs at dynamic speed to simulate 100 FPS, units normal
+- ``timestream -fps 100 -units``:
+    Calendar & units are simulated at 100 FPS
+- ``timestream -rate 1``:
+    Resets everything back to normal, regardless of other arguments
+- ``timestream -rate 1 -fps 50 -units``:
+    Same as above
 
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
