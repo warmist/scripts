@@ -107,9 +107,10 @@ end
 
 -- for wells
 local function is_tile_empty_and_floor_adjacent(pos)
+    local shape = df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape
     if not is_valid_tile_base(pos) or
-            df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape ~=
-            df.tiletype_shape.EMPTY then
+            (shape ~= df.tiletype_shape.EMPTY and
+             shape ~= df.tiletype_shape.RAMP_TOP) then
         return false
     end
     return is_valid_tile_generic(xyz2pos(pos.x+1, pos.y, pos.z)) or
@@ -728,7 +729,6 @@ local function create_building(b)
         'spreadsheet cells: %s',
         b.width, b.height, db_entry.label, b.pos.x, b.pos.y, b.pos.z,
         table.concat(b.cells, ', '))
-    local extents, room = nil, nil
     local fields = {}
     if db_entry.fields then fields = copyall(db_entry.fields) end
     local use_extents = db_entry.has_extents and
@@ -738,9 +738,16 @@ local function create_building(b)
     end
     local filters = nil
     if quickfort_common.settings['buildings_use_blocks'].value then
-        -- don't set the vector_id since that breaks custom buildings: it sets
-        -- all their building materials to use that vector id
-        local filter_mod = { material={item_type=df.item_type.BLOCKS} }
+        -- don't set the vector_id for custom buildings since it will get
+        -- applied to *all* their filters, not just the "generic building
+        -- material" ones.
+        local vector_id = nil
+        if not db_entry.custom then
+            vector_id = df.job_item_vector_id.BLOCKS
+        end
+        local filter_mod = {
+            material={item_type=df.item_type.BLOCKS, vector_id=vector_id}
+        }
         filters = dfhack.buildings.getFiltersByType(
             filter_mod, db_entry.type, db_entry.subtype, db_entry.custom)
     end
@@ -757,12 +764,15 @@ local function create_building(b)
         quickfort_building.assign_extents(
             bld, quickfort_building.make_extents(b, building_db))
     end
-    if buildingplan.isPlannableBuilding(db_entry.type) then
+    if buildingplan.isEnabled() and buildingplan.isPlannableBuilding(
+            db_entry.type, db_entry.subtype or -1, db_entry.custom or -1) then
         log('registering with buildingplan')
         buildingplan.addPlannedBuilding(bld)
     end
     if db_entry.post_construction_fn then db_entry.post_construction_fn(bld) end
 end
+
+local warning_shown = false
 
 function do_run(zlevel, grid, ctx)
     local stats = ctx.stats
@@ -770,6 +780,13 @@ function do_run(zlevel, grid, ctx)
             {label='Buildings designated', value=0, always=true}
     stats.build_unsuitable = stats.build_unsuitable or
             {label='Unsuitable tiles for building', value=0}
+
+    if not warning_shown and not buildingplan.isEnabled() then
+        dfhack.printerr('the buildingplan plugin is not enabled. buildings '
+                        ..'placed with #build blueprints will disappear if you '
+                        ..'do not have required building materials in stock.')
+        warning_shown = true
+    end
 
     local buildings = {}
     stats.invalid_keys.value =
