@@ -107,8 +107,6 @@ There is one other configuration file in the ``dfhack-config/quickfort`` folder:
 shortcuts for query blueprints. The format for this file is described in the
 file itself, and default aliases that all players can use and build on is stored in
 :source:`hack/data/quickfort/aliases-common.txt <data/quickfort/aliases-common.txt>`.
-
-.. _blueprints/library: https://github.com/DFHack/dfhack/tree/develop/data/blueprints/library
 ]====]
 
 -- reqscript all internal files here, even if they're not directly used by this
