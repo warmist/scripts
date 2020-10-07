@@ -24,6 +24,11 @@ Examples:
     Resets everything back to normal, regardless of other arguments
 - ``timestream -rate 1 -fps 50 -units``:
     Same as above
+- ``timestream -fps 100 -units 2``:
+    Activates a different mode for speeding up units, using the native DF
+    ``debug_turbospeed`` flag (similar to `fastdwarf` 2) instead of adjusting
+    timers of all units. It may result in strange unit motion, so it is not
+    the default.
 
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
@@ -44,7 +49,7 @@ args = utils.processArgs({...}, utils.invert({
 }))
 local rate = tonumber(args.rate) or -1
 local desired_fps = tonumber(args.fps)
-local simulating_units = tonumber(args.units)  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
+local simulating_units = tonumber(args.units)
 if args.units == '' then
     simulating_units = 1
 end
