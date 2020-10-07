@@ -1,13 +1,19 @@
 -- speeds up the calendar, units, or both
 
 --[====[
+
 timestream
 ==========
 Controls the speed of the calendar and creatures. Fortress mode only. Experimental.
+
 The script is also capable of dynamically speeding up the game based on your current FPS to mitigate the effects of FPS death. See examples below to see how.
+
 Usage::
+
     timestream [-rate R] [-fps FPS] [-units [FLAG]] [-debug]
+
 Examples:
+
 - ``timestream -rate 2``:
     Calendar runs at x2 normal speed, units run at normal speed
 - ``timestream -fps 100``:
@@ -21,7 +27,9 @@ Examples:
 - ``timestream -fps 100 -units 2``:
     Activates a different mode for speeding up units, using the native DF
     ``debug_turbospeed`` flag (similar to `fastdwarf` 2) instead of adjusting
-    timers of all units. This results in rubberbanding unit motion, so it is not recommended over the default method.
+    timers of all units. This results in rubberbanding unit motion, so it is not
+    recommended over the default method.
+
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
 
