@@ -1,19 +1,13 @@
 -- speeds up the calendar, units, or both
 
 --[====[
-
 timestream
 ==========
 Controls the speed of the calendar and creatures. Fortress mode only. Experimental.
-
 The script is also capable of dynamically speeding up the game based on your current FPS to mitigate the effects of FPS death. See examples below to see how.
-
 Usage::
-
     timestream [-rate R] [-fps FPS] [-units [FLAG]] [-debug]
-
 Examples:
-
 - ``timestream -rate 2``:
     Calendar runs at x2 normal speed, units run at normal speed
 - ``timestream -fps 100``:
@@ -27,9 +21,7 @@ Examples:
 - ``timestream -fps 100 -units 2``:
     Activates a different mode for speeding up units, using the native DF
     ``debug_turbospeed`` flag (similar to `fastdwarf` 2) instead of adjusting
-    timers of all units. It may result in strange unit motion, so it is not
-    the default.
-
+    timers of all units. This results in rubberbanding unit motion, so it is not recommended over the default method.
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
 
@@ -65,7 +57,7 @@ local prev_time = df.global.enabler.clock
 local ui_main = df.global.ui.main
 local saved_game_frame = -1
 local frames_until_speeding = 0
-local speedy_frame_delta = desired_fps
+local speedy_frame_delta = desired_fps or DEFAULT_MAX_FPS
 
 local SEASON_LEN = 3360
 local YEAR_LEN = 403200
@@ -83,7 +75,9 @@ end
 simulating_desired_fps = true
 if desired_fps == nil then
     desired_fps = DEFAULT_MAX_FPS
-    simulating_desired_fps = false
+    if simulating_units ~= 1 and simulating_units ~= 2 then
+        simulating_desired_fps = false
+    end
 elseif desired_fps < MINIMAL_FPS then
     desired_fps = MINIMAL_FPS
 end
