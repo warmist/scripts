@@ -10,15 +10,15 @@ The script is also capable of dynamically speeding up the game based on your cur
 
 Usage::
 
-    timestream <rate> <desired fps> <simulate units 1/0>
+    timestream [-rate R] [-fps FPS] [-units [FLAG]] [-debug]
 
 Examples:
 
-    timestream     2:           Calendar runs at x2 normal speed, units run at normal speed
-    timestream    -1 100:       Calendar runs at dynamic speed to simulate 100 FPS, units normal
-    timestream    -1 100 1:     Calendar & units are simulated at 100 FPS
-    timestream     1:           Resets everything back to normal, regardless of other arguments
-    timestream     1 50 1:      Same as above
+    timestream -rate 2:         Calendar runs at x2 normal speed, units run at normal speed
+    timestream -fps 100:        Calendar runs at dynamic speed to simulate 100 FPS, units normal
+    timestream -fps 100 -units: Calendar & units are simulated at 100 FPS
+    timestream -rate 1:         Resets everything back to normal, regardless of other arguments
+    timestream -rate 1 -fps 50 -units:  Same as above
 
 Original timestream.lua: https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 ]====]
@@ -30,11 +30,20 @@ local DEFAULT_MAX_FPS       = 100
 
 --- DO NOT CHANGE BELOW UNLESS YOU KNOW WHAT YOU'RE DOING ---
 
-args={...}
-local rate=tonumber(args[1])
-local desired_fps = tonumber(args[2])
-local simulating_units = tonumber(args[3])  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
-local debug_mode = tonumber(args[4])
+local utils = require("utils")
+args = utils.processArgs({...}, utils.invert({
+    'rate',
+    'fps',
+    'units',
+    'debug',
+}))
+local rate = tonumber(args.rate) or -1
+local desired_fps = tonumber(args.fps)
+local simulating_units = tonumber(args.units)  -- Setting this to 2 instead of 1 will use debug_turbospeed instead of adjusting the timers of all creatures. I don't quite like it because it makes everyone move like insects.
+if args.units == '' then
+    simulating_units = 1
+end
+local debug_mode = not not args.debug
 
 local current_fps = desired_fps
 local prev_tick = 0
@@ -69,12 +78,6 @@ elseif desired_fps < MINIMAL_FPS then
     desired_fps = MINIMAL_FPS
 end
 current_fps = desired_fps
-
-if debug_mode == nil or debug_mode ~= 1 then
-    debug_mode = false
-else
-    debug_mode = true
-end
 
 eventNow = false
 seasonNow = false
