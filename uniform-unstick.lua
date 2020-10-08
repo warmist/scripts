@@ -26,10 +26,12 @@ and placed onto the ground, ready for pickup.
 In no cases should the command cause a uniform item that is being properly worn to be removed/dropped.
 
 Targets:
+
 :(no target): Force the selected dwarf to put on their uniform.
 :-all:        Force the uniform on all military dwarves.
 
 Options:
+
 :(none):      Simply show identified issues (dry-run).
 :-drop:       Cause offending worn items to be placed on ground under unit.
 :-free:       Remove to-equip items from containers or other's inventories, and place on ground.
