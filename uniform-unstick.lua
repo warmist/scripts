@@ -88,31 +88,31 @@ function bodyparts_that_can_wear(unit, item)
   if item._type == df.item_helmst then
     for index, part in pairs(unitparts) do
       if part.flags.HEAD then
-        bodyparts[#bodyparts+1] = index
+        table.insert(bodyparts, index)
       end
     end
   elseif item._type == df.item_armorst then
     for index, part in pairs(unitparts) do
       if part.flags.UPPERBODY then
-        bodyparts[#bodyparts+1] = index
+        table.insert(bodyparts, index)
       end
     end
   elseif item._type == df.item_glovesst then
     for index, part in pairs(unitparts) do
       if part.flags.GRASP then
-        bodyparts[#bodyparts+1] = index
+        table.insert(bodyparts, index)
       end
     end
   elseif item._type == df.item_pantsst then
     for index, part in pairs(unitparts) do
       if part.flags.LOWERBODY then
-        bodyparts[#bodyparts+1] = index
+        table.insert(bodyparts, index)
       end
     end
   elseif item._type == df.item_shoesst then
     for index, part in pairs(unitparts) do
       if part.flags.STANCE then
-        bodyparts[#bodyparts+1] = index
+        table.insert(bodyparts, index)
       end
     end
   else
