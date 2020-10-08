@@ -241,7 +241,7 @@ function do_drop( item_list )
       if retval == false then
         dfhack.printerr("Could not drop object #"..id.."  "..item_description(item))
       else
-        print("Dropped item #"..id.." '"..utils.item_description(item).."'")
+        print("Dropped item #"..id.." '"..item_description(item).."'")
       end
     end
   end
