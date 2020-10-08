@@ -14,8 +14,9 @@ that repo.
 # Future
 
 ## New Scripts
-- `timestream`: controls the speed of the calendar and creatures
 - `quickfort`: DFHack-native implementation of quickfort with many new features and integrations - see the `quickfort-user-guide` for details
+- `timestream`: controls the speed of the calendar and creatures
+- `uniform-unstick`: prompts units to reevaluate their uniform, by removing/dropping potentially conflicting worn items
 
 ## Fixes
 - `ban-cooking`: fixed an error in several subcommands
