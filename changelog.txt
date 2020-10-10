@@ -13,6 +13,8 @@ that repo.
 
 # Future
 
+# 0.47.04-r3
+
 ## New Scripts
 - `quickfort`: DFHack-native implementation of quickfort with many new features and integrations - see the `quickfort-user-guide` for details
 - `timestream`: controls the speed of the calendar and creatures
