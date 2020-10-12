@@ -13,6 +13,13 @@ that repo.
 
 # Future
 
+## Fixes
+- `quickfort`: fix handling of modifier keys (e.g. {Ctrl} or {Alt} in query blueprints
+
+## Misc Improvements
+- `quickfort`: add ``query_unsafe`` setting to disable query blueprint error
+checking. useful for query blueprints that send unusual key sequences.
+
 # 0.47.04-r3
 
 ## New Scripts
