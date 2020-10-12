@@ -30,13 +30,13 @@ end
 
 local function handle_modifiers(token, modifiers)
     local token_lower = token:lower()
-    if token_lower == '{shift}' or
-            token_lower == '{ctrl}' or
-            token_lower == '{alt}' then
+    if token_lower == 'shift' or
+            token_lower == 'ctrl' or
+            token_lower == 'alt' then
         modifiers[token_lower] = true
         return true
     end
-    if token_lower == '{wait}' then
+    if token_lower == 'wait' then
         print('{Wait} not yet implemented')
         return true
     end

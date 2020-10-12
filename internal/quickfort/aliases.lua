@@ -11,11 +11,11 @@ local log = quickfort_common.log
 -- special keycode shortcuts inherited from python quickfort.
 local special_keys = {
     ['&']='Enter',
-    ['!']='{Ctrl}',
-    ['~']='{Alt}',
-    ['@']={'{Shift}','Enter'},
+    ['!']='Ctrl',
+    ['~']='Alt',
+    ['@']={'Shift','Enter'},
     ['^']='ESC',
-    ['%']='{Wait}'
+    ['%']='Wait'
 }
 local special_aliases = {
     ExitMenu='ESC',

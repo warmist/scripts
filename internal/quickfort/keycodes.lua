@@ -43,13 +43,13 @@ function get_keycodes(code, modifiers)
     init_keycodes()
     if not code then return nil end
     local mod = 0
-    if modifiers['{shift}'] then
+    if modifiers['shift'] then
         mod = 1
     end
-    if modifiers['{ctrl}'] then
+    if modifiers['ctrl'] then
         mod = mod + 2
     end
-    if modifiers['{alt}'] then
+    if modifiers['alt'] then
         mod = mod + 4
     end
     local key = nil
