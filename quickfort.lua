@@ -95,6 +95,14 @@ configuration stored in the file:
     Set to "true" or "false". If true, will designate dig blueprints in marker
     mode. If false, only cells with dig codes explicitly prefixed with ``m``
     will be designated in marker mode.
+``query_unsafe`` (default: 'false')
+    Skip query blueprint sanity checks that detect common blueprint errors and
+    halt or skip keycode playback. Checks include ensuring a configurable
+    building exists at the designated cursor position and verifying the active
+    UI screen is the same before and after sending keys for the cursor
+    position. Temporarily enable this if you are running a query blueprint that
+    sends a key sequence that is *not* related to stockpile or building
+    configuration.
 ``stockpiles_max_barrels``, ``stockpiles_max_bins``, and ``stockpiles_max_wheelbarrows`` (defaults: -1, -1, 0)
     Set to the maximum number of resources you want assigned to stockpiles of
     the relevant types. Set to -1 for DF defaults (number of stockpile tiles
