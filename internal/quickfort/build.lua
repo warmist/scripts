@@ -247,7 +247,7 @@ local building_db = {
     h={label='Container', type=df.building_type.Box},
     r={label='Weapon Rack', type=df.building_type.Weaponrack},
     s={label='Statue', type=df.building_type.Statue},
-    ['{Alt}s']={label='Slab', type=df.building_type.Slab},
+    ['{Alt}s']={label='Slab', type=df.building_type.Slab, skip_vector_id=true},
     t={label='Table', type=df.building_type.Table},
     g={label='Bridge (Retracting)', type=df.building_type.Bridge,
        direction=df.building_bridgest.T_direction.Retracting},
@@ -320,8 +320,8 @@ local building_db = {
     A={label='Archery Target', type=df.building_type.ArcheryTarget},
     R={label='Traction Bench', type=df.building_type.TractionBench,
        additional_orders={'table', 'mechanisms', 'cloth rope'}},
-    N={label='Nest Box', type=df.building_type.NestBox},
-    ['{Alt}h']={label='Hive', type=df.building_type.Hive},
+    N={label='Nest Box', type=df.building_type.NestBox, skip_vector_id=true},
+    ['{Alt}h']={label='Hive', type=df.building_type.Hive, skip_vector_id=true},
     -- Offering Places, Bookcases, and Display Furniture are not yet supported
     -- by dfhack
     --['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace},
@@ -742,7 +742,8 @@ local function create_building(b)
         -- applied to *all* their filters, not just the "generic building
         -- material" ones.
         local vector_id = nil
-        if not db_entry.custom then
+        -- remove skip_vector_id when we move block preferences to buildingplan
+        if not db_entry.custom and not db_entry.skip_vector_id then
             vector_id = df.job_item_vector_id.BLOCKS
         end
         local filter_mod = {
