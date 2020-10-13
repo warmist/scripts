@@ -24,19 +24,20 @@ end
 
 local function is_queryable_tile(pos)
     local flags, occupancy = dfhack.maps.getTileFlags(pos)
-    return (not flags.hidden and occupancy.building ~= 0)
-        or dfhack.buildings.findCivzonesAt(pos)
+    return not flags.hidden and
+        (occupancy.building ~= 0 or
+         dfhack.buildings.findCivzonesAt(pos))
 end
 
 local function handle_modifiers(token, modifiers)
     local token_lower = token:lower()
-    if token_lower == '{shift}' or
-            token_lower == '{ctrl}' or
-            token_lower == '{alt}' then
+    if token_lower == 'shift' or
+            token_lower == 'ctrl' or
+            token_lower == 'alt' then
         modifiers[token_lower] = true
         return true
     end
-    if token_lower == '{wait}' then
+    if token_lower == 'wait' then
         print('{Wait} not yet implemented')
         return true
     end
@@ -59,7 +60,8 @@ function do_run(zlevel, grid, ctx)
         for x, cell_and_text in pairs(row) do
             local pos = xyz2pos(x, y, zlevel)
             local cell, text = cell_and_text.cell, cell_and_text.text
-            if not is_queryable_tile(pos) then
+            if not quickfort_common.settings['query_unsafe'].value and
+                    not is_queryable_tile(pos) then
                 print(string.format(
                         'no building at coordinates (%d, %d, %d); skipping ' ..
                         'text in spreadsheet cell %s: "%s"',
@@ -86,7 +88,8 @@ function do_run(zlevel, grid, ctx)
             end
             local new_focus_string =
                     dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
-            if focus_string ~= new_focus_string then
+            if not quickfort_common.settings['query_unsafe'].value and
+                    focus_string ~= new_focus_string then
                 qerror(string.format(
                     'expected to be back on screen "%s" but screen is "%s"; ' ..
                     'there is likely a problem with the blueprint text in ' ..

@@ -24,6 +24,7 @@ settings = {
     buildings_use_blocks={value=true},
     force_interactive_build={value=false, deprecated=true},
     force_marker_mode={value=false},
+    query_unsafe={value=false},
     stockpiles_max_barrels={value=-1},
     stockpiles_max_bins={value=-1},
     stockpiles_max_wheelbarrows={value=0},
