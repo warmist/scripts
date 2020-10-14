@@ -65,7 +65,13 @@ local function process_filter(order_specs, filter, reactions)
             label = 'blocks'
         else label = 'blocks' end
     elseif filter.item_type == df.item_type.TOOL then
-        label = 'rock ' .. df.tool_uses[filter.has_tool_use]:lower()
+        label = df.tool_uses[filter.has_tool_use]:lower()
+        if filter.has_tool_use == df.tool_uses.PLACE_OFFERING then
+            label = 'altar'
+        elseif filter.has_tool_use == df.tool_uses.DISPLAY_OBJECT then
+            label = 'display case'
+        end
+        label = 'rock ' .. label
     elseif filter.item_type == df.item_type.ANIMALTRAP then
         label = 'animal trap'
     elseif filter.item_type == df.item_type.ARMORSTAND then
