@@ -6,6 +6,7 @@ if not dfhack_flags.module then
 end
 
 local quickfort_common = reqscript('internal/quickfort/common')
+local quickfort_parse = reqscript('internal/quickfort/parse')
 local log = quickfort_common.log
 
 -- special keycode shortcuts inherited from python quickfort.
@@ -26,6 +27,17 @@ local alias_stack = {}
 
 function reset_aliases()
     alias_stack = {}
+end
+
+local function push_aliases(aliases)
+    local prev = alias_stack
+    setmetatable(aliases, {prev=prev,
+                           __index=function(_, key) return prev[key] end})
+    alias_stack = aliases
+end
+
+local function pop_aliases()
+    alias_stack = getmetatable(alias_stack).prev
 end
 
 -- pushes a file of aliases on the stack. aliases are resolved with the
@@ -49,9 +61,7 @@ function push_aliases_csv_file(filename)
         end
     end
     log('successfully read in %d aliases from "%s"', num_aliases, filename)
-    local prev = alias_stack
-    setmetatable(aliases, {__index=function(_, key) return prev[key] end})
-    alias_stack = aliases
+    push_aliases(aliases)
 end
 
 local function process_text(text, tokens, depth)
@@ -67,29 +77,16 @@ local function process_text(text, tokens, depth)
             -- token is a special key or a key literal
             expansion[1] = special_keys[next_char] or next_char
         else
-            -- find the next closing bracket to find the bounds of the extended
-            -- token, skipping one space to allow for '{}}' and it's kin
-            local b, e, etoken = text:find('{(.[^}]*)}', i)
-            if not etoken then
-                qerror(string.format(
-                        'invalid extended token: "%s"; did you mean "{{}"?',
-                        text:sub(i)))
-            end
-            local _, _, rep_tok, rep_rep = etoken:find('(.-)%s+(%d+)$')
-            if rep_tok then
-                etoken = rep_tok
-                repetitions = rep_rep
-            end
-            if etoken == 'Numpad' and repetitions then
-                etoken = string.format('%s %d', etoken, repetitions)
-            end
-            if not repetitions then repetitions = 1 end
+            local etoken, params, reps, next_pos =
+                quickfort_parse.parse_extended_token(text, i)
             if not special_aliases[etoken] and alias_stack[etoken] then
+                push_aliases(params)
                 process_text(alias_stack[etoken], expansion, depth+1)
+                pop_aliases()
             else
                 expansion[1] = special_aliases[etoken] or etoken
             end
-            i = i + e - b
+            repetitions, i = reps, next_pos - 1
         end
         for j=1,repetitions do
             for k=1, #expansion do

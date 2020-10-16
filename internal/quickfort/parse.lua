@@ -8,9 +8,50 @@ end
 local xlsxreader = require('plugins.xlsxreader')
 local quickfort_common = reqscript('internal/quickfort/common')
 
-local function trim_and_insert(tokens, token)
+local function trim_token(token)
     _, _, token = token:find('^%s*(.-)%s*$')
-    table.insert(tokens, token)
+    return token
+end
+
+-- returns the next token and the start position of the following token
+-- or nil if there are no tokens
+local function get_next_csv_token(line, pos, get_next_line_fn, sep)
+    local sep = sep or ','
+    local c = string.sub(line, pos, pos)
+    if c == '' then return nil end
+    if c == '"' then
+        -- quoted value (ignore separators within)
+        local txt = ''
+        repeat
+            local startp, endp = string.find(line, '^%b""', pos)
+            while not startp do
+                -- handle multi-line quoted string
+                local next_line = get_next_line_fn()
+                if not next_line then
+                    dfhack.printerr('unterminated quoted string')
+                    return nil
+                end
+                line = line .. '\n' .. next_line
+                startp, endp = string.find(line, '^%b""', pos)
+            end
+            txt = txt .. string.sub(line, startp+1, endp-1)
+            pos = endp + 1
+            -- check first char AFTER quoted string, if it is another
+            -- quoted string without separator, then append it
+            -- this is the way to "escape" the quote char in a quote.
+            -- example: "blub""blip""boing" -> blub"blip"boing
+            c = string.sub(line, pos, pos)
+            if (c == '"') then txt = txt .. '"' end
+        until c ~= '"'
+        return trim_token(txt), pos
+    end
+    -- no quotes used, just look for the first separator
+    local startp, endp = string.find(line, sep, pos)
+    if startp then
+        return trim_token(string.sub(line, pos, startp-1)), startp+1
+    end
+    -- no separator found -> use rest of string
+    return trim_token(string.sub(line, pos)), #line+1
 end
 
 local function get_next_line(file)
@@ -22,54 +63,16 @@ end
 -- adapted from example on http://lua-users.org/wiki/LuaCsv
 -- returns a list of strings corresponding to the text in the cells in the row
 local function tokenize_next_csv_line(file)
-    local line = get_next_line(file)
+    local get_next_line_fn = function() return get_next_line(file) end
+    local line = get_next_line_fn()
     if not line then return nil end
     local tokens = {}
-    local pos = 1
     local sep = ','
-    while true do
-        local c = string.sub(line, pos, pos)
-        if c == '' then break end
-        if c == '"' then
-            -- quoted value (ignore separator within)
-            local txt = ''
-            repeat
-                local startp, endp = string.find(line, '^%b""', pos)
-                while not startp do
-                    -- handle multi-line quoted string
-                    local next_line = get_next_line(file)
-                    if not next_line then
-                        dfhack.printerr(
-                            'unterminated quoted string in .csv file')
-                        return nil
-                    end
-                    line = line .. '\n' .. next_line
-                    startp, endp = string.find(line, '^%b""', pos)
-                end
-                txt = txt .. string.sub(line, startp+1, endp-1)
-                pos = endp + 1
-                c = string.sub(line, pos, pos)
-                if (c == '"') then txt = txt .. '"' end
-                -- check first char AFTER quoted string, if it is another
-                -- quoted string without separator, then append it
-                -- this is the way to "escape" the quote char in a quote.
-                -- example: "blub""blip""boing" -> blub"blip"boing
-            until c ~= '"'
-            trim_and_insert(tokens, txt)
-            assert(c == sep or c == '')
-            pos = pos + 1
-        else
-            -- no quotes used, just look for the first separator
-            local startp, endp = string.find(line, sep, pos)
-            if startp then
-                trim_and_insert(tokens, string.sub(line, pos, startp-1))
-                pos = endp + 1
-            else
-                -- no separator found -> use rest of string and terminate
-                trim_and_insert(tokens, string.sub(line, pos))
-                break
-            end
-        end
+    local token, pos = get_next_csv_token(line, 1, get_next_line_fn, sep)
+    while token do
+        local c = line:sub(pos, pos)
+        table.insert(tokens, token)
+        token, pos = get_next_csv_token(line, pos, get_next_line_fn)
     end
     return tokens
 end
@@ -383,4 +386,109 @@ function process_section(filepath, sheet_name, label, start_cursor_coord)
             return process_levels(reader_ctx, label, start_cursor_coord)
         end
     )
+end
+
+-- throws on invalid token
+-- returns the contents of the extended token
+local function get_extended_token(text, startpos)
+    -- extended token must start with a '{' and be at least 3 characters long
+    if text:sub(startpos, startpos) ~= '{' or #text < startpos + 2 then
+        qerror(
+            string.format('invalid extended token: "%s"', text:sub(startpos)))
+    end
+    -- construct a modified version of the string so we can search for the
+    -- matching closing brace, ignoring initial '{' and '}' characters that
+    -- should be treated as literals
+    local etoken_mod = ' {' .. text:sub(startpos + 2)
+    local b, e = etoken_mod:find(' %b{}')
+    if not b then
+        qerror(string.format(
+                'invalid extended token: "%s"; did you mean "{{}"?',
+                text:sub(startpos)))
+    end
+    return text:sub(startpos + b - 1, startpos + e - 1)
+end
+
+-- returns the token (i.e. the alias name or keycode) and the start position
+-- of the next element in the etoken
+local function get_token(etoken)
+    local _, e, token = etoken:find('^{(.[^}%s]*)%s*')
+    if token == 'Numpad' then
+        _, e, num = etoken:find('^%s*Numpad%s+(%d)%s*')
+        if not num then
+            qerror(string.format(
+                    'invalid extended token: "%s"; missing Numpad number?',
+                    etoken))
+        end
+        token = string.format('%s %d', token, num)
+    end
+    return token, e + 1
+end
+
+local function no_next_line()
+    return nil
+end
+
+local function get_next_param(etoken, start)
+    local _, pos, name = etoken:find('^(%w[%w]+)=.', start)
+    return name, pos
+end
+
+-- returns the specified param map and the start position of the next element
+-- in the etoken
+local function get_params(etoken, start)
+    -- trim off the last '}' from the etoken so the csv parser doesn't read it
+    etoken = etoken:sub(1, -2)
+    local params, next_pos = {}, start
+    -- param names follow the same naming rules as aliases -- at least two
+    -- alphanumerics
+    local name, pos = get_next_param(etoken, start)
+    while name do
+        local val, next_param_start =
+                get_next_csv_token(etoken, pos, no_next_line, ' ')
+        if not val then
+            qerror(string.format(
+                    'invalid extended token param: "%s"', etoken:sub(pos)))
+        end
+        params[name] = val
+        next_pos = next_param_start
+        name, pos = get_next_param(etoken, next_param_start)
+    end
+    return params, next_pos
+end
+
+-- returns the specified repetitions, or 1 if not specified, and the position
+-- of the next element in etoken
+-- throws if specified repetitions is < 1
+local function get_repetitions(etoken, start)
+    local _, e, repetitions = etoken:find('%s*(%d+)%s*}', start)
+    return repetitions or 1, e or start
+end
+
+-- parses the sequence starting with '{' and ending with the matching '}' that
+-- delimit an extended token of the form:
+--   {token params repetitions}
+-- where token is an alias name or a keycode, and both params and repetitions
+-- are optional. if the first character of token is '{' or '}', it is treated as
+-- a literal and not a syntax element.
+-- params are in one of the following formats:
+--   param_name=param_val
+--   param_name="param val with spaces"
+--   param_name={extended_token}
+-- or any combination of the above:
+--   param_name=literal" portion with spaces {somealias}"{anotheralias var=aa}
+-- if repetitions is not specified, the value 1 is returned
+-- returns token as string, params as map, repetitions as number, start position
+-- of the next element after the etoken in text
+function parse_extended_token(text, startpos)
+    startpos = startpos or 1
+    local etoken = get_extended_token(text, startpos)
+    local token, params_start = get_token(etoken)
+    local params, repetitions_start = get_params(etoken, params_start)
+    local repetitions, last_pos = get_repetitions(etoken, repetitions_start)
+    if last_pos ~= #etoken then
+        qerror(string.format('invalid extended token format: "%s"', etoken))
+    end
+    local next_token_pos = startpos + #etoken
+    return token, params, repetitions, next_token_pos
 end
