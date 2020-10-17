@@ -107,6 +107,12 @@ local function parse_zone_config(keys, labels, zone_data)
         local c = keys:sub(i, i)
         if rawget(zone_db, c) then
             local db_entry = zone_db[c]
+            if (db_entry.zone_flags.pen_pasture or
+                zone_data.zone_flags.pen_pasture) and
+                (db_entry.zone_flags.pit_pond or
+                 zone_data.zone_flags.pit_pond) then
+                qerror("zone cannot be both a pen/pasture and a pit/pond")
+            end
             table.insert(labels, db_entry.label)
             utils.assign(zone_data.zone_flags, db_entry.zone_flags)
         elseif c == 'P' then
