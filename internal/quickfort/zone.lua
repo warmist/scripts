@@ -73,18 +73,26 @@ local function parse_gather_subconfig(keys, flags)
     end
 end
 
+local hospital_max_values = {
+    thread=1500000,
+    cloth=1000000,
+    splints=100,
+    crutches=100,
+    powder=15000,
+    buckets=100,
+    soap=15000
+}
+
 local function set_hospital_supplies(key, val, flags)
     local val_num = tonumber(val)
-    if not val_num or val_num < 0 then
-        qerror(string.format('invalid hospital supply count: "%s"', val))
+    if not val_num or val_num < 0 or val_num > hospital_max_values[key] then
+        qerror(string.format(
+            'invalid hospital supply count: "%s". must be between 0 and %d',
+            val, hospital_max_values[key]))
     end
     flags['max_'..key] = val_num
     flags.supplies_needed[key] = val_num > 0
 end
-
-local valid_hospital_params = utils.invert({
-    'thread', 'cloth', 'splints', 'crutches', 'powder', 'buckets', 'soap'
-})
 
 -- full format (all params optional):
 -- {hospital thread=num cloth=num splints=num crutches=num powder=num buckets=num soap=num}
@@ -94,7 +102,7 @@ local function parse_hospital_subconfig(keys, flags)
         qerror(string.format('invalid hospital settings: "%s"', keys))
     end
     for k,v in pairs(params) do
-        if not valid_hospital_params[k] then
+        if not hospital_max_values[k] then
             qerror(string.format('invalid hospital setting: "%s"', k))
         end
         set_hospital_supplies(k, v, flags)
