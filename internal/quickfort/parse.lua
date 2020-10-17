@@ -444,8 +444,14 @@ local function get_params(etoken, start)
     -- alphanumerics
     local name, pos = get_next_param(etoken, start)
     while name do
-        local val, next_param_start =
-                get_next_csv_token(etoken, pos, no_next_line, ' ')
+        local val, next_param_start = nil, nil
+        if etoken:sub(pos, pos) == '{' then
+            _, next_param_start, val = etoken:find('(%b{})', pos)
+            next_param_start = next_param_start + 1
+        else
+            val, next_param_start =
+                    get_next_csv_token(etoken, pos, no_next_line, ' ')
+        end
         if not val then
             qerror(string.format(
                     'invalid extended token param: "%s"', etoken:sub(pos)))
@@ -474,9 +480,9 @@ end
 -- params are in one of the following formats:
 --   param_name=param_val
 --   param_name="param val with spaces"
---   param_name={extended_token}
--- or any combination of the above:
---   param_name=literal" portion with spaces {somealias}"{anotheralias var=aa}
+--   param_name={token params repetitions}
+-- or any combination of the above (note the .csv-style doubled double quotes):
+--   param_name="literal with spaces {somealias var=""with spaces"" 5}"
 -- if repetitions is not specified, the value 1 is returned
 -- returns token as string, params as map, repetitions as number, start position
 -- of the next element after the etoken in text
