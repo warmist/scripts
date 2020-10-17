@@ -481,11 +481,17 @@ end
 --   param_name=param_val
 --   param_name="param val with spaces"
 --   param_name={token params repetitions}
--- or any combination of the above (note the .csv-style doubled double quotes):
---   param_name="literal with spaces {somealias var=""with spaces"" 5}"
+-- if the params within the extended token within the params require quotes,
+-- .csv-style doubled double quotes are required:
+--   param_name="{somealias var=""with spaces"" 5}"
+-- combining literals with extended tokens is not currently supported to keep
+-- the implementation simple, though we can add it if there is demand. That is,
+-- the following is not supported: param_name=literal{somealias}. The
+-- workaround is just to put the literal in a regularly-defined alias and call
+-- that alias.
 -- if repetitions is not specified, the value 1 is returned
 -- returns token as string, params as map, repetitions as number, start position
--- of the next element after the etoken in text
+-- of the next element after the etoken in text as number
 function parse_extended_token(text, startpos)
     startpos = startpos or 1
     local etoken = get_extended_token(text, startpos)
