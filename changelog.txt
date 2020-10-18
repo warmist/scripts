@@ -19,6 +19,7 @@ that repo.
 
 ## Misc Improvements
 - `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
+- `quickfort`: configuration support for zone pit/pond, gather, and hospital sub-menus in zone blueprints.
 
 # 0.47.04-r3
 
