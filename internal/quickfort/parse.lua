@@ -62,7 +62,7 @@ end
 
 -- adapted from example on http://lua-users.org/wiki/LuaCsv
 -- returns a list of strings corresponding to the text in the cells in the row
-local function tokenize_next_csv_line(file)
+local function tokenize_next_csv_line(file, first_col_only)
     local get_next_line_fn = function() return get_next_line(file) end
     local line = get_next_line_fn()
     if not line then return nil end
@@ -70,8 +70,8 @@ local function tokenize_next_csv_line(file)
     local sep = ','
     local token, pos = get_next_csv_token(line, 1, get_next_line_fn, sep)
     while token do
-        local c = line:sub(pos, pos)
         table.insert(tokens, token)
+        if first_col_only then break end
         token, pos = get_next_csv_token(line, pos, get_next_line_fn)
     end
     return tokens
@@ -197,8 +197,8 @@ local function make_cell_label(col_num, row_num)
     return get_col_name(col_num) .. tostring(math.floor(row_num))
 end
 
-local function read_csv_line(ctx)
-    return tokenize_next_csv_line(ctx.csv_file)
+local function read_csv_line(ctx, first_col_only)
+    return tokenize_next_csv_line(ctx.csv_file, first_col_only)
 end
 
 local function cleanup_csv_ctx(ctx)
@@ -225,7 +225,7 @@ local function reset_xlsx_ctx(ctx)
     ctx.xlsx_sheet = xlsxreader.open_sheet(ctx.xlsx_file, ctx.sheet_name)
 end
 
-local function init_reader_ctx(filepath, sheet_name)
+local function init_reader_ctx(filepath, sheet_name, first_col_only)
     local reader_ctx = {filepath=filepath}
     if string.find(filepath:lower(), '[.]csv$') then
         local file = io.open(filepath)
@@ -234,7 +234,8 @@ local function init_reader_ctx(filepath, sheet_name)
                                  filepath))
         end
         reader_ctx.csv_file = file
-        reader_ctx.get_row_tokens = read_csv_line
+        reader_ctx.get_row_tokens =
+                function(ctx) return read_csv_line(ctx, first_col_only) end
         reader_ctx.cleanup = cleanup_csv_ctx
         reader_ctx.reset = reset_csv_ctx
     else
@@ -362,7 +363,7 @@ end
 
 -- returns a list of modeline tables
 function get_modelines(filepath, sheet_name)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name)
+    local reader_ctx = init_reader_ctx(filepath, sheet_name, true)
     return dfhack.with_finalize(
         function() reader_ctx.cleanup(reader_ctx) end,
         function() return get_sheet_modelines(reader_ctx) end
@@ -379,7 +380,7 @@ Map keys are numbers, and the keyspace is sparse -- only cells that have content
 are non-nil.
 ]]
 function process_section(filepath, sheet_name, label, start_cursor_coord)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name)
+    local reader_ctx = init_reader_ctx(filepath, sheet_name, false)
     return dfhack.with_finalize(
         function() reader_ctx.cleanup(reader_ctx) end,
         function()
