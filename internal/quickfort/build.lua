@@ -247,7 +247,7 @@ local building_db = {
     h={label='Container', type=df.building_type.Box},
     r={label='Weapon Rack', type=df.building_type.Weaponrack},
     s={label='Statue', type=df.building_type.Statue},
-    ['{Alt}s']={label='Slab', type=df.building_type.Slab, skip_vector_id=true},
+    ['{Alt}s']={label='Slab', type=df.building_type.Slab},
     t={label='Table', type=df.building_type.Table},
     g={label='Bridge (Retracting)', type=df.building_type.Bridge,
        direction=df.building_bridgest.T_direction.Retracting},
@@ -320,14 +320,11 @@ local building_db = {
     A={label='Archery Target', type=df.building_type.ArcheryTarget},
     R={label='Traction Bench', type=df.building_type.TractionBench,
        additional_orders={'table', 'mechanisms', 'cloth rope'}},
-    N={label='Nest Box', type=df.building_type.NestBox, skip_vector_id=true},
-    ['{Alt}h']={label='Hive', type=df.building_type.Hive, skip_vector_id=true},
-    ['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace,
-        skip_vector_id=true},
-    ['{Alt}c']={label='Bookcase', type=df.building_type.Bookcase,
-        skip_vector_id=true},
-    F={label='Display Furniture', type=df.building_type.DisplayFurniture,
-        skip_vector_id=true},
+    N={label='Nest Box', type=df.building_type.NestBox},
+    ['{Alt}h']={label='Hive', type=df.building_type.Hive},
+    ['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace},
+    ['{Alt}c']={label='Bookcase', type=df.building_type.Bookcase},
+    F={label='Display Furniture', type=df.building_type.DisplayFurniture},
 
     -- basic building types with extents
     -- in the UI, these are required to be connected regions, which we could
@@ -737,26 +734,10 @@ local function create_building(b)
     if use_extents then
         fields.room = {x=b.pos.x, y=b.pos.y, width=b.width, height=b.height}
     end
-    local filters = nil
-    if quickfort_common.settings['buildings_use_blocks'].value then
-        -- don't set the vector_id for custom buildings since it will get
-        -- applied to *all* their filters, not just the "generic building
-        -- material" ones.
-        local vector_id = nil
-        -- remove skip_vector_id when we move block preferences to buildingplan
-        if not db_entry.custom and not db_entry.skip_vector_id then
-            vector_id = df.job_item_vector_id.BLOCKS
-        end
-        local filter_mod = {
-            material={item_type=df.item_type.BLOCKS, vector_id=vector_id}
-        }
-        filters = dfhack.buildings.getFiltersByType(
-            filter_mod, db_entry.type, db_entry.subtype, db_entry.custom)
-    end
     local bld, err = dfhack.buildings.constructBuilding{
         type=db_entry.type, subtype=db_entry.subtype, custom=db_entry.custom,
         pos=b.pos, width=b.width, height=b.height, direction=db_entry.direction,
-        filters=filters, fields=fields}
+        fields=fields}
     if not bld then
         -- this is an error instead of a qerror since our validity checking
         -- is supposed to prevent this from ever happening

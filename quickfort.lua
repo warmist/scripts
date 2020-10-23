@@ -85,16 +85,13 @@ configuration stored in the file:
 ``blueprints_dir`` (default: 'blueprints')
     Directory tree to search for blueprints. Can be set to an absolute or
     relative path. If set to a relative path, resolves to a directory under the
-    DF folder.
-``buildings_use_blocks`` (default: 'true')
-    Force all blueprint buildings that could be built with any building material
-    to only use blocks. The prevents logs, boulders, and bars (e.g. potash and
-    coal) from being wasted on constructions. If set to false, buildings will be
-    built with any available building material.
+    DF folder. Note that if you change this directory, you will not see
+    blueprints written by the DFHack `blueprint` plugin (which always writes to
+    the ``blueprints`` dir).
 ``force_marker_mode`` (default: 'false')
-    Set to "true" or "false". If true, will designate dig blueprints in marker
-    mode. If false, only cells with dig codes explicitly prefixed with ``m``
-    will be designated in marker mode.
+    Set to "true" or "false". If true, will designate all dig blueprints in
+    marker mode. If false, only cells with dig codes explicitly prefixed with
+    ``m`` will be designated in marker mode.
 ``query_unsafe`` (default: 'false')
     Skip query blueprint sanity checks that detect common blueprint errors and
     halt or skip keycode playback. Checks include ensuring a configurable
