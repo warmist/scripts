@@ -43,6 +43,7 @@ local function get_next_csv_token(line, pos, get_next_line_fn, sep)
             c = string.sub(line, pos, pos)
             if (c == '"') then txt = txt .. '"' end
         until c ~= '"'
+        if line:sub(pos, pos) == sep then pos = pos + 1 end
         return trim_token(txt), pos
     end
     -- no quotes used, just look for the first separator
