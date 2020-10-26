@@ -105,6 +105,13 @@ local function is_tile_generic_and_wall_adjacent(pos)
             is_shape_at(xyz2pos(pos.x, pos.y-1, pos.z), allowed_door_shapes)
 end
 
+local function is_tile_floor_adjacent(pos)
+    return is_valid_tile_generic(xyz2pos(pos.x+1, pos.y, pos.z)) or
+            is_valid_tile_generic(xyz2pos(pos.x-1, pos.y, pos.z)) or
+            is_valid_tile_generic(xyz2pos(pos.x, pos.y+1, pos.z)) or
+            is_valid_tile_generic(xyz2pos(pos.x, pos.y-1, pos.z))
+end
+
 -- for wells
 local function is_tile_empty_and_floor_adjacent(pos)
     local shape = df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape
@@ -113,10 +120,19 @@ local function is_tile_empty_and_floor_adjacent(pos)
              shape ~= df.tiletype_shape.RAMP_TOP) then
         return false
     end
-    return is_valid_tile_generic(xyz2pos(pos.x+1, pos.y, pos.z)) or
-            is_valid_tile_generic(xyz2pos(pos.x-1, pos.y, pos.z)) or
-            is_valid_tile_generic(xyz2pos(pos.x, pos.y+1, pos.z)) or
-            is_valid_tile_generic(xyz2pos(pos.x, pos.y-1, pos.z))
+    return is_tile_floor_adjacent(pos)
+end
+
+-- for floor hatches, grates, and bars
+local function is_tile_coverable(pos)
+    local shape = df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape
+    if not is_valid_tile_base(pos) or
+            (shape ~= df.tiletype_shape.EMPTY and
+             shape ~= df.tiletype_shape.RAMP_TOP and
+             shape ~= df.tiletype_shape.STAIR_DOWN) then
+        return false
+    end
+    return is_tile_floor_adjacent(pos)
 end
 
 --
@@ -238,11 +254,14 @@ local building_db = {
     d={label='Door', type=df.building_type.Door,
        is_valid_tile_fn=is_tile_generic_and_wall_adjacent},
     x={label='Floodgate', type=df.building_type.Floodgate},
-    H={label='Floor Hatch', type=df.building_type.Hatch},
+    H={label='Floor Hatch', type=df.building_type.Hatch,
+       is_valid_tile_fn=is_tile_coverable},
     W={label='Wall Grate', type=df.building_type.GrateWall},
-    G={label='Floor Grate', type=df.building_type.GrateFloor},
+    G={label='Floor Grate', type=df.building_type.GrateFloor,
+       is_valid_tile_fn=is_tile_coverable},
     B={label='Vertical Bars', type=df.building_type.BarsVertical},
-    ['{Alt}b']={label='Floor Bars', type=df.building_type.BarsFloor},
+    ['{Alt}b']={label='Floor Bars', type=df.building_type.BarsFloor,
+                is_valid_tile_fn=is_tile_coverable},
     f={label='Cabinet', type=df.building_type.Cabinet},
     h={label='Container', type=df.building_type.Box},
     r={label='Weapon Rack', type=df.building_type.Weaponrack},
@@ -767,7 +786,7 @@ local function create_building(b)
     end
     if buildingplan.isEnabled() and buildingplan.isPlannableBuilding(
             db_entry.type, db_entry.subtype or -1, db_entry.custom or -1) then
-        log('registering with buildingplan')
+        log('registering %s with buildingplan', db_entry.label)
         buildingplan.addPlannedBuilding(bld)
     end
     if db_entry.post_construction_fn then db_entry.post_construction_fn(bld) end
