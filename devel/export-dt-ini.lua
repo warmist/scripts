@@ -225,6 +225,8 @@ address('mat_type',df.item_crafted,'mat_type')
 address('mat_index',df.item_crafted,'mat_index')
 address('maker_race',df.item_crafted,'maker_race')
 address('quality',df.item_crafted,'quality')
+address('artifact_id',df.artifact_record,'id')
+address('artifact_name',df.artifact_record,'name')
 
 header('item_subtype_offsets')
 address('sub_type',df.itemdef,'subtype')
