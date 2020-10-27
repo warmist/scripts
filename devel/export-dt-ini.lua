@@ -389,6 +389,8 @@ address('stress_level',df.unit_personality,'stress_level')
 address('needs',df.unit_personality,'needs')
 address('current_focus',df.unit_personality,'current_focus')
 address('undistracted_focus',df.unit_personality,'undistracted_focus')
+address('combat_hardened',df.unit_personality,'combat_hardened')
+address('likes_outdoors',df.unit_personality,'likes_outdoors')
 
 header('need_offsets')
 address('id',df.unit_personality.T_needs,'id')
