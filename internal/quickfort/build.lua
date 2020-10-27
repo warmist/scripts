@@ -161,18 +161,6 @@ local function is_extent_nonempty(b)
 end
 
 --
--- ************ post construction fixup functions ************ --
---
-
-local function post_construction_init_workshop(bld)
-    bld.profile.max_general_orders = 5
-end
-
-local function post_construction_open_gate(bld)
-    bld.gate_flags.closed = false
-end
-
---
 -- ************ the database ************ --
 --
 
@@ -621,14 +609,9 @@ for _, v in pairs(building_db) do
             v.min_width, v.max_width, v.min_height, v.max_height = 1, 1, 1, 1
         end
     end
-    if v.type == df.building_type.Workshop or
-            v.type == df.building_type.Furnace then
-        v.post_construction_fn = post_construction_init_workshop
-    end
     if v.type == df.building_type.Bridge then
        v.min_width, v.max_width, v.min_height, v.max_height = 1, 10, 1, 10
        v.is_valid_tile_fn = is_valid_tile_has_space
-       v.post_construction_fn = post_construction_open_gate
     end
     if not v.is_valid_tile_fn then
         if v.type == df.building_type.Construction then
@@ -789,7 +772,6 @@ local function create_building(b)
         log('registering %s with buildingplan', db_entry.label)
         buildingplan.addPlannedBuilding(bld)
     end
-    if db_entry.post_construction_fn then db_entry.post_construction_fn(bld) end
 end
 
 local warning_shown = false
@@ -826,7 +808,7 @@ function do_run(zlevel, grid, ctx)
             stats.build_designated.value = stats.build_designated.value + 1
         end
     end
-    buildingplan.doCycle()
+    buildingplan.scheduleCycle()
     dfhack.job.checkBuildingsNow()
 end
 
