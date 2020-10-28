@@ -19,6 +19,7 @@ that repo.
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
 
 ## Misc Improvements
+- `quickfort`: query blueprint aliases can now accept parameters for dynamic expansion. see dfhack-config/quickfort/aliases.txt for details.
 - `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
 
 # 0.47.04-r3
