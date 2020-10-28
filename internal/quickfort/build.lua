@@ -318,7 +318,7 @@ local building_db = {
     Mrsssqqq=make_roller_entry(df.screw_pump_direction.FromWest, 20000),
     Mrsssqqqq=make_roller_entry(df.screw_pump_direction.FromWest, 10000),
     -- Instruments are not yet supported by DFHack
-    --I={label='Instrument', type=df.building_type.Instrument},
+    -- I={label='Instrument', type=df.building_type.Instrument},
     S={label='Support', type=df.building_type.Support,
        is_valid_tile_fn=is_valid_tile_has_space},
     m={label='Animal Trap', type=df.building_type.AnimalTrap},
@@ -329,11 +329,12 @@ local building_db = {
        additional_orders={'table', 'mechanisms', 'cloth rope'}},
     N={label='Nest Box', type=df.building_type.NestBox, skip_vector_id=true},
     ['{Alt}h']={label='Hive', type=df.building_type.Hive, skip_vector_id=true},
-    -- Offering Places, Bookcases, and Display Furniture are not yet supported
-    -- by dfhack
-    --['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace},
-    --['{Alt}c']={label='Bookcase', type=df.building_type.Bookcase},
-    --F={label='Display Furniture', type=df.building_type.DisplayFurniture},
+    ['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace,
+        skip_vector_id=true},
+    ['{Alt}c']={label='Bookcase', type=df.building_type.Bookcase,
+        skip_vector_id=true},
+    F={label='Display Furniture', type=df.building_type.DisplayFurniture,
+        skip_vector_id=true},
 
     -- basic building types with extents
     -- in the UI, these are required to be connected regions, which we could
