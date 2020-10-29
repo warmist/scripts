@@ -23,6 +23,7 @@ that repo.
 - `quickfort`: speed of first call to ``quickfort list`` is significantly improved, especially for large blueprint libraries
 - `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
 - `quickfort`: add support for bookcases, display cases, and offering places (altars)
+- `quickfort`: configuration support for zone pit/pond, gather, and hospital sub-menus in zone blueprints.
 
 # 0.47.04-r3
 

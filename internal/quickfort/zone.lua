@@ -9,7 +9,9 @@ require('dfhack.buildings') -- loads additional functions into dfhack.buildings
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
+local quickfort_parse = reqscript('internal/quickfort/parse')
 local log = quickfort_common.log
+local logfn = quickfort_common.logfn
 
 local function is_valid_zone_tile(pos)
     return not dfhack.maps.getTileFlags(pos).hidden
@@ -31,40 +33,150 @@ local zone_template = {
 }
 
 local zone_db = {
-    a={label='Inactive', flags={'active'}}, -- unspecified means active
-    w={label='Water Source', flags={'water_source'}},
-    f={label='Fishing', flags={'fishing'}},
-    g={label='Gather/Pick Fruit', flags={'gather'}},
-    d={label='Garbage Dump', flags={'garbage_dump'}},
-    n={label='Pen/Pasture', flags={'pen_pasture'}},
-    p={label='Pit/Pond', flags={'pit_pond'}},
-    s={label='Sand', flags={'sand'}},
-    c={label='Clay', flags={'clay'}},
-    m={label='Meeting Area', flags={'meeting_area'}},
-    h={label='Hospital', flags={'hospital'}},
-    t={label='Animal Training', flags={'animal_training'}},
+    a={label='Inactive', zone_flags={active=false}},
+    w={label='Water Source', zone_flags={water_source=true}},
+    f={label='Fishing', zone_flags={fishing=true}},
+    g={label='Gather/Pick Fruit', zone_flags={gather=true}},
+    d={label='Garbage Dump', zone_flags={garbage_dump=true}},
+    n={label='Pen/Pasture', zone_flags={pen_pasture=true}},
+    p={label='Pit/Pond', zone_flags={pit_pond=true}},
+    s={label='Sand', zone_flags={sand=true}},
+    c={label='Clay', zone_flags={clay=true}},
+    m={label='Meeting Area', zone_flags={meeting_area=true}},
+    h={label='Hospital', zone_flags={hospital=true}},
+    t={label='Animal Training', zone_flags={animal_training=true}},
 }
 for _, v in pairs(zone_db) do utils.assign(v, zone_template) end
 
+local function parse_pit_pond_subconfig(keys, flags)
+    for c in keys:gmatch('.') do
+        if c == 'f' then
+            flags.is_pond = true
+        else
+            qerror(string.format('invalid pit/pond config char: "%s"', c))
+        end
+    end
+end
+
+local function parse_gather_subconfig(keys, flags)
+    -- all options are on by default; specifying them turns them off
+    for c in keys:gmatch('.') do
+        if c == 't' then
+            flags.pick_trees = false
+        elseif c == 's' then
+            flags.pick_shrubs = false
+        elseif c == 'f' then
+            flags.gather_fallen = false
+        else
+            qerror(string.format('invalid gather config char: "%s"', c))
+        end
+    end
+end
+
+local hospital_max_values = {
+    thread=1500000,
+    cloth=1000000,
+    splints=100,
+    crutches=100,
+    powder=15000,
+    buckets=100,
+    soap=15000
+}
+
+local function set_hospital_supplies(key, val, flags)
+    local val_num = tonumber(val)
+    if not val_num or val_num < 0 or val_num > hospital_max_values[key] then
+        qerror(string.format(
+            'invalid hospital supply count: "%s". must be between 0 and %d',
+            val, hospital_max_values[key]))
+    end
+    flags['max_'..key] = val_num
+    flags.supplies_needed[key] = val_num > 0
+end
+
+-- full format (all params optional):
+-- {hospital thread=num cloth=num splints=num crutches=num powder=num buckets=num soap=num}
+local function parse_hospital_subconfig(keys, flags)
+    local etoken, params = quickfort_parse.parse_extended_token(keys)
+    if etoken:lower() ~= 'hospital' then
+        qerror(string.format('invalid hospital settings: "%s"', keys))
+    end
+    for k,v in pairs(params) do
+        if not hospital_max_values[k] then
+            qerror(string.format('invalid hospital setting: "%s"', k))
+        end
+        set_hospital_supplies(k, v, flags)
+    end
+end
+
+local function parse_zone_config(keys, labels, zone_data)
+    local i = 1
+    while i <= #keys do
+        local c = keys:sub(i, i)
+        if rawget(zone_db, c) then
+            local db_entry = zone_db[c]
+            if (db_entry.zone_flags.pen_pasture or
+                zone_data.zone_flags.pen_pasture) and
+                (db_entry.zone_flags.pit_pond or
+                 zone_data.zone_flags.pit_pond) then
+                qerror("zone cannot be both a pen/pasture and a pit/pond")
+            end
+            table.insert(labels, db_entry.label)
+            utils.assign(zone_data.zone_flags, db_entry.zone_flags)
+        elseif c == 'P' then
+            zone_data.pit_flags = {}
+            parse_pit_pond_subconfig(keys:sub(i+1), zone_data.pit_flags)
+            break
+        elseif c == 'G' then
+            zone_data.gather_flags = {}
+            parse_gather_subconfig(keys:sub(i+1), zone_data.gather_flags)
+            break
+        elseif c == 'H' then
+            zone_data.hospital = {supplies_needed={}}
+            parse_hospital_subconfig(keys:sub(i+1), zone_data.hospital)
+            break
+        end
+        i = i + 1
+    end
+end
+
 local function custom_zone(_, keys)
     local labels = {}
-    local flags = {}
-    for k in keys:gmatch('.') do
-        if not rawget(zone_db, k) then return nil end
-        table.insert(labels, zone_db[k].label)
-        table.insert(flags, zone_db[k].flags[1])
+    local zone_data = {zone_flags={}}
+    -- subconfig sequences are separated by '^' characters
+    for zone_config in keys:gmatch('[^^]+') do
+        parse_zone_config(keys, labels, zone_data)
     end
-    local zone_data = {label=table.concat(labels, '+'), flags=flags}
+    zone_data.label = table.concat(labels, '+')
     utils.assign(zone_data, zone_template)
     return zone_data
 end
 
 setmetatable(zone_db, {__index=custom_zone})
 
+local function dump_flags(args)
+    local flags = args[1]
+    for k,v in pairs(flags) do
+        if type(v) ~= 'table' then
+            print(string.format('  %s: %s', k, v))
+        end
+    end
+end
+
+local function assign_flags(bld, db_entry, key)
+    local flags = db_entry[key]
+    if flags then
+        log('assigning %s:', key)
+        logfn(dump_flags, flags)
+        utils.assign(bld[key], flags)
+    end
+end
+
 local function create_zone(zone)
+    local db_entry = zone_db[zone.type]
     log('creating %s zone at map coordinates (%d, %d, %d), defined' ..
         ' from spreadsheet cells: %s',
-        zone_db[zone.type].label, zone.pos.x, zone.pos.y, zone.pos.z,
+        db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
         table.concat(zone.cells, ', '))
     local fields = {room={x=zone.pos.x, y=zone.pos.y,
                           width=zone.width, height=zone.height},
@@ -80,15 +192,15 @@ local function create_zone(zone)
     end
     local extents, ntiles = quickfort_building.make_extents(zone, zone_db)
     quickfort_building.assign_extents(bld, extents)
-    for _,flag in ipairs(zone_db[zone.type].flags) do
-        bld.zone_flags[flag] = true
-    end
-    -- zones are enabled by default. if it was toggled in the keys, we actually
-    -- want to turn it off here
-    bld.zone_flags.active = not bld.zone_flags.active
+    -- set defaults (should move into constructBuilding)
     bld.gather_flags.pick_trees = true
     bld.gather_flags.pick_shrubs = true
     bld.gather_flags.gather_fallen = true
+    -- set specified flags
+    assign_flags(bld, db_entry, 'zone_flags')
+    assign_flags(bld, db_entry, 'pit_flags')
+    assign_flags(bld, db_entry, 'gather_flags')
+    assign_flags(bld, db_entry, 'hospital')
     return ntiles
 end
 
