@@ -19,6 +19,7 @@ that repo.
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
 
 ## Misc Improvements
+- `devel/export-dt-ini`: updated for Dwarf Therapist 41.2.0
 - `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
 
 # 0.47.04-r3
