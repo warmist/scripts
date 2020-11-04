@@ -8,6 +8,11 @@ end
 local xlsxreader = require('plugins.xlsxreader')
 local quickfort_common = reqscript('internal/quickfort/common')
 
+function quote_if_has_spaces(str)
+    if str:find(' ') then return '"' .. str .. '"' end
+    return str
+end
+
 local function trim_token(token)
     _, _, token = token:find('^%s*(.-)%s*$')
     return token
