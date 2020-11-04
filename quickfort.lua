@@ -35,7 +35,7 @@ Usage:
 **quickfort gui**
     Starts the quickfort dialog, where you can run blueprints from an
     interactive list.
-**quickfort list [search string] [-m|--mode <mode>] [-l|--library] [-h|--hidden]**
+**quickfort list [-m|--mode <mode>] [-l|--library] [-h|--hidden] [search string]**
     Lists blueprints in the ``blueprints`` folder. Blueprints are ``.csv`` files
     or sheets within ``.xlsx`` files that contain a ``#<mode>`` comment in the
     upper-left cell. By default, blueprints in the ``blueprints/library/``
@@ -51,20 +51,20 @@ Usage:
     Applies a blueprint in the specified file. The optional ``name`` parameter
     can select a specific blueprint from a file that contains multiple
     blueprints with the format "sheetname/label", or just "/label" for .csv
-    files. The label is defined in the blueprint modeline, defaulting to it's
+    files. The label is defined in the blueprint modeline, defaulting to its
     order in the sheet or file if not defined. If the -n parameter is not
     specified, the first blueprint in the first sheet is used.
 
 **<command>** can be one of:
 
-:run:     Applies the blueprint at your current cursor position. It doesn't
-          matter which mode you are in. You just need an active cursor.
-:orders:  Uses the manager interface to queue up orders for the specified
-          build-mode blueprint.
+:run:     Applies the blueprint at your current in-game cursor position.
+:orders:  Uses the manager interface to queue up orders to manufacture items for
+          the specified build-mode blueprint.
 :undo:    Applies the inverse of the specified blueprint. Dig tiles are
           undesignated, buildings are canceled or removed (depending on their
-          construction status), and stockpiles are removed. There is no effect
-          for query blueprints.
+          construction status), and stockpiles/zones are removed. There is no
+          effect for query blueprints since they can contain arbitrary key
+          sequences.
 
 **<options>** can be zero or more of:
 
@@ -78,8 +78,8 @@ Configuration:
 
 The quickfort script reads its startup configuration from the
 ``dfhack-config/quickfort/quickfort.txt`` file, which you can customize. The
-following settings may be dynamically modified by the ``quickfort set`` command,
-but settings changed with the ``quickfort set`` command will not change the
+settings may be dynamically modified by the ``quickfort set`` command, but
+settings changed with the ``quickfort set`` command will not change the
 configuration stored in the file:
 
 ``blueprints_dir`` (default: 'blueprints')
@@ -89,9 +89,9 @@ configuration stored in the file:
     blueprints written by the DFHack `blueprint` plugin (which always writes to
     the ``blueprints`` dir).
 ``force_marker_mode`` (default: 'false')
-    Set to "true" or "false". If true, will designate all dig blueprints in
-    marker mode. If false, only cells with dig codes explicitly prefixed with
-    ``m`` will be designated in marker mode.
+    If true, will designate all dig blueprints in marker mode. If false, only
+    cells with dig codes explicitly prefixed with ``m`` will be designated in
+    marker mode.
 ``query_unsafe`` (default: 'false')
     Skip query blueprint sanity checks that detect common blueprint errors and
     halt or skip keycode playback. Checks include ensuring a configurable
@@ -141,14 +141,14 @@ local function print_short_help()
 Usage:
 
 quickfort set [<key> <value>]
-    Allows you to modify the active quickfort configuration. Just run
-    "quickfort set" to show current settings.
+    Allows you to temporarily modify the active quickfort configuration. Just
+    run "quickfort set" to show current settings.
 quickfort reset
-    Resets quickfort configuration to defaults.
+    Resets quickfort configuration to defaults in quickfort.txt.
 quickfort gui
     Starts the quickfort dialog, where you can run blueprints from an
     interactive list.
-quickfort list [search string] [-m|--mode <mode>] [-l|--library] [-h|--hidden]
+quickfort list [-m|--mode <mode>] [-l|--library] [-h|--hidden] [search string]
     Lists blueprints in the "blueprints" folder. Specify -l to include library
     blueprints and -h to include hidden blueprints. The list can be filtered by
     a specified mode (e.g. "-m build") and/or a substring to search for in a
@@ -163,14 +163,14 @@ quickfort <command> <filename> [-n|--name <name>] [<options>]
 
 <command> can be one of:
 
-run     Applies the blueprint at your current cursor position. It doesn't matter
-        which mode you are in. You just need an active cursor.
-orders  Uses the manager interface to queue up orders for the specified
-        build-mode blueprint.
+run     Applies the blueprint at your current in-game cursor position.
+orders  Uses the manager interface to queue up orders to manufacture items for
+        the specified build-mode blueprint.
 undo    Applies the inverse of the specified blueprint. Dig tiles are
         undesignated, buildings are canceled or removed (depending on their
-        construction status), and stockpiles are removed. There is no effect for
-        query blueprints.
+        construction status), and stockpiles/zones are removed. There is no
+        effect for query blueprints since they can contain arbitrary key
+        sequences.
 
 <options> can be zero or more of:
 
@@ -181,7 +181,8 @@ undo    Applies the inverse of the specified blueprint. Dig tiles are
     blueprint isn't being applied like you expect.
 
 For more info, see:
-https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort
+https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort and
+https://docs.dfhack.org/en/stable/docs/guides/quickfort-user-guide.html
 ]]
 end
 

@@ -151,34 +151,29 @@ function do_list_internal(show_library, show_hidden)
     return display_list
 end
 
-local valid_list_args = utils.invert({
-    'h',
-    '-hidden',
-    'l',
-    '-library',
-    'm',
-    '-mode',
-})
-
-function do_list(in_args)
-    local filter_string = nil
-    if #in_args > 0 and not in_args[1]:startswith('-') then
-        filter_string = table.remove(in_args, 1)
-    end
-    local args = utils.processArgs(in_args, valid_list_args)
-    local show_library = args['l'] ~= nil or args['-library'] ~= nil
-    local show_hidden = args['h'] ~= nil or args['-hidden'] ~= nil
-    local filter_mode = args['m'] or args['-mode']
+function do_list(args)
+    local show_library, show_hidden, filter_mode = false, false, nil
+    local filter_strings = utils.processArgs2(args, {
+            {'l', 'library', handler=function() show_library = true end},
+            {'h', 'hidden', handler=function() show_hidden = true end},
+            {'m', 'mode', hasArg=true,
+             handler=function(optarg) filter_mode = optarg end},
+        })
     if filter_mode and not quickfort_common.valid_modes[filter_mode] then
         qerror(string.format('invalid mode: "%s"', filter_mode))
     end
     local list = do_list_internal(show_library, show_hidden)
     local num_filtered = 0
     for _,v in ipairs(list) do
-        if (filter_string and not string.find(v.search_key, filter_string)) or
-                (filter_mode and v.mode ~= filter_mode) then
+        if filter_mode and v.mode ~= filter_mode then
             num_filtered = num_filtered + 1
             goto continue
+        end
+        for _,filter_string in ipairs(filter_strings) do
+            if not string.find(v.search_key, filter_string) then
+                num_filtered = num_filtered + 1
+                goto continue
+            end
         end
         local sheet_spec = ''
         if v.section_name then
