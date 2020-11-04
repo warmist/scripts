@@ -1,7 +1,7 @@
 -- in-game dialog interface for the quickfort script
 --[====[
 gui/quickfort
-=========
+=============
 In-game dialog interface for the `quickfort` script.
 ]====]
 
