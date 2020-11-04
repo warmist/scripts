@@ -17,6 +17,7 @@ that repo.
 - `quickfort`: fix handling of modifier keys (e.g. {Ctrl} or {Alt} in query blueprints
 - `quickfort`: fix misconfiguration of nest boxes, hives, and slabs that were preventing them from being built from build blueprints
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
+- `quickfort`: display missing blueprint labels in gui dialog list
 
 ## Misc Improvements
 - `devel/export-dt-ini`: updated for Dwarf Therapist 41.2.0
