@@ -182,7 +182,9 @@ function do_list(in_args)
         end
         local sheet_spec = ''
         if v.section_name then
-            sheet_spec = string.format(' -n "%s"', v.section_name)
+            sheet_spec = string.format(
+                    ' -n %s',
+                    quickfort_parse.quote_if_has_spaces(v.section_name))
         end
         local comment = ')'
         if v.comment then comment = string.format(': %s)', v.comment) end
@@ -191,8 +193,9 @@ function do_list(in_args)
             start_comment = string.format('; cursor start: %s', v.start_comment)
         end
         print(string.format(
-                '%d) "%s"%s (%s%s%s',
-                v.id, v.path, sheet_spec, v.mode, comment, start_comment))
+                '%d) %s%s (%s%s%s', v.id,
+                quickfort_parse.quote_if_has_spaces(v.path),
+                sheet_spec, v.mode, comment, start_comment))
         ::continue::
     end
     if num_filtered > 0 then
