@@ -16,6 +16,7 @@ valid_modes = utils.invert({
     'query',
     'meta',
     'notes',
+    'ignore',
 })
 
 -- keep deprecated settings in the table so we don't break existing configs

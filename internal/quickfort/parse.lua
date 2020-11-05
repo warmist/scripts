@@ -361,7 +361,9 @@ local function get_sheet_modelines(reader_ctx)
             end
             first_line = false
         end
-        if modeline then table.insert(modelines, modeline) end
+        if modeline and modeline.mode ~= 'ignore' then
+            table.insert(modelines, modeline)
+        end
         row_tokens = reader_ctx.get_row_tokens(reader_ctx)
     end
     return modelines
