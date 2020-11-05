@@ -14,7 +14,9 @@ local quickfort_parse = reqscript('internal/quickfort/parse')
 
 local mode_modules = {}
 for mode, _ in pairs(quickfort_common.valid_modes) do
-    mode_modules[mode] = reqscript('internal/quickfort/'..mode)
+    if mode ~= 'ignore' then
+        mode_modules[mode] = reqscript('internal/quickfort/'..mode)
+    end
 end
 
 function parse_section_name(section_name)
