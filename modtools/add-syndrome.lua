@@ -12,7 +12,7 @@ Arguments::
         the name or id of the syndrome to operate on
         examples:
             "gila monster bite"
-			14
+            14
     -resetPolicy policy
         specify a policy of what to do if the unit already has an
         instance of the syndrome.  examples:
