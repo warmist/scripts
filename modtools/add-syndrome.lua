@@ -9,9 +9,10 @@ This allows adding and removing syndromes from units.
 Arguments::
 
     -syndrome name
-        the name of the syndrome to operate on
+        the name or id of the syndrome to operate on
         examples:
             "gila monster bite"
+            14
     -resetPolicy policy
         specify a policy of what to do if the unit already has an
         instance of the syndrome.  examples:
@@ -80,12 +81,18 @@ if args.resetPolicy then
 end
 
 if not args.syndrome then
- error 'Specify a syndrome name.'
+ error 'Specify a syndrome name or id.'
+end
+local usingId
+if tonumber(args.syndrome) then
+ usingId = true
+ args.syndrome = tonumber(args.syndrome)
 end
 
 local syndrome
 for _,syn in ipairs(df.global.world.raws.syndromes.all) do
- if syn.syn_name == args.syndrome then
+ local field = usingId and syn.id or syn.syn_name
+ if field == args.syndrome then
   syndrome = syn
   break
  end
