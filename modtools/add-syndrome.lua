@@ -8,7 +8,7 @@ This allows adding and removing syndromes from units.
 
 Arguments::
 
-    -syndrome name
+    -syndrome name|id
         the name or id of the syndrome to operate on
         examples:
             "gila monster bite"
@@ -83,18 +83,16 @@ end
 if not args.syndrome then
  error 'Specify a syndrome name or id.'
 end
-local usingId
-if tonumber(args.syndrome) then
- usingId = true
- args.syndrome = tonumber(args.syndrome)
-end
 
 local syndrome
-for _,syn in ipairs(df.global.world.raws.syndromes.all) do
- local field = usingId and syn.id or syn.syn_name
- if field == args.syndrome then
-  syndrome = syn
-  break
+if tonumber(args.syndrome) then
+ syndrome = df.syndrome.find(tonumber(args.syndrome))
+else
+ for _,syn in ipairs(df.global.world.raws.syndromes.all) do
+  if syn.syn_name == args.syndrome then
+   syndrome = syn
+   break
+  end
  end
 end
 if not syndrome then
