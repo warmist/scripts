@@ -46,9 +46,9 @@ end
 
 function do_run(zlevel, grid, ctx)
     local stats = ctx.stats
-    stats.query_keystrokes = stats.zone_designated or
+    stats.query_keystrokes = stats.query_keystrokes or
             {label='Keystrokes sent', value=0, always=true}
-    stats.query_tiles = stats.zone_tiles or
+    stats.query_tiles = stats.query_tiles or
             {label='Tiles modified', value=0}
 
     load_aliases()
