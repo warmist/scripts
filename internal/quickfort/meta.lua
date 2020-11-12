@@ -15,6 +15,9 @@ local quickfort_command = reqscript('internal/quickfort/command')
 -- a string is interpreted as a sheet name instead of a label (which is ignored
 -- for .csv files), the label defaults to "1", and the meta blueprint is the
 -- first blueprint in the file.
+-- the sheet name is only populated if cur_sheet_name is populated. This ensures
+-- the lables are in ".csv format" even if they were fully specified for source
+-- .xlsx files, but those .xlsx files have since been serialized to .csv.
 local function get_section_name(cell, text, cur_sheet_name)
     local sheet_name, label = quickfort_command.parse_section_name(text)
     if not label then
@@ -30,6 +33,7 @@ local function get_section_name(cell, text, cur_sheet_name)
         qerror(string.format('%s %s: %s', cell_msg, label_msg, text))
     end
     if not sheet_name then sheet_name = cur_sheet_name or '' end
+    if not cur_sheet_name then sheet_name = '' end
     return string.format('%s/%s', sheet_name, label)
 end
 
