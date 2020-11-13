@@ -26,6 +26,7 @@ that repo.
 - `quickfort`: add support for bookcases, display cases, and offering places (altars)
 - `quickfort`: configuration support for zone pit/pond, gather, and hospital sub-menus in zone blueprints.
 - `quickfort`: remove ``buildings_use_blocks`` setting and replace it with more flexible functionality in `buildingplan`
+- `quickfort`: support creating uninitialized stockpiles with :kbd:`c`
 
 # 0.47.04-r3
 
