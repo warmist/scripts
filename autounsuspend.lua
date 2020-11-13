@@ -31,4 +31,4 @@ local action_switch = {
 setmetatable(action_switch, {__index=function() return help end})
 
 local args = {...}
-action_switch[table.remove(args, 1) or 'help']()
+action_switch[args[1] or 'help']()
