@@ -14,7 +14,7 @@ that repo.
 # Future
 
 ## Fixes
-- `quickfort`: fix handling of modifier keys (e.g. {Ctrl} or {Alt} in query blueprints
+- `quickfort`: fix handling of modifier keys (e.g. ``{Ctrl}`` or ``{Alt}``) in query blueprints
 - `quickfort`: fix misconfiguration of nest boxes, hives, and slabs that were preventing them from being built from build blueprints
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
 - `quickfort`: fix query blueprint statistics being added to the wrong metric when both a query and a zone blueprint are run by the same meta blueprint
@@ -24,7 +24,7 @@ that repo.
 - `devel/export-dt-ini`: updated for Dwarf Therapist 41.2.0
 - `modtools/add-syndrome`: added support for specifying syndrome IDs instead of names
 - `quickfort`: query blueprint aliases can now accept parameters for dynamic expansion. see dfhack-config/quickfort/aliases.txt for details.
-- `quickfort`: aliase names can now include dashes and underscores (in addition to letters and numbers)
+- `quickfort`: alias names can now include dashes and underscores (in addition to letters and numbers)
 - `quickfort`: speed of first call to ``quickfort list`` is significantly improved, especially for large blueprint libraries
 - `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
 - `quickfort`: add support for bookcases, display cases, and offering places (altars)
