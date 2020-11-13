@@ -1,4 +1,4 @@
-# unsuspend construction jobs; buildingplan-safe
+-- unsuspend construction jobs; buildingplan-safe
 --[====[
 
 unsuspend

@@ -1,4 +1,4 @@
-# automate periodic running of the unsuspend script
+-- automate periodic running of the unsuspend script
 --[====[
 
 autounsuspend
