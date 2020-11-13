@@ -307,7 +307,7 @@ function JobDetails:onChangeMat()
         prompt = 'Please select a new material for input '..idx,
         none_caption = 'any material',
         mat_filter = function(mat,parent,mat_type,mat_index)
-            return dfhack.job.isSuitableMaterial(obj.iobj, mat_type, mat_index)
+            return dfhack.job.isSuitableMaterial(obj.iobj, mat_type, mat_index, obj.iobj.item_type)
         end,
         on_select = self:callback('setMaterial', obj)
     }:show()
