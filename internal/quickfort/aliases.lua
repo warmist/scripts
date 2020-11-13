@@ -52,9 +52,9 @@ function push_aliases_csv_file(filename)
     local num_aliases = 0
     for line in file:lines() do
         line = line:gsub('[\r\n]*$', '')
-        -- aliases must be at two alphanumerics long to distinguish them from
-        -- regular keystrokes
-        _, _, alias, definition = line:find('^(%w[%w]+):%s*(.*)')
+        -- aliases must be at least two alphanumerics long (plus - and _) to
+        -- distinguish them from regular keystrokes
+        _, _, alias, definition = line:find('^([%w-_][%w-_]+):%s*(.*)')
         if alias and #definition > 0 then
             aliases[alias] = definition
             num_aliases = num_aliases + 1

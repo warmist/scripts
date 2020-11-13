@@ -70,6 +70,7 @@ local stockpile_db = {
     g={label='Finished Goods', indices={10}, want_bins=true},
     p={label='Weapons', indices={14}, want_bins=true},
     d={label='Armor', indices={15}, want_bins=true},
+    c={label='Custom', indices={}}
 }
 for _, v in pairs(stockpile_db) do utils.assign(v, stockpile_template) end
 

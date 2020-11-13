@@ -366,7 +366,8 @@ end
 -- we assume by this point that the extent is valid and non-empty
 function make_extents(b, db)
     local area = b.width * b.height
-    local extents = df.new('uint8_t', area)
+    local extents = df.reinterpret_cast(df.building_extents_type,
+        df.new('uint8_t', area))
     local num_tiles = 0
     for i=1,area do
         local extent_x = (i-1) % b.width + 1

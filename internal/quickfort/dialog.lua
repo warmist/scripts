@@ -9,6 +9,7 @@ local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
 local quickfort_command = reqscript('internal/quickfort/command')
 local quickfort_list = reqscript('internal/quickfort/list')
+local quickfort_parse = reqscript('internal/quickfort/parse')
 
 -- must be at least enough to display all help text on the main dialog
 local min_dialog_width = 73
@@ -112,8 +113,15 @@ function BlueprintDialog:refresh()
         if v.start_comment then
             start_comment = string.format(' cursor start: %s', v.start_comment)
         end
-        local text = string.format('%d) %s (%s)%s\n    %s',
-                v.id, v.path, v.mode, start_comment, v.comment or '')
+        local sheet_spec = ''
+        if v.section_name then
+            sheet_spec = string.format(
+                    ' -n %s',
+                    quickfort_parse.quote_if_has_spaces(v.section_name))
+        end
+        local text = string.format('%d) %s%s (%s)%s\n    %s',
+                v.id, quickfort_parse.quote_if_has_spaces(v.path), sheet_spec,
+                v.mode, start_comment, v.comment or '')
         local truncated_text =
                 truncate(text, self.frame_body.width, self.row_height)
         table.insert(choices,
