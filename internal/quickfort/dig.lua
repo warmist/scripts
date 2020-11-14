@@ -552,7 +552,7 @@ local function dig_tile(ctx, db_entry)
     ctx.flags, ctx.occupancy = dfhack.maps.getTileFlags(ctx.pos)
     ctx.tileattrs = df.tiletype.attrs[dfhack.maps.getTileType(ctx.pos)]
     if db_entry.action(ctx) then
-        -- set the block's designated flag to the game does a check to see what
+        -- set the block's designated flag so the game does a check to see what
         -- jobs need to be created
         dfhack.maps.getTileBlock(ctx.pos).flags.designated = true
         if not has_designation(ctx.flags, ctx.occupancy) then
