@@ -59,13 +59,25 @@ local function scan_xlsx_blueprint(path)
     return sheet_infos
 end
 
-local blueprints = {}
+local function get_section_name(sheet_name, label)
+    if not sheet_name and not (label and label ~= "1") then return nil end
+    local sheet_name_str, label_str = '', ''
+    if sheet_name then sheet_name_str = sheet_name end
+    if label and label ~= "1" then label_str = '/' .. label end
+    return string.format('%s%s', sheet_name_str, label_str)
+end
+
+local function make_blueprint_modes_key(path, section_name)
+    return path .. '//' .. (section_name or '')
+end
+
+local blueprints, blueprint_modes = {}, {}
 local num_library_blueprints = 0
 
 local function scan_blueprints()
     local paths = dfhack.filesystem.listdir_recursive(
         quickfort_common.settings['blueprints_dir'].value, nil, false)
-    blueprints = {}
+    blueprints, blueprint_modes = {}, {}
     local library_blueprints = {}
     for _, v in ipairs(paths) do
         local is_library = string.find(v.path, '^library/') ~= nil
@@ -73,20 +85,51 @@ local function scan_blueprints()
         if is_library then target_list = library_blueprints end
         if not v.isdir and string.find(v.path:lower(), '[.]csv$') then
             local modelines = scan_csv_blueprint(v.path)
+            local first = true
             for _,modeline in ipairs(modelines) do
                 table.insert(target_list,
                         {path=v.path, modeline=modeline, is_library=is_library})
+                local key = make_blueprint_modes_key(
+                        v.path, get_section_name(nil, modeline.label))
+                blueprint_modes[key] = modeline.mode
+                if first then
+                    -- first blueprint is also accessible via blank name
+                    key = make_blueprint_modes_key(v.path)
+                    blueprint_modes[key] = modeline.mode
+                    first = false
+                end
             end
         elseif not v.isdir and string.find(v.path:lower(), '[.]xlsx$') then
             local sheet_infos = scan_xlsx_blueprint(v.path)
+            local first = true
             if #sheet_infos > 0 then
                 for _,sheet_info in ipairs(sheet_infos) do
+                    local sheet_first = true
                     for _,modeline in ipairs(sheet_info.modelines) do
                         table.insert(target_list,
                                      {path=v.path,
                                       sheet_name=sheet_info.name,
                                       modeline=modeline,
                                       is_library=is_library})
+                        local key = make_blueprint_modes_key(
+                            v.path,
+                            get_section_name(sheet_info.name, modeline.label))
+                        blueprint_modes[key] = modeline.mode
+                        if first then
+                            -- first blueprint in first sheet is also accessible
+                            -- via blank name
+                            key = make_blueprint_modes_key(v.path)
+                            blueprint_modes[key] = modeline.mode
+                            first = false
+                        end
+                        if sheet_first then
+                            -- first blueprint in each sheet is also accessible
+                            -- via blank label
+                            key = make_blueprint_modes_key(
+                                    v.path, get_section_name(sheet_info.name))
+                            blueprint_modes[key] = modeline.mode
+                            sheet_first = false
+                        end
                     end
                 end
             end
@@ -97,14 +140,6 @@ local function scan_blueprints()
     for i=1, num_library_blueprints do
         blueprints[#blueprints + 1] = library_blueprints[i]
     end
-end
-
-local function get_section_name(sheet_name, label)
-    if not sheet_name and not (label and label ~= "1") then return nil end
-    local sheet_name_str, label_str = '', ''
-    if sheet_name then sheet_name_str = sheet_name end
-    if label and label ~= "1" then label_str = '/' .. label end
-    return string.format('%s%s', sheet_name_str, label_str)
 end
 
 function get_blueprint_by_number(list_num)
@@ -118,7 +153,15 @@ function get_blueprint_by_number(list_num)
     end
     local section_name =
             get_section_name(blueprint.sheet_name, blueprint.modeline.label)
-    return blueprint.path, section_name
+    return blueprint.path, section_name, blueprint.modeline.mode
+end
+
+function get_blueprint_mode(path, section_name)
+    if #blueprints == 0 then
+        scan_blueprints()
+    end
+    path = path:gsub(package.config:sub(1,1), "/") -- normalize paths on windows
+    return blueprint_modes[make_blueprint_modes_key(path, section_name)]
 end
 
 -- returns a sequence of structured data to display. note that the id may not
