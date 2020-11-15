@@ -7,6 +7,8 @@ Periodically check construction jobs and keep them unsuspended with the
 `unsuspend` script.
 ]====]
 
+local repeatUtil = require 'repeat-util'
+
 local job_name = '__autounsuspend'
 
 local function help()
@@ -14,13 +16,13 @@ local function help()
 end
 
 local function stop()
-    dfhack.run_command{'repeat', '-cancel', job_name}
+    repeatUtil.cancel(job_name)
     print('autounsuspend Stopped.')
 end
 
 local function start()
-    dfhack.run_command{'repeat', '-name', job_name, '-time', '1',
-                       '-timeUnits', 'days', '-command', '[', 'unsuspend', ']'}
+    local unsuspend_fn = function() dfhack.run_script('unsuspend') end
+    repeatUtil.scheduleEvery(job_name, '1', 'days', unsuspend_fn)
     print('autounsuspend Running.')
 end
 

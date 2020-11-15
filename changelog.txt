@@ -19,7 +19,7 @@ that repo.
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
 - `quickfort`: fix query blueprint statistics being added to the wrong metric when both a query and a zone blueprint are run by the same meta blueprint
 - `quickfort`: display missing blueprint labels in gui dialog list
-- `autounsuspend` and `unsuspend`: now both leave buildingplan-managed buildings alone
+- `unsuspend`: now leaves buildingplan-managed buildings alone and doesn't unsuspend underwater tasks
 
 ## Misc Improvements
 - `devel/export-dt-ini`: updated for Dwarf Therapist 41.2.0
