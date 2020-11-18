@@ -297,6 +297,7 @@ local preference_functions = {
             local item_subtype = -1
             local food_mat_index = mat_info.material.food_mat_index
             -- FIXME: is fish missing? Apparently it's considered meat...
+            -- FIXME: maybe automatize this process instead of using a chain of if-elseif statements?
             if food_mat_index.Meat > -1 then
                 item_type = df.item_type.MEAT
             elseif food_mat_index.EdibleCheese > -1 then
@@ -307,6 +308,8 @@ local preference_functions = {
                 item_type = df.item_type.DRINK
             elseif food_mat_index.CookableLiquid > -1 then
                 item_type = df.item_type.LIQUID_MISC
+            elseif food_mat_index.CookablePowder > -1 then
+                item_type = df.item_type.POWDER_MISC
             elseif food_mat_index.CookableSeed > -1 then
                 item_type = df.item_type.SEEDS
             elseif food_mat_index.CookableLeaf > -1 then
