@@ -99,10 +99,9 @@ function assign(goals, unit, reset)
         assert(type(realized) == "boolean")
         goal = goal:upper()
         if df.goal_type[goal] then
-            local _, _, pos = utils.insert_or_update(unit.status.current_soul.personality.dreams,
-                                   { new = true, type = df.goal_type[goal] },
+            utils.insert_or_update(unit.status.current_soul.personality.dreams,
+                                   { new = true, type = df.goal_type[goal], flags = {accomplished = realized} },
                                    "type")
-            unit.status.current_soul.personality.dreams[pos].flags.accomplished = realized
         else
             print_yellow("WARNING: '" .. goal .. "' is not a valid goal token. Skipping...")
         end
