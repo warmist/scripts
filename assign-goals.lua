@@ -100,7 +100,7 @@ function assign(goals, unit, reset)
         goal = goal:upper()
         if df.goal_type[goal] then
             utils.insert_or_update(unit.status.current_soul.personality.dreams,
-                                   { new = true, type = df.goal_type[goal], unk8 = realized and 1 or 0 },
+                                   { new = true, type = df.goal_type[goal], flags = {accomplished = realized} },
                                    "type")
         else
             print_yellow("WARNING: '" .. goal .. "' is not a valid goal token. Skipping...")
