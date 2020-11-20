@@ -1,3 +1,14 @@
+-- fixes some equipment corruption issues (bug 11014)
+
+--[====[
+
+fix/corrupt-equipment
+=====================
+
+Fixes some corruption that can occur in equipment lists, as in :bug:`11014`.
+
+]====]
+
 function fix_equipment ()
   local categories =
     {{"FLASK", df.item_flaskst},
