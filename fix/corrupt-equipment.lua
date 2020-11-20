@@ -40,13 +40,13 @@ function fix_equipment ()
      {"BACKPACK", df.item_backpackst},
      {"QUIVER", df.item_quiverst}}
 
-  for i, element in ipairs (categories) do
-    fix_vector(df.global.ui.equipment.items_unmanifested[element[1]], valid_items,
-      "Removing corrupted unmanifested " .. element[1])
-    fix_vector(df.global.ui.equipment.items_unassigned[element[1]], valid_items,
-      "Removing corrupted unassigned " .. element[1])
-    fix_vector(df.global.ui.equipment.items_assigned[element[1]], valid_items,
-      "Removing corrupted assigned " .. element[1])
+  for category in pairs(df.global.ui.equipment.items_unmanifested) do
+    fix_vector(df.global.ui.equipment.items_unmanifested[category], valid_items,
+      "Removing corrupted unmanifested " .. category)
+    fix_vector(df.global.ui.equipment.items_unassigned[category], valid_items,
+      "Removing corrupted unassigned " .. category)
+    fix_vector(df.global.ui.equipment.items_assigned[category], valid_items,
+      "Removing corrupted assigned " .. category)
   end
 
   for i, squad in ipairs (df.global.world.squads.all) do
