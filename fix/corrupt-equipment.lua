@@ -62,13 +62,10 @@ function fix_equipment ()
       for k, position in ipairs (squad.positions) do
         for l, item_id in ipairs (position.assigned_items) do
           local legal_type_found = false
-          local item = df.item.find (item_id)
+          local item = df.item.find(item_id)
 
-          if not item then
-            dfhack.printerr ("Nonexistent item assigned to squad member " .. tostring (k) .. " of squad " .. squad_name ..
-                             ". Detection only. No action performed.")
-
-          else
+          -- the item itself may not be present - e.g. items belonging to military units on raids
+          if item then
             for m, element in ipairs (categories) do
               if item._type == element [2] then
                 legal_type_found = true
