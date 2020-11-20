@@ -41,6 +41,8 @@ function fix_equipment ()
      {"QUIVER", df.item_quiverst}}
 
   for i, element in ipairs (categories) do
+    fix_vector(df.global.ui.equipment.items_unmanifested[element[1]], valid_items,
+      "Removing corrupted unmanifested " .. element[1])
     fix_vector(df.global.ui.equipment.items_unassigned[element[1]], valid_items,
       "Removing corrupted unassigned " .. element[1])
     fix_vector(df.global.ui.equipment.items_assigned[element[1]], valid_items,
