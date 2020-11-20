@@ -9,7 +9,24 @@ Fixes some corruption that can occur in equipment lists, as in :bug:`11014`.
 
 ]====]
 
+local utils = require("utils")
+
+function fix_vector(vec, valid_items, message)
+  local raw_vec = df.reinterpret_cast("ptr-vector", vec)
+  for i = #vec - 1, 0, -1 do
+    if not valid_items[utils.addressof(raw_vec[i])] then
+      dfhack.printerr(string.format("%s (index %i)", message, i))
+      vec:erase(i)
+    end
+  end
+end
+
 function fix_equipment ()
+  local valid_items = {}
+  for _, item in ipairs(df.item.get_vector()) do
+    valid_items[utils.addressof(item)] = true
+  end
+
   local categories =
     {{"FLASK", df.item_flaskst},
      {"WEAPON", df.item_weaponst},
@@ -24,21 +41,10 @@ function fix_equipment ()
      {"QUIVER", df.item_quiverst}}
 
   for i, element in ipairs (categories) do
-    for k = #df.global.ui.equipment.items_unassigned [element [1]] - 1, 0, -1 do
-      if df.global.ui.equipment.items_unassigned [element [1]] [k]._type ~= element [2] then
-        dfhack.printerr ("Corrupted unassigned " .. element [1] .. ", removing", k)
-        df.global.ui.equipment.items_unassigned [element [1]]:erase (k)
-      end
-    end
-  end
-
-  for i, element in ipairs (categories) do
-    for k = #df.global.ui.equipment.items_assigned [element [1]] - 1, 0, -1 do
-      if df.global.ui.equipment.items_assigned [element [1]] [k]._type ~= element [2] then
-        dfhack.printerr ("Corrupted assigned " .. element [1] .. ", removing", k)
-        df.global.ui.equipment.items_assigned [element [1]]:erase (k)
-      end
-    end
+    fix_vector(df.global.ui.equipment.items_unassigned[element[1]], valid_items,
+      "Removing corrupted unassigned " .. element[1])
+    fix_vector(df.global.ui.equipment.items_assigned[element[1]], valid_items,
+      "Removing corrupted assigned " .. element[1])
   end
 
   for i, squad in ipairs (df.global.world.squads.all) do
