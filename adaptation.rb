@@ -64,15 +64,12 @@ set_adaptation_value = lambda { |u,v|
     next if u.flags2.killed
     u.status.misc_traits.each { |t|
         if t.id == :CaveAdapt
-            # TBD: expose the color_ostream console and color values of
-            # t.value based on adaptation level
             if mode == 'show'
                 if df.respond_to?(:print_color)
-                    print "Unit #{u.id} (#{u.name}) has an adaptation of "
+                    df.print_color(COLOR_WHITE, "Unit #{u.id} (#{u.name}) has an adaptation of ")
                     case t.value
                     when 0..399999
-                        #df.print_color(COLOR_GREEN, "#{t.value}\n")
-                        print "#{t.value}\n"
+                        df.print_color(COLOR_GREEN, "#{t.value}\n")
                     when 400000..599999
                         df.print_color(COLOR_YELLOW, "#{t.value}\n")
                     else
@@ -86,8 +83,22 @@ set_adaptation_value = lambda { |u,v|
                 t.value = v
                 num_set += 1
             end
+            return
         end
     }
+
+    # If we arrive here, no `CaveAdapt` trait has been found, so we'll add it if needed.
+    if mode == 'show'
+        df.print_color(COLOR_WHITE, "Unit #{u.id} (#{u.name}) has an adaptation of ")
+        df.print_color(COLOR_GREEN, "0\n")
+    elsif mode == 'set'
+        new_trait = DFHack::UnitMiscTrait.cpp_new
+        new_trait.id = :CaveAdapt
+        new_trait.value = v
+        num_set += 1
+        u.status.misc_traits.push(new_trait)
+        puts "Unit #{u.id} (#{u.name}) changed from 0 to #{v}"
+    end
 }
 
 case who
