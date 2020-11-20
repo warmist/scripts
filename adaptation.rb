@@ -15,10 +15,10 @@ The ``value`` must be between 0 and 800,000 (inclusive).
 =end
 
 # Color constants, values mapped to color_value enum in include/ColorText.h
+COLOR_RESET = -1
 COLOR_GREEN  = 2
 COLOR_RED    = 4
 COLOR_YELLOW = 14
-COLOR_WHITE  = 15
 
 def usage(s)
     if nil != s
@@ -66,7 +66,7 @@ set_adaptation_value = lambda { |u,v|
         if t.id == :CaveAdapt
             if mode == 'show'
                 if df.respond_to?(:print_color)
-                    df.print_color(COLOR_WHITE, "Unit #{u.id} (#{u.name}) has an adaptation of ")
+                    df.print_color(COLOR_RESET, "Unit #{u.id} (#{u.name}) has an adaptation of ")
                     case t.value
                     when 0..399999
                         df.print_color(COLOR_GREEN, "#{t.value}\n")
@@ -89,7 +89,7 @@ set_adaptation_value = lambda { |u,v|
 
     # If we arrive here, no `CaveAdapt` trait has been found, so we'll add it if needed.
     if mode == 'show'
-        df.print_color(COLOR_WHITE, "Unit #{u.id} (#{u.name}) has an adaptation of ")
+        df.print_color(COLOR_RESET, "Unit #{u.id} (#{u.name}) has an adaptation of ")
         df.print_color(COLOR_GREEN, "0\n")
     elsif mode == 'set'
         new_trait = DFHack::UnitMiscTrait.cpp_new
