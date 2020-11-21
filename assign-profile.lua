@@ -64,8 +64,8 @@ Examples:
 
 * Loads and applies the profile called "ARCHER" in the provided (fictional) json,
   keeping all the old characteristics but the attributes and the skills, which
-  will be reset (and then, if the profile provides some attributes values, those
-  new values will be applied)::
+  will be reset (and then, if the profile provides some attributes or skills values,
+  those new values will be applied)::
 
     assign-profile -file /hack/scripts/military_profiles.json -profile ARCHER -reset [ ATTRIBUTES SKILLS ]
 
