@@ -62,6 +62,7 @@ num_set = 0
 set_adaptation_value = lambda { |u,v|
     next if !df.unit_iscitizen(u)
     next if u.flags2.killed
+    trait_found = false
     u.status.misc_traits.each { |t|
         if t.id == :CaveAdapt
             if mode == 'show'
@@ -83,21 +84,23 @@ set_adaptation_value = lambda { |u,v|
                 t.value = v
                 num_set += 1
             end
-            return
+            #return  # Doesn't work on Ruby 1.8
+            trait_found = true
         end
     }
 
-    # If we arrive here, no `CaveAdapt` trait has been found, so we'll add it if needed.
-    if mode == 'show'
-        df.print_color(COLOR_RESET, "Unit #{u.id} (#{u.name}) has an adaptation of ")
-        df.print_color(COLOR_GREEN, "0\n")
-    elsif mode == 'set'
-        new_trait = DFHack::UnitMiscTrait.cpp_new
-        new_trait.id = :CaveAdapt
-        new_trait.value = v
-        num_set += 1
-        u.status.misc_traits.push(new_trait)
-        puts "Unit #{u.id} (#{u.name}) changed from 0 to #{v}"
+    if !trait_found
+        if mode == 'show'
+            df.print_color(COLOR_RESET, "Unit #{u.id} (#{u.name}) has an adaptation of ")
+            df.print_color(COLOR_GREEN, "0\n")
+        elsif mode == 'set'
+            new_trait = DFHack::UnitMiscTrait.cpp_new
+            new_trait.id = :CaveAdapt
+            new_trait.value = v
+            num_set += 1
+            u.status.misc_traits.push(new_trait)
+            puts "Unit #{u.id} (#{u.name}) changed from 0 to #{v}"
+        end
     end
 }
 
