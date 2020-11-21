@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## Fixes
+- `adaptation`: fixed handling of units with no cave adaptation suffered yet
 - `assign-goals`: fixed error preventing new goals from being created
 - `assign-preferences`: fixed handling of preferences for flour
 - `quickfort`: fix handling of modifier keys (e.g. ``{Ctrl}`` or ``{Alt}``) in query blueprints
