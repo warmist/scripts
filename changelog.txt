@@ -13,6 +13,9 @@ that repo.
 
 # Future
 
+## New Scripts
+- `fix/corrupt-equipment`: fixes some military equipment-related corruption issues that can cause DF crashes
+
 ## Fixes
 - `assign-goals`: fixed error preventing new goals from being created
 - `assign-preferences`: fixed handling of preferences for flour
