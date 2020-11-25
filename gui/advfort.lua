@@ -1090,10 +1090,10 @@ function fake_linking(lever,building,slots)
     item1.general_refs:insert("#",{new=df.general_ref_building_triggertargetst,building_id=building.id})
 
     lever.linked_mechanisms:insert("#",item2)
-    --fixes...
-	if building.door_flags then
+    pcall(function() -- if building.door_flags then
+        -- Just hatches and doors
         building.door_flags.operated_by_mechanisms=true
-    end
+    end)
 
     dfhack.gui.showAnnouncement("Linked!",COLOR_YELLOW,true)
 end
@@ -1118,8 +1118,8 @@ function LinkBuilding(args)
         end
     else
         if lever_bld==bld then --todo more invalid targets
-			dfhack.gui.showAnnouncement("Deselected lever",COLOR_RED,true)
-			lever_id = nil
+            dfhack.gui.showAnnouncement("Deselected trigger",COLOR_RED,true)
+            lever_id = nil
             return
         end
         -- args.job_type=df.job_type.LinkBuildingToTrigger
