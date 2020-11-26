@@ -1109,7 +1109,7 @@ function LinkBuilding(args)
         end
     end
     if lever_bld==nil then
-        if bld:getType()==df.building_type.Trap and bld:getSubtype()==df.trap_type.Lever or bld:getSubtype()==df.trap_type.PressurePlate then
+        if bld:getType()==df.building_type.Trap and (bld:getSubtype()==df.trap_type.Lever or bld:getSubtype()==df.trap_type.PressurePlate) then
             lever_id=bld.id
             dfhack.gui.showAnnouncement("Selected trigger for linking",COLOR_YELLOW,true)
             return
