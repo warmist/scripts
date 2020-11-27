@@ -81,7 +81,7 @@ end
 
 -- adapted from example on http://lua-users.org/wiki/LuaCsv
 -- returns a list of strings corresponding to the text in the cells in the row
-local function tokenize_next_csv_line(file, first_col_only)
+local function tokenize_next_csv_line(file, max_cols)
     local get_next_line_fn = function() return get_next_line(file) end
     local line = get_next_line_fn()
     if not line then return nil end
@@ -90,7 +90,7 @@ local function tokenize_next_csv_line(file, first_col_only)
     local token, pos = get_next_csv_token(line, 1, get_next_line_fn, sep)
     while token do
         table.insert(tokens, token)
-        if first_col_only then break end
+        if max_cols > 0 and #tokens >= max_cols then break end
         token, pos = get_next_csv_token(line, pos, get_next_line_fn)
     end
     return tokens
@@ -216,8 +216,8 @@ local function make_cell_label(col_num, row_num)
     return get_col_name(col_num) .. tostring(math.floor(row_num))
 end
 
-local function read_csv_line(ctx, first_col_only)
-    return tokenize_next_csv_line(ctx.csv_file, first_col_only)
+local function read_csv_line(ctx, max_cols)
+    return tokenize_next_csv_line(ctx.csv_file, max_cols)
 end
 
 local function cleanup_csv_ctx(ctx)
@@ -251,7 +251,10 @@ local function reset_xlsx_ctx(ctx)
     ctx.xlsx_sheet = xlsxreader.open_sheet(ctx.xlsx_file, ctx.sheet_name)
 end
 
-local function init_reader_ctx(filepath, sheet_name, first_col_only)
+-- max_cols is the maximum number of columns to parse. parses all columns if
+-- 0 or unset.
+local function init_reader_ctx(filepath, sheet_name, max_cols)
+    max_cols = max_cols or 0
     local reader_ctx = {filepath=filepath}
     if string.find(filepath:lower(), '[.]csv$') then
         local file = io.open(filepath)
@@ -261,7 +264,7 @@ local function init_reader_ctx(filepath, sheet_name, first_col_only)
         end
         reader_ctx.csv_file = file
         reader_ctx.get_row_tokens =
-                function(ctx) return read_csv_line(ctx, first_col_only) end
+                function(ctx) return read_csv_line(ctx, max_cols) end
         reader_ctx.cleanup = cleanup_csv_ctx
         reader_ctx.reset = reset_csv_ctx
     else
@@ -343,12 +346,18 @@ local function process_levels(reader_ctx, label, start_cursor_coord)
                                   modeline_id)
         if first_line then
             if not modeline then
-                modeline = {mode='dig', label="1"}
+                modeline = {mode='dig', label='1'}
                 reader_ctx.reset(reader_ctx) -- we need to reread the first line
             end
             first_line = false
         end
-        if modeline then modeline_id = modeline_id + 1 end
+        if modeline then
+            if modeline.mode == 'ignore' or modeline.mode == 'aliases' then
+                modeline = nil
+            else
+                modeline_id = modeline_id + 1
+            end
+        end
     end
     local x = start_cursor_coord.x - (modeline.startx or 1) + 1
     local y = start_cursor_coord.y - (modeline.starty or 1) + 1
@@ -365,10 +374,35 @@ local function process_levels(reader_ctx, label, start_cursor_coord)
     return section_data_list
 end
 
-local function get_sheet_modelines(reader_ctx)
-    local modelines = {}
+-- validates the format of aliasname (as per parse_alias_combined() below)
+-- if the format is valid, adds the alias to the aliases table and returns true.
+-- otherwise returns false.
+local function parse_alias_separate(aliasname, definition, aliases)
+    if aliasname and definition and
+            aliasname:find('^([%w-_][%w-_]+)$') and #definition > 0 then
+        aliases[aliasname] = definition
+        return true
+    end
+    return false
+end
+
+-- parses aliases of the form
+--   aliasname: value
+-- where aliasname must be at least two alphanumerics long (plus - and _) to
+-- distinguish them from regular keystrokes
+-- if the format is matched, the alias is added to the aliases table and the
+-- function returns true. if the format is not matched, the function returns
+-- false.
+function parse_alias_combined(combined_str, aliases)
+    if not combined_str then return false end
+    local _, _, aliasname, definition = combined_str:find('^([^:]+):%s*(.*)')
+    return parse_alias_separate(aliasname, definition, aliases)
+end
+
+local function get_sheet_metadata(reader_ctx)
+    local modelines, aliases = {}, {}
     local row_tokens = reader_ctx.get_row_tokens(reader_ctx)
-    local first_line = true
+    local first_line, alias_mode = true, false
     while row_tokens do
         local modeline = nil
         if #row_tokens > 0 then
@@ -381,20 +415,29 @@ local function get_sheet_modelines(reader_ctx)
             end
             first_line = false
         end
-        if modeline and modeline.mode ~= 'ignore' then
-            table.insert(modelines, modeline)
+        if modeline then
+            alias_mode = false
+            if modeline.mode == 'aliases' then
+                alias_mode = true
+            elseif modeline.mode ~= 'ignore' then
+                table.insert(modelines, modeline)
+            end
+        elseif alias_mode then
+            if not parse_alias_combined(row_tokens[1], aliases) then
+                parse_alias_separate(row_tokens[1], row_tokens[2], aliases)
+            end
         end
         row_tokens = reader_ctx.get_row_tokens(reader_ctx)
     end
-    return modelines
+    return modelines, aliases
 end
 
--- returns a list of modeline tables
-function get_modelines(filepath, sheet_name)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name, true)
+-- returns a list of modeline tables and a map of discovered aliases
+function get_metadata(filepath, sheet_name)
+    local reader_ctx = init_reader_ctx(filepath, sheet_name, 2)
     return dfhack.with_finalize(
         function() reader_ctx.cleanup(reader_ctx) end,
-        function() return get_sheet_modelines(reader_ctx) end
+        function() return get_sheet_metadata(reader_ctx) end
     )
 end
 
@@ -408,7 +451,7 @@ Map keys are numbers, and the keyspace is sparse -- only cells that have content
 are non-nil.
 ]]
 function process_section(filepath, sheet_name, label, start_cursor_coord)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name, false)
+    local reader_ctx = init_reader_ctx(filepath, sheet_name, 0)
     return dfhack.with_finalize(
         function() reader_ctx.cleanup(reader_ctx) end,
         function()
