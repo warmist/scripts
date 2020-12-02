@@ -1090,10 +1090,10 @@ function fake_linking(lever,building,slots)
     item1.general_refs:insert("#",{new=df.general_ref_building_triggertargetst,building_id=building.id})
 
     lever.linked_mechanisms:insert("#",item2)
-    --fixes...
-    if building:getType()==df.building_type.Door then
+    pcall(function() -- if building.door_flags then
+        -- Just hatches and doors
         building.door_flags.operated_by_mechanisms=true
-    end
+    end)
 
     dfhack.gui.showAnnouncement("Linked!",COLOR_YELLOW,true)
 end
@@ -1109,16 +1109,17 @@ function LinkBuilding(args)
         end
     end
     if lever_bld==nil then
-        if bld:getType()==df.building_type.Trap and bld:getSubtype()==df.trap_type.Lever then
+        if bld:getType()==df.building_type.Trap and (bld:getSubtype()==df.trap_type.Lever or bld:getSubtype()==df.trap_type.PressurePlate) then
             lever_id=bld.id
-            dfhack.gui.showAnnouncement("Selected lever for linking",COLOR_YELLOW,true)
+            dfhack.gui.showAnnouncement("Selected trigger for linking",COLOR_YELLOW,true)
             return
         else
-            dfhack.gui.showAnnouncement("You first need a lever",COLOR_RED,true)
+            dfhack.gui.showAnnouncement("You first need a trigger",COLOR_RED,true)
         end
     else
-        if lever_bld==bld then
-            dfhack.gui.showAnnouncement("Invalid target",COLOR_RED,true) --todo more invalid targets
+        if lever_bld==bld then --todo more invalid targets
+            dfhack.gui.showAnnouncement("Deselected trigger",COLOR_RED,true)
+            lever_id = nil
             return
         end
         -- args.job_type=df.job_type.LinkBuildingToTrigger
