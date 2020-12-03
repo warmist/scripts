@@ -104,7 +104,7 @@ local default_filename = "/hack/scripts/dwarf_profiles.json"
 --luacheck: in=string[],df.unit,bool[]
 function apply_profile(profile, unit, reset)
     assert(type(profile) == "table")
-    assert(not unit or type(unit) == "number" or type(unit) == "userdata")
+    assert(not unit or type(unit) == "number" or df.unit:is_instance(unit))
     assert(not reset or type(reset) == "table")
 
     reset = reset or {}
