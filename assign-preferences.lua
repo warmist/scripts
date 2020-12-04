@@ -583,7 +583,7 @@ local preference_functions = {
 ---   :reset: boolean, or nil.
 function assign(preferences, unit, reset)
     assert(not preferences or type(preferences) == "table")
-    assert(not unit or type(unit) == "number" or type(unit) == "userdata")
+    assert(not unit or type(unit) == "number" or df.unit:is_instance(unit))
     assert(not reset or type(reset) == "boolean")
 
     local preferences = preferences or {} --as:string[][]
