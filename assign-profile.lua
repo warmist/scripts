@@ -36,49 +36,51 @@ Usage:
                     the profile to apply. It's the name of
                     the profile as stated in the json file.
 
-``-reset <list of characteristics>``:
+``-reset [ <list of characteristics> ]``:
                     the characteristics to be reset/cleared. If not present,
-                    it will not clear or reset any characteristic. If it's a
+                    it will not clear or reset any characteristic, and it will
+                    simply add what is described in the profile. If it's a
                     valid list of characteristic, those characteristics will
-                    be reset, and then, if present in the profile, the new
-                    values will be applied. If set to ``PROFILE``, it will
-                    reset only the characteristics changed in the profile
-                    (and then the new values will be applied). If set to
-                    ``ALL``, it will reset EVERY characteristic. Possible
-                    values: ``ALL``, ``PROFILE``, ``ATTRIBUTES``, ``SKILLS``,
+                    be reset, and then what is described in the profile
+                    will be applied. If set to ``PROFILE``, it will reset
+                    only the characteristics directly modified by the profile
+                    (and then the new values described will be applied).
+                    If set to ``ALL``, it will reset EVERY characteristic and
+                    then it will apply the profile.
+                    Accepted values:
+                    ``ALL``, ``PROFILE``, ``ATTRIBUTES``, ``SKILLS``,
                     ``PREFERENCES``, ``BELIEFS``, ``GOALS``, ``FACETS``.
+                    There must be a space before and after each square
+                    bracket. If only one value is provided, the square brackets
+                    can be omitted.
 
 Examples:
 
-* Resets/clears all the characteristics of the unit, leaving behind a very bland
-  character::
+* Loads and applies the profile called "DOCTOR" in the default json file,
+  resetting/clearing all the characteristics changed by the profile, leaving
+  the others unchanged, and then applies the new values::
 
-    assign-profile -reset ALL
+    assign-profile -profile DOCTOR -reset PROFILE
 
-* Loads and applies the profile called "CARPENTER" in the default json file,
-  resetting/clearing all the characteristics listed in the profile, and then
-  applying the new values::
+* Loads and applies the profile called "ARCHER" in the provided (fictional) json,
+  keeping all the old characteristics but the attributes and the skills, which
+  will be reset (and then, if the profile provides some attributes or skills values,
+  those new values will be applied)::
 
-    assign-profile -profile CARPENTER -reset PROFILE
-
-* Loads and applies the profile called "ARCHER" in the provided json file,
-  keeping all the old characteristics but the attributes, which will be reset
-  (and then, if the profile provides some attributes values, those value will be
-  applied)::
-
-    assign-profile -file /hack/scripts/military_profiles.json -profile ARCHER -reset ATTRIBUTES
+    assign-profile -file /hack/scripts/military_profiles.json -profile ARCHER -reset [ ATTRIBUTES SKILLS ]
 
 ]====]
 
 local json = require "json"
+local utils = require("utils")
 
-local valid_args = {
-    HELP = "-help",
-    UNIT = "-unit",
-    FILE = "-file",
-    PROFILE = "-profile",
-    RESET = "-reset",
-}
+local valid_args = utils.invert({
+                                    "help",
+                                    "unit",
+                                    "file",
+                                    "profile",
+                                    "reset",
+                                })
 
 -- add a script here to include it in the profile. The key must be the same as written in the json.
 local scripts = {
@@ -92,36 +94,25 @@ local scripts = {
 
 local default_filename = "/hack/scripts/dwarf_profiles.json"
 
--- ----------------------------------------------- UTILITY FUNCTIONS ------------------------------------------------ --
-local function contains(table, value)
-    for _, v in pairs(table) do
-        if v == value then
-            return true
-        end
-    end
-    return false
-end
-
 -- ------------------------------------------------- APPLY PROFILE -------------------------------------------------- --
---- Apply the given profile to a unit, erasing or resetting the unit characteristics if requested.
----   :profile: nil, or a table. Each field has a characteristic name as key, and a table suitable to be passed as
----             an argument to the ``assign`` function of the module related to the characteristic.
----             See the modules documentation for more details.
----   :unit: a valid unit id, a df.unit object, or nil. If nil, the currently selected unit will be targeted.
----   :reset: nil, or a table value/boolean. See this script documentation for valid values.
+--- Apply the given profile to a unit, erasing or resetting the unit characteristics as requested.
+---   :profile: a table. Each field has a characteristic name as key, and a table suitable to be passed as
+---             an argument to the ``assign`` function of the script related to the characteristic.
+---             See the called script documentation for more details.
+---   :unit: a valid unit id, a df.unit object, or nil. The called script has the responsibility to validate this value.
+---   :reset: nil, or a list of values. See this script documentation for accepted values.
 --luacheck: in=string[],df.unit,bool[]
-function apply_profile(profile, unit, reset_table)
-    assert(not profile or type(profile) == "table")
-    assert(not unit or type(unit) == "number" or type(unit) == "userdata")
-    assert( not reset_table or type(reset_table) == "table")
+function apply_profile(profile, unit, reset)
+    assert(type(profile) == "table")
+    assert(not unit or type(unit) == "number" or df.unit:is_instance(unit))
+    assert(not reset or type(reset) == "table")
 
-    profile = profile or {}
-    reset_table = reset_table or {}
+    reset = reset or {}
 
     local function apply(characteristic_name, script)
-        local reset_flag = reset_table.ALL or
-                reset_table[characteristic_name] ~= nil or
-                (reset_table.PROFILE and profile[characteristic_name] ~= nil)
+        local reset_flag = reset.ALL ~= nil or
+                reset[characteristic_name] ~= nil or
+                (reset.PROFILE and profile[characteristic_name] ~= nil)
         script.assign(profile[characteristic_name], unit, reset_flag)
     end
 
@@ -132,8 +123,8 @@ end
 
 -- --------------------------------------------------- LOAD PROFILE ------------------------------------------------- --
 --- Load the given profile, searching it inside the given JSON file (if not nil) or inside the default JSON file.
---- The filename must begin with a slash and must be a relative path starting from the root DF
---- directory and ending at the desired file.
+--- The filename must begin with a slash and must be a relative path starting from the root DF directory and ending
+--- with the desired filename.
 --- Return the parsed profile as a table.
 --luacheck: in=string,string
 function load_profile(profile_name, filename)
@@ -155,63 +146,40 @@ end
 
 -- ------------------------------------------------------ MAIN ------------------------------------------------------ --
 local function main(...)
-    local args = { ... }
+    local args = utils.processArgs({...}, valid_args)
 
-    if #args == 0 then
+    if args.help then
         print(help)
         return
     end
 
-    local unit_id
-    local filename
-    local profile_name
-    local reset_table = {}
-
-
-    local i = 1
-    while i <= #args do
-        local arg = args[i]
-        if arg == valid_args.HELP then
-            print(help)
-            return
-        elseif arg == valid_args.UNIT then
-            i = i + 1 -- consume next arg
-            local unit_id_str = args[i]
-            if not unit_id_str then
-                -- we reached the end of the arguments list
-                qerror("Missing unit id.")
-            end
-            unit_id = tonumber(unit_id_str)
-            if not unit_id then
-                qerror("'" .. unit_id_str .. "' is not a valid unit ID.")
-            end
-        elseif arg == valid_args.FILE then
-            i = i + 1 -- consume next arg
-            filename = args[i]
-            if not filename then
-                -- we reached the end of the arguments list
-                qerror("Missing profile name.")
-            end
-        elseif arg == valid_args.PROFILE then
-            i = i + 1 -- consume next arg
-            profile_name = args[i]
-            if not profile_name then
-                -- we reached the end of the arguments list
-                qerror("Missing profile name.")
-            end
-        elseif arg == valid_args.RESET then
-            while args[i + 1] and not contains(valid_args, args[i + 1]) do
-                i = i + 1
-                reset_table[args[i]:upper()] = true
-            end
-        else
-            qerror("'" .. arg .. "' is not a valid argument.")
+    local unit
+    if args.unit then
+        unit = tonumber(args.unit)
+        if not unit then
+            qerror("'" .. args.unit .. "' is not a valid unit ID.")
         end
-        i = i + 1 -- go to the next argument
+    end
+
+    local filename = args.file
+
+    local profile_name
+    if args.profile then
+        profile_name = args.profile
+    else
+        qerror("Missing profile name.")
+    end
+
+    local reset
+    if type(args.reset) == "string" then
+        reset = {}
+        reset[args.reset] = 1
+    elseif type(args.reset) == "table" then
+        reset = utils.invert(args.reset)
     end
 
     local profile = load_profile(profile_name, filename)
-    apply_profile(profile, unit_id, reset_table)
+    apply_profile(profile, unit_id, reset)
 end
 
 if not dfhack_flags.module then
