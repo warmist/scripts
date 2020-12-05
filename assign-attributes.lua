@@ -139,7 +139,7 @@ end
 ---   :reset: boolean, or nil.
 function assign(attributes, unit, reset)
     assert(not attributes or type(attributes) == "table")
-    assert(not unit or type(unit) == "number" or type(unit) == "userdata")
+    assert(not unit or type(unit) == "number" or df.unit:is_instance(unit))
     assert(not reset or type(reset) == "boolean")
 
     attributes = attributes or {}
