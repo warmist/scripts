@@ -154,7 +154,7 @@ Examples:
 
 * "likes alabaster and willow wood"::
 
-    assign-preferences -reset -likematerial [ INORGANIC:OBSIDAN PLANT:WILLOW:WOOD ]
+    assign-preferences -reset -likematerial [ INORGANIC:ALABASTER PLANT:WILLOW:WOOD ]
 
 * "likes sparrows for their ..."::
 
