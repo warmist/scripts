@@ -437,7 +437,7 @@ local function no_next_line()
 end
 
 local function get_next_param(etoken, start)
-    local _, pos, name = etoken:find('^(%w[%w]+)=.', start)
+    local _, pos, name = etoken:find('%s*([%w-_][%w-_]+)=.', start)
     return name, pos
 end
 
