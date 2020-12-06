@@ -79,7 +79,8 @@ function do_run(zlevel, grid, ctx)
                 if handle_modifiers(token, modifiers) then goto continue end
                 local kcodes = quickfort_keycodes.get_keycodes(token, modifiers)
                 if not kcodes then
-                    qerror(string.format('unknown key: "%s"', token))
+                    qerror(string.format(
+                            'unknown alias or keycode: "%s"', token))
                 end
                 gui.simulateInput(dfhack.gui.getCurViewscreen(true), kcodes)
                 modifiers = {}
