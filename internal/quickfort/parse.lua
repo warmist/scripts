@@ -85,7 +85,7 @@ end
 
 local function parse_label(modeline, start_pos, filename, marker_values)
     local _, label_str_end, label_str =
-            string.find(modeline, '^%s+label(%b())', start_pos)
+            string.find(modeline, '^%s+label%s*(%b())', start_pos)
     if not label_str then
         return false, start_pos
     end
@@ -102,11 +102,11 @@ end
 
 local function parse_start(modeline, start_pos, filename, marker_values)
     local _, start_str_end, start_str =
-            string.find(modeline, '^%s+start(%b())', start_pos)
+            string.find(modeline, '^%s+start%s*(%b())', start_pos)
     if not start_str or #start_str == 0 then return false, start_pos end
     local _, _, startx, starty, start_comment =
             string.find(start_str,
-                        '^%(%s*(%d+)%s*[;, ]%s*(%d+)%s*[;, ]?%s*(.*)%)$')
+                        '^%(%s*(%d+)%s-[;, ]%s-(%d+)%s-[;, ]?%s*(.*)%)$')
     if startx and starty then
         marker_values.startx = startx
         marker_values.starty = starty
@@ -121,7 +121,7 @@ end
 
 local function parse_hidden(modeline, start_pos, filename, marker_values)
     local _, hidden_str_end, hidden_str =
-            string.find(modeline, '^%s+hidden(%b())', start_pos)
+            string.find(modeline, '^%s+hidden%s*(%b())', start_pos)
     if not hidden_str or #hidden_str == 0 then return false, start_pos end
     marker_values.hidden = true
     return true, hidden_str_end + 1
@@ -129,7 +129,7 @@ end
 
 local function parse_message(modeline, start_pos, filename, marker_values)
     local _, message_str_end, message_str =
-            string.find(modeline, '^%s+message(%b())', start_pos)
+            string.find(modeline, '^%s+message%s*(%b())', start_pos)
     if not message_str then
         return false, start_pos
     end
