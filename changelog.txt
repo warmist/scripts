@@ -20,6 +20,7 @@ that repo.
 - `adaptation`: fixed handling of units with no cave adaptation suffered yet
 - `assign-goals`: fixed error preventing new goals from being created
 - `assign-preferences`: fixed handling of preferences for flour
+- `deathcause`: fixed an error when inspecting certain corpses
 - `quickfort`: fix handling of modifier keys (e.g. ``{Ctrl}`` or ``{Alt}``) in query blueprints
 - `quickfort`: fix misconfiguration of nest boxes, hives, and slabs that were preventing them from being built from build blueprints
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
