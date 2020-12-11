@@ -179,9 +179,13 @@ function BlueprintDialog:onInput(keys)
 end
 
 local function dialog_command(command, text)
+    local id = get_id(text)
+    local blueprint_name, section_name, mode =
+            quickfort_list.get_blueprint_by_number(id)
+
     local cursor = guidm.getCursorPos()
     if not cursor then
-        if command == 'orders' then
+        if command == 'orders' or mode == 'notes' then
             cursor = {x=0, y=0, z=0}
         else
             dialogs.showMessage('Error',
