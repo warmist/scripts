@@ -15,6 +15,7 @@ local quickfort_parse = reqscript('internal/quickfort/parse')
 local min_dialog_width = 73
 
 -- persist these between dialog invocations
+blueprint_dialog = blueprint_dialog or nil
 show_library = show_library or false
 show_hidden = show_hidden or false
 filter_text = filter_text or nil
@@ -41,6 +42,11 @@ local BlueprintDialog = defclass(BlueprintDialog, dialogs.ListBox)
 BlueprintDialog.ATTRS{
     on_orders = DEFAULT_NIL,
 }
+
+function BlueprintDialog:onDismiss()
+    BlueprintDialog.super.onDismiss()
+    blueprint_dialog = nil
+end
 
 function BlueprintDialog:onRenderFrame(dc, rect)
     BlueprintDialog.super.onRenderFrame(self, dc, rect)
@@ -142,14 +148,14 @@ function BlueprintDialog:refresh()
 end
 
 function BlueprintDialog:onInput(keys)
-    if keys.STANDARDSCROLL_RIGHT then
-        _,obj = self.subviews.list:getSelected()
+    local idx,obj = self.subviews.list:getSelected()
+    if keys.STANDARDSCROLL_RIGHT and obj then
         BlueprintDetails{
             frame_title='Details',
             text=wrap(obj.full_text, self.frame_body.width)
         }:show()
-    elseif keys.CUSTOM_ALT_O then
-        self.on_orders(self.subviews.list:getSelected())
+    elseif keys.CUSTOM_ALT_O and obj then
+        self.on_orders(idx, obj)
     elseif keys.CUSTOM_ALT_L then
         show_library = not show_library
         self:refresh()
@@ -165,9 +171,8 @@ function BlueprintDialog:onInput(keys)
         self:inputToSubviews(keys)
     end
     filter_text = self.subviews.list:getFilter()
-    local _, selected_obj = self.subviews.list:getSelected()
-    if selected_obj then
-        selected_id = get_id(selected_obj.text)
+    if obj then
+        selected_id = get_id(obj.text)
     else
         selected_id = nil
     end
@@ -202,7 +207,8 @@ local function dialog_command(command, text)
 end
 
 function do_dialog()
-    local blueprint_dialog = BlueprintDialog{
+    if blueprint_dialog then qerror('Quickfort gui dialog already open') end
+    blueprint_dialog = BlueprintDialog{
         frame_title='Select quickfort blueprint',
         with_filter=true,
         frame_width=min_dialog_width,
