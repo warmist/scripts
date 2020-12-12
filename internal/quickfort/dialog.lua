@@ -207,7 +207,7 @@ local function dialog_command(command, text)
 end
 
 function do_dialog()
-    if blueprint_dialog then qerror('Quickfort gui dialog already open') end
+    if blueprint_dialog then blueprint_dialog:dismiss() end
     blueprint_dialog = BlueprintDialog{
         frame_title='Select quickfort blueprint',
         with_filter=true,
