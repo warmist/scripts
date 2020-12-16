@@ -734,7 +734,8 @@ local function create_building(b)
     local use_extents = db_entry.has_extents and
             not (db_entry.no_extents_if_solid and is_extent_solid(b))
     if use_extents then
-        fields.room = {x=b.pos.x, y=b.pos.y, width=b.width, height=b.height}
+        fields.room = {x=b.pos.x, y=b.pos.y, width=b.width, height=b.height,
+                       extents=quickfort_building.make_extents(b)}
     end
     local bld, err = dfhack.buildings.constructBuilding{
         type=db_entry.type, subtype=db_entry.subtype, custom=db_entry.custom,
@@ -744,10 +745,6 @@ local function create_building(b)
         -- this is an error instead of a qerror since our validity checking
         -- is supposed to prevent this from ever happening
         error(string.format('unable to place %s: %s', db_entry.label, err))
-    end
-    if use_extents then
-        quickfort_building.assign_extents(
-            bld, quickfort_building.make_extents(b, building_db))
     end
     if buildingplan.isEnabled() and buildingplan.isPlannableBuilding(
             db_entry.type, db_entry.subtype or -1, db_entry.custom or -1) then

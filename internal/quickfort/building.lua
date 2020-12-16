@@ -364,7 +364,7 @@ end
 -- allocate and initialize extents structure from the extents_grid
 -- returns extents, num_tiles
 -- we assume by this point that the extent is valid and non-empty
-function make_extents(b, db)
+function make_extents(b)
     local area = b.width * b.height
     local extents = df.reinterpret_cast(df.building_extents_type,
         df.new('uint8_t', area))
@@ -372,17 +372,9 @@ function make_extents(b, db)
     for i=1,area do
         local extent_x = (i-1) % b.width + 1
         local extent_y = math.floor((i-1) / b.width) + 1
-        local is_in_stockpile = b.extent_grid[extent_x][extent_y]
-        extents[i-1] = is_in_stockpile and 1 or 0
-        if is_in_stockpile then num_tiles = num_tiles + 1 end
+        local is_in_extent = b.extent_grid[extent_x][extent_y]
+        extents[i-1] = is_in_extent and 1 or 0
+        if is_in_extent then num_tiles = num_tiles + 1 end
     end
     return extents, num_tiles
-end
-
--- ensures we don't leak memory by overwriting extents
--- constructBuilding deallocates any extents we pass in, so we have to assign it
--- after the building is created
-function assign_extents(bld, extents)
-    if bld.room.extents then df.delete(bld.room.extents) end
-    bld.room.extents = extents
 end

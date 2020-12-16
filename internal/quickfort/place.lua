@@ -171,19 +171,18 @@ local function create_stockpile(s, stockpile_query_grid)
     log('creating %s stockpile at map coordinates (%d, %d, %d), defined' ..
         ' from spreadsheet cells: %s',
         db_entry.label, s.pos.x, s.pos.y, s.pos.z, table.concat(s.cells, ', '))
-    local extents, ntiles = quickfort_building.make_extents(s, stockpile_db)
-    local fields = {room={x=s.pos.x, y=s.pos.y, width=s.width, height=s.height}}
+    local extents, ntiles = quickfort_building.make_extents(s)
+    local fields = {room={x=s.pos.x, y=s.pos.y, width=s.width, height=s.height,
+                          extents=extents}}
     init_containers(db_entry, ntiles, fields)
     local bld, err = dfhack.buildings.constructBuilding{
         type=df.building_type.Stockpile, abstract=true, pos=s.pos,
         width=s.width, height=s.height, fields=fields}
     if not bld then
-        if extents then df.delete(extents) end
         -- this is an error instead of a qerror since our validity checking
         -- is supposed to prevent this from ever happening
         error(string.format('unable to place stockpile: %s', err))
     end
-    quickfort_building.assign_extents(bld, extents)
     queue_stockpile_settings_init(s, db_entry, stockpile_query_grid)
     return ntiles
 end
