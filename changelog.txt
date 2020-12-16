@@ -26,6 +26,7 @@ that repo.
 - `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
 - `quickfort`: fix query blueprint statistics being added to the wrong metric when both a query and a zone blueprint are run by the same meta blueprint
 - `quickfort`: display missing blueprint labels in gui dialog list
+- `quickfort`: fix occupancy settings for extent-based structures so that stockpiles can be placed within other stockpiles (e.g. in a checkerboard or bullseye pattern)
 - `unsuspend`: now leaves buildingplan-managed buildings alone and doesn't unsuspend underwater tasks
 
 ## Misc Improvements
