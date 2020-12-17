@@ -20,6 +20,8 @@ local function init_keycodes()
     if not file then
         qerror(string.format('failed to open file: "%s"', keycodes_file))
     end
+    -- initialize with "Empty" pseudo-keycode that expands to a 0-length list
+    keycodes = {['[SYM:0:Empty]']={}}
     local cur_binding = nil
     for line in file:lines() do
         line = string.gsub(line, '[\r\n]*$', '')
