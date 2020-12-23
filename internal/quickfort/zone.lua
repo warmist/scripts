@@ -178,8 +178,10 @@ local function create_zone(zone)
         ' from spreadsheet cells: %s',
         db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
         table.concat(zone.cells, ', '))
-    local fields = {room={x=zone.pos.x, y=zone.pos.y,
-                          width=zone.width, height=zone.height},
+    local extents, ntiles =
+            quickfort_building.make_extents(zone)
+    local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
+                          height=zone.height, extents=extents},
                     is_room=true}
     local bld, err = dfhack.buildings.constructBuilding{
         type=df.building_type.Civzone, subtype=df.civzone_type.ActivityZone,
@@ -190,8 +192,6 @@ local function create_zone(zone)
         -- is supposed to prevent this from ever happening
         error(string.format('unable to designate zone: %s', err))
     end
-    local extents, ntiles = quickfort_building.make_extents(zone, zone_db)
-    quickfort_building.assign_extents(bld, extents)
     -- set defaults (should move into constructBuilding)
     bld.gather_flags.pick_trees = true
     bld.gather_flags.pick_shrubs = true
