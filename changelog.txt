@@ -13,6 +13,8 @@ that repo.
 
 # Future
 
+# 0.47.04-r4
+
 ## New Scripts
 - `fix/corrupt-equipment`: fixes some military equipment-related corruption issues that can cause DF crashes
 
@@ -21,26 +23,26 @@ that repo.
 - `assign-goals`: fixed error preventing new goals from being created
 - `assign-preferences`: fixed handling of preferences for flour
 - `deathcause`: fixed an error when inspecting certain corpses
-- `quickfort`: fix handling of modifier keys (e.g. ``{Ctrl}`` or ``{Alt}``) in query blueprints
-- `quickfort`: fix misconfiguration of nest boxes, hives, and slabs that were preventing them from being built from build blueprints
-- `quickfort`: fix valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
-- `quickfort`: fix query blueprint statistics being added to the wrong metric when both a query and a zone blueprint are run by the same meta blueprint
-- `quickfort`: display missing blueprint labels in gui dialog list
-- `quickfort`: fix occupancy settings for extent-based structures so that stockpiles can be placed within other stockpiles (e.g. in a checkerboard or bullseye pattern)
+- `quickfort`: fixed handling of modifier keys (e.g. ``{Ctrl}`` or ``{Alt}``) in query blueprints
+- `quickfort`: fixed misconfiguration of nest boxes, hives, and slabs that were preventing them from being built from build blueprints
+- `quickfort`: fixed valid placement detection for floor hatches, floor grates, and floor bars (they were erroneously being rejected from open spaces and staircase tops)
+- `quickfort`: fixed query blueprint statistics being added to the wrong metric when both a query and a zone blueprint are run by the same meta blueprint
+- `quickfort`: added missing blueprint labels in gui dialog list
+- `quickfort`: fixed occupancy settings for extent-based structures so that stockpiles can be placed within other stockpiles (e.g. in a checkerboard or bullseye pattern)
 - `unsuspend`: now leaves buildingplan-managed buildings alone and doesn't unsuspend underwater tasks
 
 ## Misc Improvements
 - `devel/export-dt-ini`: updated for Dwarf Therapist 41.2.0
 - `gui/advfort`: added support for linking to hatches and pressure plates with mechanisms
 - `modtools/add-syndrome`: added support for specifying syndrome IDs instead of names
-- `quickfort`: query blueprint aliases can now accept parameters for dynamic expansion. see dfhack-config/quickfort/aliases.txt for details.
+- `quickfort`: query blueprint aliases can now accept parameters for dynamic expansion - see dfhack-config/quickfort/aliases.txt for details
 - `quickfort`: alias names can now include dashes and underscores (in addition to letters and numbers)
-- `quickfort`: speed of first call to ``quickfort list`` is significantly improved, especially for large blueprint libraries
-- `quickfort`: add ``query_unsafe`` setting to disable query blueprint error checking. useful for query blueprints that send unusual key sequences.
-- `quickfort`: add support for bookcases, display cases, and offering places (altars)
-- `quickfort`: configuration support for zone pit/pond, gather, and hospital sub-menus in zone blueprints.
-- `quickfort`: remove ``buildings_use_blocks`` setting and replace it with more flexible functionality in `buildingplan`
-- `quickfort`: support creating uninitialized stockpiles with :kbd:`c`
+- `quickfort`: improved speed of first call to ``quickfort list`` significantly, especially for large blueprint libraries
+- `quickfort`: added ``query_unsafe`` setting to disable query blueprint error checking - useful for query blueprints that send unusual key sequences
+- `quickfort`: added support for bookcases, display cases, and offering places (altars)
+- `quickfort`: added configuration support for zone pit/pond, gather, and hospital sub-menus in zone blueprints
+- `quickfort`: removed ``buildings_use_blocks`` setting and replaced it with more flexible functionality in `buildingplan`
+- `quickfort`: added support for creating uninitialized stockpiles with :kbd:`c`
 
 # 0.47.04-r3
 
