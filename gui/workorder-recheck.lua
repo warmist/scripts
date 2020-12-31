@@ -1,4 +1,4 @@
--- Makes selected `Active` work order `Checking`.
+-- Resets the selected work order to the `Checking` state
 --[====[
 
 gui/workorder-recheck
