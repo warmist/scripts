@@ -15,8 +15,8 @@ if df.viewscreen_jobmanagementst:is_instance(scr) then
     if idx < #orders then
         orders[idx].status.active = false
     else
-        dfhack.printerr("Invalid order selected")
+        qerror("Invalid order selected")
     end
 else
-    dfhack.printerr('Must be called on the manager screen (j-m or u-m)')
+    qerror('Must be called on the manager screen (j-m or u-m)')
 end
