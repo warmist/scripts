@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `gui/quickfort`: fast access to the quickfort interactive dialog
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
 # 0.47.04-r4
