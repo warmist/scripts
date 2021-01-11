@@ -16,6 +16,9 @@ that repo.
 ## New Scripts
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
+## Misc Improvements
+- `quickfort`: more flexible commandline parsing allowing for more natural parameter ordering (e.g. where you used to have to write ``quickfort list dreamfort -l`` you can now write ``quickfort list -l dreamfort``)
+
 # 0.47.04-r4
 
 ## New Scripts
