@@ -16,6 +16,9 @@ that repo.
 ## New Scripts
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
+## Misc Improvements
+- `quickfort`: print out blueprint names that a ``#meta`` blueprint is applying so it's easier to understand what meta blueprints are doing
+
 # 0.47.04-r4
 
 ## New Scripts
