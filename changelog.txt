@@ -17,7 +17,7 @@ that repo.
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
 ## Misc Improvements
-- `quickfort`: implement {Empty} keycode for use in quickfort aliases; useful for defining blank-by-default alias values
+- `quickfort`: implement ``{Empty}`` keycode for use in quickfort aliases; useful for defining blank-by-default alias values
 
 # 0.47.04-r4
 
