@@ -153,7 +153,7 @@ end
 
 function do_list(args)
     local show_library, show_hidden, filter_mode = false, false, nil
-    local filter_strings = utils.processArgs2(args, {
+    local filter_strings = utils.processArgsGetopt(args, {
             {'l', 'library', handler=function() show_library = true end},
             {'h', 'hidden', handler=function() show_hidden = true end},
             {'m', 'mode', hasArg=true,

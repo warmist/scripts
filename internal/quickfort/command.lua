@@ -80,7 +80,7 @@ function do_command(args)
         qerror(string.format('invalid command: "%s"', command))
     end
     local quiet, verbose, section_name = false, false, nil
-    local other_args = utils.processArgs2(args, {
+    local other_args = utils.processArgsGetopt(args, {
             {'q', 'quiet', handler=function() quiet = true end},
             {'v', 'verbose', handler=function() verbose = true end},
             {'n', 'name', hasArg=true,
