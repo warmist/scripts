@@ -8,7 +8,7 @@ In-game dialog interface for the `quickfort` script.
 local args = {...}
 
 if #args == 0 then
-    dfhack.run_command('quickfort', 'gui')
+    dfhack.run_script('quickfort', 'gui')
 else
-    dfhack.run_command('quickfort', table.unpack(args))
+    dfhack.run_script('quickfort', table.unpack(args))
 end
