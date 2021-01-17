@@ -14,10 +14,13 @@ that repo.
 # Future
 
 ## New Scripts
+- `gui/quickfort`: fast access to the quickfort interactive dialog
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
 ## Misc Improvements
+- `quickfort`: implement ``{Empty}`` keycode for use in quickfort aliases; useful for defining blank-by-default alias values
 - `quickfort`: more flexible commandline parsing allowing for more natural parameter ordering (e.g. where you used to have to write ``quickfort list dreamfort -l`` you can now write ``quickfort list -l dreamfort``)
+- `quickfort`: print out blueprint names that a ``#meta`` blueprint is applying so it's easier to understand what meta blueprints are doing
 
 # 0.47.04-r4
 
