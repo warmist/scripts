@@ -38,7 +38,8 @@ local function handle_modifiers(token, modifiers)
         return true
     end
     if token_lower == 'wait' then
-        print('{Wait} not yet implemented')
+        -- accepted for compatibility with Python Quickfort, but waiting has no
+        -- effect in DFHack quickfort.
         return true
     end
     return false
