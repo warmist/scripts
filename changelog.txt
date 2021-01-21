@@ -18,6 +18,7 @@ that repo.
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
 ## Misc Improvements
+- `quickfort`: new blueprint mode: ``#ignore``, useful for scratch space or personal notes
 - `quickfort`: implement ``{Empty}`` keycode for use in quickfort aliases; useful for defining blank-by-default alias values
 - `quickfort`: print out blueprint names that a ``#meta`` blueprint is applying so it's easier to understand what meta blueprints are doing
 
