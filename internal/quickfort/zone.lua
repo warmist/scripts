@@ -193,6 +193,7 @@ local function create_zone(zone)
         error(string.format('unable to designate zone: %s', err))
     end
     -- set defaults (should move into constructBuilding)
+    bld.zone_flags.active = true
     bld.gather_flags.pick_trees = true
     bld.gather_flags.pick_shrubs = true
     bld.gather_flags.gather_fallen = true

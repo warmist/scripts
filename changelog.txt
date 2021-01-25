@@ -17,6 +17,9 @@ that repo.
 - `gui/quickfort`: fast access to the quickfort interactive dialog
 - `workorder-recheck`: resets the selected work order to the ``Checking`` state
 
+## Fixes
+- `quickfort`: zones are now created in the active state by default
+
 ## Misc Improvements
 - `quickfort`: new blueprint mode: ``#ignore``, useful for scratch space or personal notes
 - `quickfort`: implement ``{Empty}`` keycode for use in quickfort aliases; useful for defining blank-by-default alias values
