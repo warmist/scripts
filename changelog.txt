@@ -19,6 +19,7 @@ that repo.
 
 ## Fixes
 - `quickfort`: zones are now created in the active state by default
+- `quickfort`: solve rare crash when changing UI modes
 
 ## Misc Improvements
 - `quickfort`: new blueprint mode: ``#ignore``, useful for scratch space or personal notes
