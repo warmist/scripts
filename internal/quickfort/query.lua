@@ -45,6 +45,14 @@ local function handle_modifiers(token, modifiers)
     return false
 end
 
+-- send keycodes to exit the current UI sidebar mode and enter another one with
+-- the given keycode. we verify before calling this function that we are in a
+-- mode that can be exited with one press of ESC.
+local function switch_ui_sidebar_mode(mode_keycode)
+    gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
+    gui.simulateInput(dfhack.gui.getCurViewscreen(true), mode_keycode)
+end
+
 local valid_ui_sidebar_modes = {
     [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
     [df.ui_sidebar_mode.LookAround]='D_LOOK',
@@ -69,10 +77,8 @@ function do_run(zlevel, grid, ctx)
 
     local saved_mode = df.global.ui.main.mode
     if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
-        -- shift into query mode from one of the approved modes verified above
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true),
-                    valid_ui_sidebar_modes[df.ui_sidebar_mode.QueryBuilding])
+        switch_ui_sidebar_mode(
+            valid_ui_sidebar_modes[df.ui_sidebar_mode.QueryBuilding])
     end
 
     for y, row in pairs(grid) do
@@ -122,10 +128,7 @@ function do_run(zlevel, grid, ctx)
     end
 
     if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
-        -- shift back into the mode we started in
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true),
-                          valid_ui_sidebar_modes[saved_mode])
+        switch_ui_sidebar_mode(valid_ui_sidebar_modes[saved_mode])
     end
     quickfort_common.move_cursor(ctx.cursor)
 end
