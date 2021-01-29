@@ -13,6 +13,19 @@ function quote_if_has_spaces(str)
     return str
 end
 
+-- returns a string like:
+--   orders library/dreamfort.csv -n /apartments2
+--   run "some file.csv"
+function format_command(command, blueprint_name, section_name)
+    local section_name_str = ''
+    if section_name then
+        section_name_str =
+                string.format(' -n %s', quote_if_has_spaces(section_name))
+    end
+    return string.format('%s %s%s', command,
+                         quote_if_has_spaces(blueprint_name), section_name_str)
+end
+
 local function trim_token(token)
     _, _, token = token:find('^%s*(.-)%s*$')
     return token

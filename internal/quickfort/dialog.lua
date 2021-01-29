@@ -195,6 +195,9 @@ local function dialog_command(command, text)
     local blueprint_name, section_name =
             quickfort_list.get_blueprint_by_number(id)
 
+    print(string.format('executing via gui dialog: quickfort %s',
+                        quickfort_parse.format_command(
+                            command, blueprint_name, section_name)))
     local ctx = {command=command, blueprint_name=blueprint_name, cursor=cursor,
                  stats={}, messages={}}
     quickfort_command.do_command_internal(ctx, section_name)

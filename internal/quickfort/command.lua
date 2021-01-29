@@ -61,12 +61,9 @@ end
 
 function finish_command(ctx, section_name, quiet)
     if ctx.command == 'orders' then quickfort_orders.create_orders(ctx) end
-    local section_name_str = ''
-    if section_name then
-        section_name_str = string.format(' -n "%s"', section_name)
-    end
-    print(string.format('%s "%s"%s successfully completed',
-                        ctx.command, ctx.blueprint_name, section_name_str))
+    print(string.format('%s successfully completed',
+                        quickfort_parse.format_command(
+                            ctx.command, ctx.blueprint_name, section_name)))
     if not quiet then
         for _,stat in pairs(ctx.stats) do
             if stat.always or stat.value > 0 then
