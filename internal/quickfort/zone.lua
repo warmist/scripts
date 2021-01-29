@@ -163,45 +163,48 @@ local function dump_flags(args)
     end
 end
 
-local function assign_flags(bld, db_entry, key)
+local function assign_flags(bld, db_entry, key, pretend)
     local flags = db_entry[key]
     if flags then
         log('assigning %s:', key)
         logfn(dump_flags, flags)
-        utils.assign(bld[key], flags)
+        if not pretend then utils.assign(bld[key], flags) end
     end
 end
 
-local function create_zone(zone)
+local function create_zone(zone, pretend)
     local db_entry = zone_db[zone.type]
     log('creating %s zone at map coordinates (%d, %d, %d), defined' ..
         ' from spreadsheet cells: %s',
         db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
         table.concat(zone.cells, ', '))
     local extents, ntiles =
-            quickfort_building.make_extents(zone)
-    local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
-                          height=zone.height, extents=extents},
-                    is_room=true}
-    local bld, err = dfhack.buildings.constructBuilding{
-        type=df.building_type.Civzone, subtype=df.civzone_type.ActivityZone,
-        abstract=true, pos=zone.pos, width=zone.width, height=zone.height,
-        fields=fields}
-    if not bld then
-        -- this is an error instead of a qerror since our validity checking
-        -- is supposed to prevent this from ever happening
-        error(string.format('unable to designate zone: %s', err))
+            quickfort_building.make_extents(zone, pretend)
+    local bld, err = nil, nil
+    if not pretend then
+        local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
+                              height=zone.height, extents=extents},
+                        is_room=true}
+        bld, err = dfhack.buildings.constructBuilding{
+            type=df.building_type.Civzone, subtype=df.civzone_type.ActivityZone,
+            abstract=true, pos=zone.pos, width=zone.width, height=zone.height,
+            fields=fields}
+        if not bld then
+            -- this is an error instead of a qerror since our validity checking
+            -- is supposed to prevent this from ever happening
+            error(string.format('unable to designate zone: %s', err))
+        end
+        -- set defaults (should move into constructBuilding)
+        bld.zone_flags.active = true
+        bld.gather_flags.pick_trees = true
+        bld.gather_flags.pick_shrubs = true
+        bld.gather_flags.gather_fallen = true
     end
-    -- set defaults (should move into constructBuilding)
-    bld.zone_flags.active = true
-    bld.gather_flags.pick_trees = true
-    bld.gather_flags.pick_shrubs = true
-    bld.gather_flags.gather_fallen = true
     -- set specified flags
-    assign_flags(bld, db_entry, 'zone_flags')
-    assign_flags(bld, db_entry, 'pit_flags')
-    assign_flags(bld, db_entry, 'gather_flags')
-    assign_flags(bld, db_entry, 'hospital')
+    assign_flags(bld, db_entry, 'zone_flags', pretend)
+    assign_flags(bld, db_entry, 'pit_flags', pretend)
+    assign_flags(bld, db_entry, 'gather_flags', pretend)
+    assign_flags(bld, db_entry, 'hospital', pretend)
     return ntiles
 end
 
@@ -228,12 +231,12 @@ function do_run(zlevel, grid, ctx)
 
     for _,zone in ipairs(zones) do
         if zone.pos then
-            local ntiles = create_zone(zone)
+            local ntiles = create_zone(zone, ctx.pretend)
             stats.zone_tiles.value = stats.zone_tiles.value + ntiles
             stats.zone_designated.value = stats.zone_designated.value + 1
         end
     end
-    dfhack.job.checkBuildingsNow()
+    if not pretend then dfhack.job.checkBuildingsNow() end
 end
 
 function do_orders()
@@ -268,7 +271,7 @@ function do_undo(zlevel, grid, ctx)
     -- move the cursor when we're in mode Zones to avoid having the viewport
     -- jump around when it doesn't need to
     local restore_cursor = false
-    if df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
+    if not pretend and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
         quickfort_common.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
         restore_cursor = true
     end
@@ -283,7 +286,9 @@ function do_undo(zlevel, grid, ctx)
                 for _,activity_zone in ipairs(activity_zones) do
                     log('removing zone at map coordinates (%d, %d, %d)',
                         pos.x, pos.y, pos.z)
-                    dfhack.buildings.deconstruct(activity_zone)
+                    if not pretend then
+                        dfhack.buildings.deconstruct(activity_zone)
+                    end
                     stats.zone_removed.value = stats.zone_removed.value + 1
                 end
                 ::continue::

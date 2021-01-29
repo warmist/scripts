@@ -76,8 +76,9 @@ function do_run(zlevel, grid, ctx)
 
     load_aliases()
 
+    local pretend = ctx.pretend
     local saved_mode = df.global.ui.main.mode
-    if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
+    if not pretend and saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
         switch_ui_sidebar_mode(df.ui_sidebar_mode.QueryBuilding)
     end
 
@@ -96,7 +97,7 @@ function do_run(zlevel, grid, ctx)
             log('applying spreadsheet cell %s with text "%s" to map ' ..
                 'coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local tokens = quickfort_aliases.expand_aliases(text)
-            quickfort_common.move_cursor(pos)
+            if not pretend then quickfort_common.move_cursor(pos) end
             local focus_string =
                     dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
             local modifiers = {} -- tracks ctrl, shift, and alt modifiers
@@ -107,7 +108,9 @@ function do_run(zlevel, grid, ctx)
                     qerror(string.format(
                             'unknown alias or keycode: "%s"', token))
                 end
-                gui.simulateInput(dfhack.gui.getCurViewscreen(true), kcodes)
+                if not pretend then
+                    gui.simulateInput(dfhack.gui.getCurViewscreen(true), kcodes)
+                end
                 modifiers = {}
                 stats.query_keystrokes.value = stats.query_keystrokes.value + 1
                 ::continue::
@@ -127,10 +130,12 @@ function do_run(zlevel, grid, ctx)
         end
     end
 
-    if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
-        switch_ui_sidebar_mode(saved_mode)
+    if not pretend then
+        if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
+            switch_ui_sidebar_mode(saved_mode)
+        end
+        quickfort_common.move_cursor(ctx.cursor)
     end
-    quickfort_common.move_cursor(ctx.cursor)
 end
 
 function do_orders()
