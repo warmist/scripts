@@ -73,29 +73,22 @@ function finish_command(ctx, section_name, quiet)
     end
 end
 
-local valid_command_args = utils.invert({
-    'q',
-    '-quiet',
-    'v',
-    '-verbose',
-    'n',
-    '-name',
-})
-
-function do_command(in_args)
-    local command = in_args.action
+function do_command(args)
+    local command = args.action
     if not command or not command_switch[command] then
         qerror(string.format('invalid command: "%s"', command))
     end
-
-    local blueprint_name = table.remove(in_args, 1)
+    local quiet, verbose, section_name = false, false, nil
+    local other_args = utils.processArgsGetopt(args, {
+            {'q', 'quiet', handler=function() quiet = true end},
+            {'v', 'verbose', handler=function() verbose = true end},
+            {'n', 'name', hasArg=true,
+             handler=function(optarg) section_name = optarg end},
+        })
+    local blueprint_name = other_args[1]
     if not blueprint_name or blueprint_name == '' then
         qerror("expected <list_num> or <blueprint_name> parameter")
     end
-    local args = utils.processArgs(in_args, valid_command_args)
-    local quiet = args['q'] ~= nil or args['-quiet'] ~= nil
-    local verbose = args['v'] ~= nil or args['-verbose'] ~= nil
-    local section_name = args['n'] or args['-name']
 
     local list_num = tonumber(blueprint_name)
     if list_num then
