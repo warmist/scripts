@@ -45,6 +45,23 @@ local function handle_modifiers(token, modifiers)
     return false
 end
 
+local valid_ui_sidebar_modes = {
+    [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
+    [df.ui_sidebar_mode.LookAround]='D_LOOK',
+    [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',
+    [df.ui_sidebar_mode.Stockpiles]='D_STOCKPILES',
+    [df.ui_sidebar_mode.Zones]='D_CIVZONE',
+}
+
+-- send keycodes to exit the current UI sidebar mode and enter another one.
+-- we must be able to leave the mode that we're in with one press of ESC. the
+-- target mode must be a member of valid_ui_sidebar_modes.
+local function switch_ui_sidebar_mode(sidebar_mode)
+    gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
+    gui.simulateInput(dfhack.gui.getCurViewscreen(true),
+                      valid_ui_sidebar_modes[sidebar_mode])
+end
+
 function do_run(zlevel, grid, ctx)
     local stats = ctx.stats
     stats.query_keystrokes = stats.query_keystrokes or
@@ -52,10 +69,17 @@ function do_run(zlevel, grid, ctx)
     stats.query_tiles = stats.query_tiles or
             {label='Tiles modified', value=0}
 
+    if not valid_ui_sidebar_modes[df.global.ui.main.mode] then
+        qerror('To run a blueprint, you must be in one of the following modes:'
+               ..' query (q), look (k), view (t), stockpiles (p), or zones (i)')
+    end
+
     load_aliases()
 
     local saved_mode = df.global.ui.main.mode
-    df.global.ui.main.mode = df.ui_sidebar_mode.QueryBuilding
+    if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
+        switch_ui_sidebar_mode(df.ui_sidebar_mode.QueryBuilding)
+    end
 
     for y, row in pairs(grid) do
         for x, cell_and_text in pairs(row) do
@@ -103,7 +127,9 @@ function do_run(zlevel, grid, ctx)
         end
     end
 
-    df.global.ui.main.mode = saved_mode
+    if saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
+        switch_ui_sidebar_mode(saved_mode)
+    end
     quickfort_common.move_cursor(ctx.cursor)
 end
 
