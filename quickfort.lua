@@ -20,9 +20,8 @@ real" in Dwarf Fortress, and then export your map using the DFHack
 `blueprint` plugin for later replay. Blueprint files should go in the
 ``blueprints`` subfolder in the main DF folder.
 
-For more details on blueprint file syntax, see the `quickfort-user-guide` or
-browse through the ready-to-use examples in the :source:`blueprints/library
-<data/blueprints/library>` folder.
+For more details on blueprint file syntax, see the `quickfort-blueprint-guide`
+or browse through the ready-to-use examples in the `quickfort-library-guide`.
 
 Usage:
 
@@ -35,19 +34,19 @@ Usage:
 **quickfort gui**
     Starts the quickfort dialog, where you can run blueprints from an
     interactive list.
-**quickfort list [-m|--mode <mode>] [-l|--library] [-h|--hidden] [search string]**
+**quickfort list [-m|-\-mode <mode>] [-l|-\-library] [-h|-\-hidden] [search string]**
     Lists blueprints in the ``blueprints`` folder. Blueprints are ``.csv`` files
     or sheets within ``.xlsx`` files that contain a ``#<mode>`` comment in the
     upper-left cell. By default, blueprints in the ``blueprints/library/``
     subfolder or blueprints that contain a ``hidden()`` marker in their modeline
     are not shown. Specify ``-l`` or ``-h`` to include library or hidden
-    blueprints. The list can be filtered by a specified mode (e.g. "-m build")
-    and/or a substring to search for in a path, filename, mode, or comment. The
-    id numbers in the list may not be contiguous if there are hidden or filtered
-    blueprints that are not being shown.
+    blueprints, respectively. The list can be filtered by a specified mode (e.g.
+    "-m build") and/or strings to search for in a path, filename, mode, or
+    comment. The id numbers in the list may not be contiguous if there are
+    hidden or filtered  blueprints that are not being shown.
 **quickfort <command> <list_num> [<options>]**
     Applies the blueprint with the number from the list command.
-**quickfort <command> <filename> [-n|--name <name>] [<options>]**
+**quickfort <command> <filename> [-n|-\-name <name>] [<options>]**
     Applies a blueprint in the specified file. The optional ``name`` parameter
     can select a specific blueprint from a file that contains multiple
     blueprints with the format "sheetname/label", or just "/label" for .csv
@@ -74,20 +73,28 @@ Usage:
     Output extra debugging information. This is especially useful if the
     blueprint isn't being applied like you expect.
 
+Example commands::
+
+    quickfort list
+    quickfort list -l dreamfort help
+    quickfort run library/dreamfort.csv
+    quickfort orders library/dreamfort.csv -n /industry2
+    quickfort run 10 -v
+
 Configuration:
 
 The quickfort script reads its startup configuration from the
 ``dfhack-config/quickfort/quickfort.txt`` file, which you can customize. The
-settings may be dynamically modified by the ``quickfort set`` command, but
-settings changed with the ``quickfort set`` command will not change the
-configuration stored in the file:
+settings may be dynamically modified by the ``quickfort set`` command for the
+current session, but settings changed with the ``quickfort set`` command will
+not change the configuration stored in the file:
 
 ``blueprints_dir`` (default: 'blueprints')
     Directory tree to search for blueprints. Can be set to an absolute or
     relative path. If set to a relative path, resolves to a directory under the
     DF folder. Note that if you change this directory, you will not see
     blueprints written by the DFHack `blueprint` plugin (which always writes to
-    the ``blueprints`` dir).
+    the ``blueprints`` dir) or blueprints in the quickfort blueprint library.
 ``force_marker_mode`` (default: 'false')
     If true, will designate all dig blueprints in marker mode. If false, only
     cells with dig codes explicitly prefixed with ``m`` will be designated in
@@ -99,19 +106,21 @@ configuration stored in the file:
     UI screen is the same before and after sending keys for the cursor
     position. Temporarily enable this if you are running a query blueprint that
     sends a key sequence that is *not* related to stockpile or building
-    configuration.
+    configuration. Most players will never need to enable this setting.
 ``stockpiles_max_barrels``, ``stockpiles_max_bins``, and ``stockpiles_max_wheelbarrows`` (defaults: -1, -1, 0)
     Set to the maximum number of resources you want assigned to stockpiles of
     the relevant types. Set to -1 for DF defaults (number of stockpile tiles
     for stockpiles that take barrels and bins, 1 wheelbarrow for stone
     stockpiles). The default here for wheelbarrows is 0 since using wheelbarrows
-    normally *decreases* the efficiency of your fort.
+    can *decrease* the efficiency of your fort unless you know how to use them
+    properly.
 
 There is one other configuration file in the ``dfhack-config/quickfort`` folder:
 :source:`aliases.txt <dfhack-config/quickfort/aliases.txt>`. It defines keycode
 shortcuts for query blueprints. The format for this file is described in the
-file itself, and default aliases that all players can use and build on is stored in
-:source:`hack/data/quickfort/aliases-common.txt <data/quickfort/aliases-common.txt>`.
+`quickfort-alias-guide`, and default aliases that all players can use and build
+on are available in the `quickfort-alias-library`. Some quickfort library
+aliases require the `search-plugin` plugin to be enabled.
 ]====]
 
 -- reqscript all internal files here, even if they're not directly used by this
@@ -151,8 +160,8 @@ quickfort gui
 quickfort list [-m|--mode <mode>] [-l|--library] [-h|--hidden] [search string]
     Lists blueprints in the "blueprints" folder. Specify -l to include library
     blueprints and -h to include hidden blueprints. The list can be filtered by
-    a specified mode (e.g. "-m build") and/or a substring to search for in a
-    path, filename, mode, or comment.
+    a specified mode (e.g. "-m build") and/or strings to search for in a path,
+    filename, mode, or comment.
 quickfort <command> <list_num> [<options>]
     Applies the blueprint with the number from the list command.
 quickfort <command> <filename> [-n|--name <name>] [<options>]
