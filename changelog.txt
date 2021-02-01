@@ -13,6 +13,9 @@ that repo.
 
 # Future
 
+## Misc Improvements
+- `quickfort`: you can now specify the number of desired barrels, bins, and wheelbarrows for individual stockpiles when placing them
+
 # 0.47.04-r5
 
 ## New Scripts
