@@ -7,6 +7,7 @@ end
 
 local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 local quickfort_command = reqscript('internal/quickfort/command')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_parse = reqscript('internal/quickfort/parse')
@@ -209,7 +210,15 @@ local function dialog_command(command, text)
     end
 end
 
-function do_dialog()
+function do_dialog(args)
+    -- allow passed-in flags and strings to pre-set our dialog flags and filter
+    local filter_strings = utils.processArgsGetopt(args, {
+            {'l', 'library', handler=function() show_library = true end},
+            {'h', 'hidden', handler=function() show_hidden = true end},
+        })
+    if #filter_strings > 0 then
+        filter_text = table.concat(filter_strings, ' ')
+    end
     if blueprint_dialog then blueprint_dialog:dismiss() end
     blueprint_dialog = BlueprintDialog{
         frame_title='Select quickfort blueprint',

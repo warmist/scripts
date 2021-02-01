@@ -31,9 +31,6 @@ Usage:
     below for available keys and values.
 **quickfort reset**
     Resets quickfort configuration to the defaults in ``quickfort.txt``.
-**quickfort gui**
-    Starts the quickfort dialog, where you can run blueprints from an
-    interactive list.
 **quickfort list [-m|-\-mode <mode>] [-l|-\-library] [-h|-\-hidden] [search string]**
     Lists blueprints in the ``blueprints`` folder. Blueprints are ``.csv`` files
     or sheets within ``.xlsx`` files that contain a ``#<mode>`` comment in the
@@ -44,6 +41,10 @@ Usage:
     "-m build") and/or strings to search for in a path, filename, mode, or
     comment. The id numbers in the list may not be contiguous if there are
     hidden or filtered  blueprints that are not being shown.
+**quickfort gui [-l|-\-library] [-h|-\-hidden] [search string]**
+    Starts the quickfort dialog, where you can run blueprints from an
+    interactive list. The optional arguments have the same meanings as they do
+    in the list command, and can be used to preset the gui dialog state.
 **quickfort <command> <list_num> [<options>]**
     Applies the blueprint with the number from the list command.
 **quickfort <command> <filename> [-n|-\-name <name>] [<options>]**
@@ -154,14 +155,15 @@ quickfort set [<key> <value>]
     run "quickfort set" to show current settings.
 quickfort reset
     Resets quickfort configuration to defaults in quickfort.txt.
-quickfort gui
-    Starts the quickfort dialog, where you can run blueprints from an
-    interactive list.
 quickfort list [-m|--mode <mode>] [-l|--library] [-h|--hidden] [search string]
     Lists blueprints in the "blueprints" folder. Specify -l to include library
     blueprints and -h to include hidden blueprints. The list can be filtered by
     a specified mode (e.g. "-m build") and/or strings to search for in a path,
     filename, mode, or comment.
+quickfort gui [-l|--library] [-h|--hidden] [search string]
+    Starts the quickfort dialog, where you can run blueprints from an
+    interactive list. The optional arguments have the same meanings as they do
+    in the list command, and can be used to preset the gui dialog state.
 quickfort <command> <list_num> [<options>]
     Applies the blueprint with the number from the list command.
 quickfort <command> <filename> [-n|--name <name>] [<options>]
