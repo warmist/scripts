@@ -206,6 +206,13 @@ local function dialog_command(command, text)
         dialogs.showMessage('Attention',
                             wrap(table.concat(ctx.messages, '\n\n'),
                                  min_dialog_width))
+    elseif command == 'orders' then
+        local count = 0
+        for _,_ in pairs(ctx.order_specs or {}) do count = count + 1 end
+        local message = string.format(
+            '%d orders enqueued for %s.', count,
+            quickfort_parse.format_command(nil, blueprint_name, section_name))
+        dialogs.showMessage('Orders enqueued', wrap(message, min_dialog_width))
     end
 end
 

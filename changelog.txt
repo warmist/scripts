@@ -13,6 +13,9 @@ that repo.
 
 # Future
 
+## Misc Improvements
+- `quickfort`: now reports how many work orders were added when generating manager orders from blueprints in the gui dialog
+
 # 0.47.04-r5
 
 ## New Scripts
