@@ -506,18 +506,17 @@ end
 -- where token is an alias name or a keycode, and both params and repetitions
 -- are optional. if the first character of token is '{' or '}', it is treated as
 -- a literal and not a syntax element.
--- params are in one of the following formats:
+-- Examples:
 --   param_name=param_val
+--   param_name=param_val{othertoken}
 --   param_name="param val with spaces"
+--   param_name="param val {othertoken} with spaces"
+--   param_name="param_val{otherextendedtoken param=val}"
+--   param_name="{alias1}{alias2}"
 --   param_name={token params repetitions}
 -- if the params within the extended token within the params require quotes,
 -- .csv-style doubled double quotes are required:
---   param_name="{somealias var=""with spaces"" 5}"
--- combining literals with extended tokens is not currently supported to keep
--- the implementation simple, though we can add it if there is demand. That is,
--- the following is not supported: param_name=literal{somealias}. The
--- workaround is just to put the literal in a regularly-defined alias and call
--- that alias.
+--   param_name="{firstalias}{secondalias var=""with spaces"" 5}"
 -- if repetitions is not specified, the value 1 is returned
 -- returns token as string, params as map, repetitions as number, start position
 -- of the next element after the etoken in text as number

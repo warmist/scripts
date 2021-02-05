@@ -18,6 +18,7 @@ require('dfhack.buildings') -- loads additional functions into dfhack.buildings
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
+local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_query = reqscript('internal/quickfort/query')
 local log = quickfort_common.log
 
@@ -220,8 +221,15 @@ function do_run(zlevel, grid, ctx)
     dfhack.job.checkBuildingsNow()
 end
 
-function do_orders()
-    log('nothing to do for blueprints in mode: place')
+-- enqueues orders only for explicitly requested containers
+function do_orders(zlevel, grid, ctx)
+    local stockpiles = {}
+    quickfort_building.init_buildings(zlevel, grid, stockpiles, stockpile_db)
+    for _, s in ipairs(stockpiles) do
+        local db_entry = stockpile_db[s.type]
+        quickfort_orders.enqueue_container_orders(ctx,
+            db_entry.num_bins, db_entry.num_barrels, db_entry.num_wheelbarrows)
+    end
 end
 
 function do_undo(zlevel, grid, ctx)

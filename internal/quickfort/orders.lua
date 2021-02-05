@@ -131,7 +131,7 @@ end
 -- ensure we don't reinit this; it contains allocated memory
 reactions = reactions or stockflow.collect_reactions()
 
-function enqueue_orders(stats, buildings, building_db, ctx)
+function enqueue_building_orders(buildings, building_db, ctx)
     local order_specs = ctx.order_specs or {}
     ctx.order_specs = order_specs
     for _, b in ipairs(buildings) do
@@ -150,7 +150,7 @@ function enqueue_orders(stats, buildings, building_db, ctx)
             for _,label in ipairs(db_entry.additional_orders) do
                 local quantity = 1
                 if additional_order == df.item_type.BLOCKS then
-                    quantity = 1 /4
+                    quantity = 1 / 4
                 end
                 inc_order_spec(order_specs, quantity, reactions, label)
             end
@@ -164,5 +164,20 @@ function enqueue_orders(stats, buildings, building_db, ctx)
             end
             process_filter(order_specs, filter, reactions)
         end
+    end
+end
+
+function enqueue_container_orders(ctx, num_bins, num_barrels, num_wheelbarrows)
+    local order_specs = ctx.order_specs or {}
+    ctx.order_specs = order_specs
+    if num_bins and num_bins > 0 then
+        inc_order_spec(order_specs, num_bins, reactions, "wooden bin")
+    end
+    if num_barrels and num_barrels > 0 then
+        inc_order_spec(order_specs, num_barrels, reactions, "rock pot")
+    end
+    if num_wheelbarrows and num_wheelbarrows > 0 then
+        inc_order_spec(
+            order_specs, num_wheelbarrows, reactions, "wooden wheelbarrow")
     end
 end

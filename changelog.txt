@@ -16,6 +16,9 @@ that repo.
 ## Fixes
 - `quickfort`: raw numeric `quickfort-dig-priorities` (e.g. ``3``, which is a valid shorthand for ``d3``) now works when used in .xlsx blueprints
 
+## Misc Improvements
+- `quickfort`: ``quickfort orders`` on a ``#place`` blueprint will enqueue manager orders for barrels, bins, or wheelbarrows that are explicitly set in the blueprint.
+
 # 0.47.04-r5
 
 ## New Scripts
