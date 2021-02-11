@@ -13,6 +13,8 @@ that repo.
 
 # Future
 
+# 0.47.05-beta1
+
 ## Fixes
 - `quickfort`: raw numeric `quickfort-dig-priorities` (e.g. ``3``, which is a valid shorthand for ``d3``) now works when used in .xlsx blueprints
 
