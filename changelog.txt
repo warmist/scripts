@@ -36,6 +36,7 @@ that repo.
 - `quickfort`: implement ``{Empty}`` keycode for use in quickfort aliases; useful for defining blank-by-default alias values
 - `quickfort`: more flexible commandline parsing allowing for more natural parameter ordering (e.g. where you used to have to write ``quickfort list dreamfort -l`` you can now write ``quickfort list -l dreamfort``)
 - `quickfort`: print out blueprint names that a ``#meta`` blueprint is applying so it's easier to understand what meta blueprints are doing
+- `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
 - `quickfort`: whitespace is now allowed between a marker name and the opening parenthesis in blueprint modelines. for example, ``#dig start (5; 5)`` is now valid (you used to be required to write ``#dig start(5; 5)``)
 
 # 0.47.04-r4
