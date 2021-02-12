@@ -230,7 +230,14 @@ local function reset_csv_ctx(ctx)
 end
 
 local function read_xlsx_line(ctx)
-    return xlsxreader.get_row(ctx.xlsx_sheet)
+    local tokens = xlsxreader.get_row(ctx.xlsx_sheet)
+    if not tokens then return nil end
+    -- raw numbers can get turned into floats. let's turn them back into ints
+    for i,token in ipairs(tokens) do
+        local num_token = tonumber(token)
+        if num_token then tokens[i] = tostring(math.floor(num_token)) end
+    end
+    return tokens
 end
 
 local function cleanup_xslx_ctx(ctx)

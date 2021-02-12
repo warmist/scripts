@@ -91,15 +91,18 @@ function do_command(args)
         qerror("expected <list_num> or <blueprint_name> parameter")
     end
 
+    local mode = nil
     local list_num = tonumber(blueprint_name)
     if list_num then
-        blueprint_name, section_name =
+        blueprint_name, section_name, mode =
                 quickfort_list.get_blueprint_by_number(list_num)
+    else
+        mode = quickfort_list.get_blueprint_mode(blueprint_name, section_name)
     end
 
     local cursor = guidm.getCursorPos()
     if not cursor then
-        if command == 'orders' then
+        if command == 'orders' or mode == 'notes' then
             cursor = {x=0, y=0, z=0}
         else
             qerror('please position the game cursor at the blueprint start ' ..
