@@ -560,7 +560,7 @@ local function dig_tile(ctx, db_entry)
     end
 end
 
-local function do_run_impl(zlevel, grid, stats, pretend)
+local function do_run_impl(zlevel, grid, stats, dry_run)
     for y, row in pairs(grid) do
         for x, cell_and_text in pairs(row) do
             local cell, text = cell_and_text.cell, cell_and_text.text
@@ -601,7 +601,7 @@ local function do_run_impl(zlevel, grid, stats, pretend)
                     else
                         local action_fn = dig_tile(ctx, db_entry)
                         if action_fn then
-                            if not pretend then action_fn() end
+                            if not dry_run then action_fn() end
                             stats.dig_designated.value =
                                     stats.dig_designated.value + 1
                         end
@@ -617,9 +617,9 @@ function do_run(zlevel, grid, ctx)
     values = values_run
     ctx.stats.dig_designated = ctx.stats.dig_designated or
             {label='Tiles designated for digging', value=0, always=true}
-    local pretend = ctx.pretend
-    do_run_impl(zlevel, grid, ctx.stats, pretend)
-    if not pretend then dfhack.job.checkDesignationsNow() end
+    local dry_run = ctx.dry_run
+    do_run_impl(zlevel, grid, ctx.stats, dry_run)
+    if not dry_run then dfhack.job.checkDesignationsNow() end
 end
 
 function do_orders()
@@ -630,5 +630,5 @@ function do_undo(zlevel, grid, ctx)
     values = values_undo
     ctx.stats.dig_designated = ctx.stats.dig_designated or
             {label='Tiles undesignated for digging', value=0, always=true}
-    do_run_impl(zlevel, grid, ctx.stats, ctx.pretend)
+    do_run_impl(zlevel, grid, ctx.stats, ctx.dry_run)
 end

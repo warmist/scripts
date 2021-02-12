@@ -78,11 +78,11 @@ function do_command(args)
     if not command or not command_switch[command] then
         qerror(string.format('invalid command: "%s"', command))
     end
-    local quiet, verbose, pretend, section_name = false, false, false, nil
+    local quiet, verbose, dry_run, section_name = false, false, false, nil
     local other_args = utils.processArgsGetopt(args, {
             {'q', 'quiet', handler=function() quiet = true end},
             {'v', 'verbose', handler=function() verbose = true end},
-            {'p', 'pretend', handler=function() pretend = true end},
+            {'d', 'dry-run', handler=function() dry_run = true end},
             {'n', 'name', hasArg=true,
              handler=function(optarg) section_name = optarg end},
         })
@@ -115,7 +115,7 @@ function do_command(args)
         function() quickfort_common.verbose = false end,
         function()
             local ctx = {command=command, blueprint_name=blueprint_name,
-                         cursor=cursor, stats={}, messages={}, pretend=pretend}
+                         cursor=cursor, stats={}, messages={}, dry_run=dry_run}
             do_command_internal(ctx, section_name)
             finish_command(ctx, section_name, quiet)
             if command == 'run' then

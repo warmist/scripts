@@ -723,13 +723,13 @@ local building_aliases = {
 -- ************ command logic functions ************ --
 --
 
-local function create_building(b, pretend)
+local function create_building(b, dry_run)
     local db_entry = building_db[b.type]
     log('creating %dx%d %s at map coordinates (%d, %d, %d), defined from ' ..
         'spreadsheet cells: %s',
         b.width, b.height, db_entry.label, b.pos.x, b.pos.y, b.pos.z,
         table.concat(b.cells, ', '))
-    if pretend then return end
+    if dry_run then return end
     local fields = {}
     if db_entry.fields then fields = copyall(db_entry.fields) end
     local use_extents = db_entry.has_extents and
@@ -784,7 +784,7 @@ function do_run(zlevel, grid, ctx)
 
     for _, b in ipairs(buildings) do
         if b.pos then
-            create_building(b, ctx.pretend)
+            create_building(b, ctx.dry_run)
             stats.build_designated.value = stats.build_designated.value + 1
         end
     end
@@ -831,7 +831,7 @@ function do_undo(zlevel, grid, ctx)
                 local bld = dfhack.buildings.findAtTile(pos)
                 if bld and bld:getType() ~= df.building_type.Stockpile and
                         not is_queued_for_destruction(bld) then
-                    if ctx.pretend then
+                    if ctx.dry_run then
                         if bld:getBuildStage() == 0 then
                             stats.build_undesignated.value =
                                     stats.build_undesignated.value + 1

@@ -166,13 +166,13 @@ local function init_containers(db_entry, ntiles, fields)
     end
 end
 
-local function create_stockpile(s, stockpile_query_grid, pretend)
+local function create_stockpile(s, stockpile_query_grid, dry_run)
     local db_entry = stockpile_db[s.type]
     log('creating %s stockpile at map coordinates (%d, %d, %d), defined from' ..
         ' spreadsheet cells: %s',
         db_entry.label, s.pos.x, s.pos.y, s.pos.z, table.concat(s.cells, ', '))
-    local extents, ntiles = quickfort_building.make_extents(s, pretend)
-    if pretend then return ntiles end
+    local extents, ntiles = quickfort_building.make_extents(s, dry_run)
+    if dry_run then return ntiles end
     local fields = {room={x=s.pos.x, y=s.pos.y, width=s.width, height=s.height,
                           extents=extents}}
     init_containers(db_entry, ntiles, fields)
@@ -210,15 +210,15 @@ function do_run(zlevel, grid, ctx)
                 stockpiles, stockpile_db)
 
     local stockpile_query_grid = {}
-    local pretend = ctx.pretend
+    local dry_run = ctx.dry_run
     for _, s in ipairs(stockpiles) do
         if s.pos then
-            local ntiles = create_stockpile(s, stockpile_query_grid, pretend)
+            local ntiles = create_stockpile(s, stockpile_query_grid, dry_run)
             stats.place_tiles.value = stats.place_tiles.value + ntiles
             stats.place_designated.value = stats.place_designated.value + 1
         end
     end
-    if pretend then return end
+    if dry_run then return end
     init_stockpile_settings(zlevel, stockpile_query_grid, ctx)
     dfhack.job.checkBuildingsNow()
 end
@@ -245,7 +245,7 @@ function do_undo(zlevel, grid, ctx)
                         xyz2pos(s.pos.x+extent_x-1, s.pos.y+extent_y-1, s.pos.z)
                 local bld = dfhack.buildings.findAtTile(pos)
                 if bld and bld:getType() == df.building_type.Stockpile then
-                    if not ctx.pretend then
+                    if not ctx.dry_run then
                         dfhack.buildings.deconstruct(bld)
                     end
                     stats.place_removed.value = stats.place_removed.value + 1

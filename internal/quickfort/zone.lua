@@ -163,25 +163,25 @@ local function dump_flags(args)
     end
 end
 
-local function assign_flags(bld, db_entry, key, pretend)
+local function assign_flags(bld, db_entry, key, dry_run)
     local flags = db_entry[key]
     if flags then
         log('assigning %s:', key)
         logfn(dump_flags, flags)
-        if not pretend then utils.assign(bld[key], flags) end
+        if not dry_run then utils.assign(bld[key], flags) end
     end
 end
 
-local function create_zone(zone, pretend)
+local function create_zone(zone, dry_run)
     local db_entry = zone_db[zone.type]
     log('creating %s zone at map coordinates (%d, %d, %d), defined' ..
         ' from spreadsheet cells: %s',
         db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
         table.concat(zone.cells, ', '))
     local extents, ntiles =
-            quickfort_building.make_extents(zone, pretend)
+            quickfort_building.make_extents(zone, dry_run)
     local bld, err = nil, nil
-    if not pretend then
+    if not dry_run then
         local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
                               height=zone.height, extents=extents},
                         is_room=true}
@@ -201,10 +201,10 @@ local function create_zone(zone, pretend)
         bld.gather_flags.gather_fallen = true
     end
     -- set specified flags
-    assign_flags(bld, db_entry, 'zone_flags', pretend)
-    assign_flags(bld, db_entry, 'pit_flags', pretend)
-    assign_flags(bld, db_entry, 'gather_flags', pretend)
-    assign_flags(bld, db_entry, 'hospital', pretend)
+    assign_flags(bld, db_entry, 'zone_flags', dry_run)
+    assign_flags(bld, db_entry, 'pit_flags', dry_run)
+    assign_flags(bld, db_entry, 'gather_flags', dry_run)
+    assign_flags(bld, db_entry, 'hospital', dry_run)
     return ntiles
 end
 
@@ -231,12 +231,12 @@ function do_run(zlevel, grid, ctx)
 
     for _,zone in ipairs(zones) do
         if zone.pos then
-            local ntiles = create_zone(zone, ctx.pretend)
+            local ntiles = create_zone(zone, ctx.dry_run)
             stats.zone_tiles.value = stats.zone_tiles.value + ntiles
             stats.zone_designated.value = stats.zone_designated.value + 1
         end
     end
-    if not pretend then dfhack.job.checkBuildingsNow() end
+    if not dry_run then dfhack.job.checkBuildingsNow() end
 end
 
 function do_orders()
@@ -271,7 +271,7 @@ function do_undo(zlevel, grid, ctx)
     -- move the cursor when we're in mode Zones to avoid having the viewport
     -- jump around when it doesn't need to
     local restore_cursor = false
-    if not pretend and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
+    if not dry_run and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
         quickfort_common.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
         restore_cursor = true
     end
@@ -286,7 +286,7 @@ function do_undo(zlevel, grid, ctx)
                 for _,activity_zone in ipairs(activity_zones) do
                     log('removing zone at map coordinates (%d, %d, %d)',
                         pos.x, pos.y, pos.z)
-                    if not pretend then
+                    if not dry_run then
                         dfhack.buildings.deconstruct(activity_zone)
                     end
                     stats.zone_removed.value = stats.zone_removed.value + 1

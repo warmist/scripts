@@ -365,10 +365,10 @@ end
 -- allocate and initialize extents structure from the extents_grid
 -- returns extents, num_tiles
 -- we assume by this point that the extent is valid and non-empty
-function make_extents(b, pretend)
+function make_extents(b, dry_run)
     local area = b.width * b.height
     local extents = nil
-    if not pretend then
+    if not dry_run then
         extents = df.reinterpret_cast(df.building_extents_type,
                                       df.new('uint8_t', area))
     end
@@ -377,7 +377,7 @@ function make_extents(b, pretend)
         local extent_x = (i-1) % b.width + 1
         local extent_y = math.floor((i-1) / b.width) + 1
         local is_in_extent = b.extent_grid[extent_x][extent_y]
-        if not pretend then extents[i-1] = is_in_extent and 1 or 0 end
+        if not dry_run then extents[i-1] = is_in_extent and 1 or 0 end
         if is_in_extent then num_tiles = num_tiles + 1 end
     end
     return extents, num_tiles
