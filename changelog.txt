@@ -16,6 +16,9 @@ that repo.
 ## Misc Improvements
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
 
+## Documentation
+- `digfort`: digfort has been replaced by `quickfort`. add deprecation warnings to command output and documentation.
+
 # 0.47.05-beta1
 
 ## Fixes
