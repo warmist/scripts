@@ -105,7 +105,8 @@ function do_run(zlevel, grid, ctx)
                 'coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local tokens = quickfort_aliases.expand_aliases(text)
             if not dry_run then quickfort_common.move_cursor(pos) end
-            local focus_string = dfhack.gui.getCurFocus(true)
+            local focus_string =
+                    dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
             local modifiers = {} -- tracks ctrl, shift, and alt modifiers
             for _,token in ipairs(tokens) do
                 if handle_modifiers(token, modifiers) then goto continue end
@@ -121,7 +122,8 @@ function do_run(zlevel, grid, ctx)
                 stats.query_keystrokes.value = stats.query_keystrokes.value + 1
                 ::continue::
             end
-            local new_focus_string = dfhack.gui.getCurFocus(true)
+            local new_focus_string =
+                    dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
             if not quickfort_common.settings['query_unsafe'].value and
                     focus_string ~= new_focus_string then
                 qerror(string.format(
