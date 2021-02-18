@@ -73,6 +73,9 @@ Usage:
 ``-v``, ``--verbose``
     Output extra debugging information. This is especially useful if the
     blueprint isn't being applied like you expect.
+``-d``, ``--dry-run``
+    Go through all the motions and print statistics on what would be done, but
+    don't actually change any game state.
 
 Example commands::
 
@@ -190,6 +193,9 @@ undo    Applies the inverse of the specified blueprint. Dig tiles are
 -v, --verbose
     Output extra debugging information. This is especially useful if the
     blueprint isn't being applied like you expect.
+-d, --dry-run
+    Go through all the motions and print statistics on what would be done, but
+    don't actually change any game state.
 
 For more info, see:
 https://docs.dfhack.org/en/stable/docs/_auto/base.html#quickfort and

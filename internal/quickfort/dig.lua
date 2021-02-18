@@ -166,22 +166,21 @@ local values_undo = {
     traffic_restricted=0,
 }
 
--- these functions return whether a designation was made
+-- these functions return a function if a designation needs to be made; else nil
 local function do_mine(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 (not is_wall(ctx.tileattrs) and
                  not is_fortification(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
-    ctx.flags.dig = values.dig_default
-    return true
+    return function() ctx.flags.dig = values.dig_default end
 end
 
 local function do_channel(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 is_tree(ctx.tileattrs) or
@@ -192,28 +191,26 @@ local function do_channel(ctx)
                  not is_removable_shape(ctx.tileattrs) and
                  not is_gatherable(ctx.tileattrs) and
                  not is_sapling(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
-    ctx.flags.dig = values.dig_channel
-    return true
+    return function() ctx.flags.dig = values.dig_channel end
 end
 
 local function do_up_stair(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 (not is_wall(ctx.tileattrs) and
                  not is_fortification(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
-    ctx.flags.dig = values.dig_upstair
-    return true
+    return function() ctx.flags.dig = values.dig_upstair end
 end
 
 local function do_down_stair(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 is_tree(ctx.tileattrs) or
@@ -223,71 +220,64 @@ local function do_down_stair(ctx)
                  not is_removable_shape(ctx.tileattrs) and
                  not is_gatherable(ctx.tileattrs) and
                  not is_sapling(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
-    ctx.flags.dig = values.dig_downstair
-    return true
+    return function() ctx.flags.dig = values.dig_downstair end
 end
 
 local function do_up_down_stair(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 (not is_wall(ctx.tileattrs) and
                  not is_fortification(ctx.tileattrs) and
                  not is_up_stair(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
     if is_up_stair(ctx.tileattrs) then
-        ctx.flags.dig = values.dig_downstair
-    else
-        ctx.flags.dig = values.dig_updownstair
+        return function() ctx.flags.dig = values.dig_downstair end
     end
-    return true
+    return function() ctx.flags.dig = values.dig_updownstair end
 end
 
 local function do_ramp(ctx)
-    if ctx.on_map_edge then return false end
+    if ctx.on_map_edge then return nil end
     if not ctx.flags.hidden then -- always designate if the tile is hidden
         if is_construction(ctx.tileattrs) or
                 (not is_wall(ctx.tileattrs) and
                  not is_fortification(ctx.tileattrs)) then
-            return false
+            return nil
         end
     end
-    ctx.flags.dig = values.dig_ramp
-    return true
+    return function() ctx.flags.dig = values.dig_ramp end
 end
 
 local function do_remove_ramps(ctx)
-    if ctx.on_map_edge or ctx.flags.hidden then return false end
+    if ctx.on_map_edge or ctx.flags.hidden then return nil end
     if is_construction(ctx.tileattrs) or
             not is_removable_shape(ctx.tileattrs) then
-        return false
+        return mo;
     end
-    ctx.flags.dig = values.dig_default
-    return true
+    return function() ctx.flags.dig = values.dig_default end
 end
 
 local function do_gather(ctx)
-    if ctx.flags.hidden then return false end
-    if not is_gatherable(ctx.tileattrs) then return false end
-    ctx.flags.dig = values.dig_default
-    return true
+    if ctx.flags.hidden then return nil end
+    if not is_gatherable(ctx.tileattrs) then return nil end
+    return function() ctx.flags.dig = values.dig_default end
 end
 
 local function do_smooth(ctx)
-    if ctx.flags.hidden then return false end
+    if ctx.flags.hidden then return nil end
     if is_construction(ctx.tileattrs) or
             not is_hard(ctx.tileattrs) or
             is_smooth(ctx.tileattrs) or
             (not is_floor(ctx.tileattrs) and not is_wall(ctx.tileattrs)) then
-        return false
+        return nil
     end
-    ctx.flags.smooth = values.tile_smooth
-    return true
+    return function() ctx.flags.smooth = values.tile_smooth end
 end
 
 local function do_engrave(ctx)
@@ -295,18 +285,16 @@ local function do_engrave(ctx)
             is_construction(ctx.tileattrs) or
             not is_smooth(ctx.tileattrs) or
             get_engraving(ctx.pos) ~= nil then
-        return false
+        return nil
     end
-    ctx.flags.smooth = values.tile_engrave
-    return true
+    return function() ctx.flags.smooth = values.tile_engrave end
 end
 
 local function do_fortification(ctx)
-    if ctx.flags.hidden then return false end
+    if ctx.flags.hidden then return nil end
     if not is_wall(ctx.tileattrs) or
-            not is_smooth(ctx.tileattrs) then return false end
-    ctx.flags.smooth = values.tile_smooth
-    return true
+            not is_smooth(ctx.tileattrs) then return nil end
+    return function() ctx.flags.smooth = values.tile_smooth end
 end
 
 local function do_track(ctx)
@@ -315,7 +303,7 @@ local function do_track(ctx)
             is_construction(ctx.tileattrs) or
             not is_floor(ctx.tileattrs) or
             not is_hard(ctx.tileattrs) then
-        return false
+        return nil
     end
     local extent_adjacent = ctx.extent_adjacent
     if not extent_adjacent.north and not  extent_adjacent.south and
@@ -323,49 +311,47 @@ local function do_track(ctx)
         print('ambiguous direction for track; please use T(width x height)' ..
               ' syntax (specify both width > 1 and height > 1 for a' ..
               ' track that extends both South and East from this corner')
-        return false
+        return nil
     end
     if extent_adjacent.north and extent_adjacent.west then
         -- we're in the "empty" interior of a track extent - tracks can only be
         -- built in lines along the top or left of an extent.
-        return false
+        return nil
     end
     -- don't overwrite all directions, only 'or' in the new bits. we could be
     -- adding to a previously-designated track.
     local occupancy = ctx.occupancy
+    return function()
     if extent_adjacent.north then occupancy.carve_track_north = values.track end
     if extent_adjacent.east then occupancy.carve_track_east = values.track end
     if extent_adjacent.south then occupancy.carve_track_south = values.track end
     if extent_adjacent.west then occupancy.carve_track_west = values.track end
-    return true
+    end
 end
 
 local function do_toggle_engravings(ctx)
-    if ctx.flags.hidden then return false end
+    if ctx.flags.hidden then return nil end
     local engraving = get_engraving(ctx.pos)
-    if engraving == nil then return false end
-    engraving.flags.hidden = not engraving.flags.hidden
-    return true
+    if engraving == nil then return nil end
+    return function() engraving.flags.hidden = not engraving.flags.hidden end
 end
 
 local function do_toggle_marker(ctx)
-    if not has_designation(ctx.flags, ctx.occupancy) then return false end
-    ctx.occupancy.dig_marked = not ctx.occupancy.dig_marked
-    return true
+    if not has_designation(ctx.flags, ctx.occupancy) then return nil end
+    return function()
+        ctx.occupancy.dig_marked = not ctx.occupancy.dig_marked end
 end
 
 local function do_remove_construction(ctx)
     if ctx.flags.hidden or not is_construction(ctx.tileattrs) then
-        return false
+        return nil
     end
-    ctx.flags.dig = values.dig_default
-    return true
+    return function() ctx.flags.dig = values.dig_default end
 end
 
 local function do_remove_designation(ctx)
-    if not has_designation(ctx.flags, ctx.occupancy) then return false end
-    clear_designation(ctx.flags, ctx.occupancy)
-    return true
+    if not has_designation(ctx.flags, ctx.occupancy) then return nil end
+    return function() clear_designation(ctx.flags, ctx.occupancy) end
 end
 
 local function is_valid_item(item)
@@ -395,12 +381,11 @@ local function get_items_at(pos, include_buildings)
 end
 
 local function do_item_flag(pos, flag_name, flag_value, include_buildings)
-    local ret = false
-    for _, item in ipairs(get_items_at(pos, include_buildings)) do
-        item.flags[flag_name] = flag_value
-        ret = true
+    local items = get_items_at(pos, include_buildings)
+    if #items == 0 then return nil end
+    return function()
+        for _,item in ipairs(items) do item.flags[flag_name] = flag_value end
     end
-    return ret
 end
 
 local function do_claim(ctx)
@@ -438,23 +423,23 @@ local function do_unhide(ctx)
 end
 
 local function do_traffic_high(ctx)
-    if ctx.flags.hidden then return false end
-    ctx.flags.traffic = values.traffic_high
+    if ctx.flags.hidden then return nil end
+    return function() ctx.flags.traffic = values.traffic_high end
 end
 
 local function do_traffic_normal(ctx)
-    if ctx.flags.hidden then return false end
-    ctx.flags.traffic = values.traffic_normal
+    if ctx.flags.hidden then return nil end
+    return function() ctx.flags.traffic = values.traffic_normal end
 end
 
 local function do_traffic_low(ctx)
-    if ctx.flags.hidden then return false end
-    ctx.flags.traffic = values.traffic_low
+    if ctx.flags.hidden then return nil end
+    return function() ctx.flags.traffic = values.traffic_low end
 end
 
 local function do_traffic_restricted(ctx)
-    if ctx.flags.hidden then return false end
-    ctx.flags.traffic = values.traffic_restricted
+    if ctx.flags.hidden then return nil end
+    return function() ctx.flags.traffic = values.traffic_restricted end
 end
 
 local dig_db = {
@@ -551,7 +536,10 @@ end
 local function dig_tile(ctx, db_entry)
     ctx.flags, ctx.occupancy = dfhack.maps.getTileFlags(ctx.pos)
     ctx.tileattrs = df.tiletype.attrs[dfhack.maps.getTileType(ctx.pos)]
-    if db_entry.action(ctx) then
+    local action_fn = db_entry.action(ctx)
+    if not action_fn then return nil end
+    return function()
+        action_fn()
         -- set the block's designated flag so the game does a check to see what
         -- jobs need to be created
         dfhack.maps.getTileBlock(ctx.pos).flags.designated = true
@@ -569,12 +557,10 @@ local function dig_tile(ctx, db_entry)
                 set_priority(ctx, db_entry.priority)
             end
         end
-        return true
     end
-    return false
 end
 
-local function do_run_impl(zlevel, grid, stats)
+local function do_run_impl(zlevel, grid, stats, dry_run)
     for y, row in pairs(grid) do
         for x, cell_and_text in pairs(row) do
             local cell, text = cell_and_text.cell, cell_and_text.text
@@ -613,7 +599,9 @@ local function do_run_impl(zlevel, grid, stats)
                         stats.out_of_bounds.value =
                                 stats.out_of_bounds.value + 1
                     else
-                        if dig_tile(ctx, db_entry) then
+                        local action_fn = dig_tile(ctx, db_entry)
+                        if action_fn then
+                            if not dry_run then action_fn() end
                             stats.dig_designated.value =
                                     stats.dig_designated.value + 1
                         end
@@ -623,15 +611,15 @@ local function do_run_impl(zlevel, grid, stats)
             ::continue::
         end
     end
-    return stats
 end
 
 function do_run(zlevel, grid, ctx)
     values = values_run
     ctx.stats.dig_designated = ctx.stats.dig_designated or
             {label='Tiles designated for digging', value=0, always=true}
-    do_run_impl(zlevel, grid, ctx.stats)
-    dfhack.job.checkDesignationsNow()
+    local dry_run = ctx.dry_run
+    do_run_impl(zlevel, grid, ctx.stats, dry_run)
+    if not dry_run then dfhack.job.checkDesignationsNow() end
 end
 
 function do_orders()
@@ -642,5 +630,5 @@ function do_undo(zlevel, grid, ctx)
     values = values_undo
     ctx.stats.dig_designated = ctx.stats.dig_designated or
             {label='Tiles undesignated for digging', value=0, always=true}
-    do_run_impl(zlevel, grid, ctx.stats)
+    do_run_impl(zlevel, grid, ctx.stats, ctx.dry_run)
 end

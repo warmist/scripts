@@ -123,7 +123,9 @@ function create_orders(ctx)
     for k,order_spec in pairs(ctx.order_specs or {}) do
         local quantity = math.ceil(order_spec.quantity)
         log('ordering %d %s', quantity, k)
-        stockflow.create_orders(order_spec.order, quantity)
+        if not ctx.dry_run then
+            stockflow.create_orders(order_spec.order, quantity)
+        end
         table.insert(ctx.stats, {label=k, value=quantity})
     end
 end
