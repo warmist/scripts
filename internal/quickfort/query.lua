@@ -6,6 +6,8 @@ if not dfhack_flags.module then
 end
 
 local gui = require('gui')
+local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local log = quickfort_common.log
 local quickfort_aliases = reqscript('internal/quickfort/aliases')
@@ -62,6 +64,16 @@ local function switch_ui_sidebar_mode(sidebar_mode)
                       valid_ui_sidebar_modes[sidebar_mode])
 end
 
+local function is_same_coord(pos1, pos2)
+    return pos1.x == pos2.x and pos1.y == pos2.y and pos1.z == pos2.z
+end
+
+-- If a tile starts or ends with one of these focus strings, the start and end
+-- focus strings can differ without us flagging it as an error.
+local exempt_focus_strings = utils.invert({
+    'dwarfmode/QueryBuilding/Destroying',
+    })
+
 function do_run(zlevel, grid, ctx)
     local stats = ctx.stats
     stats.query_keystrokes = stats.query_keystrokes or
@@ -115,15 +127,30 @@ function do_run(zlevel, grid, ctx)
                 stats.query_keystrokes.value = stats.query_keystrokes.value + 1
                 ::continue::
             end
-            local new_focus_string =
-                    dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
-            if not quickfort_common.settings['query_unsafe'].value and
-                    focus_string ~= new_focus_string then
-                qerror(string.format(
-                    'expected to be back on screen "%s" but screen is "%s"; ' ..
-                    'there is likely a problem with the blueprint text in ' ..
-                    'cell %s: "%s" (do you need a "^" at the end?)',
-                    focus_string, new_focus_string, cell, text))
+            -- sanity checks for common blueprint mistakes
+            if not dry_run
+                    and not quickfort_common.settings['query_unsafe'].value then
+                local cursor = guidm.getCursorPos()
+                if not is_same_coord(pos, cursor) then
+                    qerror(string.format(
+                        'expected to be at cursor position (%d, %d, %d) on ' ..
+                        'screen "%s" but cursor is at (%d, %d, %d); there ' ..
+                        'is likely a problem with the blueprint text in ' ..
+                        'cell %s: "%s"', pos.x, pos.y, pos.z, focus_string,
+                        cursor.x, cursor.y, cursor.z, cell, text))
+                end
+                local new_focus_string = dfhack.gui.getCurFocus(true)
+                local is_exempt = exempt_focus_strings[focus_string] or
+                        exempt_focus_strings[new_focus_string]
+                if not is_exempt and focus_string ~= new_focus_string then
+                    qerror(string.format(
+                        'expected to be at cursor position (%d, %d, %d) on ' ..
+                        'screen "%s" but screen is "%s"; there is likely a ' ..
+                        'problem with the blueprint text in cell %s: "%s" ' ..
+                        '(do you need a "^" at the end to escape back to ' ..
+                        'the map screen?)', pos.x, pos.y, pos.z, focus_string,
+                        new_focus_string, cell, text))
+                end
             end
             stats.query_tiles.value = stats.query_tiles.value + 1
             ::continue::

@@ -16,6 +16,7 @@ that repo.
 ## Misc Improvements
 - `gui/no-dfhack-init`: clarified how to dismiss dialog that displays when no ``dfhack.init`` file is found
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
+- `quickfort`: refine ``#query`` blueprint sanity checks: cursor should still be on target tile at end of configuration, and it's ok for the screen ID to change if you are destroying (or canceling destruction of) a building
 
 # 0.47.05-beta1
 
