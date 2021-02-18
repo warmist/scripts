@@ -16,6 +16,7 @@ that repo.
 ## Misc Improvements
 - `gui/no-dfhack-init`: clarified how to dismiss dialog that displays when no ``dfhack.init`` file is found
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
+- `quickfort`: you can now add alias definitions directly to your blueprint files instead of having to put them in a separate aliases.txt file. makes sharing blueprints with custom alias definitions much easier.
 
 # 0.47.05-beta1
 
