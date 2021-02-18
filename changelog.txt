@@ -15,6 +15,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/no-dfhack-init`: clarified how to dismiss dialog that displays when no ``dfhack.init`` file is found
+- `quickfort`: you can now be in any mode with an active cursor when running #query blueprints (before you could only be in a few "approved" modes, like look, query, or place)
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
 
 # 0.47.05-beta1
