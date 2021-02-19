@@ -47,7 +47,7 @@ Additional options can be specified after the filename:
 
 =end
 
-puts "The digfort script is deprecated. Please use DFHack's quickfort command instead. The digfort script will be removed in a future DFHack release."
+puts "The digfort script is deprecated. Please move your blueprints to the 'blueprints' folder (under your DF installation directory) and use DFHack's quickfort command instead:\n  quickfort run example.csv\nThe digfort script will be removed in a future DFHack release."
 
 fname = $script_args[0].to_s
 opts = $script_args[1..-1] or []
