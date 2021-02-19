@@ -16,6 +16,7 @@ that repo.
 ## Misc Improvements
 - `gui/no-dfhack-init`: clarified how to dismiss dialog that displays when no ``dfhack.init`` file is found
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
+- `quickfort`: now reports how many work orders were added when generating manager orders from blueprints in the gui dialog
 
 # 0.47.05-beta1
 
