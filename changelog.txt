@@ -19,6 +19,9 @@ that repo.
 - `quickfort`: now reports how many work orders were added when generating manager orders from blueprints in the gui dialog
 - `quickfort`: you can now specify the number of desired barrels, bins, and wheelbarrows for individual stockpiles when placing them
 
+## Documentation
+- `digfort`: digfort has been replaced by `quickfort`. add deprecation warnings to command output and documentation.
+
 # 0.47.05-beta1
 
 ## Fixes
