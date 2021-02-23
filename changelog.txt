@@ -18,6 +18,8 @@ that repo.
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
 - `quickfort`: now reports how many work orders were added when generating manager orders from blueprints in the gui dialog
 - `quickfort`: you can now specify the number of desired barrels, bins, and wheelbarrows for individual stockpiles when placing them
+- `quickfort`: add ``--dry-run`` option to process blueprints but not change any game state
+- `quickfort`: ``quickfort orders`` on a ``#place`` blueprint will enqueue manager orders for barrels, bins, or wheelbarrows that are explicitly set in the blueprint.
 
 ## Documentation
 - `digfort`: digfort has been replaced by `quickfort`. add deprecation warnings to command output and documentation.
@@ -29,7 +31,6 @@ that repo.
 
 ## Misc Improvements
 - `quickfort`: new commandline options for setting the initial state of the gui dialog. for example: ``quickfort gui -l dreamfort notes`` will start the dialog filtered for the dreamfort walkthrough blueprints
-- `quickfort`: add ``--dry-run`` option to process blueprints but not change any game state
 
 # 0.47.04-r5
 

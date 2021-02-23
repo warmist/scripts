@@ -798,7 +798,7 @@ function do_orders(zlevel, grid, ctx)
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
                 zlevel, grid, buildings, building_db, building_aliases)
-    quickfort_orders.enqueue_orders(stats, buildings, building_db, ctx)
+    quickfort_orders.enqueue_building_orders(buildings, building_db, ctx)
 end
 
 local function is_queued_for_destruction(bld)
