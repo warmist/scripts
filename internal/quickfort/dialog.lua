@@ -203,8 +203,9 @@ local function dialog_command(command, text)
     print(string.format('executing via gui dialog: quickfort %s',
                         quickfort_parse.format_command(
                             command, blueprint_name, section_name)))
+    local aliases = quickfort_list.get_aliases(blueprint_name)
     local ctx = {command=command, blueprint_name=blueprint_name, cursor=cursor,
-                 stats={}, messages={}}
+                 stats={}, messages={}, aliases=aliases}
     quickfort_command.do_command_internal(ctx, section_name)
     quickfort_command.finish_command(ctx, section_name, true)
     if command == 'run' and #ctx.messages > 0 then

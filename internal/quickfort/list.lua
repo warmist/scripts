@@ -16,28 +16,30 @@ local function scan_csv_blueprint(path)
     local filepath = quickfort_common.get_blueprint_filepath(path)
     local mtime = dfhack.filesystem.mtime(filepath)
     if not blueprint_cache[path] or blueprint_cache[path].mtime ~= mtime then
+        local modelines, aliases = quickfort_parse.get_metadata(filepath)
         blueprint_cache[path] =
-                {modelines=quickfort_parse.get_modelines(filepath), mtime=mtime}
+                {modelines=modelines, aliases=aliases, mtime=mtime}
     end
     if #blueprint_cache[path].modelines == 0 then
         print(string.format('skipping "%s": empty file', path))
     end
-    return blueprint_cache[path].modelines
+    return blueprint_cache[path].modelines, blueprint_cache[path].aliases
 end
 
 local function get_xlsx_file_sheet_infos(filepath)
-    local sheet_infos = {}
+    local sheet_infos = {aliases={}}
     local xlsx_file = xlsxreader.open_xlsx_file(filepath)
     if not xlsx_file then return sheet_infos end
     return dfhack.with_finalize(
         function() xlsxreader.close_xlsx_file(xlsx_file) end,
         function()
             for _, sheet_name in ipairs(xlsxreader.list_sheets(xlsx_file)) do
-                local modelines =
-                        quickfort_parse.get_modelines(filepath, sheet_name)
+                local modelines, aliases =
+                        quickfort_parse.get_metadata(filepath, sheet_name)
+                utils.assign(sheet_infos.aliases, aliases)
                 if #modelines > 0 then
-                    table.insert(sheet_infos,
-                                 {name=sheet_name, modelines=modelines})
+                    local metadata = {name=sheet_name, modelines=modelines}
+                    table.insert(sheet_infos, metadata)
                 end
             end
             return sheet_infos
@@ -67,11 +69,16 @@ local function get_section_name(sheet_name, label)
     return string.format('%s%s', sheet_name_str, label_str)
 end
 
-local function make_blueprint_modes_key(path, section_name)
-    return path .. '//' .. (section_name or '')
+-- normalize paths on windows
+local function normalize_path(path)
+    return path:gsub(package.config:sub(1,1), "/")
 end
 
-local blueprints, blueprint_modes = {}, {}
+local function make_blueprint_modes_key(path, section_name)
+    return normalize_path(path) .. '//' .. (section_name or '')
+end
+
+local blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
 local num_library_blueprints = 0
 
 local function scan_blueprints()
@@ -83,8 +90,10 @@ local function scan_blueprints()
         local is_library = string.find(v.path, '^library/') ~= nil
         local target_list = blueprints
         if is_library then target_list = library_blueprints end
+        local file_aliases = {}
         if not v.isdir and string.find(v.path:lower(), '[.]csv$') then
-            local modelines = scan_csv_blueprint(v.path)
+            local modelines, aliases = scan_csv_blueprint(v.path)
+            file_aliases = aliases
             local first = true
             for _,modeline in ipairs(modelines) do
                 table.insert(target_list,
@@ -101,6 +110,7 @@ local function scan_blueprints()
             end
         elseif not v.isdir and string.find(v.path:lower(), '[.]xlsx$') then
             local sheet_infos = scan_xlsx_blueprint(v.path)
+            file_aliases = sheet_infos.aliases
             local first = true
             if #sheet_infos > 0 then
                 for _,sheet_info in ipairs(sheet_infos) do
@@ -134,6 +144,7 @@ local function scan_blueprints()
                 end
             end
         end
+        file_scope_aliases[normalize_path(v.path)] = file_aliases
     end
     -- tack library files on to the end so user files are contiguous
     num_library_blueprints = #library_blueprints
@@ -143,9 +154,7 @@ local function scan_blueprints()
 end
 
 function get_blueprint_by_number(list_num)
-    if #blueprints == 0 then
-        scan_blueprints()
-    end
+    scan_blueprints()
     list_num = tonumber(list_num)
     local blueprint = blueprints[list_num]
     if not blueprint then
@@ -157,11 +166,14 @@ function get_blueprint_by_number(list_num)
 end
 
 function get_blueprint_mode(path, section_name)
-    if #blueprints == 0 then
-        scan_blueprints()
-    end
-    path = path:gsub(package.config:sub(1,1), "/") -- normalize paths on windows
+    scan_blueprints()
     return blueprint_modes[make_blueprint_modes_key(path, section_name)]
+end
+
+-- returns the aliases that are scoped to the given file
+function get_aliases(path)
+    scan_blueprints()
+    return file_scope_aliases[normalize_path(path)]
 end
 
 -- returns a sequence of structured data to display. note that the id may not
