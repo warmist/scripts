@@ -29,7 +29,8 @@ function reset_aliases()
     alias_stack = {}
 end
 
-local function push_aliases(aliases)
+-- overwrites metatable of passed-in aliases map
+function push_aliases(aliases)
     local prev = alias_stack
     setmetatable(aliases, {prev=prev,
                            __index=function(_, key) return prev[key] end})
@@ -52,11 +53,7 @@ function push_aliases_csv_file(filename)
     local num_aliases = 0
     for line in file:lines() do
         line = line:gsub('[\r\n]*$', '')
-        -- aliases must be at least two alphanumerics long (plus - and _) to
-        -- distinguish them from regular keystrokes
-        _, _, alias, definition = line:find('^([%w-_][%w-_]+):%s*(.*)')
-        if alias and #definition > 0 then
-            aliases[alias] = definition
+        if quickfort_parse.parse_alias_combined(line, aliases) then
             num_aliases = num_aliases + 1
         end
     end

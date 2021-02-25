@@ -1,11 +1,16 @@
-# designate an area based on a '.csv' plan
+# designate based on a '.csv' plan (deprecated: please use DFHack quickfort)
 =begin
 
 digfort
 =======
 A script to designate an area for digging according to a plan in csv format.
 
-This script, inspired by quickfort, can designate an area for digging.
+**Digfort is deprecated.** Please use DFHack's more powerful `quickfort` command
+instead. You can use your existing .csv files. Just move them to the
+``blueprints`` folder in your DF installation, and instead of ``digfort
+file.csv`` run ``quickfort run file.csv``.
+
+This script, inspired by (Python) quickfort, can designate an area for digging.
 Your plan should be stored in a .csv file like this::
 
     # this is a comment
@@ -41,6 +46,8 @@ Additional options can be specified after the filename:
   is to fail with an error message.)
 
 =end
+
+puts "The digfort script is deprecated. Please move your blueprints to the 'blueprints' folder (under your DF installation directory) and use DFHack's quickfort command instead:\n  quickfort run example.csv\nThe digfort script will be removed in a future DFHack release."
 
 fname = $script_args[0].to_s
 opts = $script_args[1..-1] or []

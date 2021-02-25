@@ -14,12 +14,19 @@ local quickfort_keycodes = reqscript('internal/quickfort/keycodes')
 local common_aliases_filename = 'hack/data/quickfort/aliases-common.txt'
 local user_aliases_filename = 'dfhack-config/quickfort/aliases.txt'
 
-local function load_aliases()
+local function load_aliases(ctx)
     -- ensure we're starting from a clean alias stack, even if the previous
     -- invocation of this function returned early with an error
     quickfort_aliases.reset_aliases()
     quickfort_aliases.push_aliases_csv_file(common_aliases_filename)
     quickfort_aliases.push_aliases_csv_file(user_aliases_filename)
+    local num_file_aliases = 0
+    for _ in pairs(ctx.aliases) do num_file_aliases = num_file_aliases + 1 end
+    if num_file_aliases > 0 then
+        quickfort_aliases.push_aliases(ctx.aliases)
+        log('successfully read in %d aliases from "%s"',
+            num_file_aliases, ctx.blueprint_name)
+    end
 end
 
 local function is_queryable_tile(pos)
@@ -77,7 +84,7 @@ function do_run(zlevel, grid, ctx)
     stats.query_tiles = stats.query_tiles or
             {label='Tiles modified', value=0}
 
-    load_aliases()
+    load_aliases(ctx)
 
     local dry_run = ctx.dry_run
     local saved_mode = df.global.ui.main.mode
