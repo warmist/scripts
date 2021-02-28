@@ -59,8 +59,9 @@ end
 if not runner.initialized then
     dfhack.printerr(
         'Warning: Coverage stats are not being collected. Report will be' ..
-        ' empty. Please run dfhack with the DFHACK_ENABLE_LUACOV environment' ..
-        ' variable defined to start coverage monitoring.')
+        ' empty unless stats were collected in a previous run. Please run' ..
+        ' dfhack with the DFHACK_ENABLE_LUACOV environment variable defined' ..
+        ' to start coverage monitoring.')
 end
 
 -- gets the active luacov configuration
