@@ -79,16 +79,21 @@ for _,pattern in ipairs(other_args) do
                 (pattern:gsub("\\", "/"):gsub("%.lua$", "")))
 end
 
-print('flushing accumulated stats')
-runner.save_stats()
+runner.pause()
+dfhack.with_finalize(
+    function() runner.resume() end,
+    function()
+        print('flushing accumulated stats')
+        runner.save_stats()
 
-print(string.format('generating report in "%s" for files matching:',
-                    configuration.reportfile))
-if #configuration.include == 0 then
-    print('  all')
-else
-    for _,pattern in ipairs(configuration.include) do
-        print(('  %s'):format(pattern))
-    end
-end
-runner.run_report(configuration)
+        print(string.format('generating report in "%s" for files matching:',
+                            configuration.reportfile))
+        if #configuration.include == 0 then
+            print('  all')
+        else
+            for _,pattern in ipairs(configuration.include) do
+                print(('  %s'):format(pattern))
+            end
+        end
+        runner.run_report(configuration)
+    end)
