@@ -71,12 +71,19 @@ local configuration = runner.load_config()
 -- parameters, but we need to restore the original values when this script is
 -- subsequently run without parameters.
 default_include = default_include or configuration.include or {}
-configuration.include = #other_args == 0 and default_include or {}
 
 -- override 'include' table if patterns were explicitly specified
+configuration.include = #other_args == 0 and default_include or {}
 for _,pattern in ipairs(other_args) do
     table.insert(configuration.include,
                 (pattern:gsub("\\", "/"):gsub("%.lua$", "")))
+end
+
+-- always exclude test files
+configuration.exclude = configuration.exclude or {}
+local test_pattern = '/test/' -- those are path slashes and not regex delimiters
+if not utils.invert(configuration.exclude)[test_pattern] then
+    table.insert(configuration.exclude, test_pattern)
 end
 
 runner.pause()
