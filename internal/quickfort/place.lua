@@ -18,6 +18,7 @@ require('dfhack.buildings') -- loads additional functions into dfhack.buildings
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
+local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_query = reqscript('internal/quickfort/query')
 local log = quickfort_common.log
 
@@ -74,11 +75,32 @@ local stockpile_db = {
 }
 for _, v in pairs(stockpile_db) do utils.assign(v, stockpile_template) end
 
+local function add_resource_digit(cur_val, digit)
+    return (cur_val * 10) + digit
+end
+
 local function custom_stockpile(_, keys)
-    local labels = {}
-    local indices = {}
+    local labels, indices = {}, {}
     local want_bins, want_barrels, want_wheelbarrows = false, false, false
+    local num_bins, num_barrels, num_wheelbarrows = nil, nil, nil
+    local prev_key, in_digits = nil, false
     for k in keys:gmatch('.') do
+        local digit = tonumber(k)
+        if digit and prev_key then
+            local db_entry = rawget(stockpile_db, prev_key)
+            if db_entry.want_bins then
+                if not in_digits then num_bins = 0 end
+                num_bins = add_resource_digit(num_bins, digit)
+            elseif db_entry.want_barrels then
+                if not in_digits then num_barrels = 0 end
+                num_barrels = add_resource_digit(num_barrels, digit)
+            else
+                if not in_digits then num_wheelbarrows = 0 end
+                num_wheelbarrows = add_resource_digit(num_wheelbarrows, digit)
+            end
+            in_digits = true
+            goto continue
+        end
         if not rawget(stockpile_db, k) then return nil end
         table.insert(labels, stockpile_db[k].label)
         table.insert(indices, stockpile_db[k].indices[1])
@@ -86,13 +108,21 @@ local function custom_stockpile(_, keys)
         want_barrels = want_barrels or stockpile_db[k].want_barrels
         want_wheelbarrows =
                 want_wheelbarrows or stockpile_db[k].want_wheelbarrows
+        prev_key = k
+        -- flag that we're starting a new (potential) digit sequence and we
+        -- should reset the accounting for the relevent resource number
+        in_digits = false
+        ::continue::
     end
     local stockpile_data = {
         label=table.concat(labels, '+'),
         indices=indices,
         want_bins=want_bins,
         want_barrels=want_barrels,
-        want_wheelbarrows=want_wheelbarrows
+        want_wheelbarrows=want_wheelbarrows,
+        num_bins=num_bins,
+        num_barrels=num_barrels,
+        num_wheelbarrows=num_wheelbarrows
     }
     utils.assign(stockpile_data, stockpile_template)
     return stockpile_data
@@ -137,32 +167,35 @@ end
 
 local function init_containers(db_entry, ntiles, fields)
     if db_entry.want_barrels then
-        local max_barrels =
+        local max_barrels = db_entry.num_barrels or
                 quickfort_common.settings['stockpiles_max_barrels'].value
         if max_barrels < 0 or max_barrels >= ntiles then
             fields.max_barrels = ntiles
         else
             fields.max_barrels = max_barrels
         end
+        log('barrels set to %d', fields.max_barrels)
     end
     if db_entry.want_bins then
-        local max_bins = quickfort_common.settings['stockpiles_max_bins'].value
+        local max_bins = db_entry.num_bins or
+                quickfort_common.settings['stockpiles_max_bins'].value
         if max_bins < 0 or max_bins >= ntiles then
             fields.max_bins = ntiles
         else
             fields.max_bins = max_bins
         end
+        log('bins set to %d', fields.max_bins)
     end
-    if db_entry.want_wheelbarrows then
-        local max_wb =
+    if db_entry.want_wheelbarrows or db_entry.num_wheelbarrows then
+        local max_wb = db_entry.num_wheelbarrows or
                 quickfort_common.settings['stockpiles_max_wheelbarrows'].value
-        if max_wb < 0 then
-            fields.max_wheelbarrows = 1
-        elseif max_wb >= ntiles then
-            fields.max_wheelbarrows = ntiles
+        if max_wb < 0 then max_wb = 1 end
+        if max_wb >= ntiles - 1 then
+            fields.max_wheelbarrows = ntiles - 1
         else
             fields.max_wheelbarrows = max_wb
         end
+        log('wheelbarrows set to %d', fields.max_wheelbarrows)
     end
 end
 
@@ -223,8 +256,15 @@ function do_run(zlevel, grid, ctx)
     dfhack.job.checkBuildingsNow()
 end
 
-function do_orders()
-    log('nothing to do for blueprints in mode: place')
+-- enqueues orders only for explicitly requested containers
+function do_orders(zlevel, grid, ctx)
+    local stockpiles = {}
+    quickfort_building.init_buildings(zlevel, grid, stockpiles, stockpile_db)
+    for _, s in ipairs(stockpiles) do
+        local db_entry = stockpile_db[s.type]
+        quickfort_orders.enqueue_container_orders(ctx,
+            db_entry.num_bins, db_entry.num_barrels, db_entry.num_wheelbarrows)
+    end
 end
 
 function do_undo(zlevel, grid, ctx)

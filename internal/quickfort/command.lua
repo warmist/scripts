@@ -14,7 +14,7 @@ local quickfort_parse = reqscript('internal/quickfort/parse')
 
 local mode_modules = {}
 for mode, _ in pairs(quickfort_common.valid_modes) do
-    if mode ~= 'ignore' then
+    if mode ~= 'ignore' and mode ~= 'aliases' then
         mode_modules[mode] = reqscript('internal/quickfort/'..mode)
     end
 end
@@ -114,8 +114,9 @@ function do_command(args)
     dfhack.with_finalize(
         function() quickfort_common.verbose = false end,
         function()
+            local aliases = quickfort_list.get_aliases(blueprint_name)
             local ctx = {command=command, blueprint_name=blueprint_name,
-                         cursor=cursor, stats={}, messages={}, dry_run=dry_run}
+                         cursor=cursor, stats={}, messages={}, aliases=aliases, dry_run=dry_run}
             do_command_internal(ctx, section_name)
             finish_command(ctx, section_name, quiet)
             if command == 'run' then
