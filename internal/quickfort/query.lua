@@ -120,8 +120,7 @@ function do_run(zlevel, grid, ctx)
                 'coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local tokens = quickfort_aliases.expand_aliases(text)
             if not dry_run then quickfort_common.move_cursor(pos) end
-            local focus_string =
-                    dfhack.gui.getFocusString(dfhack.gui.getCurViewscreen(true))
+            local focus_string = dfhack.gui.getCurFocus(true)
             local modifiers = {} -- tracks ctrl, shift, and alt modifiers
             for _,token in ipairs(tokens) do
                 if handle_modifiers(token, modifiers) then goto continue end
