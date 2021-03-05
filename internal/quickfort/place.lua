@@ -205,10 +205,10 @@ local function create_stockpile(s, stockpile_query_grid, dry_run)
         ' spreadsheet cells: %s',
         db_entry.label, s.pos.x, s.pos.y, s.pos.z, table.concat(s.cells, ', '))
     local extents, ntiles = quickfort_building.make_extents(s, dry_run)
-    if dry_run then return ntiles end
     local fields = {room={x=s.pos.x, y=s.pos.y, width=s.width, height=s.height,
                           extents=extents}}
     init_containers(db_entry, ntiles, fields)
+    if dry_run then return ntiles end
     local bld, err = dfhack.buildings.constructBuilding{
         type=df.building_type.Stockpile, abstract=true, pos=s.pos,
         width=s.width, height=s.height, fields=fields}
