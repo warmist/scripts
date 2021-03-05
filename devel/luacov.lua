@@ -30,6 +30,9 @@ interceptor hook and prevent coverage statistics from being collected.
 
 Options:
 
+-c, --clear
+    Remove "luacov.stats.out" after generating the report, ensuring the next
+    report starts from a clean slate.
 -h, --help
     Show this help message and exit.
 
@@ -46,8 +49,9 @@ devel/luacov quickfort hack/lua
 local utils = require('utils')
 local runner = require("luacov.runner")
 
-local show_help = false
+local clear, show_help = false, false
 local other_args = utils.processArgsGetopt({...}, {
+        {'c', 'clear', handler=function() clear = true end},
         {'h', 'help', handler=function() show_help = true end},
     })
 if show_help then
@@ -103,4 +107,12 @@ dfhack.with_finalize(
             end
         end
         runner.run_report(configuration)
+        if clear then
+            print(string.format('removing accumulated stats in "%s"',
+                                configuration.statsfile))
+            os.remove(configuration.statsfile)
+        else
+            print(string.format('allowing further stats to accumulate in "%s"',
+                                configuration.statsfile))
+        end
     end)
