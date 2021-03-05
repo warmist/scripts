@@ -15,11 +15,12 @@ that repo.
 
 ## Misc Improvements
 - `gui/no-dfhack-init`: clarified how to dismiss dialog that displays when no ``dfhack.init`` file is found
-- `quickfort`: you can now be in any mode with an active cursor when running #query blueprints (before you could only be in a few "approved" modes, like look, query, or place)
 - `quickfort`: an active cursor is no longer required for running #notes blueprints (like the dreamfort walkthrough)
+- `quickfort`: you can now be in any mode with an active cursor when running ``#query`` blueprints (before you could only be in a few "approved" modes, like look, query, or place)
+- `quickfort`: refine ``#query`` blueprint sanity checks: cursor should still be on target tile at end of configuration, and it's ok for the screen ID to change if you are destroying (or canceling destruction of) a building
 - `quickfort`: now reports how many work orders were added when generating manager orders from blueprints in the gui dialog
-- `quickfort`: you can now specify the number of desired barrels, bins, and wheelbarrows for individual stockpiles when placing them
 - `quickfort`: add ``--dry-run`` option to process blueprints but not change any game state
+- `quickfort`: you can now specify the number of desired barrels, bins, and wheelbarrows for individual stockpiles when placing them
 - `quickfort`: ``quickfort orders`` on a ``#place`` blueprint will enqueue manager orders for barrels, bins, or wheelbarrows that are explicitly set in the blueprint.
 - `quickfort`: you can now add alias definitions directly to your blueprint files instead of having to put them in a separate aliases.txt file. makes sharing blueprints with custom alias definitions much easier.
 
