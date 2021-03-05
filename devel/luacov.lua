@@ -9,18 +9,18 @@ Usage:
 
 This script generates a coverage report from collected statistics. By default it
 reports on every Lua file in all of DFHack. To filter filenames, specify one or
-more Lua patterns matching files to be included. Alternately, you can configure
-reporting parameters in the .luacov file in your DF directory. See online luacov
-documentation for the format of that file.
+more Lua patterns matching files or directories to be included. Alternately, you
+can configure reporting parameters in the .luacov file in your DF directory. See
+online luacov documentation for the format of that file.
 
 Statistics are cumulative across reports. That is, if you run a report, run a
 lua script, and then run another report, the report will include all activity
 from the first report plus the recently run lua script. Restarting DFHack will
-clear the statistics. You can also clear statistics from previous reports while
-DFHack is running by deleting the "luacov.stats.out" file in your DF folder.
+clear the statistics. You can also clear statistics after running a report by
+passing the --clear flag to this script.
 
 Note that the coverage report will be empty unless you run DFHack with the
-"DFHACK_ENABLE_LUACOV" environment variable defined, which starts the coverage
+"DFHACK_ENABLE_LUACOV=1" environment variable defined, which starts the coverage
 monitoring.
 
 Also note that coverage monitoring and lua profiling via the "profiler" module
