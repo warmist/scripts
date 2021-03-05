@@ -145,6 +145,7 @@ local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 local quickfort_place = reqscript('internal/quickfort/place')
 local quickfort_query = reqscript('internal/quickfort/query')
+local quickfort_reader = reqscript('internal/quickfort/reader')
 local quickfort_set = reqscript('internal/quickfort/set')
 local quickfort_zone = reqscript('internal/quickfort/zone')
 
