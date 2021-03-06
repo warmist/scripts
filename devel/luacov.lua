@@ -40,15 +40,15 @@ Options:
 Examples:
 
 devel/luacov
-     Report on all DFHack lua scripts.
-devel/luacov quickfort
-    Report only on quickfort source files.
+    Report on all DFHack lua scripts.
+devel/luacov -c quickfort
+    Report only on quickfort source files and clear stats.
 devel/luacov quickfort hack/lua
     Report only on quickfort and DFHack library lua source files.
 ]====]
 
 local utils = require('utils')
-local runner = require("luacov.runner")
+local runner = require('luacov.runner')
 
 local clear, show_help = false, false
 local other_args = utils.processArgsGetopt({...}, {
@@ -65,18 +65,19 @@ if not runner.initialized then
     dfhack.printerr(
         'Warning: Coverage stats are not being collected. Report will be' ..
         ' empty unless stats were collected in a previous run. Please start' ..
-        ' dfhack with the DFHACK_ENABLE_LUACOV environment variable defined' ..
-        ' to start coverage monitoring. Keep in mind that using the' ..
+        ' dfhack with the DFHACK_ENABLE_LUACOV=1 environment variable' ..
+        ' defined to start coverage monitoring. Keep in mind that using the' ..
         ' "kill-lua" command or using a Lua profiler may interfere with' ..
         ' coverage monitoring.')
 end
 
--- gets the active luacov configuration
+-- gets the active luacov configuration from when runner.init() was called.
+-- note that this does *not* reload .luacov if that file was changed.
 local config = runner.load_config()
 
 -- save the original configuration values since this script can mutate the
--- config when run with parameters, but we need to restore the original values
--- when this script is subsequently run without parameters.
+-- config when run with parameters. we need to restore the original values when
+-- this script is subsequently run without parameters.
 default_include = default_include or config.include or {}
 if default_clear == nil then default_clear = config.deletestats or false end
 
@@ -97,7 +98,11 @@ end
 -- remove stats after generating report if requested; otherwise restore default
 config.deletestats = clear or default_clear
 
+-- pause the runner while we're generating a report. otherwise we can end up
+-- conflicting with autosaved stats if the user has that enabled in their
+-- .luacov config.
 runner.pause()
+
 dfhack.with_finalize(
     function() runner.resume() end,
     function()
