@@ -78,8 +78,7 @@ local config = runner.load_config()
 -- config when run with parameters, but we need to restore the original values
 -- when this script is subsequently run without parameters.
 default_include = default_include or config.include or {}
-default_clear = default_clear ~= nil and default_clear or
-        config.deletestats or false
+if default_clear == nil then default_clear = config.deletestats or false end
 
 -- override 'include' table if patterns were explicitly specified
 config.include = #other_args == 0 and default_include or {}
@@ -102,21 +101,20 @@ runner.pause()
 dfhack.with_finalize(
     function() runner.resume() end,
     function()
-        print(string.format('flushing accumulated stats to "%s"',
-                            config.statsfile))
+        print(('flushing coverage stats to "%s"'):format(config.statsfile))
         runner.save_stats()
 
-        print(string.format('generating report in "%s" for files matching:',
-                            config.reportfile))
+        print(('generating report in "%s" for files matching:'):format(
+                config.reportfile))
         if #config.include == 0 then
-            print('  all')
+            print('  .*')
         else
             for _,pattern in ipairs(config.include) do
                 print(('  %s'):format(pattern))
             end
         end
-        print(string.format('and %s accumulated stats in "%s"',
-                            config.deletestats and 'removing' or 'keeping',
-                            config.statsfile))
+        print(('and %s accumulated stats in "%s"'):format(
+                config.deletestats and 'removing' or 'keeping',
+                config.statsfile))
         runner.run_report(config)
     end)
