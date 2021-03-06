@@ -11,7 +11,8 @@ This script generates a coverage report from collected statistics. By default it
 reports on every Lua file in all of DFHack. To filter filenames, specify one or
 more Lua patterns matching files or directories to be included. Alternately, you
 can configure reporting parameters in the .luacov file in your DF directory. See
-online luacov documentation for the format of that file.
+https://keplerproject.github.io/luacov/doc/modules/luacov.defaults.html for
+details.
 
 Statistics are cumulative across reports. That is, if you run a report, run a
 lua script, and then run another report, the report will include all activity
@@ -31,7 +32,7 @@ interceptor hook and prevent coverage statistics from being collected.
 Options:
 
 -c, --clear
-    Remove "luacov.stats.out" after generating the report, ensuring the next
+    Remove accumulated metrics after generating the report, ensuring the next
     report starts from a clean slate.
 -h, --help
     Show this help message and exit.
@@ -60,59 +61,62 @@ if show_help then
     return
 end
 
-if not runner.initialized then
+if not runner.initialized or debug.gethook() ~= runner.debug_hook then
     dfhack.printerr(
         'Warning: Coverage stats are not being collected. Report will be' ..
         ' empty unless stats were collected in a previous run. Please run' ..
         ' dfhack with the DFHACK_ENABLE_LUACOV environment variable defined' ..
-        ' to start coverage monitoring.')
+        ' to start coverage monitoring. Keep in mind that using the' ..
+        ' "kill-lua" command or using a Lua profiler will interfere with' ..
+        ' coverage monitoring.')
 end
 
 -- gets the active luacov configuration
-local configuration = runner.load_config()
+local config = runner.load_config()
 
--- save the original include table since this script can mutate it when run with
--- parameters, but we need to restore the original values when this script is
--- subsequently run without parameters.
-default_include = default_include or configuration.include or {}
+-- save the original configuration values since this script can mutate the
+-- config when run with parameters, but we need to restore the original values
+-- when this script is subsequently run without parameters.
+default_include = default_include or config.include or {}
+default_clear = default_clear ~= nil and default_clear or
+        config.deletestats or false
 
 -- override 'include' table if patterns were explicitly specified
-configuration.include = #other_args == 0 and default_include or {}
+config.include = #other_args == 0 and default_include or {}
 for _,pattern in ipairs(other_args) do
-    table.insert(configuration.include,
+    table.insert(config.include,
                 (pattern:gsub("\\", "/"):gsub("%.lua$", "")))
 end
 
 -- always exclude test files
-configuration.exclude = configuration.exclude or {}
+config.exclude = config.exclude or {}
 local test_pattern = '/test/' -- those are path slashes and not regex delimiters
-if not utils.invert(configuration.exclude)[test_pattern] then
-    table.insert(configuration.exclude, test_pattern)
+if not utils.invert(config.exclude)[test_pattern] then
+    table.insert(config.exclude, test_pattern)
 end
+
+-- remove stats after generating report if requested; otherwise restore default
+config.deletestats = clear or default_clear
 
 runner.pause()
 dfhack.with_finalize(
     function() runner.resume() end,
     function()
-        print('flushing accumulated stats')
+        print(string.format('flushing accumulated stats to "%s"',
+                            config.statsfile))
         runner.save_stats()
 
         print(string.format('generating report in "%s" for files matching:',
-                            configuration.reportfile))
-        if #configuration.include == 0 then
+                            config.reportfile))
+        if #config.include == 0 then
             print('  all')
         else
-            for _,pattern in ipairs(configuration.include) do
+            for _,pattern in ipairs(config.include) do
                 print(('  %s'):format(pattern))
             end
         end
-        runner.run_report(configuration)
-        if clear then
-            print(string.format('removing accumulated stats in "%s"',
-                                configuration.statsfile))
-            os.remove(configuration.statsfile)
-        else
-            print(string.format('allowing further stats to accumulate in "%s"',
-                                configuration.statsfile))
-        end
+        print(string.format('and %s accumulated stats in "%s"',
+                            config.deletestats and 'removing' or 'keeping',
+                            config.statsfile))
+        runner.run_report(config)
     end)
