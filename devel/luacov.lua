@@ -20,14 +20,14 @@ from the first report plus the recently run lua script. Restarting DFHack will
 clear the statistics. You can also clear statistics after running a report by
 passing the --clear flag to this script.
 
-Note that the coverage report will be empty unless you run DFHack with the
-"DFHACK_ENABLE_LUACOV=1" environment variable defined, which starts the coverage
-monitoring.
+Note that the coverage report will be empty unless you have started DFHack with
+the "DFHACK_ENABLE_LUACOV=1" environment variable defined, which enables the
+coverage monitoring.
 
-Also note that coverage monitoring and lua profiling via the "profiler" module
-cannot both be active at the same time. Their interceptor hooks override each
-other. Usage of the "kill-lua" command will likewise override the luacov
-interceptor hook and prevent coverage statistics from being collected.
+Also note that enabling both coverage monitoring and lua profiling via the
+"profiler" module can produce strange results. Their interceptor hooks override
+each other. Usage of the "kill-lua" command will likewise override the luacov
+interceptor hook and may prevent coverage statistics from being collected.
 
 Options:
 
@@ -61,13 +61,13 @@ if show_help then
     return
 end
 
-if not runner.initialized or debug.gethook() ~= runner.debug_hook then
+if not runner.initialized then
     dfhack.printerr(
         'Warning: Coverage stats are not being collected. Report will be' ..
-        ' empty unless stats were collected in a previous run. Please run' ..
+        ' empty unless stats were collected in a previous run. Please start' ..
         ' dfhack with the DFHACK_ENABLE_LUACOV environment variable defined' ..
         ' to start coverage monitoring. Keep in mind that using the' ..
-        ' "kill-lua" command or using a Lua profiler will interfere with' ..
+        ' "kill-lua" command or using a Lua profiler may interfere with' ..
         ' coverage monitoring.')
 end
 
