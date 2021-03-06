@@ -2,9 +2,14 @@
 
 local help_message =
 [====[
+
+devel/luacov
+============
+
 Lua script coverage report generator
 
 Usage:
+
     luacov [options] [pattern...]
 
 This script generates a coverage report from collected statistics. By default it
@@ -56,7 +61,6 @@ local other_args = utils.processArgsGetopt({...}, {
         {'h', 'help', handler=function() show_help = true end},
     })
 if show_help then
-    dfhack.print(string.format('LuaCov %s - ', runner.version))
     print(help_message)
     return
 end
