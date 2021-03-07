@@ -13,6 +13,9 @@ that repo.
 
 # Future
 
+## New Scripts
+- `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
+
 # 0.47.05-r1
 
 ## Misc Improvements
