@@ -53,6 +53,9 @@ that repo.
 - `setfps`: improved error handling
 - `unretire-anyone`: the historical figure selection list now includes the ``SYN_NAME`` (necromancer, vampire, etc) of figures where applicable
 
+## Internals
+- Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
+
 # 0.47.05-r1
 
 ## Misc Improvements
