@@ -8,8 +8,6 @@ Displays announcements and reports in the console.
 
 :enable|start:      Begins monitoring
 :disable|stop:      Stops monitoring
-:interval X:        Sets the delay between checks for
-                    new announcements to ``X`` frames
 
 ]====]
 
@@ -29,7 +27,7 @@ end
 
 function log(s, color)
     dfhack.color(color)
-    print(dfhack.df2utf(s))
+    print(dfhack.df2console(s))
     dfhack.color(COLOR_RESET)
 end
 
