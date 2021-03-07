@@ -9,7 +9,9 @@ require('dfhack.buildings') -- loads additional functions into dfhack.buildings
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
+local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+
 local log = quickfort_common.log
 local logfn = quickfort_common.logfn
 
@@ -272,7 +274,7 @@ function do_undo(zlevel, grid, ctx)
     -- jump around when it doesn't need to
     local restore_cursor = false
     if not dry_run and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
-        quickfort_common.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
+        quickfort_map.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
         restore_cursor = true
     end
 
@@ -296,5 +298,5 @@ function do_undo(zlevel, grid, ctx)
         end
     end
 
-    if restore_cursor then quickfort_common.move_cursor(ctx.cursor) end
+    if restore_cursor then quickfort_map.move_cursor(ctx.cursor) end
 end

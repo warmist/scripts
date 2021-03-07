@@ -8,6 +8,47 @@ end
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
+-- returns a tuple of keys, extent where keys is a string and extent is of the
+-- format: {width, height, specified}, where width and height are numbers and
+-- specified is true when an extent was explicitly specified
+function parse_cell(text)
+    local _, _, keys, width, height =
+            string.find(text, '^%s*([^(]+)%s*%(?%s*(%d*)%s*x?%s*(%d*)%s*%)?$')
+    width = tonumber(width)
+    height = tonumber(height)
+    local specified = width and height and true
+    if not width or width <= 0 then width = 1 end
+    if not height or height <= 0 then height = 1 end
+    return keys, {width=width, height=height, specified=specified}
+end
+
+local function coord2d_lt(cell_a, cell_b)
+    return cell_a.y < cell_b.y or
+            (cell_a.y == cell_b.y and cell_a.x < cell_b.x)
+end
+
+function get_ordered_grid_cells(grid)
+    local cells = {}
+    for y, row in pairs(grid) do
+        for x, cell_and_text in pairs(row) do
+            local cell, text = cell_and_text.cell, cell_and_text.text
+            table.insert(cells, {y=y, x=x, cell=cell, text=text})
+        end
+    end
+    table.sort(cells, coord2d_lt)
+    return cells
+end
+
+function parse_section_name(section_name)
+    local sheet_name, label = nil, nil
+    if section_name then
+        _, _, sheet_name, label = section_name:find('^([^/]*)/?(.*)$')
+        if #sheet_name == 0 then sheet_name = nil end
+        if #label == 0 then label = nil end
+    end
+    return sheet_name, label
+end
+
 function quote_if_has_spaces(str)
     if str:find(' ') then return '"' .. str .. '"' end
     return str

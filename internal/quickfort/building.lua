@@ -7,6 +7,9 @@ if not dfhack_flags.module then
 end
 
 local quickfort_common = reqscript('internal/quickfort/common')
+local quickfort_map = reqscript('internal/quickfort/map')
+local quickfort_parse = reqscript('internal/quickfort/parse')
+
 local log = quickfort_common.log
 local logfn = quickfort_common.logfn
 
@@ -64,7 +67,7 @@ local function flood_fill(grid, x, y, seen_grid, data, db, aliases)
     if seen_grid[x] and seen_grid[x][y] then return 0 end
     if not grid[y] or not grid[y][x] then return 0 end
     local cell, text = grid[y][x].cell, grid[y][x].text
-    local keys, extent = quickfort_common.parse_cell(text)
+    local keys, extent = quickfort_parse.parse_cell(text)
     local db_entry = nil
     if keys then
         if aliases[string.lower(keys)] then
@@ -258,16 +261,16 @@ function init_buildings(zlevel, grid, buildings, db, aliases)
 end
 
 local function is_on_map_x(x)
-    return quickfort_common.is_within_map_bounds_x(x) or
-            quickfort_common.is_on_map_edge_x(x)
+    return quickfort_map.is_within_map_bounds_x(x) or
+            quickfort_map.is_on_map_edge_x(x)
 end
 
 local function is_on_map_y(y)
-    return quickfort_common.is_within_map_bounds_y(y) or
-            quickfort_common.is_on_map_edge_y(y)
+    return quickfort_map.is_within_map_bounds_y(y) or
+            quickfort_map.is_on_map_edge_y(y)
 end
 
-local is_on_map_z = quickfort_common.is_within_map_bounds_z
+local is_on_map_z = quickfort_map.is_within_map_bounds_z
 
 -- check bounds against size limits and map edges, adjust pos, width, height,
 -- and extent_grid accordingly. marks invalid buildings that are cropped below
