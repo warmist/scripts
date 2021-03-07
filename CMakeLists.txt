@@ -7,6 +7,8 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        PATTERN "scripts/test" EXCLUDE
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/
-        DESTINATION ${DFHACK_DATA_DESTINATION}/scripts/test/scripts
-)
+if(BUILD_TESTS)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test/
+            DESTINATION ${DFHACK_DATA_DESTINATION}/scripts/test/scripts
+    )
+endif()
