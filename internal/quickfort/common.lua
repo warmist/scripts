@@ -5,7 +5,6 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
 valid_modes = utils.invert({

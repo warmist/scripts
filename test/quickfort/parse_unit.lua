@@ -1,6 +1,62 @@
 local parse = reqscript('internal/quickfort/parse').unit_test_hooks
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
+function test.parse_cell()
+    expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('')})
+    expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('()')})
+
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a()')})
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(x)')})
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(5)')})
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(5x)')})
+
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a')})
+    expect.table_eq({'ab', {width=5, height=6, specified=true}},
+                    {parse.parse_cell('ab(5x6)')})
+    expect.table_eq({'ab', {width=5, height=6, specified=true}},
+                    {parse.parse_cell('ab  (  5  x  6  )')})
+    expect.table_eq({'ab', {width=5, height=6, specified=true}},
+                    {parse.parse_cell('ab(5x6 ')})
+end
+
+function test.coord2d_lt()
+    expect.true_(parse.coord2d_lt({x=0,y=0}, {x=0,y=10}))
+    expect.true_(parse.coord2d_lt({x=0,y=10}, {x=1,y=10}))
+    expect.true_(parse.coord2d_lt({x=1000,y=0}, {x=0,y=10}))
+
+    expect.false_(parse.coord2d_lt({x=0,y=0}, {x=0,y=0}))
+    expect.false_(parse.coord2d_lt({x=0,y=10}, {x=0,y=0}))
+    expect.false_(parse.coord2d_lt({x=1,y=10}, {x=0,y=10}))
+    expect.false_(parse.coord2d_lt({x=0,y=10}, {x=1000,y=0}))
+end
+
+function test.get_ordered_grid_cells()
+    local expected = {{y=20, x=10, cell='A1', text='d1'},
+                      {y=22, x=10, cell='A3', text='d3'}}
+    local grid = {[20]={[10]={cell='A1', text='d1'}},
+                  [22]={[10]={cell='A3', text='d3'}}}
+    expect.table_eq(expected, parse.get_ordered_grid_cells(grid))
+
+    grid = {[22]={[10]={cell='A3', text='d3'}},
+            [20]={[10]={cell='A1', text='d1'}}}
+    expect.table_eq(expected, parse.get_ordered_grid_cells(grid))
+end
+
+function test.parse_section_name()
+    expect.table_eq({nil, nil}, {parse.parse_section_name('')})
+    expect.table_eq({' ', nil}, {parse.parse_section_name(' ')})
+    expect.table_eq({' ', nil}, {parse.parse_section_name(' /')})
+    expect.table_eq({nil, nil}, {parse.parse_section_name('/ ')})
+    expect.table_eq({' ', nil}, {parse.parse_section_name(' / ')})
+
+    expect.table_eq({'sheet', 'label'},
+                    {parse.parse_section_name('sheet/label ')})
+    expect.table_eq({' sheet ', 'label'},
+                    {parse.parse_section_name(' sheet /label ')})
+    expect.table_eq({' sheet ', nil},
+                    {parse.parse_section_name(' sheet / badlabel')})
+end
+
 function test.quote_if_has_spaces()
     expect.eq('', parse.quote_if_has_spaces(''))
     expect.eq('abc', parse.quote_if_has_spaces('abc'))
@@ -14,24 +70,6 @@ function test.format_command()
               parse.format_command('run', 'file.csv', '/somelabel'))
     expect.eq('"f name.xlsx"', parse.format_command(nil, 'f name.xlsx', nil))
     expect.error(parse.format_command, nil, nil, nil)
-end
-
-function test.trim_token()
-    expect.eq('', parse.trim_token(''))
-    expect.eq('', parse.trim_token(' '))
-    expect.eq('', parse.trim_token('        '))
-    expect.eq('a', parse.trim_token('a'))
-    expect.eq('a', parse.trim_token(' a'))
-    expect.eq('a', parse.trim_token('  a'))
-    expect.eq('a', parse.trim_token('a '))
-    expect.eq('a', parse.trim_token('a  '))
-    expect.eq('a', parse.trim_token('  a  '))
-    expect.eq('a b', parse.trim_token('a b'))
-    expect.eq('a b', parse.trim_token(' a b'))
-    expect.eq('a b', parse.trim_token('a b '))
-    expect.eq('a b', parse.trim_token(' a b '))
-    expect.eq('a  b', parse.trim_token('a  b'))
-    expect.error(parse.trim_token, nil)
 end
 
 function test.get_next_csv_token_single_line()
@@ -59,7 +97,7 @@ function test.get_next_csv_token_multi_line()
     expect.eq(1, i)
 
     i = 1
-    expect.table_eq({'start, \nmiddle,\n end', reassembled, 31},
+    expect.table_eq({'start, \nmiddle,\n end ', reassembled, 31},
                     {parse.get_next_csv_token(lines[1], 7, next_line_fn)})
     expect.eq(3, i)
 
@@ -81,7 +119,7 @@ function test.tokenize_next_csv_line()
     local next_line_fn = function() i = i + 1 return lines[i] end
 
     i = 0
-    expect.table_eq({'first', 'start \nmiddle\n end', 'second'},
+    expect.table_eq({'first', 'start \nmiddle\n end ', 'second'},
                     parse.tokenize_next_csv_line(next_line_fn, 0))
     expect.eq(3, i)
 
@@ -90,7 +128,7 @@ function test.tokenize_next_csv_line()
     expect.eq(1, i)
 
     i = 0
-    expect.table_eq({'first', 'start \nmiddle\n end'},
+    expect.table_eq({'first', 'start \nmiddle\n end '},
                     parse.tokenize_next_csv_line(next_line_fn, 2))
     expect.eq(3, i)
 
@@ -305,6 +343,24 @@ function test.make_cell_label()
     expect.error(parse.make_cell_label, 1, nil)
 end
 
+function test.trim_token()
+    expect.eq('', parse.trim_token(''))
+    expect.eq('', parse.trim_token(' '))
+    expect.eq('', parse.trim_token('        '))
+    expect.eq('a', parse.trim_token('a'))
+    expect.eq('a', parse.trim_token(' a'))
+    expect.eq('a', parse.trim_token('  a'))
+    expect.eq('a', parse.trim_token('a '))
+    expect.eq('a', parse.trim_token('a  '))
+    expect.eq('a', parse.trim_token('  a  '))
+    expect.eq('a b', parse.trim_token('a b'))
+    expect.eq('a b', parse.trim_token(' a b'))
+    expect.eq('a b', parse.trim_token('a b '))
+    expect.eq('a b', parse.trim_token(' a b '))
+    expect.eq('a  b', parse.trim_token('a  b'))
+    expect.error(parse.trim_token, nil)
+end
+
 MockReader = defclass(MockReader, quickfort_reader.Reader)
 MockReader.ATTRS{lines={}, i=0}
 function MockReader:reset(lines) self.lines, self.i = lines, 0 end
@@ -321,6 +377,12 @@ function test.process_level()
     expect.table_eq({{}, 0}, {parse.process_level(reader, 1, start)})
 
     reader:reset({{'d'},{'`'},{'d'}})
+    expect.table_eq(
+        {{[20]={[10]={cell='A1', text='d'}},
+          [22]={[10]={cell='A3', text='d'}}},
+         3}, {parse.process_level(reader, 1, start)})
+
+    reader:reset({{' d '},{' ~ '},{'  d  '}})
     expect.table_eq(
         {{[20]={[10]={cell='A1', text='d'}},
           [22]={[10]={cell='A3', text='d'}}},

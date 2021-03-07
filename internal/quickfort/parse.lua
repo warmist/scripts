@@ -8,20 +8,22 @@ end
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
--- returns a tuple of keys, extent where keys is a string and extent is of the
+-- returns a tuple of {keys, extent} where keys is a string and extent is of the
 -- format: {width, height, specified}, where width and height are numbers and
--- specified is true when an extent was explicitly specified
+-- specified is true when an extent was explicitly specified. this function
+-- assumes that text has been trimmed of leading and trailing spaces.
 function parse_cell(text)
     local _, _, keys, width, height =
-            string.find(text, '^%s*([^(]+)%s*%(?%s*(%d*)%s*x?%s*(%d*)%s*%)?$')
+            string.find(text, '^([^(][^(]-)%s*%(?%s*(%d*)%s*x?%s*(%d*)%s*%)?$')
     width = tonumber(width)
     height = tonumber(height)
     local specified = width and height and true
-    if not width or width <= 0 then width = 1 end
-    if not height or height <= 0 then height = 1 end
+    if not specified or not width or width <= 0 then width = 1 end
+    if not specified or not height or height <= 0 then height = 1 end
     return keys, {width=width, height=height, specified=specified}
 end
 
+-- sorts by row (y), then column (x)
 local function coord2d_lt(cell_a, cell_b)
     return cell_a.y < cell_b.y or
             (cell_a.y == cell_b.y and cell_a.x < cell_b.x)
@@ -39,10 +41,12 @@ function get_ordered_grid_cells(grid)
     return cells
 end
 
+-- sheet names can contain (or even start with or even be completely composed
+-- of) spaces
 function parse_section_name(section_name)
     local sheet_name, label = nil, nil
     if section_name then
-        _, _, sheet_name, label = section_name:find('^([^/]*)/?(.*)$')
+        _, _, sheet_name, label = section_name:find('^([^/]*)/?(%S*)')
         if #sheet_name == 0 then sheet_name = nil end
         if #label == 0 then label = nil end
     end
@@ -69,12 +73,6 @@ function format_command(command, blueprint_name, section_name)
     end
     return string.format('%s%s%s', command_str,
                          quote_if_has_spaces(blueprint_name), section_name_str)
-end
-
--- removes spaces from the beginning and end of the given string
-local function trim_token(token)
-    _, _, token = token:find('^%s*(.-)%s*$')
-    return token
 end
 
 -- returns the next token, the current (possibly reassembed multiline) line, and
@@ -112,15 +110,15 @@ local function get_next_csv_token(line, pos, get_next_line_fn, sep)
             if (c == '"') then txt = txt .. '"' end
         until c ~= '"'
         if line:sub(pos, pos) == sep then pos = pos + 1 end
-        return trim_token(txt), line, pos
+        return txt, line, pos
     end
     -- no quotes used, just look for the first separator
     local startp, endp = string.find(line, sep, pos)
     if startp then
-        return trim_token(string.sub(line, pos, startp-1)), line, startp+1
+        return string.sub(line, pos, startp-1), line, startp+1
     end
     -- no separator found -> use rest of string
-    return trim_token(string.sub(line, pos)), line, #line+1
+    return string.sub(line, pos), line, #line+1
 end
 
 -- adapted from example on http://lua-users.org/wiki/LuaCsv
@@ -263,6 +261,12 @@ local function make_cell_label(col_num, row_num)
     return get_col_name(col_num) .. tostring(math.floor(row_num))
 end
 
+-- removes spaces from the beginning and end of the given string
+local function trim_token(token)
+    _, _, token = token:find('^%s*(.-)%s*$')
+    return token
+end
+
 -- returns a grid representation of the current level, the number of rows
 -- read from the input, and the next z-level modifier, if any. See
 -- process_section() for grid format.
@@ -273,6 +277,7 @@ local function process_level(reader, start_line_num, start_coord)
         local row_tokens = reader:get_next_row()
         if not row_tokens then return grid, y-start_coord.y end
         for i, v in ipairs(row_tokens) do
+            v = trim_token(v)
             if i == 1 then
                 if v == '#<' then return grid, y-start_coord.y, 1 end
                 if v == '#>' then return grid, y-start_coord.y, -1 end
@@ -281,8 +286,8 @@ local function process_level(reader, start_line_num, start_coord)
                 end
             end
             if v:match('^#$') then break end
-            if not v:match('^[`~%s]*$') then
-                -- cell has actual content, not just spaces or comment chars
+            if not v:match('^[`~]*$') then
+                -- cell has actual content, not just chalk line chars
                 if not grid[y] then grid[y] = {} end
                 local x = start_coord.x + i - 1
                 local line_num = start_line_num + y - start_coord.y
@@ -564,9 +569,12 @@ function parse_extended_token(text, startpos)
 end
 
 unit_test_hooks = {
+    parse_cell=parse_cell,
+    coord2d_lt=coord2d_lt,
+    get_ordered_grid_cells=get_ordered_grid_cells,
+    parse_section_name=parse_section_name,
     quote_if_has_spaces=quote_if_has_spaces,
     format_command=format_command,
-    trim_token=trim_token,
     get_next_csv_token=get_next_csv_token,
     tokenize_next_csv_line=tokenize_next_csv_line,
     get_marker_body=get_marker_body,
@@ -578,6 +586,7 @@ unit_test_hooks = {
     parse_modeline=parse_modeline,
     get_col_name=get_col_name,
     make_cell_label=make_cell_label,
+    trim_token=trim_token,
     process_level=process_level,
     process_levels=process_levels,
     parse_alias_separate=parse_alias_separate,
