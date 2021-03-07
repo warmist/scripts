@@ -15,7 +15,7 @@ that repo.
 
 ## Misc Improvements
 - `quickfort`: print more helpful error messages for invalid modeline markers
-- `quickfort`: handle more extra space characters in modelines
+- `quickfort`: handle extra space characters in blueprints
 - `quickfort`: print a warning when an invalid alias is encountered instead of silently ignoring it
 
 ## Fixes
