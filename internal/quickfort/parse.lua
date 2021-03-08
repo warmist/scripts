@@ -417,14 +417,14 @@ local function new_reader(filepath, sheet_name, max_cols)
     if string.find(filepath:lower(), '[.]xlsx$') then
         return quickfort_reader.XlsxReader{
             filepath=filepath,
-            sheet_name=sheet_name,
             max_cols=max_cols,
+            sheet_name=sheet_name,
         }
     else
         return quickfort_reader.CsvReader{
             filepath=filepath,
-            line_tokenizer=tokenize_next_csv_line,
             max_cols=max_cols,
+            line_tokenizer=tokenize_next_csv_line,
         }
     end
 end

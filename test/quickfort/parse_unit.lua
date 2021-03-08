@@ -1,6 +1,12 @@
 local parse = reqscript('internal/quickfort/parse').unit_test_hooks
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
+function test.module()
+    expect.error_match(dfhack.run_script,
+                       'this script cannot be called directly',
+                       'internal/quickfort/parse')
+end
+
 function test.parse_cell()
     expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('')})
     expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('()')})

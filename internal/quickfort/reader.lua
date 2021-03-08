@@ -11,21 +11,13 @@ local function chomp(line)
     return line and line:gsub('[\r\n]*$', '') or nil
 end
 
-
 Reader = defclass(Reader, nil)
-
 Reader.ATTRS{
     -- filesystem path that can be passed to io.open()
     filepath = DEFAULT_NIL,
-    -- how many columns to read per row; <=0 or nil means all
-    max_cols = DEFAULT_NIL,
+    -- how many columns to read per row; 0 means all
+    max_cols = 0,
 }
-
-function Reader:assert_file()
-    if not self.file then
-        qerror(string.format('failed to open %s', self:description()))
-    end
-end
 
 -- causes the next call to get_next_row to re-return the value from the
 -- previous time it was called
@@ -43,20 +35,22 @@ function Reader:get_next_row()
 end
 
 CsvReader = defclass(CsvReader, Reader)
-
 CsvReader.ATTRS{
-    -- tokenizer function with the following signature:
-    --  (get_next_line_fn, max_cols). Required
+    -- Tokenizer function with the following signature:
+    --  (get_next_line_fn, max_cols). Must return a list of strings. Required.
     line_tokenizer = DEFAULT_NIL,
+    -- file open function to use
+    open_fn = io.open,
 }
 
 function CsvReader:init()
-    self.file = io.open(self.filepath)
-    self:assert_file()
-end
-
-function CsvReader:description()
-    return string.format('.csv file "%s"', self.filepath)
+    if not self.line_tokenizer then
+        error('cannot initialize a CsvReader without a line_tokenizer.')
+    end
+    self.file = self.open_fn(self.filepath)
+    if not self.file then
+        qerror(string.format('failed to open "%s"', self.filepath))
+    end
 end
 
 function CsvReader:cleanup()
@@ -69,40 +63,26 @@ function CsvReader:get_next_row_raw()
         self.max_cols)
 end
 
-
 XlsxReader = defclass(XlsxReader, Reader)
-
 XlsxReader.ATTRS{
     -- name of xlsx sheet to open, nil means first sheet
     sheet_name = DEFAULT_NIL,
+    -- xlsxio reader class to use
+    xlsxioreader = xlsxreader.XlsxioReader,
 }
 
 function XlsxReader:init()
-    self.file = xlsxreader.open_xlsx_file(self.filepath)
-    self:assert_file()
-    if not self.sheet_name then
-        for _,sheet_name in ipairs(xlsxreader.list_sheets(self.file)) do
-            self.sheet_name = sheet_name
-            break
-        end
-    end
-    -- this always succeeds even if the sheet doesn't exist. we'll fail
-    -- on the next call to get_next_row_raw, though
-    self.sheet = xlsxreader.open_sheet(self.flie, self.sheet_name)
-end
-
-function XlsxReader:description()
-    return string.format('sheet "%s" in .xlsx file "%s"',
-                         self.sheet_name, self.filepath)
+    self.reader = self.xlsxioreader{filepath=self.filepath}
+    self.sheet_reader = self.reader:open_sheet(self.sheet_name)
 end
 
 function XlsxReader:cleanup()
-    xlsxreader.close_sheet(self.sheet)
-    xlsxreader.close_xlsx_file(self.file)
+    self.sheet_reader:close()
+    self.reader:close()
 end
 
 function XlsxReader:get_next_row_raw()
-    local tokens = xlsxreader.get_row(self.sheet)
+    local tokens = self.sheet_reader:get_row(self.max_cols)
     if not tokens then return nil end
     -- raw numbers can get turned into floats. let's turn them back into ints
     for i,token in ipairs(tokens) do
@@ -114,4 +94,7 @@ end
 
 unit_test_hooks = {
     chomp=chomp,
+    Reader=Reader,
+    CsvReader=CsvReader,
+    XlsxReader=XlsxReader,
 }
