@@ -91,6 +91,8 @@ function test.XlsxReader()
     expect.table_eq({'a','b1','b1.0','1c','1.0c','1','1'},
                     xlsxreader:get_next_row_raw())
 
+    -- expect close to be called 2 times since the mock is impersonating both
+    -- the top-level reader and the sheet reader
     xlsxreader:cleanup()
-    expect.eq(1, xlsxreader.reader.close_called)
+    expect.eq(2, xlsxreader.reader.close_called)
 end
