@@ -6,6 +6,17 @@ gui/mass-remove
 ===============
 Allows removal of buildings/constructions and suspend/unsuspend using
 a box selection.
+
+The following marking modes are available.
+
+- Suspend (s): suspends the construction of a planned building/construction
+- Unsuspend (p): resumes the construction of a planned building/construction
+- Remove Construction (n): designates a construction (wall, floor, etc) for removal. Similar to the native Designate->Remove Construction menu in DF
+- Unremove Construction (c): cancels removal of a construction (wall, floor, etc)
+- Remove Building (x): designates a building (door, workshop, etc) for removal. Similar to the native Set Building Tasks/Prefs->Remove Building menu in DF
+- Unremove Building (b): cancels removal of a building (door, workshop, etc)
+- Remove All (a): designates both constructions and buildings for removal, and deletes planned buildings/constructions
+- Unremove All (u): cancels removal designations for both constructions and buildings
 ]====]
 
 local gui = require "gui"
@@ -15,18 +26,6 @@ local utils = require 'utils'
 
 MassRemoveUI = defclass(MassRemoveUI, guidm.MenuOverlay)
 
---[====[
-The actions that can be taken. Key bindings in parentheses.
-
---suspend (s): suspends the construction of a planned building/construction
---unsuspend (p): resumes the construction of a planned building/construction
---remove_n (n): designates a construction (wall, floor, etc) for removal. Similar to the native Designate->Remove Construction menu in DF
---unremove_n (c): cancels removal of a construction (wall, floor, etc)
---remove_x (x): designates a building (door, workshop, etc) for removal. Similar to the native Set Building Tasks/Prefs->Remove Building menu in DF
---unremove_x (b): cancels removal of a building (door, workshop, etc)
---remove_a (a): designates both constructions and buildings for removal, and deletes planned buildings/constructions
---unremove_a (u): cancels removal designations for both constructions and buildings
-]====]
 --used to iterate through actions with + and -
 local actions={"suspend", "unsuspend", "remove_n", "unremove_n", "remove_x", "unremove_x", "remove_a", "unremove_a"}
 local action_indexes=utils.invert(actions)
