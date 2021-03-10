@@ -82,14 +82,8 @@ local function paintMapTile(dc, vp, cursor, pos, ...)
     end
 end
 
-function MassRemoveUI:init()
-    self.saved_mode = df.global.ui.main.mode
-    df.global.ui.main.mode=df.ui_sidebar_mode.LookAround
-end
-
-function MassRemoveUI:onDestroy()
-    persistTable.GlobalTable.massRemoveAction=self.action
-    df.global.ui.main.mode = self.saved_mode
+function MassRemoveUI:onAboutToShow(parent)
+    gui.simulateInput(parent, df.interface_key.D_LOOK)
 end
 
 function MassRemoveUI:changeSuspendState(x, y, z, new_state)
@@ -270,12 +264,6 @@ function MassRemoveUI:onRenderBody(dc)
 end
 
 function MassRemoveUI:onInput(keys)
-    if df.global.cursor.x==-30000 then
-        local vp=self:getViewport()
-        df.global.cursor=xyz2pos(math.floor((vp.x1+math.abs((vp.x2-vp.x1))/2)+.5),math.floor((vp.y1+math.abs((vp.y2-vp.y1)/2))+.5), vp.z)
-        return
-    end
-
     if keys.CUSTOM_S then
         self.action = "suspend"
         return
