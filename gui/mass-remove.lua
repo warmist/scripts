@@ -207,7 +207,7 @@ function MassRemoveUI:renderOverlay()
     end
 
     --show box selection
-    if gui.blink_visible(250) and self.marking then
+    if not gui.blink_visible(500) and self.marking then
         local x_start, x_end = minToMax(self.mark.x, df.global.cursor.x)
         local y_start, y_end = minToMax(self.mark.y, df.global.cursor.y)
         paintMapTile(dc, vp, nil, self.mark, "+", COLOR_LIGHTGREEN)
