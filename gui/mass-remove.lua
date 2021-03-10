@@ -11,6 +11,7 @@ a box selection.
 local gui = require "gui"
 local guidm = require "gui.dwarfmode"
 local persistTable = require 'persist-table'
+local utils = require 'utils'
 
 MassRemoveUI = defclass(MassRemoveUI, guidm.MenuOverlay)
 
@@ -26,10 +27,9 @@ The actions that can be taken. Key bindings in parentheses.
 --remove_a (a): designates both constructions and buildings for removal, and deletes planned buildings/constructions
 --unremove_a (u): cancels removal designations for both constructions and buildings
 ]====]
-local actions={"suspend", "unsuspend", "remove_n", "unremove_n", "remove_x", "unremove_x", "remove_a", "unremove_a"}
 --used to iterate through actions with + and -
-local action_indexes={suspend=1,unsuspend=2,remove_n=3,unremove_n=4,remove_x=5,unremove_x=6,remove_a=7,unremove_a=8}
-local actions_length=tablelength(actions)
+local actions={"suspend", "unsuspend", "remove_n", "unremove_n", "remove_x", "unremove_x", "remove_a", "unremove_a"}
+local action_indexes=utils.invert(actions)
 
 MassRemoveUI.ATTRS {
     action="remove_a",
@@ -301,10 +301,10 @@ function MassRemoveUI:onInput(keys)
         self.action = "unremove_a"
         return
     elseif keys.SECONDSCROLL_UP then
-        self.action = actions[((action_indexes[self.action]-2) % actions_length)+1]
+        self.action = actions[((action_indexes[self.action]-2) % #actions)+1]
         return
     elseif keys.SECONDSCROLL_DOWN then
-        self.action = actions[(action_indexes[self.action] % actions_length)+1]
+        self.action = actions[(action_indexes[self.action] % #actions)+1]
         return
     end
 
