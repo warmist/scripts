@@ -126,9 +126,9 @@ end
 function MassRemoveUI:unremoveBuilding(x, y, z)
     local building = dfhack.buildings.findAtTile(x, y, z)
     if building then
-        for i, job in ipairs(building.jobs) do
+        for _, job in ipairs(building.jobs) do
             if job.job_type == df.job_type.DestroyBuilding then
-                building.jobs:erase(i)
+                dfhack.job.removeJob(job)
                 break
             end
         end
