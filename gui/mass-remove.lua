@@ -44,14 +44,6 @@ local function tablelength(T)
   return count
 end
 
---Needed because I couldn't find a direct way of getting a tile at certain coordinates.
-local function getTileAt(x, y, z)
-    local block = dfhack.maps.getTileBlock(x, y, z)
-    if block then
-        return block.designation[x%16][y%16]
-    end
-end
-
 --Helper to match a job of a particular type at tile (x,y,z) and run the callback function on the job.
 local function iterateJobs(jobType, x, y, z, callback)
     local joblist = df.global.world.jobs.list.next
@@ -104,10 +96,9 @@ end
 
 --Construction removals can either be marked as dig on the tile itself, or picked up as jobs. This function checks both.
 function MassRemoveUI:unremoveConstruction(x, y, z)
-    local tile = getTileAt(x,y,z)
-    tile.dig = df.tile_dig_designation.No
-
-    iterateJobs(df.job_type.RemoveConstruction, x, y, z, function(job) dfhack.job.removeJob(job) end)
+    local tileFlags, occupancy = dfhack.maps.getTileFlags(x,y,z)
+    tileFlags.dig = df.tile_dig_designation.No
+    dfhack.maps.getTileBlock(x,y,z).flags.designated = true
 end
 
 function MassRemoveUI:removeBuilding(x, y, z)
