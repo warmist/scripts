@@ -13,8 +13,10 @@ that repo.
 
 # Future
 
-## Misc Improvements
+## Fixes
+- `color-schemes`: fixed error in ``register`` subcommand when the DF path contains certain punctuation characters
 
+## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
 
 # 0.47.05-r1
