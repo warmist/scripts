@@ -405,11 +405,11 @@ function test.process_level()
           [22]={[10]={cell='A3', text='d'}}},
          3}, {parse.process_level(reader, 1, start)})
 
-    reader:reset({{'d'},{'`','#comment','d'},{'d'}})
+    reader:reset({{'d'},{'`','#comment','d'},{'d#d'}})
     expect.table_eq(
         {{[20]={[10]={cell='A1', text='d'}},
           [21]={[12]={cell='C2', text='d'}},
-          [22]={[10]={cell='A3', text='d'}}},
+          [22]={[10]={cell='A3', text='d#d'}}},
          3}, {parse.process_level(reader, 1, start)})
 
     reader:reset({{'d'},{'#<'}})

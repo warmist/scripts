@@ -35,6 +35,8 @@ local function coord2d_lt(cell_a, cell_b)
             (cell_a.y == cell_b.y and cell_a.x < cell_b.x)
 end
 
+-- returns a list of {x, y, cell, text} tuples in order of ascending y, then
+-- ascending x
 function get_ordered_grid_cells(grid)
     local cells = {}
     for y, row in pairs(grid) do
@@ -292,7 +294,7 @@ local function process_level(reader, start_line_num, start_coord)
                 end
             end
             if v:match('^#$') then break end
-            if not v:match('^[`~ ]*$') and not v:match('%s*#') then
+            if not v:match('^[`~ ]*$') and not v:match('^%s*#') then
                 -- cell has actual content, not just comments or chalk line chars
                 if not grid[y] then grid[y] = {} end
                 local x = start_coord.x + i - 1
