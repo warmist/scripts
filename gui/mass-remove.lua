@@ -75,9 +75,9 @@ local function paintMapTile(dc, vp, cursor, pos, ...)
 end
 
 local function ableToSuspend(job)
-	local buildingHolder = dfhack.job.getGeneralRef(job, df.general_ref_type.BUILDING_HOLDER)
-	local ret = not buildingHolder or not buildingplan.isPlannedBuilding(buildingHolder:getBuilding())
-	return ret
+    local buildingHolder = dfhack.job.getGeneralRef(job, df.general_ref_type.BUILDING_HOLDER)
+    local ret = not buildingHolder or not buildingplan.isPlannedBuilding(buildingHolder:getBuilding())
+    return ret
 end
 
 function MassRemoveUI:onAboutToShow(parent)
@@ -86,16 +86,16 @@ end
 
 function MassRemoveUI:changeSuspendState(x, y, z, new_state)
     iterateJobs(
-		df.job_type.ConstructBuilding,
-		x,
-		y,
-		z,
-		function(job)
-			if ableToSuspend(job) then
-				job.flags.suspend = new_state
-			end
-		end
-	)
+        df.job_type.ConstructBuilding,
+        x,
+        y,
+        z,
+        function(job)
+            if ableToSuspend(job) then
+                job.flags.suspend = new_state
+            end
+        end
+    )
 end
 
 function MassRemoveUI:suspend(x, y, z)
