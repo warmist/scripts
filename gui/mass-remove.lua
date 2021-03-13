@@ -254,13 +254,13 @@ function MassRemoveUI:onRenderBody(dc)
 
     dc:seek(1,9)
     dc:pen(self:getColor("suspend")):key_string("CUSTOM_S", "Suspend"):newline(1)
-    dc:pen(self:getColor("unsuspend")):key_string("CUSTOM_P", "Unsuspend"):newline():newline(1)
+    dc:pen(self:getColor("unsuspend")):key_string("CUSTOM_SHIFT_S", "Unsuspend"):newline():newline(1)
     dc:pen(self:getColor("remove_n")):key_string("CUSTOM_N", "Remove Construction"):newline(1)
-    dc:pen(self:getColor("unremove_n")):key_string("CUSTOM_C", "Unremove Construction"):newline():newline(1)
+    dc:pen(self:getColor("unremove_n")):key_string("CUSTOM_SHIFT_N", "Unremove Construction"):newline():newline(1)
     dc:pen(self:getColor("remove_x")):key_string("CUSTOM_X", "Remove Building"):newline(1)
-    dc:pen(self:getColor("unremove_x")):key_string("CUSTOM_B", "Unremove Building"):newline():newline(1)
+    dc:pen(self:getColor("unremove_x")):key_string("CUSTOM_SHIFT_X", "Unremove Building"):newline():newline(1)
     dc:pen(self:getColor("remove_a")):key_string("CUSTOM_A", "Remove All"):newline(1)
-    dc:pen(self:getColor("unremove_a")):key_string("CUSTOM_U", "Unremove All"):newline(1)
+    dc:pen(self:getColor("unremove_a")):key_string("CUSTOM_SHIFT_A", "Unremove All"):newline(1)
 
     dc:pen(COLOR_WHITE)
     if self.marking then
@@ -274,25 +274,25 @@ function MassRemoveUI:onInput(keys)
     if keys.CUSTOM_S then
         self.action = "suspend"
         return
-    elseif keys.CUSTOM_P then
+    elseif keys.CUSTOM_SHIFT_S then
         self.action = "unsuspend"
-        return
-    elseif keys.CUSTOM_C then
-        self.action = "unremove_n"
-        return
-    elseif keys.CUSTOM_B then
-        self.action = "unremove_x"
-        return
-    elseif keys.CUSTOM_X then
-        self.action = "remove_x"
         return
     elseif keys.CUSTOM_N then
         self.action = "remove_n"
         return
+    elseif keys.CUSTOM_SHIFT_N then
+        self.action = "unremove_n"
+        return
+    elseif keys.CUSTOM_X then
+        self.action = "remove_x"
+        return
+    elseif keys.CUSTOM_SHIFT_X then
+        self.action = "unremove_x"
+        return
     elseif keys.CUSTOM_A then
         self.action = "remove_a"
         return
-    elseif keys.CUSTOM_U then
+    elseif keys.CUSTOM_SHIFT_A then
         self.action = "unremove_a"
         return
     elseif keys.SECONDSCROLL_UP then
