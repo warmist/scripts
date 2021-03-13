@@ -23,6 +23,7 @@ local gui = require "gui"
 local guidm = require "gui.dwarfmode"
 local persistTable = require 'persist-table'
 local utils = require 'utils'
+local buildingplan = require('plugins.buildingplan')
 
 MassRemoveUI = defclass(MassRemoveUI, guidm.MenuOverlay)
 
@@ -73,12 +74,28 @@ local function paintMapTile(dc, vp, cursor, pos, ...)
     end
 end
 
+local function ableToSuspend(job)
+	local buildingHolder = dfhack.job.getGeneralRef(job, df.general_ref_type.BUILDING_HOLDER)
+	local ret = not buildingHolder or not buildingplan.isPlannedBuilding(buildingHolder:getBuilding())
+	return ret
+end
+
 function MassRemoveUI:onAboutToShow(parent)
     gui.simulateInput(parent, df.interface_key.D_LOOK)
 end
 
 function MassRemoveUI:changeSuspendState(x, y, z, new_state)
-    iterateJobs(df.job_type.ConstructBuilding, x, y, z, function(job) job.flags.suspend = new_state end)
+    iterateJobs(
+		df.job_type.ConstructBuilding,
+		x,
+		y,
+		z,
+		function(job)
+			if ableToSuspend(job) then
+				job.flags.suspend = new_state
+			end
+		end
+	)
 end
 
 function MassRemoveUI:suspend(x, y, z)
@@ -173,7 +190,7 @@ function MassRemoveUI:renderOverlay()
             local job = joblist.item
             joblist = joblist.next
 
-            if job.job_type == df.job_type.ConstructBuilding and job.flags.suspend then
+            if job.job_type == df.job_type.ConstructBuilding and job.flags.suspend and ableToSuspend(job) then
                 paintMapTile(dc, vp, nil, job.pos, "s", COLOR_LIGHTRED)
             elseif job.job_type == df.job_type.RemoveConstruction then
                 paintMapTile(dc, vp, nil, job.pos, "n", COLOR_LIGHTRED)
