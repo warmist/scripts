@@ -9,20 +9,25 @@ end
 
 function test.parse_cell()
     expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('')})
-    expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('()')})
 
-    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a()')})
-    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(x)')})
-    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(5)')})
-    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a(5x)')})
+    expect.table_eq({'()', {width=1, height=1}}, {parse.parse_cell('()')})
+    expect.table_eq({'a()', {width=1, height=1}}, {parse.parse_cell('a()')})
+    expect.table_eq({'a(x)', {width=1, height=1}}, {parse.parse_cell('a(x)')})
+    expect.table_eq({'a(5)', {width=1, height=1}}, {parse.parse_cell('a(5)')})
+    expect.table_eq({'a(5x)', {width=1, height=1}}, {parse.parse_cell('a(5x)')})
+    expect.table_eq({'ab(5x6 ', {width=1, height=1}},
+                    {parse.parse_cell('ab(5x6 ')})
+    expect.table_eq({'a5', {width=1, height=1}}, {parse.parse_cell('a5')})
+    expect.table_eq({'a5x', {width=1, height=1}}, {parse.parse_cell('a5x')})
+    expect.table_eq({'a5x2', {width=1, height=1}}, {parse.parse_cell('a5x2')})
 
     expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a')})
     expect.table_eq({'ab', {width=5, height=6, specified=true}},
                     {parse.parse_cell('ab(5x6)')})
     expect.table_eq({'ab', {width=5, height=6, specified=true}},
                     {parse.parse_cell('ab  (  5  x  6  )')})
-    expect.table_eq({'ab', {width=5, height=6, specified=true}},
-                    {parse.parse_cell('ab(5x6 ')})
+    expect.table_eq({'ab', {width=1, height=1, specified=true}},
+                    {parse.parse_cell('ab(0x0)')})
 end
 
 function test.coord2d_lt()
@@ -397,6 +402,13 @@ function test.process_level()
     reader:reset({{'d'},{'`','#','ignoreme'},{'d'}})
     expect.table_eq(
         {{[20]={[10]={cell='A1', text='d'}},
+          [22]={[10]={cell='A3', text='d'}}},
+         3}, {parse.process_level(reader, 1, start)})
+
+    reader:reset({{'d'},{'`','#comment','d'},{'d'}})
+    expect.table_eq(
+        {{[20]={[10]={cell='A1', text='d'}},
+          [21]={[12]={cell='C2', text='d'}},
           [22]={[10]={cell='A3', text='d'}}},
          3}, {parse.process_level(reader, 1, start)})
 

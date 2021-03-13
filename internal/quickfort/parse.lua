@@ -13,13 +13,19 @@ local quickfort_reader = reqscript('internal/quickfort/reader')
 -- specified is true when an extent was explicitly specified. this function
 -- assumes that text has been trimmed of leading and trailing spaces.
 function parse_cell(text)
+    -- first try to match expansion syntax
     local _, _, keys, width, height =
-            string.find(text, '^([^(][^(]-)%s*%(?%s*(%d*)%s*x?%s*(%d*)%s*%)?$')
-    width = tonumber(width)
-    height = tonumber(height)
-    local specified = width and height and true
-    if not specified or not width or width <= 0 then width = 1 end
-    if not specified or not height or height <= 0 then height = 1 end
+            text:find('^([^(][^(]-)%s*%(%s*(%d+)%s*x%s*(%d+)%s*%)$')
+    local specified = nil
+    if keys then
+        width = tonumber(width)
+        height = tonumber(height)
+        specified = width and height and true
+    else
+        _, _, keys = text:find('(.+)')
+    end
+    if not specified or width <= 0 then width = 1 end
+    if not specified or height <= 0 then height = 1 end
     return keys, {width=width, height=height, specified=specified}
 end
 
@@ -286,8 +292,8 @@ local function process_level(reader, start_line_num, start_coord)
                 end
             end
             if v:match('^#$') then break end
-            if not v:match('^[`~]*$') then
-                -- cell has actual content, not just chalk line chars
+            if not v:match('^[`~ ]*$') and not v:match('%s*#') then
+                -- cell has actual content, not just comments or chalk line chars
                 if not grid[y] then grid[y] = {} end
                 local x = start_coord.x + i - 1
                 local line_num = start_line_num + y - start_coord.y
