@@ -1,4 +1,4 @@
---building/construction mass removal/suspension tool
+-- building/construction mass removal/suspension tool
 
 --[====[
 
@@ -27,7 +27,7 @@ local buildingplan = require('plugins.buildingplan')
 
 MassRemoveUI = defclass(MassRemoveUI, guidm.MenuOverlay)
 
---used to iterate through actions with + and -
+-- used to iterate through actions with + and -
 local actions={"suspend", "unsuspend", "remove_n", "unremove_n", "remove_x", "unremove_x", "remove_a", "unremove_a"}
 local action_indexes=utils.invert(actions)
 
@@ -37,14 +37,14 @@ MassRemoveUI.ATTRS {
     mark=nil
 }
 
---Helper functions.
+-- Helper functions.
 local function tablelength(T)
   local count = 0
   for _ in pairs(T) do count = count + 1 end
   return count
 end
 
---Helper to match a job of a particular type at tile (x,y,z) and run the callback function on the job.
+-- Helper to match a job of a particular type at tile (x,y,z) and run the callback function on the job.
 local function iterateJobs(jobType, x, y, z, callback)
     local joblist = df.global.world.jobs.list.next
 
@@ -58,7 +58,7 @@ local function iterateJobs(jobType, x, y, z, callback)
     end
 end
 
---Sorts and returns the given arguments.
+-- Sorts and returns the given arguments.
 local function minToMax(...)
     local args={...}
     table.sort(args,function(a,b) return a < b end)
@@ -132,7 +132,7 @@ function MassRemoveUI:removeConstruction(x, y, z)
     dfhack.constructions.designateRemove(x, y, z)
 end
 
---Construction removals can either be marked as dig on the tile itself, or picked up as jobs. This function checks both.
+-- Construction removals can either be marked as dig on the tile itself, or picked up as jobs. This function checks both.
 function MassRemoveUI:unremoveConstruction(x, y, z)
     local tileFlags, occupancy = dfhack.maps.getTileFlags(x,y,z)
     tileFlags.dig = df.tile_dig_designation.No
@@ -205,7 +205,7 @@ function MassRemoveUI:renderOverlay()
     local vp=self:getViewport()
     local dc = gui.Painter.new(self.df_layout.map)
 
-    --show buildings/constructions marked for removal and planned buildings/constructions that are suspended
+    -- show buildings/constructions marked for removal and planned buildings/constructions that are suspended
     if gui.blink_visible(500) then
         local joblist = df.global.world.jobs.list.next
         while joblist do
@@ -229,7 +229,7 @@ function MassRemoveUI:renderOverlay()
         end
     end
 
-    --show box selection
+    -- show box selection
     if not gui.blink_visible(500) and self.marking then
         local x_start, x_end = minToMax(self.mark.x, df.global.cursor.x)
         local y_start, y_end = minToMax(self.mark.y, df.global.cursor.y)
@@ -245,7 +245,7 @@ function MassRemoveUI:renderOverlay()
         end
     end
 
-    --show initial position of box selection
+    -- show initial position of box selection
     if self.mark and self.marking then
         local fg=COLOR_RED
         local bg=COLOR_BLACK
