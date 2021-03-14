@@ -74,6 +74,24 @@ local function paintMapTile(dc, vp, cursor, pos, ...)
     end
 end
 
+-- Adapted from quickfort/query.lua
+local function switch_to_look_mode(parent)
+    for i=1,10 do
+        if df.global.ui.main.mode == df.ui_sidebar_mode.Default then
+            gui.simulateInput(parent, df.interface_key.D_LOOK)
+            return
+        end
+        gui.simulateInput(parent, df.interface_key.LEAVESCREEN)
+    end
+    qerror('Unable to get into look mode from current UI viewscreen.')
+end
+
+local function switch_to_default_mode()
+    for i=1,2 do
+        gui.simulateInput(dfhack.gui.getCurViewscreen(true), df.interface_key.LEAVESCREEN)
+    end
+end
+
 local function ableToSuspend(job)
     local buildingHolder = dfhack.job.getGeneralRef(job, df.general_ref_type.BUILDING_HOLDER)
     local ret = not buildingHolder or not buildingplan.isPlannedBuilding(buildingHolder:getBuilding())
@@ -81,7 +99,11 @@ local function ableToSuspend(job)
 end
 
 function MassRemoveUI:onAboutToShow(parent)
-    gui.simulateInput(parent, df.interface_key.D_LOOK)
+    switch_to_look_mode(parent)
+end
+
+function MassRemoveUI:onDestroy()
+    switch_to_default_mode()
 end
 
 function MassRemoveUI:changeSuspendState(x, y, z, new_state)
@@ -321,10 +343,6 @@ function MassRemoveUI:onInput(keys)
     elseif self:propagateMoveKeys(keys) then
         return
     end
-end
-
-if not (dfhack.gui.getCurFocus():match("^dwarfmode/Default") or dfhack.gui.getCurFocus():match("^dwarfmode/Designate") or dfhack.gui.getCurFocus():match("^dwarfmode/LookAround"))then
-    qerror("This screen requires the main dwarfmode view or the designation screen")
 end
 
 local list = MassRemoveUI{action=persistTable.GlobalTable.massRemoveAction, marking=false}
