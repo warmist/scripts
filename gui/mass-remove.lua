@@ -103,6 +103,7 @@ function MassRemoveUI:onAboutToShow(parent)
 end
 
 function MassRemoveUI:onDestroy()
+	persistTable.GlobalTable.massRemoveAction=self.action
     switch_to_default_mode()
 end
 
