@@ -133,11 +133,13 @@ function expand_aliases(text)
     return tokens
 end
 
-unit_test_hooks = {
-    reset_aliases=reset_aliases,
-    push_aliases=push_aliases,
-    pop_aliases=pop_aliases,
-    push_aliases_reader=push_aliases_reader,
-    process_text=process_text,
-    expand_aliases=expand_aliases,
-}
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        reset_aliases=reset_aliases,
+        push_aliases=push_aliases,
+        pop_aliases=pop_aliases,
+        push_aliases_reader=push_aliases_reader,
+        process_text=process_text,
+        expand_aliases=expand_aliases,
+    }
+end
