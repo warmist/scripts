@@ -21,8 +21,8 @@ local function load_aliases(ctx)
     -- ensure we're starting from a clean alias stack, even if the previous
     -- invocation of this function returned early with an error
     quickfort_aliases.reset_aliases()
-    quickfort_aliases.push_aliases_csv_file(common_aliases_filename)
-    quickfort_aliases.push_aliases_csv_file(user_aliases_filename)
+    quickfort_aliases.push_aliases_file(common_aliases_filename)
+    quickfort_aliases.push_aliases_file(user_aliases_filename)
     local num_file_aliases = 0
     for _ in pairs(ctx.aliases) do num_file_aliases = num_file_aliases + 1 end
     if num_file_aliases > 0 then
