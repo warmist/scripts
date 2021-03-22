@@ -375,7 +375,6 @@ end
 MockReader = defclass(MockReader, quickfort_reader.Reader)
 MockReader.ATTRS{lines={}, i=0}
 function MockReader:reset(lines) self.lines, self.i = lines, 0 end
-function MockReader:description() return 'mock test file' end
 function MockReader:get_next_row_raw()
     self.i = self.i + 1
     return self.lines[self.i]

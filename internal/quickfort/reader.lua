@@ -92,9 +92,11 @@ function XlsxReader:get_next_row_raw()
     return tokens
 end
 
-unit_test_hooks = {
-    chomp=chomp,
-    Reader=Reader,
-    CsvReader=CsvReader,
-    XlsxReader=XlsxReader,
-}
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        chomp=chomp,
+        Reader=Reader,
+        CsvReader=CsvReader,
+        XlsxReader=XlsxReader,
+    }
+end
