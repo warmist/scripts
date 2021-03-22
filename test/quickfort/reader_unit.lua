@@ -80,9 +80,12 @@ function MockXlsxioReader:reset(lines) self.i, self.lines = 0, lines end
 function MockXlsxioReader:close()
     self.close_called = (self.close_called or 0) + 1
 end
+local function open_mock_xlsxio_reader(filepath)
+    return MockXlsxioReader{filepath=filepath}
+end
 
 function test.XlsxReader()
-    local xlsxreader = reader.XlsxReader{xlsxioreader=MockXlsxioReader}
+    local xlsxreader = reader.XlsxReader{open_fn=open_mock_xlsxio_reader}
 
     xlsxreader.reader:reset({})
     expect.nil_(xlsxreader:get_next_row_raw())

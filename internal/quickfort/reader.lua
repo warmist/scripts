@@ -68,11 +68,11 @@ XlsxReader.ATTRS{
     -- name of xlsx sheet to open, nil means first sheet
     sheet_name = DEFAULT_NIL,
     -- xlsxio reader class to use
-    xlsxioreader = xlsxreader.XlsxioReader,
+    open_fn = xlsxreader.open,
 }
 
 function XlsxReader:init()
-    self.reader = self.xlsxioreader{filepath=self.filepath}
+    self.reader = self.open_fn(self.filepath)
     self.sheet_reader = self.reader:open_sheet(self.sheet_name)
 end
 
