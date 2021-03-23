@@ -4,4 +4,5 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        PATTERN "*.rb"
                        PATTERN "*.json"
                        PATTERN "3rdparty" EXCLUDE
+                       PATTERN "scripts/test" EXCLUDE
 )
