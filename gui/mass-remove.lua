@@ -9,14 +9,14 @@ a box selection.
 
 The following marking modes are available.
 
-- Suspend (s): suspends the construction of a planned building/construction
-- Unsuspend (p): resumes the construction of a planned building/construction
-- Remove Construction (n): designates a construction (wall, floor, etc) for removal. Similar to the native Designate->Remove Construction menu in DF
-- Unremove Construction (c): cancels removal of a construction (wall, floor, etc)
-- Remove Building (x): designates a building (door, workshop, etc) for removal. Similar to the native Set Building Tasks/Prefs->Remove Building menu in DF
-- Unremove Building (b): cancels removal of a building (door, workshop, etc)
-- Remove All (a): designates both constructions and buildings for removal, and deletes planned buildings/constructions
-- Unremove All (u): cancels removal designations for both constructions and buildings
+- Suspend: suspends the construction of a planned building/construction
+- Unsuspend: resumes the construction of a planned building/construction
+- Remove Construction: designates a construction (wall, floor, etc) for removal. Similar to the native Designate->Remove Construction menu in DF
+- Unremove Construction: cancels removal of a construction (wall, floor, etc)
+- Remove Building: designates a building (door, workshop, etc) for removal. Similar to the native Set Building Tasks/Prefs->Remove Building menu in DF
+- Unremove Building: cancels removal of a building (door, workshop, etc)
+- Remove All: designates both constructions and buildings for removal, and deletes planned buildings/constructions
+- Unremove All: cancels removal designations for both constructions and buildings
 ]====]
 
 local gui = require "gui"
@@ -28,30 +28,29 @@ local buildingplan = require('plugins.buildingplan')
 MassRemoveUI = defclass(MassRemoveUI, guidm.MenuOverlay)
 
 -- used to iterate through actions with + and -
-local actions={"suspend", "unsuspend", "remove_n", "unremove_n", "remove_x", "unremove_x", "remove_a", "unremove_a"}
-local action_indexes=utils.invert(actions)
+local actions = {
+    "suspend",
+    "unsuspend",
+    "remove_construction",
+    "unremove_construction",
+    "remove_building",
+    "unremove_building",
+    "remove_all",
+    "unremove_all",
+}
+local action_indexes = utils.invert(actions)
 
 MassRemoveUI.ATTRS {
-    action="remove_a",
+    action="remove_all",
     marking=false,
     mark=nil
 }
 
 -- Helper functions.
-local function tablelength(T)
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
-end
 
 -- Helper to match a job of a particular type at tile (x,y,z) and run the callback function on the job.
 local function iterateJobs(jobType, x, y, z, callback)
-    local joblist = df.global.world.jobs.list.next
-
-    while joblist do
-        local job = joblist.item
-        joblist = joblist.next
-
+    for _, job in utils.listpairs(df.global.world.jobs.list) do
         if job.job_type == jobType and job.pos.x == x and job.pos.y == y and job.pos.z == z then
             callback(job)
         end
@@ -164,18 +163,18 @@ function MassRemoveUI:changeDesignation(x, y, z)
         self:suspend(x, y, z)
     elseif self.action == "unsuspend" then
         self:unsuspend(x, y, z)
-    elseif self.action == "remove_x" then
+    elseif self.action == "remove_building" then
         self:removeBuilding(x, y, z)
-    elseif self.action == "unremove_x" then
+    elseif self.action == "unremove_building" then
         self:unremoveBuilding(x, y, z)
-    elseif self.action == "remove_n" then
+    elseif self.action == "remove_construction" then
         self:removeConstruction(x, y, z)
-    elseif self.action == "unremove_n" then
+    elseif self.action == "unremove_construction" then
         self:unremoveConstruction(x, y, z)
-    elseif self.action == "remove_a" then
+    elseif self.action == "remove_all" then
         self:removeBuilding(x, y, z)
         self:removeConstruction(x, y, z)
-    elseif self.action == "unremove_a" then
+    elseif self.action == "unremove_all" then
         self:unremoveBuilding(x, y, z)
         self:unremoveConstruction(x, y, z)
     end
@@ -278,12 +277,12 @@ function MassRemoveUI:onRenderBody(dc)
     dc:seek(1,9)
     dc:pen(self:getColor("suspend")):key_string("CUSTOM_S", "Suspend"):newline(1)
     dc:pen(self:getColor("unsuspend")):key_string("CUSTOM_SHIFT_S", "Unsuspend"):newline():newline(1)
-    dc:pen(self:getColor("remove_n")):key_string("CUSTOM_N", "Remove Construction"):newline(1)
-    dc:pen(self:getColor("unremove_n")):key_string("CUSTOM_SHIFT_N", "Unremove Construction"):newline():newline(1)
-    dc:pen(self:getColor("remove_x")):key_string("CUSTOM_X", "Remove Building"):newline(1)
-    dc:pen(self:getColor("unremove_x")):key_string("CUSTOM_SHIFT_X", "Unremove Building"):newline():newline(1)
-    dc:pen(self:getColor("remove_a")):key_string("CUSTOM_A", "Remove All"):newline(1)
-    dc:pen(self:getColor("unremove_a")):key_string("CUSTOM_SHIFT_A", "Unremove All"):newline(1)
+    dc:pen(self:getColor("remove_construction")):key_string("CUSTOM_N", "Remove Construction"):newline(1)
+    dc:pen(self:getColor("unremove_construction")):key_string("CUSTOM_SHIFT_N", "Unremove Construction"):newline():newline(1)
+    dc:pen(self:getColor("remove_building")):key_string("CUSTOM_X", "Remove Building"):newline(1)
+    dc:pen(self:getColor("unremove_building")):key_string("CUSTOM_SHIFT_X", "Unremove Building"):newline():newline(1)
+    dc:pen(self:getColor("remove_all")):key_string("CUSTOM_A", "Remove All"):newline(1)
+    dc:pen(self:getColor("unremove_all")):key_string("CUSTOM_SHIFT_A", "Unremove All"):newline(1)
 
     dc:pen(COLOR_WHITE)
     if self.marking then
@@ -301,22 +300,22 @@ function MassRemoveUI:onInput(keys)
         self.action = "unsuspend"
         return
     elseif keys.CUSTOM_N then
-        self.action = "remove_n"
+        self.action = "remove_construction"
         return
     elseif keys.CUSTOM_SHIFT_N then
-        self.action = "unremove_n"
+        self.action = "unremove_construction"
         return
     elseif keys.CUSTOM_X then
-        self.action = "remove_x"
+        self.action = "remove_building"
         return
     elseif keys.CUSTOM_SHIFT_X then
-        self.action = "unremove_x"
+        self.action = "unremove_building"
         return
     elseif keys.CUSTOM_A then
-        self.action = "remove_a"
+        self.action = "remove_all"
         return
     elseif keys.CUSTOM_SHIFT_A then
-        self.action = "unremove_a"
+        self.action = "unremove_all"
         return
     elseif keys.SECONDSCROLL_UP then
         self.action = actions[((action_indexes[self.action]-2) % #actions)+1]
