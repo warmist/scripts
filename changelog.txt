@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
+- `gui/mass-remove`: mass removal/suspension tool for buildings and constructions
 
 ## Fixes
 - `color-schemes`: fixed error in ``register`` subcommand when the DF path contains certain punctuation characters
