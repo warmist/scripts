@@ -1,9 +1,9 @@
 local reader = reqscript('internal/quickfort/reader').unit_test_hooks
 
 function test.module()
-    expect.error_match(dfhack.run_script,
-                       'this script cannot be called directly',
-                       'internal/quickfort/reader')
+    expect.error_match(
+        'this script cannot be called directly',
+        function() dfhack.run_script('internal/quickfort/reader') end)
 end
 
 function test.chomp()
@@ -50,11 +50,15 @@ end
 function test.CsvReader()
     local mock_tokenizer = function(line_fn, _) return line_fn() end
 
-    expect.error_match(reader.CsvReader, 'without a line_tokenizer', {})
-    expect.error_match(reader.CsvReader, 'failed to open "f"',
-                       {filepath='f',
-                        line_tokenizer=mock_tokenizer,
-                        open_fn=function(fname) return nil end})
+    expect.error_match('without a line_tokenizer',
+                       function() reader.CsvReader{} end)
+    expect.error_match('failed to open "f"',
+                       function()
+                            reader.CsvReader{
+                                filepath='f',
+                                line_tokenizer=mock_tokenizer,
+                                open_fn=function(fname) return nil end}
+                       end)
 
     mock_file = MockFile{fname='f'}
     csvreader = reader.CsvReader{

@@ -2,9 +2,9 @@ local parse = reqscript('internal/quickfort/parse').unit_test_hooks
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
 function test.module()
-    expect.error_match(dfhack.run_script,
-                       'this script cannot be called directly',
-                       'internal/quickfort/parse')
+    expect.error_match(
+        'this script cannot be called directly',
+        function() dfhack.run_script('internal/quickfort/parse') end)
 end
 
 function test.parse_cell()
@@ -73,14 +73,14 @@ function test.quote_if_has_spaces()
     expect.eq('abc', parse.quote_if_has_spaces('abc'))
     expect.eq('"a bc"', parse.quote_if_has_spaces('a bc'))
     expect.eq('" "', parse.quote_if_has_spaces(' '))
-    expect.error(parse.quote_if_has_spaces, nil)
+    expect.error(parse.quote_if_has_spaces)
 end
 
 function test.format_command()
     expect.eq('run file.csv -n /somelabel',
               parse.format_command('run', 'file.csv', '/somelabel'))
     expect.eq('"f name.xlsx"', parse.format_command(nil, 'f name.xlsx', nil))
-    expect.error(parse.format_command, nil, nil, nil)
+    expect.error(function() parse.format_command(nil, nil, nil) end)
 end
 
 function test.get_next_csv_token_single_line()
@@ -92,9 +92,9 @@ function test.get_next_csv_token_single_line()
     expect.table_eq({'blup"blip"boing', line, 47},
                     {parse.get_next_csv_token(line, 27)})
     expect.table_eq({'#', line, 48}, {parse.get_next_csv_token(line, 47)})
-    expect.error(parse.get_next_csv_token, line, nil)
-    expect.error(parse.get_next_csv_token, nil, 1)
-    expect.error(parse.get_next_csv_token, nil, nil)
+    expect.error(function() parse.get_next_csv_token(line, nil) end)
+    expect.error(function() parse.get_next_csv_token(nil, 1) end)
+    expect.error(function() parse.get_next_csv_token(nil, nil) end)
 end
 
 function test.get_next_csv_token_multi_line()
@@ -117,10 +117,13 @@ function test.get_next_csv_token_multi_line()
                     {parse.get_next_csv_token(reassembled, 31, next_line_fn)})
     expect.eq(1, i)
 
-    -- prints "unterminated" warning
     i = 1
     lines[3] = nil
-    expect.nil_(parse.get_next_csv_token(lines[1], 7, next_line_fn))
+    expect.printerr_match(
+        'unterminated',
+        function()
+            expect.nil_(parse.get_next_csv_token(lines[1], 7, next_line_fn))
+        end)
     expect.eq(3, i)
 end
 
@@ -146,8 +149,8 @@ function test.tokenize_next_csv_line()
     expect.nil_(parse.tokenize_next_csv_line(function() return nil end, 0))
 
     i = 0
-    expect.error(parse.tokenize_next_csv_line, next_line_fn, nil)
-    expect.error(parse.tokenize_next_csv_line, nil, 0)
+    expect.error(function() parse.tokenize_next_csv_line(next_line_fn, nil) end)
+    expect.error(function() parse.tokenize_next_csv_line(nil, 0) end)
 
     i = 0
     lines = {'a,"b",c,"d"'}
@@ -178,8 +181,8 @@ function test.get_marker_body()
     expect.table_eq({8, 'body'}, {parse.get_marker_body('m(body)m(b)', 1, 'm')})
     expect.table_eq({9, 'b d'}, {parse.get_marker_body('m( b d )', 1, 'm')})
 
-    expect.error(parse.get_marker_body, nil, 5, '')
-    expect.error(parse.get_marker_body, '#dig', 5, nil)
+    expect.error(function() parse.get_marker_body(nil, 5, '') end)
+    expect.error(function() parse.get_marker_body('#dig', 5, nil) end)
 end
 
 function test.parse_label()
@@ -191,16 +194,25 @@ function test.parse_label()
                     {parse.parse_label('#dig notlabel()', 5, fname, values)})
     expect.table_eq({}, values)
 
-    -- prints error message about invalid label
     values = {}
-    expect.table_eq({true, 13},
-                    {parse.parse_label('#dig label()', 5, fname, values)})
+    expect.printerr_match(
+        'labels must start',
+        function()
+            expect.table_eq({true, 13},
+                            {parse.parse_label('#dig label()', 5,
+                                               fname, values)})
+        end)
     expect.table_eq({}, values)
 
     -- prints error message about invalid label
     values = {}
-    expect.table_eq({true, 16},
-                    {parse.parse_label('#dig label(a b)', 5, fname, values)})
+    expect.printerr_match(
+        'labels must start',
+        function()
+            expect.table_eq({true, 16},
+                            {parse.parse_label('#dig label(a b)', 5,
+                                               fname, values)})
+        end)
     expect.table_eq({}, values)
 
     values = {}
@@ -213,7 +225,8 @@ function test.parse_label()
                     {parse.parse_label('#dig label(a_b)', 5, fname, values)})
     expect.table_eq({label='a_b'}, values)
 
-    expect.error(parse.parse_label, '#dig label(a)', 5, fname, nil)
+    expect.error(
+            function() parse.parse_label('#dig label(a)', 5, fname, nil) end)
 end
 
 function test.parse_start()
@@ -227,8 +240,13 @@ function test.parse_start()
 
     -- prints error message about invalid syntax
     values = {}
-    expect.table_eq({true, 13},
-                    {parse.parse_start('#dig start()', 5, fname, values)})
+    expect.printerr_match(
+        'start%(%) markers must',
+        function()
+            expect.table_eq({true, 13},
+                            {parse.parse_start('#dig start()', 5,
+                                               fname, values)})
+        end)
     expect.table_eq({}, values)
 
     values = {}
@@ -261,7 +279,8 @@ function test.parse_start()
                     {parse.parse_start('#dig start(1,;2)', 5, fname, values)})
     expect.table_eq({start_comment='1,;2'}, values)
 
-    expect.error(parse.parse_start, '#dig start(way)', 5, fname, nil)
+    expect.error(
+            function() parse.parse_start('#dig start(way)', 5, fname, nil) end)
 end
 
 function test.parse_hidden()
@@ -283,7 +302,8 @@ function test.parse_hidden()
                     {parse.parse_hidden('#dig hidden(smth)', 5, fname, values)})
     expect.table_eq({hidden=true}, values)
 
-    expect.error(parse.parse_hidden, '#dig hidden()', 5, fname, nil)
+    expect.error(
+            function() parse.parse_hidden('#dig hidden()', 5, fname, nil) end)
 end
 
 function test.parse_markers()
@@ -342,7 +362,7 @@ function test.get_col_name()
     expect.eq('BA', parse.get_col_name(53))
     expect.eq('BZ', parse.get_col_name(78))
 
-    expect.error(parse.get_col_name, nil)
+    expect.error(function() parse.get_col_name(nil) end)
 end
 
 function test.make_cell_label()
@@ -351,7 +371,7 @@ function test.make_cell_label()
     expect.eq('B1', parse.make_cell_label(2, 1))
     expect.eq('BA100', parse.make_cell_label(53, 100))
 
-    expect.error(parse.make_cell_label, 1, nil)
+    expect.error(function() parse.make_cell_label(1, nil) end)
 end
 
 function test.trim_token()
@@ -369,7 +389,7 @@ function test.trim_token()
     expect.eq('a b', parse.trim_token('a b '))
     expect.eq('a b', parse.trim_token(' a b '))
     expect.eq('a  b', parse.trim_token('a  b'))
-    expect.error(parse.trim_token, nil)
+    expect.error(function() parse.trim_token(nil) end)
 end
 
 MockReader = defclass(MockReader, quickfort_reader.Reader)
@@ -429,7 +449,7 @@ function test.process_levels()
     local start = {x=10, y=20, z=30}
 
     -- label not found
-    expect.error(parse.process_levels, reader, '1', start)
+    expect.error(function() parse.process_levels(reader, '1', start) end)
 
     -- implicit #dig modeline
     reader:reset({{'d'}})
@@ -475,7 +495,7 @@ function test.parse_alias_separate()
     expect.false_(parse.parse_alias_separate('', 'a', {}))
     expect.false_(parse.parse_alias_separate('aa', nil, {}))
     expect.false_(parse.parse_alias_separate('aa', '', {}))
-    expect.error(parse.parse_alias_separate, 'aa', 'a', nil)
+    expect.error(function() parse.parse_alias_separate('aa', 'a', nil) end)
 
     local aliases = {}
     expect.true_(parse.parse_alias_separate('aa', 'a', aliases))
@@ -491,7 +511,7 @@ function test.parse_alias_combined()
     expect.false_(parse.parse_alias_combined(nil, {}))
     expect.false_(parse.parse_alias_combined(':aa:a', {}))
     expect.false_(parse.parse_alias_combined('a:a:a', {}))
-    expect.error(parse.parse_alias_combined, 'aa:a', nil)
+    expect.error(function() parse.parse_alias_combined('aa:a', nil) end)
 
     local aliases = {}
     expect.true_(parse.parse_alias_combined('aa:a', aliases))
@@ -516,9 +536,13 @@ function test.get_sheet_metadata()
     reader:reset({{'#aliases'},{'aa: a'},{'ab','b'}})
     expect.table_eq({{},{aa='a',ab='b'}}, {parse.get_sheet_metadata(reader)})
 
-    -- invalid alias (prints warning)
     reader:reset({{'#aliases'},{'aa: a'},{'badalias'},{'ab','b'}})
-    expect.table_eq({{},{aa='a',ab='b'}}, {parse.get_sheet_metadata(reader)})
+    expect.printerr_match(
+        {'invalid alias'},
+        function()
+            expect.table_eq({{},{aa='a',ab='b'}},
+                            {parse.get_sheet_metadata(reader)})
+        end)
 
     -- comment in alias section
     reader:reset({{'#aliases'},{'aa: a'},{'# comment'},{'ab','b'}})
@@ -526,12 +550,12 @@ function test.get_sheet_metadata()
 end
 
 function test.get_extended_token()
-    expect.error(parse.get_extended_token, '', 1)
-    expect.error(parse.get_extended_token, 'hello', 1)
-    expect.error(parse.get_extended_token, '{', 1)
-    expect.error(parse.get_extended_token, '{}', 1)
-    expect.error(parse.get_extended_token, '}', 1)
-    expect.error(parse.get_extended_token, '{hello', 1)
+    expect.error(function() parse.get_extended_token('', 1) end)
+    expect.error(function() parse.get_extended_token('hello', 1) end)
+    expect.error(function() parse.get_extended_token('{', 1) end)
+    expect.error(function() parse.get_extended_token('{}', 1) end)
+    expect.error(function() parse.get_extended_token('}', 1) end)
+    expect.error(function() parse.get_extended_token('{hello', 1) end)
 
     expect.eq('{hello }', parse.get_extended_token('aa{hello }aa', 3))
     expect.eq('{{}', parse.get_extended_token('aa{{}aa', 3))
@@ -545,7 +569,7 @@ function test.get_token()
     expect.table_eq({'hello', 8}, {parse.get_token('{hello 5}')})
     expect.table_eq({'Numpad 5', 10}, {parse.get_token('{Numpad 5}')})
     expect.table_eq({'Numpad 5', 12}, {parse.get_token('{Numpad 5  param=hi}')})
-    expect.error(parse.get_token, '{Numpad param=hello}')
+    expect.error(function() parse.get_token('{Numpad param=hello}') end)
 end
 
 function test.get_next_param()
@@ -565,8 +589,13 @@ function test.get_params()
                         '{hello var1="{hi1}{hi2}" var2={alias} var3="a  b" 5}',
                         8)})
 
-    expect.error(parse.get_params, '{hello bad_empty= }', 8)
-    expect.error(parse.get_params, '{hello unterminated="}', 8)
+    expect.error(function() parse.get_params('{hello bad_empty= }', 8) end)
+    expect.printerr_match(
+        {'unterminated'},
+        function()
+            expect.error(
+                function() parse.get_params('{hello unterm_param="}', 8) end)
+        end)
 end
 
 function test.get_repetitions()
@@ -586,5 +615,5 @@ function test.parse_extended_token()
         '{hello p1=val p2=val{other} p3="with spaces"' ..
         ' p4="with {other} spaces" p5="val{other param=val}" p6="{o1}{o2}"' ..
         ' p7={other pp7={other2} 5} p8="{other pp8=""with spaces""}" 15}', 1)})
-    expect.error(parse.parse_extended_token, '{other param=}', 1)
+    expect.error(function() parse.parse_extended_token('{other param=}', 1) end)
 end
