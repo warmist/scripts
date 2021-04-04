@@ -15,6 +15,10 @@ Usage::
 local cap = ...
 local capnum = tonumber(cap)
 
+if not cap or cap=='-help' then
+	qerror('Usage:\n\tsetfps <number>')
+end
+
 if not capnum or capnum < 1 then
     qerror('Invalid FPS cap value: '..cap)
 end
