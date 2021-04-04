@@ -2,9 +2,9 @@ local aliases = reqscript('internal/quickfort/aliases').unit_test_hooks
 local quickfort_reader = reqscript('internal/quickfort/reader')
 
 function test.module()
-    expect.error_match(dfhack.run_script,
-                       'this script cannot be called directly',
-                       'internal/quickfort/aliases')
+    expect.error_match(
+        'this script cannot be called directly',
+        function() dfhack.run_script('internal/quickfort/aliases') end)
 end
 
 function test.push_pop_reset()
@@ -56,10 +56,12 @@ function test.process_text()
     dfhack.with_finalize(
         function() aliases.reset_aliases() end,
         function()
-            expect.error(aliases.process_text, 'text', {}, 51)
+            expect.error(function() aliases.process_text('text', {}, 51) end)
 
             aliases.push_aliases({aa='{bb}',bb='{aa}'})
-            expect.error_match(aliases.process_text, 'recursion', '{aa}', {})
+            expect.error_match(
+                    'recursion',
+                    function() aliases.process_text('{aa}', {}) end)
 
             aliases.reset_aliases()
             aliases.push_aliases({aa='{bb}', bb='x{cc}x', cc='o'})
