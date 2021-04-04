@@ -1,9 +1,9 @@
 local common = reqscript('internal/quickfort/common')
 
 function test.module()
-    expect.error_match(dfhack.run_script,
-                       'this script cannot be called directly',
-                       'internal/quickfort/common')
+    expect.error_match(
+        'this script cannot be called directly',
+        function() dfhack.run_script('internal/quickfort/common') end)
 end
 
 function test.settings()
