@@ -1,9 +1,9 @@
 local notes = reqscript('internal/quickfort/notes')
 
 function test.module()
-    expect.error_match(dfhack.run_script,
-                       'this script cannot be called directly',
-                       'internal/quickfort/notes')
+    expect.error_match(
+        'this script cannot be called directly',
+        function() dfhack.run_script('internal/quickfort/notes') end)
 end
 
 function test.do_run()
