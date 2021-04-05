@@ -13,6 +13,7 @@ local quickfort_parse = reqscript('internal/quickfort/parse')
 local log = quickfort_common.log
 local logfn = quickfort_common.logfn
 
+-- assumes num is a non-negative integer
 local function get_digit_count(num)
     local num_digits = 1
     while num >= 10 do
@@ -22,6 +23,7 @@ local function get_digit_count(num)
     return num_digits
 end
 
+-- total string length will be width+1
 local function left_pad(num, width)
     local num_digit_count = get_digit_count(num)
     local ret = ''
@@ -68,18 +70,12 @@ local function flood_fill(grid, x, y, seen_grid, data, db, aliases)
     if not grid[y] or not grid[y][x] then return 0 end
     local cell, text = grid[y][x].cell, grid[y][x].text
     local keys, extent = quickfort_parse.parse_cell(text)
-    local db_entry = nil
-    if keys then
-        if aliases[string.lower(keys)] then
-            keys = aliases[string.lower(keys)]
-        end
-        db_entry = db[keys]
-    end
-    if not db_entry then
+    if aliases[string.lower(keys)] then keys = aliases[string.lower(keys)] end
+    if not db[keys] then
         if not seen_grid[x] then seen_grid[x] = {} end
         seen_grid[x][y] = true -- seen, but not part of any building
-        print(string.format('invalid key sequence in cell %s: "%s"',
-                            cell, text))
+        dfhack.printerr(string.format('invalid key sequence in cell %s: "%s"',
+                                      cell, text))
         return 1
     end
     if data.type and (data.type ~= keys or extent.specified) then return 0 end
@@ -97,23 +93,21 @@ local function flood_fill(grid, x, y, seen_grid, data, db, aliases)
             if target_y > data.y_max then data.y_max = target_y end
         end
     end
-    if not extent.specified then
-        return flood_fill(grid, x-1, y-1, seen_grid, data, db, aliases) +
-                flood_fill(grid, x-1, y, seen_grid, data, db, aliases) +
-                flood_fill(grid, x-1, y+1, seen_grid, data, db, aliases) +
-                flood_fill(grid, x, y-1, seen_grid, data, db, aliases) +
-                flood_fill(grid, x, y+1, seen_grid, data, db, aliases) +
-                flood_fill(grid, x+1, y-1, seen_grid, data, db, aliases) +
-                flood_fill(grid, x+1, y, seen_grid, data, db, aliases) +
-                flood_fill(grid, x+1, y+1, seen_grid, data, db, aliases)
-    end
-    return 0
+    if extent.specified then return 0 end
+    return flood_fill(grid, x-1, y-1, seen_grid, data, db, aliases) +
+            flood_fill(grid, x-1, y, seen_grid, data, db, aliases) +
+            flood_fill(grid, x-1, y+1, seen_grid, data, db, aliases) +
+            flood_fill(grid, x, y-1, seen_grid, data, db, aliases) +
+            flood_fill(grid, x, y+1, seen_grid, data, db, aliases) +
+            flood_fill(grid, x+1, y-1, seen_grid, data, db, aliases) +
+            flood_fill(grid, x+1, y, seen_grid, data, db, aliases) +
+            flood_fill(grid, x+1, y+1, seen_grid, data, db, aliases)
 end
 
 local function swap_id(data, seen_grid, from_id)
     for x=data.x_min,data.x_max do
         for y=data.y_min,data.y_max do
-            if seen_grid[x][y] == from_id then
+            if seen_grid[x] and seen_grid[x][y] == from_id then
                 seen_grid[x][y] = data.id
             end
         end
@@ -139,7 +133,7 @@ local function chunk_extents(data_tables, seen_grid, db)
         local cuts = 0
         for x=data.x_min,data.x_max do
             for y=data.y_min,data.y_max do
-                if seen_grid[x][y] == data.id then
+                if seen_grid[x] and seen_grid[x][y] == data.id then
                     chunk = copyall(data)
                     chunk.id = #data_tables - (i - 1) + #chunks + 1
                     chunk.x_min, chunk.y_min = x, y
@@ -185,7 +179,7 @@ local function expand_buildings(data_tables, seen_grid, db)
         for x=data.x_min,data.x_max do
             if not seen_grid[x] then seen_grid[x] = {} end
             for y=data.y_min,data.y_max do
-                -- expand into unclaimed tiles
+                -- only expand into unclaimed tiles
                 if not seen_grid[x][y] then seen_grid[x][y] = data.id end
             end
         end
@@ -200,8 +194,8 @@ local function build_extent_grid(seen_grid, data)
         extent_grid[extent_x] = {}
         for y=data.y_min,data.y_max do
             local extent_y = y - data.y_min + 1
-            extent_grid[extent_x][extent_y] = seen_grid[x][y] == data.id
-            if extent_grid[extent_x][extent_y] then
+            if seen_grid[x] and seen_grid[x][y] == data.id then
+                extent_grid[extent_x][extent_y] = true
                 num_tiles = num_tiles + 1
             end
         end
@@ -231,22 +225,18 @@ function init_buildings(zlevel, grid, buildings, db, aliases)
             ::continue::
         end
     end
-    logfn(dump_seen_grid, 'before chunking', seen_grid, #data_tables)
+    logfn(dump_seen_grid, 'after edge detection', seen_grid, #data_tables)
     data_tables = chunk_extents(data_tables, seen_grid, db)
     logfn(dump_seen_grid, 'after chunking', seen_grid, #data_tables)
     expand_buildings(data_tables, seen_grid, db)
     logfn(dump_seen_grid, 'after expansion', seen_grid, #data_tables)
     for _, data in ipairs(data_tables) do
         local extent_grid, is_solid = build_extent_grid(seen_grid, data)
-        if not extent_grid then
-            log('%s building/stockpile completely overwritten by other ' ..
-                'elements (defined in spreadsheet cells %s)',
-                db[data.type].label, table.concat(data.cells, ', '))
-        elseif not db[data.type].has_extents and not is_solid then
-            log('%s partially overwritten by other buildings, and it ' ..
-                'cannot be built unless all tiles are free (defined in ' ..
-               'spreadsheet cells %s)',
-                db[data.type].label, table.concat(data.cells, ', '))
+        if not db[data.type].has_extents and not is_solid then
+            dfhack.printerr(
+                ('space needed for "%s" is taken by adjacent structures ' ..
+                 '(defined in spreadsheet cells: %s)'):format(
+                        db[data.type].label, table.concat(data.cells, ', ')))
         else
             table.insert(buildings,
                          {type=data.type,
@@ -260,63 +250,88 @@ function init_buildings(zlevel, grid, buildings, db, aliases)
     return invalid_keys
 end
 
-local function is_on_map_x(x)
-    return quickfort_map.is_within_map_bounds_x(x) or
-            quickfort_map.is_on_map_edge_x(x)
+-- y dimension may be sparse, but x must be contiguous, even if empty
+local function count_extent_tiles(extent_grid, width, height, startx, starty)
+    local num_tiles = 0
+    for extent_x=startx or 1,width do
+        for extent_y=starty or 1,height do
+            if extent_grid[extent_x][extent_y] then
+                num_tiles = num_tiles + 1
+            end
+        end
+    end
+    return num_tiles
 end
 
-local function is_on_map_y(y)
-    return quickfort_map.is_within_map_bounds_y(y) or
-            quickfort_map.is_on_map_edge_y(y)
+local function trim_empty_cols(b)
+    local height = b.height
+    if height <= 0 then return end
+    -- trim from right
+    while b.width > 0 and
+            count_extent_tiles(b.extent_grid, b.width, height, b.width) == 0 do
+        b.extent_grid[b.width] = nil
+        b.width = b.width - 1
+    end
+    -- trim from left
+    while b.width > 0 and count_extent_tiles(b.extent_grid, 1, height) == 0 do
+        -- x dimension is contiguous so we can use table.remove()
+        table.remove(b.extent_grid, 1)
+        b.width = b.width - 1
+        b.pos.x = b.pos.x + 1
+    end
 end
 
-local is_on_map_z = quickfort_map.is_within_map_bounds_z
+local function trim_empty_rows(b)
+    local width = b.width
+    if width <= 0 then return end
+    -- trim from bottom
+    while b.height > 0 and
+            count_extent_tiles(b.extent_grid, width, b.height,
+                               1, b.height) == 0 do
+        for extent_x=1,width do
+            b.extent_grid[extent_x][b.height] = nil
+        end
+        b.height = b.height - 1
+    end
+    -- trim from top
+    while b.height > 0 and count_extent_tiles(b.extent_grid, width, 1) == 0 do
+        for extent_x=1,width do
+            for extent_y=1,b.height do
+                b.extent_grid[extent_x][extent_y] =
+                        b.extent_grid[extent_x][extent_y+1]
+            end
+            b.extent_grid[extent_x][b.height] = nil
+        end
+        b.height = b.height - 1
+        b.pos.y = b.pos.y + 1
+    end
+end
+
+local function has_area(b)
+    return b.width > 0 and b.height > 0
+end
+
+local function clear_building(b)
+    b.width, b.height, b.extent_grid, b.pos = 0, 0, {}, nil
+end
 
 -- check bounds against size limits and map edges, adjust pos, width, height,
--- and extent_grid accordingly. marks invalid buildings that are cropped below
--- their minimum dimensions
--- assumes b.width and b.height > 0 if b.pos is not nil
-function crop_to_bounds(buildings, db)
+-- and extent_grid accordingly. nulls or zeroes out config for buildings that
+-- are cropped below their minimum dimensions
+function crop_to_bounds(ctx, buildings, db)
     local out_of_bounds_tiles = 0
+    local bounds = ctx.bounds or quickfort_map.MapBoundsChecker{}
     for _, b in ipairs(buildings) do
         if not b.pos then goto continue end
-        -- if pos is off the map, crop and move pos until we're ok (or empty)
-        while b.pos and
-                (not is_on_map_x(b.pos.x) or not is_on_map_z(b.pos.z)) do
-            for extent_y=1,b.height do
-                if b.extent_grid[1][extent_y] then
-                    out_of_bounds_tiles = out_of_bounds_tiles + 1
-                end
-            end
-            -- change extent_grid to a linked list if this gets too slow
-            table.remove(b.extent_grid, 1)
-            b.width = b.width - 1
-            b.pos.x = b.pos.x + 1
-            if b.width < db[b.type].min_width then b.pos = nil end
+        local prev_oob, db_entry = out_of_bounds_tiles, db[b.type]
+        -- if zlevel is out of bounds, the whole extent is out of bounds
+        if not bounds:is_on_map_z(b.pos.z) then
+            out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, b.width, b.height)
+            clear_building(b)
         end
-        while b.pos and not is_on_map_y(b.pos.y) do
-            for extent_x=1,b.width do
-                if b.extent_grid[extent_x][1] then
-                    out_of_bounds_tiles = out_of_bounds_tiles + 1
-                end
-                table.remove(b.extent_grid[extent_x], 1)
-            end
-            b.height = b.height - 1
-            b.pos.y = b.pos.y + 1
-            if b.height < db[b.type].min_height then b.pos = nil end
-        end
-        -- if building extends off map to bottom or right, just crop
-        while b.pos and not is_on_map_x(b.pos.x+b.width-1) do
-            for extent_y=1,b.height do
-                if b.extent_grid[b.width][extent_y] then
-                    out_of_bounds_tiles = out_of_bounds_tiles + 1
-                end
-            end
-            b.extent_grid[b.width] = nil
-            b.width = b.width - 1
-            if b.width < db[b.type].min_width then b.pos = nil end
-        end
-        while b.pos and not is_on_map_y(b.pos.y+b.height-1) do
+        -- if building extends off map to bottom or right, crop
+        while has_area(b) and not bounds:is_on_map_y(b.pos.y + b.height - 1) do
             for extent_x=1,b.width do
                 if b.extent_grid[extent_x][b.height] then
                     out_of_bounds_tiles = out_of_bounds_tiles + 1
@@ -324,10 +339,62 @@ function crop_to_bounds(buildings, db)
                 b.extent_grid[extent_x][b.height] = nil
             end
             b.height = b.height - 1
-            if b.height < db[b.type].min_height then b.pos = nil end
+            if b.height < db_entry.min_height then
+                out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, b.width, b.height)
+                clear_building(b)
+            end
         end
-        if not b.pos then
-            log('building/stockpile not within map bounds, defined from ' ..
+        while has_area(b) and not bounds:is_on_map_x(b.pos.x+b.width-1) do
+            out_of_bounds_tiles = out_of_bounds_tiles +
+                count_extent_tiles(b.extent_grid, b.width, b.height, b.width)
+            b.extent_grid[b.width] = nil
+            b.width = b.width - 1
+            if b.width < db_entry.min_width then
+                out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, b.width, b.height)
+                clear_building(b)
+            end
+        end
+        -- if pos is off the map up or to the left, crop and move pos until
+        -- we're ok (or empty)
+        while has_area(b) and not bounds:is_on_map_y(b.pos.y) do
+            for extent_x=1,b.width do
+                if b.extent_grid[extent_x][1] then
+                    out_of_bounds_tiles = out_of_bounds_tiles + 1
+                end
+                -- grid is sparse in y so we can't just use table.remove()
+                for extent_y=1,b.height do
+                    b.extent_grid[extent_x][extent_y] =
+                            b.extent_grid[extent_x][extent_y+1]
+                end
+                b.extent_grid[extent_x][b.height] = nil
+            end
+            b.height = b.height - 1
+            b.pos.y = b.pos.y + 1
+            if b.height < db_entry.min_height then
+                out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, b.width, b.height)
+                clear_building(b)
+            end
+        end
+        while has_area(b) and not bounds:is_on_map_x(b.pos.x) do
+            out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, 1, b.height)
+            table.remove(b.extent_grid, 1)
+            b.width = b.width - 1
+            b.pos.x = b.pos.x + 1
+            if b.width < db_entry.min_width then
+                out_of_bounds_tiles = out_of_bounds_tiles +
+                    count_extent_tiles(b.extent_grid, b.width, b.height)
+                clear_building(b)
+            end
+        end
+        trim_empty_cols(b)
+        trim_empty_rows(b)
+        if not has_area(b) then clear_building(b) end
+        if prev_oob ~= out_of_bounds_tiles then
+            log('cropping building/stockpile to map boundary, defined in ' ..
                 'spreadsheet cells: %s', table.concat(b.cells, ', '))
         end
         ::continue::
@@ -342,23 +409,26 @@ function check_tiles_and_extents(buildings, db)
     local occupied_tiles = 0
     for _, b in ipairs(buildings) do
         if not b.pos then goto continue end
-        for extent_x, col in ipairs(b.extent_grid) do
-            for extent_y, in_extent in ipairs(col) do
-                if not b.extent_grid[extent_x][extent_y] then goto continue end
+        local db_entry = db[b.type]
+        for extent_x=1,b.width do
+            local col = b.extent_grid[extent_x]
+            for extent_y=1,b.height do
+                local in_extent = col[extent_y]
+                if not in_extent then goto continue_inner end
                 local pos =
                         xyz2pos(b.pos.x+extent_x-1, b.pos.y+extent_y-1, b.pos.z)
-                if not db[b.type].is_valid_tile_fn(pos) then
+                if not db_entry.is_valid_tile_fn(pos) then
                     log('tile not usable: (%d, %d, %d)', pos.x, pos.y, pos.z)
-                    b.extent_grid[extent_x][extent_y] = false
+                    col[extent_y] = false
                     occupied_tiles = occupied_tiles + 1
                 end
-                ::continue::
+                ::continue_inner::
             end
         end
-        if not db[b.type].is_valid_extent_fn(b) then
+        if not db_entry.is_valid_extent_fn(b) then
             log('no room for %s at (%d, %d, %d)',
-                db[b.type].label, b.pos.x, b.pos.y, b.pos.z)
-            b.pos = nil
+                db_entry.label, b.pos.x, b.pos.y, b.pos.z)
+            clear_building(b)
         end
         ::continue::
     end
@@ -384,4 +454,26 @@ function make_extents(b, dry_run)
         if is_in_extent then num_tiles = num_tiles + 1 end
     end
     return extents, num_tiles
+end
+
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        get_digit_count=get_digit_count,
+        left_pad=left_pad,
+        dump_seen_grid=dump_seen_grid,
+        flood_fill=flood_fill,
+        swap_id=swap_id,
+        chunk_extents=chunk_extents,
+        expand_buildings=expand_buildings,
+        build_extent_grid=build_extent_grid,
+        init_buildings=init_buildings,
+        count_extent_tiles=count_extent_tiles,
+        trim_empty_cols=trim_empty_cols,
+        trim_empty_rows=trim_empty_rows,
+        has_area=has_area,
+        clear_building=clear_building,
+        crop_to_bounds=crop_to_bounds,
+        check_tiles_and_extents=check_tiles_and_extents,
+        make_extents=make_extents,
+    }
 end
