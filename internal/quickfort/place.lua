@@ -236,7 +236,7 @@ function do_run(zlevel, grid, ctx)
                 zlevel, grid, stockpiles, stockpile_db)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
-                stockpiles, stockpile_db)
+                ctx, stockpiles, stockpile_db)
     stats.place_occupied.value =
             stats.place_occupied.value +
             quickfort_building.check_tiles_and_extents(

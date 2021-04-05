@@ -20,7 +20,6 @@ local utils = require('utils')
 local buildingplan = require('plugins.buildingplan')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
-local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_orders = reqscript('internal/quickfort/orders')
 
 local log = quickfort_common.log
@@ -31,6 +30,7 @@ local log = quickfort_common.log
 
 local function is_valid_tile_base(pos)
     local flags, occupancy = dfhack.maps.getTileFlags(pos)
+    if not flags then return false end
     return not flags.hidden and occupancy.building == 0
 end
 
@@ -89,9 +89,9 @@ local function is_valid_tile_construction(pos)
 end
 
 local function is_shape_at(pos, allowed_shapes)
-    if not quickfort_map.is_within_map_bounds(pos) and
-            not quickfort_map.is_on_map_edge(pos) then return false end
-    return allowed_shapes[df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape]
+    local tiletype = dfhack.maps.getTileType(pos)
+    if not tiletype then return false end
+    return allowed_shapes[df.tiletype.attrs[tiletype].shape]
 end
 
 -- for doors
@@ -778,7 +778,7 @@ function do_run(zlevel, grid, ctx)
                 zlevel, grid, buildings, building_db, building_aliases)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
-                buildings, building_db)
+                ctx, buildings, building_db)
     stats.build_unsuitable.value =
             stats.build_unsuitable.value +
             quickfort_building.check_tiles_and_extents(
