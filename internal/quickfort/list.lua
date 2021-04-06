@@ -10,10 +10,17 @@ local xlsxreader = require('plugins.xlsxreader')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 
+-- blueprint_name is relative to the blueprints dir
+function get_blueprint_filepath(blueprint_name)
+    return string.format("%s/%s",
+                         quickfort_common.settings['blueprints_dir'].value,
+                         blueprint_name)
+end
+
 local blueprint_cache = {}
 
 local function scan_csv_blueprint(path)
-    local filepath = quickfort_common.get_blueprint_filepath(path)
+    local filepath = get_blueprint_filepath(path)
     local mtime = dfhack.filesystem.mtime(filepath)
     if not blueprint_cache[path] or blueprint_cache[path].mtime ~= mtime then
         local modelines, aliases = quickfort_parse.get_metadata(filepath)
@@ -48,7 +55,7 @@ local function get_xlsx_file_sheet_infos(filepath)
 end
 
 local function scan_xlsx_blueprint(path)
-    local filepath = quickfort_common.get_blueprint_filepath(path)
+    local filepath = get_blueprint_filepath(path)
     local mtime = dfhack.filesystem.mtime(filepath)
     if blueprint_cache[path] and blueprint_cache[path].mtime == mtime then
         return blueprint_cache[path].sheet_infos

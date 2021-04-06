@@ -19,16 +19,6 @@ for mode, _ in pairs(quickfort_common.valid_modes) do
     end
 end
 
-function parse_section_name(section_name)
-    local sheet_name, label = nil, nil
-    if section_name then
-        _, _, sheet_name, label = section_name:find('^([^/]*)/?(.*)$')
-        if #sheet_name == 0 then sheet_name = nil end
-        if #label == 0 then label = nil end
-    end
-    return sheet_name, label
-end
-
 local command_switch = {
     run='do_run',
     orders='do_orders',
@@ -41,9 +31,9 @@ function do_command_internal(ctx, section_name)
     ctx.stats.invalid_keys = ctx.stats.invalid_keys or
             {label='Invalid key sequences', value=0}
 
-    local sheet_name, label = parse_section_name(section_name)
+    local sheet_name, label = quickfort_parse.parse_section_name(section_name)
     ctx.sheet_name = sheet_name
-    local filepath = quickfort_common.get_blueprint_filepath(ctx.blueprint_name)
+    local filepath = quickfort_list.get_blueprint_filepath(ctx.blueprint_name)
     local section_data_list = quickfort_parse.process_section(
             filepath, sheet_name, label, ctx.cursor)
     local command = ctx.command

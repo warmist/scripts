@@ -5,8 +5,61 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local xlsxreader = require('plugins.xlsxreader')
 local quickfort_common = reqscript('internal/quickfort/common')
+local quickfort_reader = reqscript('internal/quickfort/reader')
+
+-- returns a tuple of {keys, extent} where keys is a string and extent is of the
+-- format: {width, height, specified}, where width and height are numbers and
+-- specified is true when an extent was explicitly specified. this function
+-- assumes that text has been trimmed of leading and trailing spaces.
+function parse_cell(text)
+    -- first try to match expansion syntax
+    local _, _, keys, width, height =
+            text:find('^([^(][^(]-)%s*%(%s*(%d+)%s*x%s*(%d+)%s*%)$')
+    local specified = nil
+    if keys then
+        width = tonumber(width)
+        height = tonumber(height)
+        specified = width and height and true
+    else
+        _, _, keys = text:find('(.+)')
+    end
+    if not specified or width <= 0 then width = 1 end
+    if not specified or height <= 0 then height = 1 end
+    return keys, {width=width, height=height, specified=specified}
+end
+
+-- sorts by row (y), then column (x)
+local function coord2d_lt(cell_a, cell_b)
+    return cell_a.y < cell_b.y or
+            (cell_a.y == cell_b.y and cell_a.x < cell_b.x)
+end
+
+-- returns a list of {x, y, cell, text} tuples in order of ascending y, then
+-- ascending x
+function get_ordered_grid_cells(grid)
+    local cells = {}
+    for y, row in pairs(grid) do
+        for x, cell_and_text in pairs(row) do
+            local cell, text = cell_and_text.cell, cell_and_text.text
+            table.insert(cells, {y=y, x=x, cell=cell, text=text})
+        end
+    end
+    table.sort(cells, coord2d_lt)
+    return cells
+end
+
+-- sheet names can contain (or even start with or even be completely composed
+-- of) spaces
+function parse_section_name(section_name)
+    local sheet_name, label = nil, nil
+    if section_name then
+        _, _, sheet_name, label = section_name:find('^([^/]*)/?(%S*)')
+        if #sheet_name == 0 then sheet_name = nil end
+        if #label == 0 then label = nil end
+    end
+    return sheet_name, label
+end
 
 function quote_if_has_spaces(str)
     if str:find(' ') then return '"' .. str .. '"' end
@@ -23,20 +76,16 @@ function format_command(command, blueprint_name, section_name)
     end
     local section_name_str = ''
     if section_name then
-        section_name_str =
-                string.format(' -n %s', quote_if_has_spaces(section_name))
+        section_name_str = string.format(' -n %s',
+                                         quote_if_has_spaces(section_name))
     end
     return string.format('%s%s%s', command_str,
                          quote_if_has_spaces(blueprint_name), section_name_str)
 end
 
-local function trim_token(token)
-    _, _, token = token:find('^%s*(.-)%s*$')
-    return token
-end
-
--- returns the next token and the start position of the following token
--- or nil if there are no tokens
+-- returns the next token, the current (possibly reassembed multiline) line, and
+-- the start position of the following token in the line
+-- or nil if there are no more tokens
 local function get_next_csv_token(line, pos, get_next_line_fn, sep)
     local sep = sep or ','
     local c = string.sub(line, pos, pos)
@@ -50,7 +99,10 @@ local function get_next_csv_token(line, pos, get_next_line_fn, sep)
                 -- handle multi-line quoted string
                 local next_line = get_next_line_fn()
                 if not next_line then
-                    dfhack.printerr('unterminated quoted string')
+                    -- don't put quote characters around %s because it ends up
+                    -- being confusing
+                    dfhack.printerr(string.format(
+                            'unterminated quoted string: %s', line))
                     return nil
                 end
                 line = line .. '\n' .. next_line
@@ -66,93 +118,92 @@ local function get_next_csv_token(line, pos, get_next_line_fn, sep)
             if (c == '"') then txt = txt .. '"' end
         until c ~= '"'
         if line:sub(pos, pos) == sep then pos = pos + 1 end
-        return trim_token(txt), pos
+        return txt, line, pos
     end
     -- no quotes used, just look for the first separator
     local startp, endp = string.find(line, sep, pos)
     if startp then
-        return trim_token(string.sub(line, pos, startp-1)), startp+1
+        return string.sub(line, pos, startp-1), line, startp+1
     end
     -- no separator found -> use rest of string
-    return trim_token(string.sub(line, pos)), #line+1
-end
-
-local function get_next_line(file)
-    local line = file:read()
-    if not line then return nil end
-    return string.gsub(line, '[\r\n]*$', '')
+    return string.sub(line, pos), line, #line+1
 end
 
 -- adapted from example on http://lua-users.org/wiki/LuaCsv
 -- returns a list of strings corresponding to the text in the cells in the row
-local function tokenize_next_csv_line(file, max_cols)
-    local get_next_line_fn = function() return get_next_line(file) end
+local function tokenize_next_csv_line(get_next_line_fn, max_cols)
     local line = get_next_line_fn()
     if not line then return nil end
     local tokens = {}
-    local sep = ','
-    local token, pos = get_next_csv_token(line, 1, get_next_line_fn, sep)
+    local sep, token, pos = ',', nil, nil
+    token, line, pos = get_next_csv_token(line, 1, get_next_line_fn, sep)
     while token do
         table.insert(tokens, token)
         if max_cols > 0 and #tokens >= max_cols then break end
-        token, pos = get_next_csv_token(line, pos, get_next_line_fn)
+        token, line, pos = get_next_csv_token(line, pos, get_next_line_fn)
     end
     return tokens
 end
 
+-- returns the character position after the marker and the trimmed marker body
+-- or nil if the specified marker is not found at the indicated start_pos
+local function get_marker_body(modeline, start_pos, marker_name)
+    local _, marker_end, marker_body = string.find(
+            modeline, '^%s*'..marker_name..'%s*(%b())', start_pos)
+    if not marker_body then return nil end
+    local _, _, inner_body = string.find(marker_body, '^%(%s*(.-)%s*%)$')
+    return marker_end + 1, inner_body
+end
+
 local function parse_label(modeline, start_pos, filename, marker_values)
-    local _, label_str_end, label_str =
-            string.find(modeline, '^%s+label%s*(%b())', start_pos)
-    if not label_str then
-        return false, start_pos
-    end
-    local _, _, label = string.find(label_str, '^%(%s*(%a.-)%s*%)$')
-    if not label or #label == 0 then
-        print(string.format(
-            'error while parsing "%s": labels must start with a letter: "%s"',
-            filename, modeline))
-    else
+    local next_start_pos, label = get_marker_body(modeline, start_pos, 'label')
+    if not label then return false, start_pos end
+    if label:match('^%a[-_%w]*$') then
         marker_values.label = label
+    else
+        dfhack.printerr(string.format(
+            'error while parsing "%s": labels must start with a letter and' ..
+            ' consist only of letters, numbers, dashes, and underscores: "%s"',
+            filename, modeline))
     end
-    return true, label_str_end + 1
+    return true, next_start_pos
 end
 
 local function parse_start(modeline, start_pos, filename, marker_values)
-    local _, start_str_end, start_str =
-            string.find(modeline, '^%s+start%s*(%b())', start_pos)
-    if not start_str or #start_str == 0 then return false, start_pos end
+    local next_start_pos, start_str =
+            get_marker_body(modeline, start_pos, 'start')
+    if not start_str then return false, start_pos end
     local _, _, startx, starty, start_comment =
-            string.find(start_str,
-                        '^%(%s*(%d+)%s-[;, ]%s-(%d+)%s-[;, ]?%s*(.*)%)$')
+            start_str:find('^(%d+)%s-[;, ]%s-(%d+)%s-[;, ]?%s*(.*)')
     if startx and starty then
         marker_values.startx = startx
         marker_values.starty = starty
         marker_values.start_comment = #start_comment>0 and start_comment or nil
-    else
+    elseif #start_str > 0 then
         -- the whole thing is a comment
-        _, _, start_comment = string.find(start_str, '^%(%s*(.-)%s*%)$')
-        marker_values.start_comment = start_comment
+        marker_values.start_comment = start_str
+    else
+        dfhack.printerr(string.format(
+            'error while parsing "%s": start() markers must either have both' ..
+            ' an x and a y value or else have a non-empty comment: "%s"',
+            filename, modeline))
     end
-    return true, start_str_end + 1
+    return true, next_start_pos
 end
 
 local function parse_hidden(modeline, start_pos, filename, marker_values)
-    local _, hidden_str_end, hidden_str =
-            string.find(modeline, '^%s+hidden%s*(%b())', start_pos)
-    if not hidden_str or #hidden_str == 0 then return false, start_pos end
+    local next_start_pos, exist = get_marker_body(modeline, start_pos, 'hidden')
+    if not exist then return false, start_pos end
     marker_values.hidden = true
-    return true, hidden_str_end + 1
+    return true, next_start_pos
 end
 
 local function parse_message(modeline, start_pos, filename, marker_values)
-    local _, message_str_end, message_str =
-            string.find(modeline, '^%s+message%s*(%b())', start_pos)
-    if not message_str then
-        return false, start_pos
-    end
-    local _, _, message = string.find(message_str, '^%(%s*(.-)%s*%)$')
-    marker_values.message = message
-    return true, message_str_end + 1
+    local next_start_pos, message =
+            get_marker_body(modeline, start_pos, 'message')
+    if not message then return false, start_pos end
+    if #message > 0 then marker_values.message = message end
+    return true, next_start_pos
 end
 
 local marker_fns = {parse_label, parse_start, parse_hidden, parse_message}
@@ -166,13 +217,15 @@ local function parse_markers(modeline, start_pos, filename)
     while #remaining_marker_fns > 0 do
         local matched = false
         for i,marker_fn in ipairs(remaining_marker_fns) do
-            matched, start_pos =
-                    marker_fn(modeline, start_pos, filename, marker_values)
+            matched, start_pos = marker_fn(modeline, start_pos, filename,
+                                           marker_values)
             if matched then
                 table.remove(remaining_marker_fns, i)
                 break
             end
         end
+        -- the rest of the modeline is a comment (or is empty or has duplicate
+        -- markers that will be treated as a comment)
         if not matched then break end
     end
     return marker_values, start_pos
@@ -181,26 +234,22 @@ end
 --[[
 parses a modeline
 example: '#dig label(dig1) start(4;4;center of stairs) dining hall'
-where all elements other than the initial #mode are optional (though if the
-'label' part exists, a label must be specified, and if the 'start' part exists,
-the offsets must also exist). If a label is not specified, the modeline_id is
-used as the label.
-returns a table in the format:
-  {mode, label, startx, starty, start_comment, comment}
-or nil if the modeline is invalid
+where all elements other than the initial #mode are optional. If a label is not
+specified, the modeline_id is used as the label.
+returns a table that includes at least the mode and the label, plus a comment if
+one is specified, plus any marker-related data (see above parsers for details).
+returns nil if the modeline is invalid.
 ]]
 local function parse_modeline(modeline, filename, modeline_id)
     if not modeline then return nil end
     local _, mode_end, mode = string.find(modeline, '^#([%l]+)')
-    if not mode or not quickfort_common.valid_modes[mode] then
-        return nil
-    end
+    if not mode or not quickfort_common.valid_modes[mode] then return nil end
     local modeline_data, comment_start =
             parse_markers(modeline, mode_end+1, filename)
-    local _, _, comment = string.find(modeline, '^%s*(.*)', comment_start)
+    local _, _, comment = string.find(modeline, '^%s*(.-)%s*$', comment_start)
     modeline_data.mode = mode
-    modeline_data.comment = #comment > 0 and comment or nil
     modeline_data.label = modeline_data.label or tostring(modeline_id)
+    modeline_data.comment = #comment > 0 and comment or nil
     return modeline_data
 end
 
@@ -220,101 +269,33 @@ local function make_cell_label(col_num, row_num)
     return get_col_name(col_num) .. tostring(math.floor(row_num))
 end
 
-local function read_csv_line(ctx, max_cols)
-    return tokenize_next_csv_line(ctx.csv_file, max_cols)
+-- removes spaces from the beginning and end of the given string
+local function trim_token(token)
+    _, _, token = token:find('^%s*(.-)%s*$')
+    return token
 end
 
-local function cleanup_csv_ctx(ctx)
-    ctx.csv_file:close()
-end
-
-local function reset_csv_ctx(ctx)
-    ctx.csv_file:close()
-    ctx.csv_file = io.open(ctx.filepath)
-end
-
-local function read_xlsx_line(ctx)
-    local tokens = xlsxreader.get_row(ctx.xlsx_sheet)
-    if not tokens then return nil end
-    -- raw numbers can get turned into floats. let's turn them back into ints
-    for i,token in ipairs(tokens) do
-        local num_token = tonumber(token)
-        if num_token then tokens[i] = tostring(math.floor(num_token)) end
-    end
-    return tokens
-end
-
-local function cleanup_xslx_ctx(ctx)
-    xlsxreader.close_sheet(ctx.xlsx_sheet)
-    xlsxreader.close_xlsx_file(ctx.xlsx_file)
-end
-
--- only resets the sheet, not the entire file
-local function reset_xlsx_ctx(ctx)
-    xlsxreader.close_sheet(ctx.xlsx_sheet)
-    ctx.xlsx_sheet = xlsxreader.open_sheet(ctx.xlsx_file, ctx.sheet_name)
-end
-
--- max_cols is the maximum number of columns to parse. parses all columns if
--- 0 or unset.
-local function init_reader_ctx(filepath, sheet_name, max_cols)
-    max_cols = max_cols or 0
-    local reader_ctx = {filepath=filepath}
-    if string.find(filepath:lower(), '[.]csv$') then
-        local file = io.open(filepath)
-        if not file then
-            qerror(string.format('failed to open blueprint file: "%s"',
-                                 filepath))
-        end
-        reader_ctx.csv_file = file
-        reader_ctx.get_row_tokens =
-                function(ctx) return read_csv_line(ctx, max_cols) end
-        reader_ctx.cleanup = cleanup_csv_ctx
-        reader_ctx.reset = reset_csv_ctx
-    else
-        local xlsx_file = xlsxreader.open_xlsx_file(filepath)
-        if not xlsx_file then
-            qerror(string.format('failed to open blueprint file: "%s"',
-                                 filepath))
-        end
-        if not sheet_name then
-            for _, sheet in ipairs(xlsxreader.list_sheets(xlsx_file)) do
-                sheet_name = sheet
-                break
-            end
-        end
-        -- open_sheet succeeds even if the sheet cannot be found
-        reader_ctx.xlsx_file = xlsx_file
-        reader_ctx.sheet_name = sheet_name
-        reader_ctx.xlsx_sheet =
-                xlsxreader.open_sheet(reader_ctx.xlsx_file, sheet_name)
-        reader_ctx.get_row_tokens = read_xlsx_line
-        reader_ctx.cleanup = cleanup_xslx_ctx
-        reader_ctx.reset = reset_xlsx_ctx
-    end
-    return reader_ctx
-end
-
--- returns a grid representation of the current level, the number of lines
--- read from the input, and the next z-level modifier, if any. See process_file
--- for grid format.
-local function process_level(reader_ctx, start_line_num, start_coord)
+-- returns a grid representation of the current level, the number of rows
+-- read from the input, and the next z-level modifier, if any. See
+-- process_section() for grid format.
+local function process_level(reader, start_line_num, start_coord)
     local grid = {}
     local y = start_coord.y
     while true do
-        local row_tokens = reader_ctx.get_row_tokens(reader_ctx)
+        local row_tokens = reader:get_next_row()
         if not row_tokens then return grid, y-start_coord.y end
         for i, v in ipairs(row_tokens) do
+            v = trim_token(v)
             if i == 1 then
                 if v == '#<' then return grid, y-start_coord.y, 1 end
                 if v == '#>' then return grid, y-start_coord.y, -1 end
-                if parse_modeline(v, reader_ctx.filepath) then
+                if parse_modeline(v, reader.filepath) then
                     return grid, y-start_coord.y
                 end
             end
-            if string.find(v, '^#') then break end
-            if not string.find(v, '^[`~%s]*$') then
-                -- cell has actual content, not just spaces or comment chars
+            if v:match('^#$') then break end
+            if not v:match('^[`~ ]*$') and not v:match('^%s*#') then
+                -- cell has actual content, not just comments or chalk line chars
                 if not grid[y] then grid[y] = {} end
                 local x = start_coord.x + i - 1
                 local line_num = start_line_num + y - start_coord.y
@@ -325,33 +306,29 @@ local function process_level(reader_ctx, start_line_num, start_coord)
     end
 end
 
-local function process_levels(reader_ctx, label, start_cursor_coord)
+local function process_levels(reader, label, start_cursor_coord)
     local section_data_list = {}
     -- scan down to the target label
     local cur_line_num, modeline_id = 1, 1
     local row_tokens, modeline = nil, nil
     local first_line = true
     while not modeline or (label and modeline.label ~= label) do
-        row_tokens = reader_ctx.get_row_tokens(reader_ctx)
+        row_tokens = reader:get_next_row()
         if not row_tokens then
-            local label_str = 'no data'
-            if label then label_str = string.format('label "%s" not', label) end
-            if reader_ctx.sheet_name then
-                qerror(string.format(
-                        '%s found in sheet "%s" in file "%s"',
-                        label_str, reader_ctx.sheet_name, reader_ctx.filepath))
-            else
-                qerror(string.format('%s found in file "%s"',
-                                     label_str, reader_ctx.filepath))
+            local label_str = 'no data found'
+            if label then
+                label_str = string.format('label "%s" not found', label)
             end
+            qerror(string.format(
+                    "%s in %s", label_str, reader:description()))
         end
-        cur_line_num = cur_line_num + 1
-        modeline = parse_modeline(row_tokens[1], reader_ctx.filepath,
+        modeline = parse_modeline(row_tokens[1], reader.filepath,
                                   modeline_id)
         if first_line then
             if not modeline then
                 modeline = {mode='dig', label='1'}
-                reader_ctx.reset(reader_ctx) -- we need to reread the first line
+                reader:redo() -- we need to reread the first line
+                cur_line_num = cur_line_num - 1
             end
             first_line = false
         end
@@ -362,13 +339,14 @@ local function process_levels(reader_ctx, label, start_cursor_coord)
                 modeline_id = modeline_id + 1
             end
         end
+        cur_line_num = cur_line_num + 1
     end
     local x = start_cursor_coord.x - (modeline.startx or 1) + 1
     local y = start_cursor_coord.y - (modeline.starty or 1) + 1
     local z = start_cursor_coord.z
     while true do
         local grid, num_section_rows, zmod =
-                process_level(reader_ctx, cur_line_num, xyz2pos(x, y, z))
+                process_level(reader, cur_line_num, xyz2pos(x, y, z))
         table.insert(section_data_list,
                      {modeline=modeline, zlevel=z, grid=grid})
         if zmod == nil then break end
@@ -378,12 +356,14 @@ local function process_levels(reader_ctx, label, start_cursor_coord)
     return section_data_list
 end
 
+local alias_pattern = '[%w-_][%w-_]+'
+
 -- validates the format of aliasname (as per parse_alias_combined() below)
 -- if the format is valid, adds the alias to the aliases table and returns true.
 -- otherwise returns false.
 local function parse_alias_separate(aliasname, definition, aliases)
     if aliasname and definition and
-            aliasname:find('^([%w-_][%w-_]+)$') and #definition > 0 then
+            aliasname:find('^('..alias_pattern..')$') and #definition > 0 then
         aliases[aliasname] = definition
         return true
     end
@@ -403,15 +383,15 @@ function parse_alias_combined(combined_str, aliases)
     return parse_alias_separate(aliasname, definition, aliases)
 end
 
-local function get_sheet_metadata(reader_ctx)
+local function get_sheet_metadata(reader)
     local modelines, aliases = {}, {}
-    local row_tokens = reader_ctx.get_row_tokens(reader_ctx)
+    local row_tokens = reader:get_next_row()
     local first_line, alias_mode = true, false
     while row_tokens do
         local modeline = nil
-        if #row_tokens > 0 then
-            modeline = parse_modeline(row_tokens[1], reader_ctx.filepath,
-                                      #modelines+1)
+        local first_tok = row_tokens[1]
+        if first_tok then
+            modeline = parse_modeline(first_tok, reader.filepath, #modelines+1)
         end
         if first_line then
             if not modeline then
@@ -426,22 +406,43 @@ local function get_sheet_metadata(reader_ctx)
             elseif modeline.mode ~= 'ignore' then
                 table.insert(modelines, modeline)
             end
-        elseif alias_mode then
-            if not parse_alias_combined(row_tokens[1], aliases) then
-                parse_alias_separate(row_tokens[1], row_tokens[2], aliases)
+        elseif alias_mode and first_tok and first_tok:match('^%s*[^#]') then
+            if not parse_alias_combined(first_tok, aliases) then
+                if not parse_alias_separate(first_tok, row_tokens[2],
+                                            aliases) then
+                    dfhack.printerr(string.format(
+                            'invalid alias in #aliases section: "%s"',
+                            first_tok))
+                end
             end
         end
-        row_tokens = reader_ctx.get_row_tokens(reader_ctx)
+        row_tokens = reader:get_next_row()
     end
     return modelines, aliases
 end
 
+local function new_reader(filepath, sheet_name, max_cols)
+    if string.find(filepath:lower(), '[.]xlsx$') then
+        return quickfort_reader.XlsxReader{
+            filepath=filepath,
+            max_cols=max_cols,
+            sheet_name=sheet_name,
+        }
+    else
+        return quickfort_reader.CsvReader{
+            filepath=filepath,
+            max_cols=max_cols,
+            line_tokenizer=tokenize_next_csv_line,
+        }
+    end
+end
+
 -- returns a list of modeline tables and a map of discovered aliases
 function get_metadata(filepath, sheet_name)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name, 2)
+    local reader = new_reader(filepath, sheet_name, 2)
     return dfhack.with_finalize(
-        function() reader_ctx.cleanup(reader_ctx) end,
-        function() return get_sheet_metadata(reader_ctx) end
+        function() reader:cleanup() end,
+        function() return get_sheet_metadata(reader) end
     )
 end
 
@@ -455,11 +456,11 @@ Map keys are numbers, and the keyspace is sparse -- only cells that have content
 are non-nil.
 ]]
 function process_section(filepath, sheet_name, label, start_cursor_coord)
-    local reader_ctx = init_reader_ctx(filepath, sheet_name, 0)
+    local reader = new_reader(filepath, sheet_name)
     return dfhack.with_finalize(
-        function() reader_ctx.cleanup(reader_ctx) end,
+        function() reader:cleanup() end,
         function()
-            return process_levels(reader_ctx, label, start_cursor_coord)
+            return process_levels(reader, label, start_cursor_coord)
         end
     )
 end
@@ -490,7 +491,8 @@ end
 local function get_token(etoken)
     local _, e, token = etoken:find('^{(.[^}%s]*)%s*')
     if token == 'Numpad' then
-        _, e, num = etoken:find('^%s*Numpad%s+(%d)%s*')
+        local num = nil
+        _, e, num = etoken:find('^{Numpad%s+(%d)%s*')
         if not num then
             qerror(string.format(
                     'invalid extended token: "%s"; missing Numpad number?',
@@ -501,12 +503,9 @@ local function get_token(etoken)
     return token, e + 1
 end
 
-local function no_next_line()
-    return nil
-end
-
+-- param names follow the same naming rules as aliases
 local function get_next_param(etoken, start)
-    local _, pos, name = etoken:find('%s*([%w-_][%w-_]+)=.', start)
+    local _, pos, name = etoken:find('%s*('..alias_pattern..')=.', start)
     return name, pos
 end
 
@@ -516,8 +515,6 @@ local function get_params(etoken, start)
     -- trim off the last '}' from the etoken so the csv parser doesn't read it
     etoken = etoken:sub(1, -2)
     local params, next_pos = {}, start
-    -- param names follow the same naming rules as aliases -- at least two
-    -- alphanumerics
     local name, pos = get_next_param(etoken, start)
     while name do
         local val, next_param_start = nil, nil
@@ -525,10 +522,10 @@ local function get_params(etoken, start)
             _, next_param_start, val = etoken:find('(%b{})', pos)
             next_param_start = next_param_start + 1
         else
-            val, next_param_start =
-                    get_next_csv_token(etoken, pos, no_next_line, ' ')
+            val, _, next_param_start = get_next_csv_token(
+                    etoken, pos, function() return nil end, ' ')
         end
-        if not val then
+        if not val or #val == 0 then
             qerror(string.format(
                     'invalid extended token param: "%s"', etoken:sub(pos)))
         end
@@ -541,10 +538,9 @@ end
 
 -- returns the specified repetitions, or 1 if not specified, and the position
 -- of the next element in etoken
--- throws if specified repetitions is < 1
 local function get_repetitions(etoken, start)
     local _, e, repetitions = etoken:find('%s*(%d+)%s*}', start)
-    return repetitions or 1, e or start
+    return tonumber(repetitions) or 1, e or start
 end
 
 -- parses the sequence starting with '{' and ending with the matching '}' that
@@ -578,4 +574,38 @@ function parse_extended_token(text, startpos)
     end
     local next_token_pos = startpos + #etoken
     return token, params, repetitions, next_token_pos
+end
+
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        parse_cell=parse_cell,
+        coord2d_lt=coord2d_lt,
+        get_ordered_grid_cells=get_ordered_grid_cells,
+        parse_section_name=parse_section_name,
+        quote_if_has_spaces=quote_if_has_spaces,
+        format_command=format_command,
+        get_next_csv_token=get_next_csv_token,
+        tokenize_next_csv_line=tokenize_next_csv_line,
+        get_marker_body=get_marker_body,
+        parse_label=parse_label,
+        parse_start=parse_start,
+        parse_hidden=parse_hidden,
+        parse_message=parse_message,
+        parse_markers=parse_markers,
+        parse_modeline=parse_modeline,
+        get_col_name=get_col_name,
+        make_cell_label=make_cell_label,
+        trim_token=trim_token,
+        process_level=process_level,
+        process_levels=process_levels,
+        parse_alias_separate=parse_alias_separate,
+        parse_alias_combined=parse_alias_combined,
+        get_sheet_metadata=get_sheet_metadata,
+        get_extended_token=get_extended_token,
+        get_token=get_token,
+        get_next_param=get_next_param,
+        get_params=get_params,
+        get_repetitions=get_repetitions,
+        parse_extended_token=parse_extended_token,
+    }
 end

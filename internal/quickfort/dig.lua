@@ -13,6 +13,9 @@ end
 
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
+local quickfort_map = reqscript('internal/quickfort/map')
+local quickfort_parse = reqscript('internal/quickfort/parse')
+
 local log = quickfort_common.log
 
 local function is_construction(tileattrs)
@@ -568,7 +571,7 @@ local function do_run_impl(zlevel, grid, stats, dry_run)
             log('applying spreadsheet cell %s with text "%s" to map' ..
                 ' coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local db_entry = nil
-            local keys, extent = quickfort_common.parse_cell(text)
+            local keys, extent = quickfort_parse.parse_cell(text)
             if keys then db_entry = dig_db[keys] end
             if not db_entry then
                 print(string.format('invalid key sequence: "%s" in cell %s',
@@ -591,9 +594,9 @@ local function do_run_impl(zlevel, grid, stats, dry_run)
                     local ctx = {
                         pos=extent_pos,
                         extent_adjacent=extent_adjacent,
-                        on_map_edge=quickfort_common.is_on_map_edge(extent_pos)
+                        on_map_edge=quickfort_map.is_on_map_edge(extent_pos)
                     }
-                    if not quickfort_common.is_within_map_bounds(ctx.pos) and
+                    if not quickfort_map.is_within_map_bounds(ctx.pos) and
                             not ctx.on_map_edge then
                         log('coordinates out of bounds; skipping')
                         stats.out_of_bounds.value =

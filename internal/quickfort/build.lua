@@ -20,7 +20,9 @@ local utils = require('utils')
 local buildingplan = require('plugins.buildingplan')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
+local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_orders = reqscript('internal/quickfort/orders')
+
 local log = quickfort_common.log
 
 --
@@ -87,8 +89,8 @@ local function is_valid_tile_construction(pos)
 end
 
 local function is_shape_at(pos, allowed_shapes)
-    if not quickfort_common.is_within_map_bounds(pos) and
-            not quickfort_common.is_on_map_edge(pos) then return false end
+    if not quickfort_map.is_within_map_bounds(pos) and
+            not quickfort_map.is_on_map_edge(pos) then return false end
     return allowed_shapes[df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape]
 end
 

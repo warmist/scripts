@@ -19,9 +19,15 @@ that repo.
 
 ## Fixes
 - `color-schemes`: fixed error in ``register`` subcommand when the DF path contains certain punctuation characters
+- `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. a cell with a single '#' marker in it, though, will still stop the parser from reading further in the row
+- `quickfort`: fix off-by-one line number accounting in blueprints with implicit #dig modelines
+- `quickfort`: properly detect and error on sub-alias params with no values instead of just failing to apply the alias later (if you really want an empty value, use ``{Empty}`` instead)
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
+- `quickfort`: print more helpful error messages for invalid modeline markers
+- `quickfort`: handle extra space characters in blueprints
+- `quickfort`: print a warning when an invalid alias is encountered instead of silently ignoring it
 
 # 0.47.05-r1
 

@@ -9,10 +9,11 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
-local log = quickfort_common.log
 local quickfort_aliases = reqscript('internal/quickfort/aliases')
 local quickfort_keycodes = reqscript('internal/quickfort/keycodes')
+local quickfort_map = reqscript('internal/quickfort/map')
 
+local log = quickfort_common.log
 local common_aliases_filename = 'hack/data/quickfort/aliases-common.txt'
 local user_aliases_filename = 'dfhack-config/quickfort/aliases.txt'
 
@@ -119,7 +120,7 @@ function do_run(zlevel, grid, ctx)
             log('applying spreadsheet cell %s with text "%s" to map ' ..
                 'coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local tokens = quickfort_aliases.expand_aliases(text)
-            if not dry_run then quickfort_common.move_cursor(pos) end
+            if not dry_run then quickfort_map.move_cursor(pos) end
             local focus_string = dfhack.gui.getCurFocus(true)
             local modifiers = {} -- tracks ctrl, shift, and alt modifiers
             for _,token in ipairs(tokens) do
@@ -171,7 +172,7 @@ function do_run(zlevel, grid, ctx)
                 and basic_ui_sidebar_modes[saved_mode] then
             switch_ui_sidebar_mode(saved_mode)
         end
-        quickfort_common.move_cursor(ctx.cursor)
+        quickfort_map.move_cursor(ctx.cursor)
     end
 end
 
