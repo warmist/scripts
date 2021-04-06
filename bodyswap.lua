@@ -7,8 +7,8 @@
 
 local utils = require 'utils'
 local validArgs = utils.invert({
-'unit',
-'help'
+  'unit',
+  'help'
 })
 local args = utils.processArgs({...}, validArgs)
 
@@ -75,13 +75,60 @@ function createNemesis(unit)
   return nemesis
 end
 
-function updateAdvCompanionsList(advHistFig)
-  df.global.ui_advmode.companions.all_histfigs:resize(0)
-  for _,link in ipairs(advHistFig.histfig_links) do
-    if link._type == df.histfig_hf_link_companionst then
-      df.global.ui_advmode.companions.all_histfigs:insert('#',link.target_hf) -- we only need to update the historical figure ID list as the other stuff here is reset whenever the companions screen is loaded, and is probably not used for anything else
+function isPet(nemesis)
+  if nemesis.unit and nemesis.unit.relationship_ids.Pet ~= -1 then
+    return true
+  elseif nemesis.figure then -- in case the unit is offloaded
+    for  _, link in ipairs(nemesis.figure.histfig_links) do
+      if link._type == df.histfig_hf_link_pet_ownerst then
+        return true
+      end
     end
   end
+  return false
+end
+
+function processNemesisParty(nemesis, targetUnitID, alreadyProcessed)
+-- configures the target and any leaders/companions to behave as cohesive adventure mode party members
+  local alreadyProcessed = alreadyProcessed or {}
+  alreadyProcessed[tostring(nemesis.id)] = true
+
+  local nemUnit = nemesis.unit
+  if nemesis.unit_id == targetUnitID then -- the target you're bodyswapping into
+    df.global.ui_advmode.interactions.party_core_members:insert('#', nemesis.figure.id)
+    nemUnit.relationship_ids.GroupLeader = -1
+  elseif isPet(nemesis) then -- pets belonging to the target or to their companions
+    df.global.ui_advmode.interactions.party_pets:insert('#', nemesis.figure.id)
+  else
+    df.global.ui_advmode.interactions.party_core_members:insert('#', nemesis.figure.id) -- placing all non-pet companions in the core party list to enable tactical mode swapping
+    if nemUnit then -- check in case the companion is offloaded
+      nemUnit.relationship_ids.GroupLeader = targetUnitID
+    end
+  end
+-- the hierarchy of nemesis-level leader/companion relationships appears to be left untouched when the player character is changed using the inbuilt "tactical mode" party system
+
+  if nemesis.group_leader_id ~= -1 and not alreadyProcessed[tostring(nemesis.group_leader_id)] then
+    local leader = df.nemesis_record.find(nemesis.group_leader_id)
+    if leader then
+      processNemesisParty(leader, targetUnitID, alreadyProcessed)
+    end
+  end
+  for _, id in ipairs(nemesis.companions) do
+    if not alreadyProcessed[tostring(id)] then
+      local companion = df.nemesis_record.find(id)
+      if companion then
+        processNemesisParty(companion, targetUnitID, alreadyProcessed)
+      end
+    end
+  end
+end
+
+function updateAdvCompanions(targetNemesis)
+  local party = df.global.ui_advmode.interactions
+  party.party_core_members:resize(0)
+  party.party_pets:resize(0)
+  party.party_extra_members:resize(0)
+  processNemesisParty(targetNemesis, targetNemesis.unit_id)
 end
 
 function swapAdvUnit(newUnit)
@@ -128,7 +175,7 @@ function swapAdvUnit(newUnit)
   setOldAdvNemFlags(oldNem)
   setNewAdvNemFlags(newNem)
   clearNemesisFromLinkedSites(newNem)
-  updateAdvCompanionsList(newNem.figure)
+  updateAdvCompanions(newNem)
   df.global.ui_advmode.player_id = newNem.id
   activeUnits[newUnitIndex] = oldUnit
   activeUnits[oldUnitIndex] = newUnit
