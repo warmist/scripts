@@ -76,8 +76,10 @@ function createNemesis(unit)
 end
 
 function isPet(nemesis)
-  if nemesis.unit and nemesis.unit.relationship_ids.Pet ~= -1 then
-    return true
+  if nemesis.unit then
+    if nemesis.unit.relationship_ids.Pet ~= -1 then
+      return true
+    end
   elseif nemesis.figure then -- in case the unit is offloaded
     for  _, link in ipairs(nemesis.figure.histfig_links) do
       if link._type == df.histfig_hf_link_pet_ownerst then
