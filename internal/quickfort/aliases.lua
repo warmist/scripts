@@ -7,20 +7,22 @@ end
 
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+local quickfort_reader = reqscript('internal/quickfort/reader')
+
 local log = quickfort_common.log
 
 -- special keycode shortcuts inherited from python quickfort.
 local special_keys = {
-    ['&']='Enter',
-    ['!']='Ctrl',
-    ['~']='Alt',
+    ['&']={'Enter'},
+    ['!']={'Ctrl'},
+    ['~']={'Alt'},
     ['@']={'Shift','Enter'},
-    ['^']='ESC',
-    ['%']='Wait'
+    ['^']={'ESC'},
+    ['%']={'Wait'},
 }
 local special_aliases = {
-    ExitMenu='ESC',
-    ['r+']={'r','+','Enter'}
+    ExitMenu={'ESC'},
+    ['r+']={'r','+','Enter'},
 }
 
 local alias_stack = {}
@@ -29,7 +31,9 @@ function reset_aliases()
     alias_stack = {}
 end
 
--- overwrites metatable of passed-in aliases map
+-- pushes a collection of aliases on the stack. aliases are resolved with the
+-- definition nearest the top of the stack.
+-- note: this function overwrites the metatable of the passed-in aliases map
 function push_aliases(aliases)
     local prev = alias_stack
     setmetatable(aliases, {prev=prev,
@@ -41,29 +45,30 @@ local function pop_aliases()
     alias_stack = getmetatable(alias_stack).prev
 end
 
--- pushes a file of aliases on the stack. aliases are resolved with the
--- definition nearest the top of the stack.
-function push_aliases_csv_file(filename)
-    local file = io.open(filename)
-    if not file then
-        log('aliases file not found: "%s"', filename)
-        return
-    end
-    local aliases = {}
-    local num_aliases = 0
-    for line in file:lines() do
-        line = line:gsub('[\r\n]*$', '')
+local function push_aliases_reader(reader)
+    local aliases, num_aliases = {}, 0
+    local line = reader:get_next_row()
+    while line do
         if quickfort_parse.parse_alias_combined(line, aliases) then
             num_aliases = num_aliases + 1
         end
+        line = reader:get_next_row()
     end
-    log('successfully read in %d aliases from "%s"', num_aliases, filename)
     push_aliases(aliases)
+    return num_aliases
+end
+
+function push_aliases_file(filepath)
+    local num_aliases = push_aliases_reader(quickfort_reader.CsvReader{
+                            filepath=filepath,
+                            line_tokenizer=function(f) return f() end})
+    log('successfully read in %d aliases from "%s"', num_aliases, filepath)
 end
 
 local function process_text(text, tokens, depth)
+    depth = depth or 1
     if depth > 50 then
-        qerror(string.format('alias resolution maximum depth exceeded (%d)',
+        qerror(string.format('alias maximum recursion depth exceeded (%d)',
                              depth))
     end
     local i = 1
@@ -115,20 +120,26 @@ end
 function expand_aliases(text)
     local tokens = {}
     if special_aliases[text] then
-        local special_expansion = special_aliases[text]
-        if type(special_expansion) == "table" then
-            tokens = special_expansion
-        else
-            tokens = {special_expansion}
-        end
+        tokens = special_aliases[text]
     elseif alias_stack[text] then
-        process_text(alias_stack[text], tokens, 1)
+        process_text(alias_stack[text], tokens)
     else
-        process_text(text, tokens, 1)
+        process_text(text, tokens)
     end
     local expanded_text = table.concat(tokens, '')
     if text ~= expanded_text then
         log('expanded keys to: "%s"', table.concat(tokens, ' '))
     end
     return tokens
+end
+
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        reset_aliases=reset_aliases,
+        push_aliases=push_aliases,
+        pop_aliases=pop_aliases,
+        push_aliases_reader=push_aliases_reader,
+        process_text=process_text,
+        expand_aliases=expand_aliases,
+    }
 end
