@@ -225,7 +225,7 @@ function do_run(zlevel, grid, ctx)
                 zlevel, grid, zones, zone_db)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
-                zones, zone_db)
+                ctx, zones, zone_db)
     stats.zone_occupied.value =
             stats.zone_occupied.value +
             quickfort_building.check_tiles_and_extents(

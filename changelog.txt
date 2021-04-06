@@ -22,6 +22,7 @@ that repo.
 - `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. a cell with a single '#' marker in it, though, will still stop the parser from reading further in the row
 - `quickfort`: fix off-by-one line number accounting in blueprints with implicit #dig modelines
 - `quickfort`: properly detect and error on sub-alias params with no values instead of just failing to apply the alias later (if you really want an empty value, use ``{Empty}`` instead)
+- `quickfort`: improve handling of non-rectangular and non-solid extent-based structures (like fancy-shaped stockpiles and farm plots)
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports

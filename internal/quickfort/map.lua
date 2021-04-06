@@ -7,47 +7,66 @@ end
 
 local guidm = require('gui.dwarfmode')
 
--- TODO: reload these values when the map changes (or don't cache them)
-local map_limits = {
-    x={min=0, max=df.global.world.map.x_count-1},
-    y={min=0, max=df.global.world.map.y_count-1},
-    z={min=0, max=df.global.world.map.z_count-1},
-}
-
-function is_within_map_bounds_x(x)
-    return x > map_limits.x.min and
-            x < map_limits.x.max
-end
-
-function is_within_map_bounds_y(y)
-    return y > map_limits.y.min and
-            y < map_limits.y.max
-end
-
-function is_within_map_bounds_z(z)
-    return z >= map_limits.z.min and
-            z <= map_limits.z.max
-end
-
-function is_within_map_bounds(pos)
-    return is_within_map_bounds_x(pos.x) and
-            is_within_map_bounds_y(pos.y) and
-            is_within_map_bounds_z(pos.z)
-end
-
-function is_on_map_edge_x(x)
-    return x == map_limits.x.min or x == map_limits.x.max
-end
-
-function is_on_map_edge_y(y)
-    return y == map_limits.y.min or y == map_limits.y.max
-end
-
-function is_on_map_edge(pos)
-    return is_on_map_edge_x(pos.x) and is_on_map_edge_y(pos.y)
-end
-
 function move_cursor(pos)
     guidm.setCursorPos(pos)
     dfhack.gui.refreshSidebar()
+end
+
+MapBoundsChecker = defclass(MapBoundsChecker, nil)
+MapBoundsChecker.ATTRS{
+    -- if unset, bounds will be initialized with the bounds of the currently
+    -- loaded game map. format is: {x=width, y=height, z=depth}
+    dims=DEFAULT_NIL
+}
+
+function MapBoundsChecker:init()
+    self.x_min, self.y_min, self.z_min = 0, 0, 0
+    local dims = self.dims or {}
+    if not dims or not dims.x or not dims.y or not dims.z then
+        dims.x, dims.y, dims.z = df.global.world.map.x_count,
+                df.global.world.map.y_count, df.global.world.map.z_count
+    end
+    self.x_max, self.y_max, self.z_max = dims.x - 1, dims.y - 1, dims.z - 1
+end
+
+function MapBoundsChecker:is_within_map_bounds_x(x)
+    return x > self.x_min and x < self.x_max
+end
+
+function MapBoundsChecker:is_within_map_bounds_y(y)
+    return y > self.y_min and y < self.y_max
+end
+
+function MapBoundsChecker:is_within_map_bounds_z(z)
+    return z >= self.z_min and z <= self.z_max
+end
+
+function MapBoundsChecker:is_within_map_bounds(pos)
+    return self:is_within_map_bounds_x(pos.x) and
+            self:is_within_map_bounds_y(pos.y) and
+            self:is_within_map_bounds_z(pos.z)
+end
+
+function MapBoundsChecker:is_on_map_edge_x(x)
+    return x == self.x_min or x == self.x_max
+end
+
+function MapBoundsChecker:is_on_map_edge_y(y)
+    return y == self.y_min or y == self.y_max
+end
+
+function MapBoundsChecker:is_on_map_edge(pos)
+    return self:is_on_map_edge_x(pos.x) and self:is_on_map_edge_y(pos.y)
+end
+
+function MapBoundsChecker:is_on_map_x(x)
+    return self:is_within_map_bounds_x(x) or self:is_on_map_edge_x(x)
+end
+
+function MapBoundsChecker:is_on_map_y(y)
+    return self:is_within_map_bounds_y(y) or self:is_on_map_edge_y(y)
+end
+
+function MapBoundsChecker:is_on_map_z(z)
+    return self:is_within_map_bounds_z(z)
 end
