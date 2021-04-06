@@ -67,12 +67,12 @@ end
 
 if not runner.initialized then
     dfhack.printerr(
-        'Warning: Coverage stats are not being collected. Report will be' ..
-        ' empty unless stats were collected in a previous run. Please start' ..
-        ' dfhack with the DFHACK_ENABLE_LUACOV=1 environment variable' ..
-        ' defined to start coverage monitoring. Keep in mind that using the' ..
-        ' "kill-lua" command or using a Lua profiler may interfere with' ..
-        ' coverage monitoring.')
+        'Warning: Coverage stats are not being collected so the generated' ..
+        ' report will be empty. Please start dfhack with the' ..
+        ' DFHACK_ENABLE_LUACOV=1 environment variable defined to enable' ..
+        ' coverage monitoring. Keep in mind that using the "kill-lua"' ..
+        ' command or using a Lua profiler may interfere with coverage' ..
+        ' monitoring.')
 end
 
 -- gets the active luacov configuration from when runner.init() was called.
@@ -110,7 +110,7 @@ runner.pause()
 dfhack.with_finalize(
     function() runner.resume() end,
     function()
-        print(('flushing coverage stats to "%s"'):format(config.statsfile))
+        print('flushing coverage stats')
         runner.save_stats()
 
         print(('generating report in "%s" for files matching:'):format(
@@ -122,7 +122,7 @@ dfhack.with_finalize(
                 print(('  %s'):format(pattern))
             end
         end
-        print(('and %s accumulated stats in "%s"'):format(
+        print(('and %s accumulated coverage stats in "%s"'):format(
                 config.deletestats and 'removing' or 'keeping',
                 config.statsfile))
         runner.run_report(config)
