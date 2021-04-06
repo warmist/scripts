@@ -455,11 +455,7 @@ function test.clear_building()
     expect.table_eq({width=0, height=0, extent_grid={}, canary='bird'}, bld)
 end
 
--- crop_to_bounds test generator. we generate top-level tests instead of just
--- having multiple checks within a single test because the checks occur in a
--- helper function. if we didn't generate separate tests for the cases, we
--- wouldn't be able to tell which test is failing.
-do
+function test.crop_to_bounds()
     local ctx = {bounds=quickfort_map.MapBoundsChecker{dims={x=3,y=3,z=1}}}
     local db = {a={min_width=1, min_height=1},
                 b={min_width=3, min_height=3}}
@@ -479,24 +475,23 @@ do
         }
     end
 
-    local function make_crop_to_bounds_tests(type, bitmap, tests)
+    local function do_crop_to_bounds_tests(type, bitmap, tests)
         for _,t in ipairs(tests) do
-            test['crop_to_bounds_'..t.name] = function()
-                local buildings = get_buildings(
-                    type, bitmap, t.xmod or 0, t.ymod or 0, t.zmod or 0)
-                expect.eq(t.expected_cropped,
-                          b.crop_to_bounds(ctx, buildings, db))
+            local buildings = get_buildings(
+                type, bitmap, t.xmod or 0, t.ymod or 0, t.zmod or 0)
+            expect.eq(t.expected_cropped,
+                      b.crop_to_bounds(ctx, buildings, db),
+                      t.name)
 
-                local expected_building = copyall(t.expected_building or {})
-                expected_building.type = type
-                expected_building.cells = {'A1'}
-                if not expected_building.pos then
-                    expected_building.width = 0
-                    expected_building.height = 0
-                    expected_building.extent_grid = {}
-                end
-                expect.table_eq({expected_building}, buildings)
+            local expected_building = copyall(t.expected_building or {})
+            expected_building.type = type
+            expected_building.cells = {'A1'}
+            if not expected_building.pos then
+                expected_building.width = 0
+                expected_building.height = 0
+                expected_building.extent_grid = {}
             end
+            expect.table_eq({expected_building}, buildings, t.name)
         end
     end
 
@@ -505,7 +500,7 @@ do
         {'a','' ,'a'},
         {'a','' ,'a'},
     }
-    make_crop_to_bounds_tests('a', bitmap, {
+    do_crop_to_bounds_tests('a', bitmap, {
         {name='a1_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[1]=true,[2]=true,[3]=true},
@@ -555,7 +550,7 @@ do
         {'a','' ,'a'},
         {'a','a','a'},
     }
-    make_crop_to_bounds_tests('a', bitmap, {
+    do_crop_to_bounds_tests('a', bitmap, {
         {name='a2_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[1]=true,[2]=true,[3]=true},
@@ -605,7 +600,7 @@ do
         {'a','' ,'' },
         {'a','a','a'},
     }
-    make_crop_to_bounds_tests('a', bitmap, {
+    do_crop_to_bounds_tests('a', bitmap, {
         {name='a3_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[1]=true,[2]=true,[3]=true},
@@ -657,7 +652,7 @@ do
         {'' ,'' ,'a'},
         {'a','a','a'},
     }
-    make_crop_to_bounds_tests('a', bitmap, {
+    do_crop_to_bounds_tests('a', bitmap, {
         {name='a4_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[1]=true,[3]=true},
@@ -709,7 +704,7 @@ do
         {'a','' ,'a'},
         {'' ,'a','' },
     }
-    make_crop_to_bounds_tests('a', bitmap, {
+    do_crop_to_bounds_tests('a', bitmap, {
         {name='a5_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[2]=true},
@@ -761,7 +756,7 @@ do
         {'b','b','b'},
         {'b','b','b'},
     }
-    make_crop_to_bounds_tests('b', bitmap, {
+    do_crop_to_bounds_tests('b', bitmap, {
         {name='b_no_crop', expected_cropped=0,
          expected_building={width=3, height=3, pos={x=0, y=0, z=0},
                             extent_grid={[1]={[1]=true,[2]=true,[3]=true},
