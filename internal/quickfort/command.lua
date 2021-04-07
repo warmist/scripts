@@ -25,6 +25,18 @@ local command_switch = {
     undo='do_undo',
 }
 
+function init_ctx(command, blueprint_name, cursor, aliases, dry_run)
+    return {
+        command=command,
+        blueprint_name=blueprint_name,
+        cursor=cursor,
+        aliases=aliases,
+        dry_run=dry_run,
+        stats={},
+        messages={},
+    }
+end
+
 function do_command_internal(ctx, section_name)
     ctx.stats.out_of_bounds = ctx.stats.out_of_bounds or
             {label='Tiles outside map boundary', value=0}
@@ -105,8 +117,8 @@ function do_command(args)
         function() quickfort_common.verbose = false end,
         function()
             local aliases = quickfort_list.get_aliases(blueprint_name)
-            local ctx = {command=command, blueprint_name=blueprint_name,
-                         cursor=cursor, stats={}, messages={}, aliases=aliases, dry_run=dry_run}
+            local ctx = init_ctx(command, blueprint_name, cursor, aliases,
+                                 dry_run)
             do_command_internal(ctx, section_name)
             finish_command(ctx, section_name, quiet)
             if command == 'run' then
