@@ -97,6 +97,7 @@ function do_run(zlevel, grid, ctx)
     stats.query_tiles = stats.query_tiles or
             {label='Tiles modified', value=0}
 
+    quickfort_keycodes.init_keycodes()
     load_aliases(ctx)
 
     local dry_run = ctx.dry_run
