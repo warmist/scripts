@@ -432,7 +432,7 @@ local function new_reader(filepath, sheet_name, max_cols)
         return quickfort_reader.CsvReader{
             filepath=filepath,
             max_cols=max_cols,
-            line_tokenizer=tokenize_next_csv_line,
+            row_tokenizer=tokenize_next_csv_line,
         }
     end
 end

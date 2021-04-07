@@ -11,13 +11,25 @@ local function chomp(line)
     return line and line:gsub('[\r\n]*$', '') or nil
 end
 
+-- abstract base class for the Reader class tree
 Reader = defclass(Reader, nil)
 Reader.ATTRS{
-    -- filesystem path that can be passed to io.open()
+    -- relative or absolute filesystem path of target file
     filepath = DEFAULT_NIL,
-    -- how many columns to read per row; 0 means all
-    max_cols = 0,
+    -- file open function to use; set in subclasses
+    open_fn = DEFAULT_NIL,
 }
+
+function Reader:init()
+    self.source = self.open_fn(self.filepath)
+    if not self.source then
+        qerror(string.format('failed to open "%s"', self.filepath))
+    end
+end
+
+function Reader:cleanup()
+    self.source:close()
+end
 
 -- causes the next call to get_next_row to re-return the value from the
 -- previous time it was called
@@ -34,32 +46,34 @@ function Reader:get_next_row()
     return self.prev_row
 end
 
-CsvReader = defclass(CsvReader, Reader)
-CsvReader.ATTRS{
-    -- Tokenizer function with the following signature:
-    --  (get_next_line_fn, max_cols). Must return a list of strings. Required.
-    line_tokenizer = DEFAULT_NIL,
+TextReader = defclass(TextReader, Reader)
+TextReader.ATTRS{
     -- file open function to use
     open_fn = io.open,
 }
 
-function CsvReader:init()
-    if not self.line_tokenizer then
-        error('cannot initialize a CsvReader without a line_tokenizer.')
-    end
-    self.file = self.open_fn(self.filepath)
-    if not self.file then
-        qerror(string.format('failed to open "%s"', self.filepath))
-    end
+function TextReader:get_next_row_raw()
+    return chomp(self.source:read())
 end
 
-function CsvReader:cleanup()
-    self.file:close()
+CsvReader = defclass(CsvReader, TextReader)
+CsvReader.ATTRS{
+    -- Tokenizer function with the following signature:
+    --  (get_next_line_fn, max_cols). Must return a list of strings. Required.
+    row_tokenizer = DEFAULT_NIL,
+    -- how many columns to read per row; 0 means all
+    max_cols = 0,
+}
+
+function CsvReader:init()
+    if not self.row_tokenizer then
+        error('cannot initialize a CsvReader without a row_tokenizer.')
+    end
 end
 
 function CsvReader:get_next_row_raw()
-    return self.line_tokenizer(
-        function() return chomp(self.file:read()) end,
+    return self.row_tokenizer(
+        function() return CsvReader.super.get_next_row_raw(self) end,
         self.max_cols)
 end
 
@@ -67,18 +81,19 @@ XlsxReader = defclass(XlsxReader, Reader)
 XlsxReader.ATTRS{
     -- name of xlsx sheet to open, nil means first sheet
     sheet_name = DEFAULT_NIL,
-    -- xlsxio reader class to use
+    -- how many columns to read per row; 0 means all
+    max_cols = 0,
+    -- file open function to use
     open_fn = xlsxreader.open,
 }
 
 function XlsxReader:init()
-    self.reader = self.open_fn(self.filepath)
-    self.sheet_reader = self.reader:open_sheet(self.sheet_name)
+    self.sheet_reader = self.source:open_sheet(self.sheet_name)
 end
 
 function XlsxReader:cleanup()
     self.sheet_reader:close()
-    self.reader:close()
+    XlsxReader.super.cleanup(self)
 end
 
 function XlsxReader:get_next_row_raw()
@@ -95,7 +110,7 @@ end
 if dfhack.internal.IN_TEST then
     unit_test_hooks = {
         chomp=chomp,
-        Reader=Reader,
+        TextReader=TextReader,
         CsvReader=CsvReader,
         XlsxReader=XlsxReader,
     }

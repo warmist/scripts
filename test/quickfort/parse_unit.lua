@@ -393,7 +393,8 @@ function test.trim_token()
 end
 
 MockReader = defclass(MockReader, quickfort_reader.Reader)
-MockReader.ATTRS{lines={}, i=0}
+MockReader.ATTRS{lines={}, i=0,
+                 open_fn=function() return {close=function() end} end}
 function MockReader:reset(lines) self.lines, self.i = lines, 0 end
 function MockReader:get_next_row_raw()
     self.i = self.i + 1

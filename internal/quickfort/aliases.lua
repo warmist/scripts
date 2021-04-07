@@ -59,9 +59,8 @@ local function push_aliases_reader(reader)
 end
 
 function push_aliases_file(filepath)
-    local num_aliases = push_aliases_reader(quickfort_reader.CsvReader{
-                            filepath=filepath,
-                            line_tokenizer=function(f) return f() end})
+    local num_aliases = push_aliases_reader(
+            quickfort_reader.TextReader{filepath=filepath})
     log('successfully read in %d aliases from "%s"', num_aliases, filepath)
 end
 
