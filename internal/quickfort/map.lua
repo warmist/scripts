@@ -56,7 +56,7 @@ function MapBoundsChecker:is_on_map_edge_y(y)
 end
 
 function MapBoundsChecker:is_on_map_edge(pos)
-    return self:is_on_map_edge_x(pos.x) and self:is_on_map_edge_y(pos.y)
+    return self:is_on_map_edge_x(pos.x) or self:is_on_map_edge_y(pos.y)
 end
 
 function MapBoundsChecker:is_on_map_x(x)
