@@ -61,7 +61,7 @@ end
 function push_aliases_file(filepath)
     local num_aliases = push_aliases_reader(
             quickfort_reader.TextReader{filepath=filepath})
-    log('successfully read in %d aliases from "%s"', num_aliases, filepath)
+    log('read in %d aliases from "%s"', num_aliases, filepath)
 end
 
 local function process_text(text, tokens, depth)
