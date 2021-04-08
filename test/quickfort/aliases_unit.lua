@@ -31,22 +31,29 @@ function test.push_pop_reset()
         end)
 end
 
-MockReader = defclass(MockReader, quickfort_reader.Reader)
-MockReader.ATTRS{lines={}, i=0}
-function MockReader:reset(lines) self.lines, self.i = lines, 0 end
-function MockReader:get_next_row_raw()
+MockFile = defclass(MockFile, nil)
+MockFile.ATTRS{i=0, lines={}}
+function MockFile:close() end
+function MockFile:reset(lines) self.lines, self.i = lines, 0 end
+function MockFile:read()
     self.i = self.i + 1
     return self.lines[self.i]
 end
 
+local function mock_open()
+    return MockFile{}
+end
+
 function test.push_aliases_reader()
-    local mock_reader = MockReader{}
+    local mock_reader =
+            quickfort_reader.TextReader{filepath='f', open_fn=mock_open}
+    local mock_file = mock_reader.source
     dfhack.with_finalize(
         function() aliases.reset_aliases() end,
         function()
             expect.eq(0, aliases.push_aliases_reader(mock_reader))
 
-            mock_reader:reset({'# comment', '#comment: withcolon', 'aa: zz'})
+            mock_file:reset({'# comment', '#comment: withcolon', 'aa: zz'})
             expect.eq(1, aliases.push_aliases_reader(mock_reader))
             expect.table_eq({'z','z'}, aliases.expand_aliases('aa'))
         end)

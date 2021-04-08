@@ -1,4 +1,4 @@
-local reader = reqscript('internal/quickfort/reader').unit_test_hooks
+local r = reqscript('internal/quickfort/reader').unit_test_hooks
 
 function test.module()
     expect.error_match(
@@ -7,34 +7,17 @@ function test.module()
 end
 
 function test.chomp()
-    expect.nil_(reader.chomp(nil))
+    expect.nil_(r.chomp(nil))
 
-    expect.eq('', reader.chomp(''))
-    expect.eq('a', reader.chomp('a'))
-    expect.eq('', reader.chomp('\r'))
-    expect.eq('', reader.chomp('\n\r'))
-    expect.eq('', reader.chomp('\r\n'))
-    expect.eq('', reader.chomp('\n'))
-    expect.eq('\r ', reader.chomp('\r \n'))
-    expect.eq('  message  ', reader.chomp('  message  \n'))
-    expect.eq(' \t message  ', reader.chomp(' \t message  \n'))
-end
-
-MockReader = defclass(MockReader, reader.Reader)
-MockReader.ATTRS{i=0}
-function MockReader:get_next_row_raw()
-    self.i = self.i + 1
-    return {string.format('row %d', self.i)}
-end
-
-function test.Reader()
-    local mock_reader = MockReader{filepath='mock'}
-
-    expect.table_eq({'row 1'}, mock_reader:get_next_row())
-    expect.table_eq({'row 2'}, mock_reader:get_next_row())
-    mock_reader:redo()
-    expect.table_eq({'row 2'}, mock_reader:get_next_row())
-    expect.table_eq({'row 3'}, mock_reader:get_next_row())
+    expect.eq('', r.chomp(''))
+    expect.eq('a', r.chomp('a'))
+    expect.eq('', r.chomp('\r'))
+    expect.eq('', r.chomp('\n\r'))
+    expect.eq('', r.chomp('\r\n'))
+    expect.eq('', r.chomp('\n'))
+    expect.eq('\r ', r.chomp('\r \n'))
+    expect.eq('  message  ', r.chomp('  message  \n'))
+    expect.eq(' \t message  ', r.chomp(' \t message  \n'))
 end
 
 MockFile = defclass(MockFile, nil)
@@ -47,30 +30,45 @@ function MockFile:read()
     return string.format('line %d\n', self.i)
 end
 
-function test.CsvReader()
-    local mock_tokenizer = function(line_fn, _) return line_fn() end
+local function mock_open(fname)
+    return MockFile{fname=fname}
+end
 
-    expect.error_match('without a line_tokenizer',
-                       function() reader.CsvReader{} end)
+function test.TextReader()
     expect.error_match('failed to open "f"',
                        function()
-                            reader.CsvReader{
+                            r.TextReader{
                                 filepath='f',
-                                line_tokenizer=mock_tokenizer,
-                                open_fn=function(fname) return nil end}
+                                open_fn=function() return nil end}
                        end)
 
-    mock_file = MockFile{fname='f'}
-    csvreader = reader.CsvReader{
+    local text_reader = r.TextReader{filepath='f', open_fn=mock_open}
+
+    expect.eq('line 1', text_reader:get_next_row())
+    expect.eq('line 2', text_reader:get_next_row())
+    text_reader:redo()
+    expect.eq('line 2', text_reader:get_next_row())
+    expect.eq('line 3', text_reader:get_next_row())
+
+    text_reader:cleanup()
+    expect.eq(1, text_reader.source.close_called)
+end
+
+function test.CsvReader()
+    local mock_tokenizer = function(line_fn, _) return {line_fn()} end
+
+    expect.error_match('without a row_tokenizer',
+                       function()
+                           r.CsvReader{open_fn=function() return true end}
+                       end)
+
+    csvreader = r.CsvReader{
         filepath='f',
-        line_tokenizer=mock_tokenizer,
-        open_fn=function() return mock_file end}
+        row_tokenizer=mock_tokenizer,
+        open_fn=mock_open}
 
-    expect.eq('line 1', csvreader:get_next_row_raw())
-    expect.eq('line 2', csvreader:get_next_row_raw())
-
-    csvreader:cleanup()
-    expect.eq(1, mock_file.close_called)
+    expect.table_eq({'line 1'}, csvreader:get_next_row_raw())
+    expect.table_eq({'line 2'}, csvreader:get_next_row_raw())
 end
 
 MockXlsxioReader = defclass(MockXlsxioReader, nil)
@@ -89,17 +87,17 @@ local function open_mock_xlsxio_reader(filepath)
 end
 
 function test.XlsxReader()
-    local xlsxreader = reader.XlsxReader{open_fn=open_mock_xlsxio_reader}
+    local xlsxreader = r.XlsxReader{open_fn=open_mock_xlsxio_reader}
 
-    xlsxreader.reader:reset({})
+    xlsxreader.source:reset({})
     expect.nil_(xlsxreader:get_next_row_raw())
 
-    xlsxreader.reader:reset({{'a','b1','b1.0','1c','1.0c','1','1.0'}})
+    xlsxreader.source:reset({{'a','b1','b1.0','1c','1.0c','1','1.0'}})
     expect.table_eq({'a','b1','b1.0','1c','1.0c','1','1'},
                     xlsxreader:get_next_row_raw())
 
     -- expect close to be called 2 times since the mock is impersonating both
     -- the top-level reader and the sheet reader
     xlsxreader:cleanup()
-    expect.eq(2, xlsxreader.reader.close_called)
+    expect.eq(2, xlsxreader.source.close_called)
 end

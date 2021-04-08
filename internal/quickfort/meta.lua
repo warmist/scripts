@@ -42,9 +42,8 @@ local function do_meta(zlevel, grid, ctx)
             {label='Blueprints applied', value=0, always=true}
 
     -- ensure we process blueprints in the declared order
-    local cells = quickfort_parse.get_ordered_grid_cells(grid)
     local saved_zlevel = ctx.cursor.z
-    for _, cell in ipairs(cells) do
+    for _, cell in ipairs(quickfort_parse.get_ordered_grid_cells(grid)) do
         local section_name =
                 get_section_name(cell.cell, cell.text, ctx.sheet_name)
         print(string.format('applying blueprint: "%s"', section_name))
@@ -54,14 +53,6 @@ local function do_meta(zlevel, grid, ctx)
     end
 end
 
-function do_run(zlevel, grid, ctx)
-    do_meta(zlevel, grid, ctx)
-end
-
-function do_orders(zlevel, grid, ctx)
-    do_meta(zlevel, grid, ctx)
-end
-
-function do_undo(zlevel, grid, ctx)
-    do_meta(zlevel, grid, ctx)
-end
+do_run = do_meta
+do_orders = do_meta
+do_undo = do_meta
