@@ -24,6 +24,7 @@ that repo.
 - `quickfort`: properly detect and error on sub-alias params with no values instead of just failing to apply the alias later (if you really want an empty value, use ``{Empty}`` instead)
 - `quickfort`: improve handling of non-rectangular and non-solid extent-based structures (like fancy-shaped stockpiles and farm plots)
 - `quickfort`: fix conversion of numbers to DF keycodes in ``#query`` blueprints
+- `quickfort`: fix off-by-one error when cropping buildings that cross the map edge
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
