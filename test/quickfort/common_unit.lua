@@ -8,47 +8,44 @@ end
 
 function test.settings()
     for _,v in pairs(common.settings) do
-        expect.true_(v.value ~= nil)
+        expect.ne(v.value, nil)
     end
 end
 
-local mock_print_called = 0
-local function mock_print()
-    mock_print_called = mock_print_called + 1
-end
-
 function test.log()
-    local saved_verbose, saved_print = common.verbose, common.print
-    common.verbose, common.print = false, mock_print
-    dfhack.with_finalize(
-        function() common.verbose,common.print = saved_verbose,saved_print end,
+    local mock_print = mock.func()
+    mock.patch(
+        {
+            {common, 'verbose', false},
+            {common, 'print', mock_print},
+        },
         function()
-            mock_print_called = 0
             common.log('should not log')
-            expect.eq(0, mock_print_called)
+            expect.eq(0, mock_print.call_count)
             common.verbose = true
             common.log('should log')
-            expect.eq(1, mock_print_called)
-            common.verbose, mock_print_called = false, 0
+            expect.eq(1, mock_print.call_count)
+            common.verbose = false
             common.log('should not log')
-            expect.eq(0, mock_print_called)
+            expect.eq(1, mock_print.call_count)
         end)
 end
 
 function test.logfn()
-    saved_verbose, saved_print = common.verbose, common.print
-    common.verbose, common.print = false, mock_print
-    dfhack.with_finalize(
-        function() common.verbose,common.print = saved_verbose,saved_print end,
+    local mock_print = mock.func()
+    mock.patch(
+        {
+            {common, 'verbose', false},
+            {common, 'print', mock_print},
+        },
         function()
-            mock_print_called = 0
             common.logfn(mock_print, 'should not log')
-            expect.eq(0, mock_print_called)
+            expect.eq(0, mock_print.call_count)
             common.verbose = true
             common.logfn(mock_print, 'should log')
-            expect.eq(1, mock_print_called)
-            common.verbose, mock_print_called = false, 0
+            expect.eq(1, mock_print.call_count)
+            common.verbose = false
             common.logfn(mock_print, 'should not log')
-            expect.eq(0, mock_print_called)
+            expect.eq(1, mock_print.call_count)
         end)
 end

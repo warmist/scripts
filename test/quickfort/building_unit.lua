@@ -30,10 +30,10 @@ function test.left_pad()
 end
 
 function test.dump_seen_grid()
-    local saved_print, lines = building.print, {}
-    building.print = function(line) table.insert(lines, line) end
-    dfhack.with_finalize(
-        function() building.print = saved_print end,
+    local lines = {}
+    local print_wrapper = function(line) table.insert(lines, line) end
+    mock.patch(
+        {{building, 'print', print_wrapper}},
         function()
             b.dump_seen_grid{'empty', {}, 0}
             expect.table_eq({'boundary map (empty):'}, lines)
