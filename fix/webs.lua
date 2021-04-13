@@ -4,7 +4,7 @@
 --[====[
 
 fix/webs
-======
+========
 Turns floating webs into projectiles, causing them to fall down to a valid surface
 Use ``fix/webs -all`` to turn all webs into projectiles, causing webs to fall out of branches, etc.
 
