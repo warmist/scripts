@@ -3,31 +3,23 @@
 --@module = true
 --[====[
 
-fix/webs
-========
+fix/drop-webs
+=============
 Turns floating webs into projectiles, causing them to fall down to a valid surface
-Use ``fix/webs -all`` to turn all webs into projectiles, causing webs to fall out of branches, etc.
+Use ``fix/drop-webs -all`` to turn all webs into projectiles, causing webs to fall out of branches, etc.
 
 ]====]
 local utils = require "utils"
 
-function fix_webs(air_only)
+function drop_webs(all_webs)
     if not dfhack.isMapLoaded() then
         qerror("Error: Map not loaded!")
     end
     
     local count = 0
-    for i, item in ipairs(df.global.world.items.all) do
-        if item:getType() == df.item_type.THREAD and
-        item.flags.spider_web and
-        item.flags.on_ground and
-        not item.flags.in_job then
-            local valid_tile = true
-            
-            if air_only then
-                local tt = dfhack.maps.getTileBlock(item.pos).tiletype[item.pos.x%16][item.pos.y%16]
-                valid_tile = (tt == df.tiletype.OpenSpace)
-            end
+    for i, item in ipairs(df.global.world.items.other.ANY_WEBS) do
+        if item.flags.on_ground and not item.flags.in_job then
+            local valid_tile = all_webs or (dfhack.maps.getTileType(item.pos) == df.tiletype.OpenSpace)
             
             if valid_tile then
                 local proj = dfhack.items.makeProjectile(item)
@@ -48,11 +40,7 @@ function main(...)
     local validArgs = utils.invert({"all"})
     local args = utils.processArgs({...}, validArgs)
     
-    if args.all then
-        fix_webs(false)
-    else
-        fix_webs(true)
-    end
+    drop_webs(args.all)
 end
 
 if not dfhack_flags.module then
