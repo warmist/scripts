@@ -33,6 +33,7 @@ that repo.
 - `quickfort`: now prints more helpful error messages for invalid modeline markers
 - `quickfort`: added support for extra space characters in blueprints
 - `quickfort`: now prints a warning when an invalid alias is encountered instead of silently ignoring it
+- `setfps`: improved error handling
 
 # 0.47.05-r1
 
