@@ -5,8 +5,20 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local quickfort_common = reqscript('internal/quickfort/common')
+local utils = require('utils')
 local quickfort_reader = reqscript('internal/quickfort/reader')
+
+valid_modes = utils.invert({
+    'dig',
+    'build',
+    'place',
+    'zone',
+    'query',
+    'meta',
+    'notes',
+    'ignore',
+    'aliases',
+})
 
 -- returns a tuple of {keys, extent} where keys is a string and extent is of the
 -- format: {width, height, specified}, where width and height are numbers and
@@ -243,7 +255,7 @@ returns nil if the modeline is invalid.
 local function parse_modeline(modeline, filename, modeline_id)
     if not modeline then return nil end
     local _, mode_end, mode = string.find(modeline, '^#([%l]+)')
-    if not mode or not quickfort_common.valid_modes[mode] then return nil end
+    if not mode or not valid_modes[mode] then return nil end
     local modeline_data, comment_start =
             parse_markers(modeline, mode_end+1, filename)
     local _, _, comment = string.find(modeline, '^%s*(.-)%s*$', comment_start)

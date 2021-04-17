@@ -13,7 +13,7 @@ local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 
 local mode_modules = {}
-for mode, _ in pairs(quickfort_common.valid_modes) do
+for mode, _ in pairs(quickfort_parse.valid_modes) do
     if mode ~= 'ignore' and mode ~= 'aliases' then
         mode_modules[mode] = reqscript('internal/quickfort/'..mode)
     end

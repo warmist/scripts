@@ -5,20 +5,6 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local utils = require('utils')
-
-valid_modes = utils.invert({
-    'dig',
-    'build',
-    'place',
-    'zone',
-    'query',
-    'meta',
-    'notes',
-    'ignore',
-    'aliases',
-})
-
 -- keep deprecated settings in the table so we don't break existing configs
 settings = {
     blueprints_dir={value='blueprints'},

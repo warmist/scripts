@@ -221,7 +221,7 @@ function do_list(args)
             {'m', 'mode', hasArg=true,
              handler=function(optarg) filter_mode = optarg end},
         })
-    if filter_mode and not quickfort_common.valid_modes[filter_mode] then
+    if filter_mode and not quickfort_parse.valid_modes[filter_mode] then
         qerror(string.format('invalid mode: "%s"', filter_mode))
     end
     local list = do_list_internal(show_library, show_hidden)
