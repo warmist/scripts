@@ -20,6 +20,8 @@ local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
 local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_query = reqscript('internal/quickfort/query')
+local quickfort_set = reqscript('internal/quickfort/set')
+
 local log = quickfort_common.log
 
 local function is_valid_stockpile_tile(pos)
@@ -168,7 +170,7 @@ end
 local function init_containers(db_entry, ntiles, fields)
     if db_entry.want_barrels then
         local max_barrels = db_entry.num_barrels or
-                quickfort_common.settings['stockpiles_max_barrels'].value
+                quickfort_set.get_setting('stockpiles_max_barrels')
         if max_barrels < 0 or max_barrels >= ntiles then
             fields.max_barrels = ntiles
         else
@@ -178,7 +180,7 @@ local function init_containers(db_entry, ntiles, fields)
     end
     if db_entry.want_bins then
         local max_bins = db_entry.num_bins or
-                quickfort_common.settings['stockpiles_max_bins'].value
+                quickfort_set.get_setting('stockpiles_max_bins')
         if max_bins < 0 or max_bins >= ntiles then
             fields.max_bins = ntiles
         else
@@ -188,7 +190,7 @@ local function init_containers(db_entry, ntiles, fields)
     end
     if db_entry.want_wheelbarrows or db_entry.num_wheelbarrows then
         local max_wb = db_entry.num_wheelbarrows or
-                quickfort_common.settings['stockpiles_max_wheelbarrows'].value
+                quickfort_set.get_setting('stockpiles_max_wheelbarrows')
         if max_wb < 0 then max_wb = 1 end
         if max_wb >= ntiles - 1 then
             fields.max_wheelbarrows = ntiles - 1

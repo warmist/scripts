@@ -7,13 +7,13 @@ end
 
 local utils = require('utils')
 local xlsxreader = require('plugins.xlsxreader')
-local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+local quickfort_set = reqscript('internal/quickfort/set')
 
 -- blueprint_name is relative to the blueprints dir
 function get_blueprint_filepath(blueprint_name)
     return string.format("%s/%s",
-                         quickfort_common.settings['blueprints_dir'].value,
+                         quickfort_set.get_setting('blueprints_dir'),
                          blueprint_name)
 end
 
@@ -90,7 +90,7 @@ local num_library_blueprints = 0
 
 local function scan_blueprints()
     local paths = dfhack.filesystem.listdir_recursive(
-        quickfort_common.settings['blueprints_dir'].value, nil, false)
+        quickfort_set.get_setting('blueprints_dir'), nil, false)
     blueprints, blueprint_modes = {}, {}
     local library_blueprints = {}
     for _, v in ipairs(paths) do
@@ -221,7 +221,7 @@ function do_list(args)
             {'m', 'mode', hasArg=true,
              handler=function(optarg) filter_mode = optarg end},
         })
-    if filter_mode and not quickfort_common.valid_modes[filter_mode] then
+    if filter_mode and not quickfort_parse.valid_modes[filter_mode] then
         qerror(string.format('invalid mode: "%s"', filter_mode))
     end
     local list = do_list_internal(show_library, show_hidden)
