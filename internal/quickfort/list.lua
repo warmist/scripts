@@ -7,13 +7,13 @@ end
 
 local utils = require('utils')
 local xlsxreader = require('plugins.xlsxreader')
-local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+local quickfort_set = reqscript('internal/quickfort/set')
 
 -- blueprint_name is relative to the blueprints dir
 function get_blueprint_filepath(blueprint_name)
     return string.format("%s/%s",
-                         quickfort_common.settings['blueprints_dir'].value,
+                         quickfort_set.get_setting('blueprints_dir'),
                          blueprint_name)
 end
 
@@ -90,7 +90,7 @@ local num_library_blueprints = 0
 
 local function scan_blueprints()
     local paths = dfhack.filesystem.listdir_recursive(
-        quickfort_common.settings['blueprints_dir'].value, nil, false)
+        quickfort_set.get_setting('blueprints_dir'), nil, false)
     blueprints, blueprint_modes = {}, {}
     local library_blueprints = {}
     for _, v in ipairs(paths) do

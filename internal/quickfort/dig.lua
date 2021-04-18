@@ -15,6 +15,7 @@ local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+local quickfort_set = reqscript('internal/quickfort/set')
 
 local log = quickfort_common.log
 
@@ -554,7 +555,7 @@ local function dig_tile(digctx, db_entry)
         else
             if not db_entry.skip_marker_mode then
                 local marker_mode = db_entry.marker_mode or
-                        quickfort_common.settings['force_marker_mode'].value
+                        quickfort_set.get_setting('force_marker_mode')
                 digctx.occupancy.dig_marked = marker_mode
             end
             if db_entry.use_priority then

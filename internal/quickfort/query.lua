@@ -12,6 +12,7 @@ local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_aliases = reqscript('internal/quickfort/aliases')
 local quickfort_keycodes = reqscript('internal/quickfort/keycodes')
 local quickfort_map = reqscript('internal/quickfort/map')
+local quickfort_set = reqscript('internal/quickfort/set')
 
 local log = quickfort_common.log
 local common_aliases_filename = 'hack/data/quickfort/aliases-common.txt'
@@ -110,7 +111,7 @@ function do_run(zlevel, grid, ctx)
         for x, cell_and_text in pairs(row) do
             local pos = xyz2pos(x, y, zlevel)
             local cell, text = cell_and_text.cell, cell_and_text.text
-            if not quickfort_common.settings['query_unsafe'].value and
+            if not quickfort_set.get_setting('query_unsafe') and
                     not is_queryable_tile(pos) then
                 print(string.format(
                         'no building at coordinates (%d, %d, %d); skipping ' ..
@@ -140,7 +141,7 @@ function do_run(zlevel, grid, ctx)
             end
             -- sanity checks for common blueprint mistakes
             if not dry_run
-                    and not quickfort_common.settings['query_unsafe'].value then
+                    and not quickfort_set.get_setting('query_unsafe') then
                 local cursor = guidm.getCursorPos()
                 if not is_same_coord(pos, cursor) then
                     qerror(string.format(
