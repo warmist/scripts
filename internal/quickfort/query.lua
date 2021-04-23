@@ -81,10 +81,6 @@ local function switch_ui_sidebar_mode(sidebar_mode)
     qerror('Unable to get into query mode from current UI viewscreen.')
 end
 
-local function is_same_coord(pos1, pos2)
-    return pos1.x == pos2.x and pos1.y == pos2.y and pos1.z == pos2.z
-end
-
 -- If a tile starts or ends with one of these focus strings, the start and end
 -- focus strings can differ without us flagging it as an error.
 local exempt_focus_strings = utils.invert({
@@ -143,7 +139,7 @@ function do_run(zlevel, grid, ctx)
             if not dry_run
                     and not quickfort_set.get_setting('query_unsafe') then
                 local cursor = guidm.getCursorPos()
-                if not is_same_coord(pos, cursor) then
+                if not same_xyz(pos, cursor) then
                     qerror(string.format(
                         'expected to be at cursor position (%d, %d, %d) on ' ..
                         'screen "%s" but cursor is at (%d, %d, %d); there ' ..
