@@ -55,15 +55,21 @@ function showNemesisPrompt(advSetUpScreen)
       if (histFig.died_year == -1 or histFlags.ghost) and not histFlags.deity and not histFlags.force then
         local creature = df.creature_raw.find(histFig.race).caste[histFig.caste]
         local name = creature.caste_name[0]
-        local sym = df.pronoun_type.attrs[creature.sex].symbol
-        if sym then
-          name = name .. ' (' .. sym .. ')'
+        if histFig.info and histFig.info.curse then
+          local curse = histFig.info.curse
+          if curse.name ~= '' then
+            name = name .. ' ' .. curse.name
+          end
+          if curse.undead_name ~= '' then
+            name = curse.undead_name .. " - undead " .. name
+          end
         end
         if histFlags.ghost then
           name = name .. " ghost"
         end
-        if histFig.info and histFig.info.curse and histFig.info.curse.undead_name ~= '' then
-          name = histFig.info.curse.undead_name .. " - undead " .. name
+        local sym = df.pronoun_type.attrs[creature.sex].symbol
+        if sym then
+          name = name .. ' (' .. sym .. ')'
         end
         if histFig.name.has_name then
           name = dfhack.TranslateName(histFig.name) .. " - (" .. dfhack.TranslateName(histFig.name, true).. ") - " .. name
