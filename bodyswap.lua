@@ -50,7 +50,6 @@ function setNewAdvNemFlags(nem)
 end
 function setOldAdvNemFlags(nem)
   nem.flags.ACTIVE_ADVENTURER = false
-  nem.flags.RETIRED_ADVENTURER = true
 end
 
 function clearNemesisFromLinkedSites(nem)
@@ -103,6 +102,7 @@ function processNemesisParty(nemesis, targetUnitID, alreadyProcessed)
     df.global.ui_advmode.interactions.party_pets:insert('#', nemesis.figure.id)
   else
     df.global.ui_advmode.interactions.party_core_members:insert('#', nemesis.figure.id) -- placing all non-pet companions into the core party list to enable tactical mode swapping
+    nemesis.flags.ADVENTURER = true
     if nemUnit then -- check in case the companion is offloaded
       nemUnit.relationship_ids.GroupLeader = targetUnitID
     end
