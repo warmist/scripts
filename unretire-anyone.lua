@@ -41,7 +41,7 @@ function addNemesisToUnretireList(advSetUpScreen, nemesis)
     advSetUpScreen.race_ids:insert('#', -2)
   end
 
-  nemesis.flags.RETIRED_ADVENTURER = true
+  nemesis.flags.ADVENTURER = true
   advSetUpScreen.nemesis_ids:insert('#', nemesis.id)
 end
 
@@ -49,7 +49,7 @@ end
 function showNemesisPrompt(advSetUpScreen)
   local choices = {}
   for _,nemesis in ipairs(df.global.world.nemesis.all) do
-    if nemesis.figure and not nemesis.flags.RETIRED_ADVENTURER then -- these are already available for unretiring
+    if nemesis.figure and not nemesis.flags.ADVENTURER then -- these are already available for unretiring
       local histFig = nemesis.figure
       local histFlags = histFig.flags
       if (histFig.died_year == -1 or histFlags.ghost) and not histFlags.deity and not histFlags.force then
