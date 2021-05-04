@@ -78,7 +78,7 @@ local function switch_ui_sidebar_mode(sidebar_mode)
         end
         gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
     end
-    qerror('Unable to get into query mode from current UI viewscreen.')
+    qerror('Unable to get into target sidebar mode from current UI viewscreen.')
 end
 
 -- If a tile starts or ends with one of these focus strings, the start and end
