@@ -17,6 +17,7 @@ that repo.
 - `devel/block-borders`: overlay that displays map block borders
 - `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
 - `gui/mass-remove`: mass removal/suspension tool for buildings and constructions
+- `reveal-hidden-sites`: exposes all undiscovered sites
 
 ## Fixes
 - `bodyswap`: stopped prior party members from tagging along after bodyswapping and reloading the map
