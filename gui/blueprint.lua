@@ -19,11 +19,9 @@ values set in the interface. See the `blueprint` documentation for information
 on the possible parameters and options.
 ]====]
 
-local blueprint = require('plugins.blueprint')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local widgets = require('gui.widgets')
-
 
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
