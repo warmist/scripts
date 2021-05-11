@@ -738,7 +738,7 @@ end
 function UnitInfoViewer:chunk_BodySize()
  local i = self.ident
  local pat = i.unit.body.physical_attrs
- local blurb = i.pronoun..' appears to be about '..pat.STRENGTH.value..':'..pat.AGILITY.value..' cubic decimeters in size.'
+ local blurb = i.pronoun..' appears to be about ' .. i.unit.body.size_info.size_cur .. ' cubic decimeters in size.'
  self:insert_chunk(blurb,pens.LIGHTBLUE)
 end
 function UnitInfoViewer:chunk_Ghostly()
