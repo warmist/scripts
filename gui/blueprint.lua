@@ -57,6 +57,7 @@ BlueprintUI = defclass(BlueprintUI, guidm.MenuOverlay)
 BlueprintUI.ATTRS {
     presets={},
     frame_inset=1,
+    focus_path='blueprint',
 }
 function BlueprintUI:init()
     local summary = {
