@@ -42,7 +42,7 @@ Usage::
 
     -days X
         Replace "X" with a positive integer
-        Adds (8400 multiplied by X) ticks to the timeskip duration
+        Adds (1200 multiplied by X) ticks to the timeskip duration
 
     -hours X
         Replace "X" with a positive integer
