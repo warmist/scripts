@@ -181,7 +181,7 @@ if args.hours then
   if tonumber(args.hours) and tonumber(args.hours) >= 0 then
     ticks = ticks + tonumber(args.hours)*50
   else
-    qerror("Invalid -hours duration (must be a positive number): " .. tostring(args.days))
+    qerror("Invalid -hours duration: " .. tostring(args.hours))
   end
 end
 
