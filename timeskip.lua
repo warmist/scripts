@@ -121,7 +121,7 @@ end
 
 local ticks = tonumber(args.ticks)
 if not ticks or ticks < 0 then
-  qerror("The tick duration must be number greater or equal to 0!")
+  qerror("The tick duration must be a number greater or equal to 0!")
 end
 ticks = math.floor(ticks) -- get rid of decimals the user may have inputted
 
