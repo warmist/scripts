@@ -16,10 +16,14 @@ It is also possible to run the script during the timeskip,
 which can be useful if you decide to end the process earlier
 or later than initially planned.
 
+The timeskip duration can be specified using any combination of
+the following arguments.
+
 Usage::
 
     -ticks X
-        Replace "X" with the desired timeskip duration in ticks
+        Replace "X" with a positive integer (or 0)
+        Adds the specified number of ticks to the timeskip duration
         The following conversions may help you calculate this:
             1 tick = 72 seconds = 1 minute 12 seconds
             50 ticks = 60 minutes = 1 hour
@@ -27,6 +31,22 @@ Usage::
             8400 ticks = 7 days = 1 week
             33600 ticks = 4 weeks = 1 month
             403200 ticks = 12 months = 1 year
+
+    -years X
+        Replace "X" with a positive integer
+        Adds (403200 multiplied by X) ticks to the timeskip duration
+
+    -months X
+        Replace "X" with a positive integer
+        Adds (33600 multiplied by X) ticks to the timeskip duration
+
+    -days X
+        Replace "X" with a positive integer
+        Adds (8400 multiplied by X) ticks to the timeskip duration
+
+    -hours X
+        Replace "X" with a positive integer
+        Adds (50 multiplied by X) ticks to the timeskip duration
 
     -clear
         If the timeskip has not yet begun, this resets its duration
@@ -38,6 +58,10 @@ Example::
         Sets the end of the timeskip to
         2 years, 1 month, 9 days, 8 hours, 58 minutes, 48 seconds
         from the current date.
+
+    timeskip -years 2 -months 1 -days 9 -hours 8 -ticks 49
+        Does the same thing as the previous example
+
 ]====]
 
 local utils = require 'utils'
@@ -99,6 +123,10 @@ end
 
 local validArgs = utils.invert({
   'ticks',
+  'years',
+  'months',
+  'days',
+  'hours',
   'clear',
   'help'
 })
@@ -115,14 +143,52 @@ if args.clear then
   return
 end
 
-if not args.ticks then
-  qerror("You need to specify a duration using the -ticks argument!")
+local ticks = 0
+
+if args.ticks then
+  if tonumber(args.ticks) and tonumber(args.ticks) >= 0 then
+    ticks = ticks + tonumber(args.ticks)
+  else
+    qerror("Invalid -ticks duration: " .. tostring(args.ticks))
+  end
 end
 
-local ticks = tonumber(args.ticks)
-if not ticks or ticks < 0 then
-  qerror("The tick duration must be a number greater or equal to 0!")
+if args.years then
+  if tonumber(args.years) and tonumber(args.years) >= 0 then
+    ticks = ticks + tonumber(args.years)*403200
+  else
+    qerror("Invalid -years duration: " .. tostring(args.years))
+  end
 end
+
+if args.months then
+  if tonumber(args.months) and tonumber(args.months) >= 0 then
+    ticks = ticks + tonumber(args.months)*33600
+  else
+    qerror("Invalid -months duration: " .. tostring(args.months))
+  end
+end
+
+if args.days then
+  if tonumber(args.days) and tonumber(args.days) >= 0 then
+    ticks = ticks + tonumber(args.days)*1200
+  else
+    qerror("Invalid -days duration: " .. tostring(args.days))
+  end
+end
+
+if args.hours then
+  if tonumber(args.hours) and tonumber(args.hours) >= 0 then
+    ticks = ticks + tonumber(args.hours)*50
+  else
+    qerror("Invalid -hours duration (must be a positive number): " .. tostring(args.days))
+  end
+end
+
+if ticks == 0 then
+  qerror("Duration not specified! Enter \"timeskip -help\" for more information.")
+end
+
 ticks = math.floor(ticks) -- get rid of decimals the user may have inputted
 
 printTimeskipCalendarDuration(ticks)
