@@ -123,13 +123,12 @@ function BlueprintUI:onRenderBody()
         local _,x_start,x_end = min_to_max(self.mark.x, cursor.x, vp.x1, vp.x2)
         for y=y_start,y_end do for x=x_start,x_end do
             local pos = xyz2pos(x, y, cursor.z)
-            if x == cursor.x and y == cursor.y then
-                -- don't overwrite the cursor
-                goto continue
+            -- don't overwrite the cursor so the user can still tell where it is
+            if not same_xyz(cursor, pos) then
+                local stile = vp:tileToScreen(pos)
+                dc:map(true):seek(stile.x, stile.y):
+                        pen(fg, bg):char('X'):map(false)
             end
-            local stile = vp:tileToScreen(pos)
-            dc:map(true):seek(stile.x, stile.y):pen(fg, bg):char('X'):map(false)
-            ::continue::
         end end
     end
 end
