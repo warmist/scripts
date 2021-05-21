@@ -1,18 +1,19 @@
--- modify the duration of the "Updating World" timeskip
+-- Change the duration of the "Updating World" timeskip preceding the start of a new game.
+-- Author: Atomic Chicken
 
 local usage = [====[
 
-timeskip
-========
+set-timeskip-duration
+=====================
 Starting a new fortress/adventurer session is preceded by
-an "Updating World" timeskip which is normally 2 weeks long.
+an "Updating World" process which is normally 2 weeks long.
 This script allows you to modify the duration of this timeskip,
 enabling you to jump into the game earlier or later than usual.
 
 You can use this at any point before the timeskip begins
 (for example, while still at the "Start Playing" menu).
 
-It is also possible to run the script during the timeskip,
+It is also possible to run the script while the world is updating,
 which can be useful if you decide to end the process earlier
 or later than initially planned.
 
@@ -54,12 +55,12 @@ Usage::
 
 Example::
 
-    timeskip -ticks 851249
+    set-timeskip-duration -ticks 851249
         Sets the end of the timeskip to
         2 years, 1 month, 9 days, 8 hours, 58 minutes, 48 seconds
         from the current date.
 
-    timeskip -years 2 -months 1 -days 9 -hours 8 -ticks 49
+    set-timeskip-duration -years 2 -months 1 -days 9 -hours 8 -ticks 49
         Does the same thing as the previous example
 
 ]====]
@@ -185,8 +186,8 @@ if args.hours then
   end
 end
 
-if ticks == 0 then
-  qerror("Duration not specified! Enter \"timeskip -help\" for more information.")
+if ticks == 0 and not (args.ticks and tonumber(args.ticks) == 0) then -- permit users to remove the timeskip altogether by setting it to 0 ticks
+  qerror("Duration not specified! Enter \"set-timeskip-duration -help\" for more information.")
 end
 
 ticks = math.floor(ticks) -- get rid of decimals the user may have inputted
