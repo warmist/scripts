@@ -68,7 +68,7 @@ Usage:
 
 **<options>** can be zero or more of:
 
-:``-c``, ``--cursor <x>,<y>,<z>``:
+``-c``, ``--cursor <x>,<y>,<z>``
     Use the specified map coordinates instead of the current cursor position for
     the blueprint cursor start position. If this option is specified, then an
     active game map cursor is not necessary.
