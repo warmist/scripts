@@ -19,6 +19,8 @@ values set in the interface. See the `blueprint` documentation for information
 on the possible parameters and options.
 ]====]
 
+local blueprint = require('plugins.blueprint')
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local widgets = require('gui.widgets')
@@ -121,15 +123,17 @@ function BlueprintUI:onRenderBody()
         -- clip blinking region to viewport
         local _,y_start,y_end = min_to_max(self.mark.y, cursor.y, vp.y1, vp.y2)
         local _,x_start,x_end = min_to_max(self.mark.x, cursor.x, vp.x1, vp.x2)
-        for y=y_start,y_end do for x=x_start,x_end do
-            local pos = xyz2pos(x, y, cursor.z)
-            -- don't overwrite the cursor so the user can still tell where it is
-            if not same_xyz(cursor, pos) then
-                local stile = vp:tileToScreen(pos)
-                dc:map(true):seek(stile.x, stile.y):
-                        pen(fg, bg):char('X'):map(false)
+        for y=y_start,y_end do
+            for x=x_start,x_end do
+                local pos = xyz2pos(x, y, cursor.z)
+                -- don't overwrite the cursor so the user can still see it
+                if not same_xyz(cursor, pos) then
+                    local stile = vp:tileToScreen(pos)
+                    dc:map(true):seek(stile.x, stile.y):
+                            pen(fg, bg):char('X'):map(false)
+                end
             end
-        end end
+        end
     end
 end
 
@@ -140,7 +144,6 @@ function BlueprintUI:onInput(keys)
         local pos = guidm.getCursorPos()
         if self.mark then
             self:commit(pos)
-            self:dismiss()
         else
             self:on_mark(pos)
         end
@@ -158,18 +161,31 @@ function BlueprintUI:commit(pos)
         -- when there are multiple levels, process them top to bottom
         depth = -depth
     end
-    local basename = "blueprint"
-    local cmd = {'blueprint',
-                 tostring(width), tostring(height), tostring(depth),
-                 basename}
+
+    local name = 'blueprint'
+    local params = {tostring(width), tostring(height), tostring(depth), name}
 
     -- set cursor to top left corner of the *uppermost* z-level
     local x, y, z = math.min(mark.x, pos.x), math.min(mark.y, pos.y),
             math.max(mark.z, pos.z)
-    table.insert(cmd, ('--cursor=%d,%d,%d'):format(x, y, z))
+    table.insert(params, ('--cursor=%d,%d,%d'):format(x, y, z))
 
-    print('running: ' .. table.concat(cmd, ' '))
-    dfhack.run_command(cmd)
+    print('running: blueprint ' .. table.concat(params, ' '))
+    local files = blueprint.run(table.unpack(params))
+
+    local text = 'No files generated'
+    if files and #files > 0 then
+        text = 'Generated blueprint file(s):\n'
+        for _,fname in ipairs(files) do
+            text = text .. ('  %s\n'):format(fname)
+        end
+    end
+
+    dialogs.MessageBox{
+        frame_title='Blueprint completed',
+        text=text,
+        on_close=self:callback('dismiss'),
+    }:show()
 end
 
 if not dfhack_flags.module then
