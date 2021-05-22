@@ -29,7 +29,7 @@ that repo.
 - `quickfort`: changed to properly detect and report an error on sub-alias params with no values instead of just failing to apply the alias later (if you really want an empty value, use ``{Empty}`` instead)
 - `quickfort`: improved handling of non-rectangular and non-solid extent-based structures (like fancy-shaped stockpiles and farm plots)
 - `quickfort`: fixed conversion of numbers to DF keycodes in ``#query`` blueprints
-- `quickfort`: fixed an off-by-one error when cropping buildings that cross the map edge
+- `quickfort`: fixed various errors with cropping across the map edge
 - `quickfort`: properly reset config to default values in ``quickfort reset`` even if if the ``dfhack-config/quickfort/quickfort.txt`` config file doesn't mention all config vars. aso now works even if the config file doesn't exist
 
 ## Misc Improvements

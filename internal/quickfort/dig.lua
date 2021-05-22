@@ -600,9 +600,9 @@ local function do_run_impl(zlevel, grid, ctx)
                         extent_adjacent=extent_adjacent,
                         on_map_edge=bounds:is_on_map_edge(extent_pos)
                     }
-                    if not bounds:is_within_map_bounds(digctx.pos) and
-                            not digctx.on_map_edge then
-                        log('coordinates out of bounds; skipping')
+                    if not bounds:is_on_map(digctx.pos) then
+                        log('coordinates out of bounds; skipping (%d, %d, %d)',
+                            digctx.pos.x, digctx.pos.y, digctx.pos.z)
                         stats.out_of_bounds.value =
                                 stats.out_of_bounds.value + 1
                     else
