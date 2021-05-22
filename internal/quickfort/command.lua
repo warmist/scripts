@@ -76,7 +76,7 @@ function finish_command(ctx, section_name, quiet)
 end
 
 local function parse_cursor(arg)
-    local _, _, x, y, z = arg:find('^(%d+),(%d+),(%d+)$')
+    local _, _, x, y, z = arg:find('^(-?%d+),(-?%d+),(-?%d+)$')
     if not x then
         qerror(('invalid argument for --cursor option: "%s"; expected format' ..
                 ' is "<x>,<y>,<z>", for example: "30,60,150"'):format(arg))
