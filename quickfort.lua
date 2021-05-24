@@ -69,7 +69,7 @@ Usage:
 **<options>** can be zero or more of:
 
 ``-q``, ``--quiet``
-    Don't report on what actions were taken (error messages are still shown).
+    Suppress non-error console output.
 ``-v``, ``--verbose``
     Output extra debugging information. This is especially useful if the
     blueprint isn't being applied like you expect.
@@ -191,7 +191,7 @@ undo    Applies the inverse of the specified blueprint. Dig tiles are
 <options> can be zero or more of:
 
 -q, --quiet
-    Don't report on what actions were taken (error messages are still shown).
+    Suppress non-error console output.
 -v, --verbose
     Output extra debugging information. This is especially useful if the
     blueprint isn't being applied like you expect.
