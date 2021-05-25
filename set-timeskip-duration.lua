@@ -19,7 +19,7 @@ or later than initially planned.
 
 Note that the change in timeskip duration will persist until either
     the game is closed,
-    the "-clear" argument is used,
+    the "-clear" argument is used (see below),
     or it is overwritten by setting a new duration.
 
 The timeskip duration can be specified using any combination of
