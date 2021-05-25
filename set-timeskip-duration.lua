@@ -17,6 +17,11 @@ It is also possible to run the script while the world is updating,
 which can be useful if you decide to end the process earlier
 or later than initially planned.
 
+Note that the change in timeskip duration will persist until either
+    the game is closed,
+    the "-clear" argument is used,
+    or it is overwritten by setting a new duration.
+
 The timeskip duration can be specified using any combination of
 the following arguments.
 
@@ -34,24 +39,24 @@ Usage::
             403200 ticks = 12 months = 1 year
 
     -years X
-        Replace "X" with a positive integer
+        Replace "X" with a positive integer (or 0)
         Adds (403200 multiplied by X) ticks to the timeskip duration
 
     -months X
-        Replace "X" with a positive integer
+        Replace "X" with a positive integer (or 0)
         Adds (33600 multiplied by X) ticks to the timeskip duration
 
     -days X
-        Replace "X" with a positive integer
+        Replace "X" with a positive integer (or 0)
         Adds (1200 multiplied by X) ticks to the timeskip duration
 
     -hours X
-        Replace "X" with a positive integer
+        Replace "X" with a positive integer (or 0)
         Adds (50 multiplied by X) ticks to the timeskip duration
 
     -clear
-        If the timeskip has not yet begun, this resets its duration
-        to the default value.
+        This resets the timeskip duration to its default value.
+        Note that it won't affect timeskips which have already begun.
 
 Example::
 
@@ -144,11 +149,11 @@ if args.clear then
   return
 end
 
-local ticks = 0
+local ticks
 
 if args.ticks then
   if tonumber(args.ticks) and tonumber(args.ticks) >= 0 then
-    ticks = ticks + tonumber(args.ticks)
+    ticks = (ticks or 0) + tonumber(args.ticks)
   else
     qerror("Invalid -ticks duration: " .. tostring(args.ticks))
   end
@@ -156,7 +161,7 @@ end
 
 if args.years then
   if tonumber(args.years) and tonumber(args.years) >= 0 then
-    ticks = ticks + tonumber(args.years)*403200
+    ticks = (ticks or 0) + tonumber(args.years)*403200
   else
     qerror("Invalid -years duration: " .. tostring(args.years))
   end
@@ -164,7 +169,7 @@ end
 
 if args.months then
   if tonumber(args.months) and tonumber(args.months) >= 0 then
-    ticks = ticks + tonumber(args.months)*33600
+    ticks = (ticks or 0) + tonumber(args.months)*33600
   else
     qerror("Invalid -months duration: " .. tostring(args.months))
   end
@@ -172,7 +177,7 @@ end
 
 if args.days then
   if tonumber(args.days) and tonumber(args.days) >= 0 then
-    ticks = ticks + tonumber(args.days)*1200
+    ticks = (ticks or 0) + tonumber(args.days)*1200
   else
     qerror("Invalid -days duration: " .. tostring(args.days))
   end
@@ -180,13 +185,13 @@ end
 
 if args.hours then
   if tonumber(args.hours) and tonumber(args.hours) >= 0 then
-    ticks = ticks + tonumber(args.hours)*50
+    ticks = (ticks or 0) + tonumber(args.hours)*50
   else
     qerror("Invalid -hours duration: " .. tostring(args.hours))
   end
 end
 
-if ticks == 0 and not (args.ticks and tonumber(args.ticks) == 0) then -- permit users to remove the timeskip altogether by setting it to 0 ticks
+if not ticks then
   qerror("Duration not specified! Enter \"set-timeskip-duration -help\" for more information.")
 end
 
@@ -205,9 +210,6 @@ else
         setTargetDate(scr, ticks)
         dfhack.onStateChange.TimeskipMonitor = nil
       end
-    elseif event == SC_WORLD_UNLOADED or event == SC_MAP_LOADED then
-      dfhack.onStateChange.TimeskipMonitor = nil
-      print("Cleared timeskip settings.")
     end
   end
 end
