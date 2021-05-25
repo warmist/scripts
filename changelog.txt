@@ -40,6 +40,7 @@ that repo.
 - `quickfort`: now prints a warning when an invalid alias is encountered instead of silently ignoring it
 - `quickfort`: is now more quiet when the ``--quiet`` parameter is specified
 - `setfps`: improved error handling
+- `unretire-anyone`: the historical figure selection list now includes the SYN_NAME (necromancer, vampire, etc) of figures where applicable
 
 # 0.47.05-r1
 
