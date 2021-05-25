@@ -202,14 +202,13 @@ printTimeskipCalendarDuration(ticks)
 local scr = dfhack.gui.getCurViewscreen()
 if scr._type == df.viewscreen_update_regionst then
   setTargetDate(scr, ticks)
-else
-  dfhack.onStateChange.TimeskipMonitor = function(event)
-    if event == SC_VIEWSCREEN_CHANGED then
-      local scr = dfhack.gui.getCurViewscreen()
-      if scr._type == df.viewscreen_update_regionst then
-        setTargetDate(scr, ticks)
-        dfhack.onStateChange.TimeskipMonitor = nil
-      end
+end
+
+dfhack.onStateChange.TimeskipMonitor = function(event)
+  if event == SC_VIEWSCREEN_CHANGED then
+    local scr = dfhack.gui.getCurViewscreen()
+    if scr._type == df.viewscreen_update_regionst then
+      setTargetDate(scr, ticks)
     end
   end
 end
