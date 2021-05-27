@@ -75,18 +75,30 @@ function finish_command(ctx, section_name, quiet)
     end
 end
 
+local function parse_cursor(arg)
+    local _, _, x, y, z = arg:find('^(-?%d+),(-?%d+),(-?%d+)$')
+    if not x then
+        qerror(('invalid argument for --cursor option: "%s"; expected format' ..
+                ' is "<x>,<y>,<z>", for example: "30,60,150"'):format(arg))
+    end
+    return {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
+end
+
 function do_command(args)
     local command = args.action
     if not command or not command_switch[command] then
         qerror(string.format('invalid command: "%s"', command))
     end
+    local cursor = guidm.getCursorPos()
     local quiet, verbose, dry_run, section_name = false, false, false, nil
     local other_args = utils.processArgsGetopt(args, {
-            {'q', 'quiet', handler=function() quiet = true end},
-            {'v', 'verbose', handler=function() verbose = true end},
+            {'c', 'cursor', hasArg=true,
+             handler=function(optarg) cursor = parse_cursor(optarg) end},
             {'d', 'dry-run', handler=function() dry_run = true end},
             {'n', 'name', hasArg=true,
              handler=function(optarg) section_name = optarg end},
+            {'q', 'quiet', handler=function() quiet = true end},
+            {'v', 'verbose', handler=function() verbose = true end},
         })
     local blueprint_name = other_args[1]
     if not blueprint_name or blueprint_name == '' then
@@ -102,13 +114,12 @@ function do_command(args)
         mode = quickfort_list.get_blueprint_mode(blueprint_name, section_name)
     end
 
-    local cursor = guidm.getCursorPos()
     if not cursor then
         if command == 'orders' or mode == 'notes' then
             cursor = {x=0, y=0, z=0}
         else
             qerror('please position the game cursor at the blueprint start ' ..
-                   'location')
+                   'location or use the --cursor option')
         end
     end
 
