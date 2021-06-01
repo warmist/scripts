@@ -107,12 +107,6 @@ function test.cancel_selection()
         end)
 end
 
--- ensure we pause long enough to render a new frame
-local frames_to_wait = math.ceil(df.global.enabler.fps_per_gfps) + 1
-local function force_render()
-    delay(frames_to_wait)
-end
-
 local screen_width, screen_height = dfhack.screen.getWindowSize()
 local SPACE_ASCII = (' '):byte()
 local function get_screen_word(screen_pos)
@@ -127,7 +121,7 @@ end
 
 function test.render_labels()
     local view = load_ui()
-    force_render()
+    view:onRender()
     local action_label = view.subviews[3].subviews[1]
     local action_word_pos = {x=action_label.frame_body.x1+11,
                              y=action_label.frame_body.y1}
@@ -138,11 +132,11 @@ function test.render_labels()
     expect.eq('Back', get_screen_word(cancel_word_pos))
     guidm.setCursorPos({x=10, y=20, z=30})
     send_keys('SELECT')
-    force_render()
+    view:onRender()
     expect.eq('second', get_screen_word(action_word_pos))
     expect.eq('Cancel', get_screen_word(cancel_word_pos))
     send_keys('LEAVESCREEN') -- cancel selection
-    force_render()
+    view:onRender()
     expect.eq('first', get_screen_word(action_word_pos))
     expect.eq('Back', get_screen_word(cancel_word_pos))
     send_keys('LEAVESCREEN') -- leave UI
@@ -153,7 +147,7 @@ local X_ASCII = ('X'):byte()
 local function check_overlay(view, mark, cursor)
     guidm.setCursorPos(cursor)
     dfhack.gui.revealInDwarfmodeMap(cursor, true)
-    force_render()
+    view:onRender()
     local vp = view:getViewport()
     local z = cursor.z
     local upper_left = {x=math.min(mark.x, cursor.x),
