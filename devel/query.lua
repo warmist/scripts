@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
--- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2020-03-03
--- Version: 2.x
+-- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-15
+-- Version: 3.x
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -11,30 +11,28 @@ local validArgs = utils.invert({
  'tile',
  'table',
 
- 'query',
- 'querykeys',
- 'depth',
- 'keydepth',
+ 'search',
+ 'hasvalue',
+
+ 'maxdepth',
  'maxtablelength',
 
- 'listall',
- 'listfields',
- 'listkeys',
  'getfield',
- 'setkey',
+ 'setvalue',
 
- 'includeitall',
+ 'noblacklist',
+ 'showall',
 
  'safer',
  'dumb',
  'disableprint',
- 'debug'
+ 'debug',
+ 'devdebug',
+ 'datadebug'
 })
 local args = utils.processArgs({...}, validArgs)
-depth=nil
-keydepth=nil
+maxdepth =nil
 cur_depth = -1
-cur_keydepth = -1
 
 newkeyvalue=nil
 bprintfields=nil
@@ -48,13 +46,6 @@ devel/query
 ===========
 Query is a script useful for finding and reading values of data structure fields.
 Purposes will likely be exclusive to writing lua script code.
-
-Fields: contents of tables
-Keys:   contents below non-table containers
-
-Keys and fields are essentially the same thing. The real difference is what
-code checks need to be in place for queries on keys vs fields. This is why
-they are differentiated.
 
 This is a recursive script which takes your selected data {table,unit,item,tile}
 and then iterates through it, then iterates through anything it finds. It does
@@ -107,7 +98,7 @@ or specifically what key to print inside a unit.
                         Must use dot notation to denote sub-tables.
                         (eg. ``-table df.global.world``)
 
-``-getfield <value>``:  Gets the specified field from the selected unit.
+``-getfield <value>``:  Gets the specified field from the selection.
 
                         Must use dot notation to denote sub-fields.
                         Useful if there would be several matching
@@ -115,23 +106,15 @@ or specifically what key to print inside a unit.
 
 **Query options:**
 
-``-query <value>``:     Searches the selection for fields with substrings matching the specified value.
+``-search <value>``:       Searches the selection for field names with substrings matching the specified value.
 
-``-querykeys <value>``: Lists only keys matching the specified value.
+``-hasvalue <value>``:     Searches the selection for field values matching the specified value.
 
-``-listall``:           Lists both fields and keys, useful if you aren't running a search.
+``-maxdepth <value>``:        Limits the field recursion depth (default: 10)
 
-``-listfields``:        Lists fields. Useful if you aren't running a search.
+``-maxtablelength <value>``:  Limits the table sizes that will be walked (default: 257)
 
-``-listkeys``:          Lists keys. Useful. Ya, period.
-
-``-depth <value>``:          Limits the field recursion depth (default: 10)
-
-``-keydepth <value>``:       Limits the key recursion depth (default: 4)
-
-``-maxtablelength <value>``: Limits the table sizes that will be walked (default: 257)
-
-``-includeitall``:  Removes blacklist filtering, and disregards readability of output.
+``-noblacklist``:   Removes blacklist filtering, and disregards readability of output.
 
 ``-safer``:         Disables walking struct data.
 
@@ -140,9 +123,8 @@ or specifically what key to print inside a unit.
                     if you're running an alpha or beta build of DFHack.
 
 ``-dumb``:          Disables intelligent checks for things such as reasonable
-recursion depth (i.e. depth maximums are increased, not removed) and also checks
-for recursive data structures (i.e. to avoid walking a child that goes to a
-parent)
+                    recursion depth [note: depth maximums are increased, not removed]
+                    and also checks for recursive data structures (ie. cycles)
 
 **Command options:**
 
@@ -174,24 +156,66 @@ what else you could use it for.
         6. devel/query -dumb -includeitall -listall -table df -getfield job_skill
 ]]
 
+--Section: entry/initialization
+function main()
+    if args.help then
+        print(help)
+        return
+    end
+    processArguments()
+    local selection,path_info,pos,tilex,tiley = table.unpack{getSelectionData()}
+    debugf(0, tostring(selection), path_info)
 
-function init_parameters()
-    --Print Options
-    bprintfields=(args.listall or args.query or args.listfields) and true or false
-    bprintkeys=(args.listall or args.querykeys or args.listkeys) and true or false
+    if selection == nil then
+        qerror(string.format("Selected %s is null. Invalid selection.", path_info))
+        return
+    end
+    query(selection, path_info, args.search, path_info)
+end
 
+function getSelectionData()
+    local selection = nil
+    local path_info = nil
+    local pos = nil
+    local tilex = nil
+    local tiley = nil
+    if args.table then
+        debugf(0,"table selection")
+        selection = findTable(args.table)
+        path_info = args.table
+    elseif args.unit then
+        debugf(0,"unit selection")
+        selection = dfhack.gui.getSelectedUnit()
+        path_info = "unit"
+    elseif args.item then
+        debugf(0,"item selection")
+        selection = dfhack.gui.getSelectedItem()
+        path_info = "item"
+    elseif args.tile then
+        debugf(0,"tile selection")
+        pos = copyall(df.global.cursor)
+        selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
+        path_info = string.format("block[%d][%d][%d]",pos.x,pos.y,pos.z)
+        tilex = pos.x%16
+        tiley = pos.y%16
+    else
+        print(help)
+    end
+    if args.getfield then
+        selection = parseTableString(selection,args.getfield)
+    end
+    return selection, path_info, pos, tilex, tiley
+end
+
+function processArguments()
     --Dumb Queries
     if args.dumb then
         --[[ Let's make the recursion dumber, but let's not do it infinitely.
         There are many recursive structures which would cause this to happen.
         ]]
-        if not args.depth then
-            depth = 25
-            args.depth = depth
-        end
-        if not args.keydepth then
-            keydepth = 25
-            args.keydepth = keydepth
+        if not args.maxdepth then
+            maxdepth = 25
+            args.maxdepth = maxdepth
         end
     else
         --Table Length
@@ -206,25 +230,14 @@ function init_parameters()
     end
 
     --Table Recursion
-    if args.depth then
-        depth = tonumber(args.depth)
-        if not depth then
+    if args.maxdepth then
+        maxdepth = tonumber(args.maxdepth)
+        if not maxdepth then
             qerror(string.format("Must provide a number with -depth"))
         end
     else
-        depth = 10
-        args.depth = depth
-    end
-
-    --Key Recursion
-    if args.keydepth then
-        keydepth = tonumber(args.keydepth)
-        if not keydepth then
-            qerror(string.format("Must provide a number with -keydepth"))
-        end
-    else
-        keydepth = 4
-        args.keydepth = keydepth
+        maxdepth = 10
+        args.maxdepth = maxdepth
     end
 
     --Set Key [boolean parsing]
@@ -235,18 +248,104 @@ function init_parameters()
     end
 end
 
-function debugf(level,...)
-    if args.debug and level <= tonumber(args.debug) then
-        str=string.format(" #  %s",select(1, ...))
-        for i = 2, select('#', ...) do
-            str=string.format("%s\t%s",str,select(i, ...))
+--Section: core logic
+function query(t, tname, search_term, path)
+    --[[
+    * increment depth
+    * check depth
+    * print info about t
+    * recurse structure
+    * decrement depth
+    ]]--
+    cur_depth = cur_depth + 1
+    if not maxdepth or cur_depth < maxdepth then
+        -- check that we can search
+        -- print field t
+        setValue(t)
+        printField(path, tname, t)
+        --print()
+        if is_searchable(t, tname) then
+            -- iterate over search space
+            for k,v in pairs(t) do
+                -- for each, make new parent string and recurse
+                --print(k,t[k],v)
+                local newTName = makeName(tname,k)
+                local newParent =  appendField(path,k)
+                query(t[k], newTName, search_term, newParent)
+            end
         end
-        print(str)
+    end
+    cur_depth = cur_depth - 1
+end
+
+function setValue(field)
+    if args.setvalue then
+        if not args.search or is_match(path, tostring(field), field) then
+            field = args.setvalue
+        end
     end
 end
 
---thanks goes to lethosor for this
+--Section: filters
+function is_searchable(t, tname)
+    if not isBlackListed(tname) and not df.isnull(t) then
+        debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
+        if not isEmpty(t) then
+            if not args.maxtablelength or runOnce(is_searchable) or countTableLength(t) <= args.maxtablelength then
+                if getmetatable(t) then
+                    if t._kind == "primitive" then
+                        return false
+                    end
+                    debugf(1,string.format("_kind: %s, _type: %s",t._kind,t._type))
+                end
+                for _,_ in safe_pairs(t) do
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+function is_match(path, field, value)
+    return not is_recursive(path, field)
+            and (not args.hasvalue or value == args.hasvalue)
+            and (not args.search or string.find(tostring(field),args.search))
+end
+
+function is_recursive(path, field)
+    return string.find(path, tostring(field))
+end
+
+function isBlackListed(field)
+    if not args.noblacklist then
+        if string.find(field,"script") then
+            return true
+        elseif string.find(field,"saves") then
+            return true
+        elseif string.find(field,"movie") then
+            return true
+        elseif string.find(field,"font") then
+            return true
+        elseif string.find(field,"texpos") then
+            return true
+        end
+    end
+    return false
+end
+
+bRunOnce={}
+function runOnce(caller)
+    if bRunOnce[caller] == true then
+        return false
+    end
+    bRunOnce[caller] = true
+    return true
+end
+
+--Section: table helpers
 function safe_pairs(item, keys_only)
+    --thanks goes to lethosor for this function
     if keys_only then
         local mt = debug.getmetatable(item)
         if mt and mt._index_table then
@@ -269,59 +368,36 @@ function safe_pairs(item, keys_only)
     end
 end
 
-function TableLength(t)
-    -- 'and t._kind and' ya, that's right, it can be nil!
-    if type(t) == "userdata" and getmetatable(t) and t._kind and not (t._kind == "struct" or t._kind == "primitive") then
-        --debugf(11,"TableLength: stage 1",string.format("_kind: %s, value: %s",t._kind,t))
-        len=#t
-        if len ~= 0 then
-            --debugf(11,"TableLength: stage 2")
-            return len
-        end
-    elseif type(t) == "table" then
-        --debugf(11,"TableLength: stage 3")
-        return #t
-    else
-        --debugf(11,"TableLength: stage 4")
-        return 0
+function isEmpty(t)
+    for _,_ in safe_pairs(t) do
+        return false
     end
+    return true
+end
+
+function countTableLength(t)
     local count = 0
-    --debugf(11,"TableLength: stage 5 (for loop)")
-    for i,k in pairs(t) do
+    for _,_ in safe_pairs(t) do
         count = count + 1
     end
+    debugf(1,string.format("countTableEntries( %s ) = %d",t,count))
     return count
 end
 
-function parseTableString(str)
-    tableParts = {}
-    for word in string.gmatch(str, '([^.]+)') do --thanks stack overflow
-        table.insert(tableParts, word)
+function getTableLength(t)
+    if type(t) == "table" then
+        local count=#t
+        debugf(1,string.format("----getTableLength( %s ) = %d",t,count))
+        return count
     end
-    curTable = nil
-    for k,v in pairs(tableParts) do
-      if curTable == nil then
-        if _G[v] ~= nil then
-            curTable = _G[v]
-        else
-            qerror("Table" .. v .. " does not exist.")
-        end
-      else
-        if curTable[v] ~= nil then
-            curTable = curTable[v]
-        else
-            qerror("Table" .. v .. " does not exist.")
-        end
-      end
-    end
-    return curTable
+    return 0
 end
 
-function parseKeyString(t,str)
-    debugf(1,"parsing",t,str)
+function parseTableString(t, path)
+    debugf(1,"parsing",t, path)
     curTable = t
     keyParts = {}
-    for word in string.gmatch(str, '([^.]+)') do --thanks stack overflow
+    for word in string.gmatch(path, '([^.]+)') do --thanks stack overflow
         table.insert(keyParts, word)
     end
     if not curTable then
@@ -339,50 +415,118 @@ function parseKeyString(t,str)
     return curTable
 end
 
+function findTable(path)
+    tableParts = {}
+    for word in string.gmatch(path, '([^.]+)') do --thanks stack overflow
+        table.insert(tableParts, word)
+    end
+    curTable = nil
+    for k,v in pairs(tableParts) do
+        if curTable == nil then
+            if _G[v] ~= nil then
+                curTable = _G[v]
+            else
+                qerror("Table" .. v .. " does not exist.")
+            end
+        else
+            if curTable[v] ~= nil then
+                curTable = curTable[v]
+            else
+                qerror("Table" .. v .. " does not exist.")
+            end
+        end
+    end
+    return curTable
+end
+
 function hasMetadata(value)
-    if getmetatable(value) and value._kind then
-        return true
-    end
-    return false
-end
-
-function isBlackListed(field)
-    if not args.includeitall then
-        function match(str,p)
-            return string.find(str,p)
-        end
-        if match(field,"script") then
-            return true
-        elseif match(field,"saves") then
+    if not isEmpty(value) then
+        if getmetatable(value) and value._kind then
             return true
         end
     end
     return false
 end
 
-function isFieldValueMatch(field,value)
-    --debugf(11,"isFieldValueMatch()")
-    if not (args.query or args.queryvalues) then
-        --debugf(11,"isFieldValueMatch: stage 1")
-        return true
+--Section: output helpers
+function makeName(tname, field)
+    if tonumber(field) then
+        return string.format("%s[%s]", tname, field)
     end
-    --debugf(11,"isFieldValueMatch: stage 2,0")
-    bFieldMatches = not args.query or (args.query and string.find(tostring(field),args.query))
-    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
-    return bFieldMatches and bValueMatches
+    return field
 end
 
-function isKeyValueMatch(key,value)
-    --debugf(11,"isKeyValueMatch()")
-    if not (args.querykeys or args.queryvalues) then
-        --debugf(11,"isKeyValueMatch: stage 1")
-        return true
+function appendField(parent, field)
+    newParent=""
+    if tonumber(field) then
+        newParent=string.format("%s[%s]",parent,field)
+    else
+        newParent=string.format("%s.%s",parent,field)
     end
-    --debugf(11,"isKeyValueMatch: stage 2,0")
-    bKeyMatches = not args.querykeys or (args.querykeys and string.find(key,args.querykeys))
-    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
-    return bKeyMatches and bValueMatches
+    debugf(2, string.format("new parent: %s", newParent))
+    return newParent
 end
+
+function makeIndentation()
+    indent="   "
+    for i=1,(cur_depth) do
+        indent=string.format("  %s",indent)
+    end
+    indent=string.format("%s ",indent)
+    return indent
+end
+
+bToggle = true
+function printField(path, field, value)
+    if runOnce(printField) then
+        print(string.format("%s", path))
+        return
+    end
+    if not args.disableprint then
+        local indent = nil
+        if not args.search then
+            indent = makeIndentation()
+        elseif is_match(path, field, value) then
+            indent = makeIndentation()
+        end
+        if indent ~= nil then
+            local indentedField = field
+            indentedField = string.format("%-40s", field .. ":")
+            if bToggle then
+                indentedField = string.gsub(indentedField,"  "," ~")
+                bToggle = false
+            else
+                bToggle = true
+            end
+            indentedField = indent .. "| " .. indentedField
+            indent = string.format("%" .. string.len(indentedField) .. "s", "")
+            if hasMetadata(value) then
+                print(string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind))
+            else
+                print(string.format("%s %s", indentedField, value))
+            end
+            if args.datadebug then
+                if hasMetadata(value) then
+                    print(string.format("%s type(%s): %s\n%s _kind: %s\n%s _type: %s", indent, field, type(value), indent, field._kind, indent, field._type))
+                else
+                    print(string.format("%s type(%s): %s", indent, field, type(value)))
+                end
+            end
+        end
+    end
+end
+
+function debugf(level,...)
+    if args.debug and level <= tonumber(args.debug) then
+        str=string.format(" #  %s",select(1, ...))
+        for i = 2, select('#', ...) do
+            str=string.format("%s\t%s",str,select(i, ...))
+        end
+        print(str)
+    end
+end
+
+
 
 function hasPairs(value)
     --debugf(11,"hasPairs()")
@@ -421,6 +565,32 @@ function hasPairs(value)
     --debugf(11,"hasPairs: stage 0")
     return false
 end
+
+function isFieldValueMatch(field,value)
+    --debugf(11,"isFieldValueMatch()")
+    if not (args.query or args.queryvalues) then
+        --debugf(11,"isFieldValueMatch: stage 1")
+        return true
+    end
+    --debugf(11,"isFieldValueMatch: stage 2,0")
+    bFieldMatches = not args.query or (args.query and string.find(tostring(field),args.query))
+    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
+    return bFieldMatches and bValueMatches
+end
+
+function isKeyValueMatch(key,value)
+    --debugf(11,"isKeyValueMatch()")
+    if not (args.querykeys or args.queryvalues) then
+        --debugf(11,"isKeyValueMatch: stage 1")
+        return true
+    end
+    --debugf(11,"isKeyValueMatch: stage 2,0")
+    bKeyMatches = not args.querykeys or (args.querykeys and string.find(key,args.querykeys))
+    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
+    return bKeyMatches and bValueMatches
+end
+
+
 
 function isFieldHumanReadable(field,value)
     if args.includeitall then
@@ -521,10 +691,23 @@ function canRecurseKey(parent,key,value)
 end
 
 function print_tile(key,v)
-    if v._kind == "container" and string.find(tostring(v),"[16][]") then
+    print(string.format("%s, v._kind: %s", v[x][y], v[x][y]._kind))
+    for k,v2 in safe_pairs(v[x][y]) do
+        if isKeyHumanReadable(k,v2) then
+            bprintparent=print_key(k,v2,bprintparent,parent,v2)
+            if canRecurseKey(parent,k,v2) then
+                debugf(3,"print_keys->print_keys.3")
+                print_keys(string.format(tonumber(k) and "%s[%s]" or "%s.%s",parent,k),k,v2,bprintparent)
+            else
+                debugf(3,"print_keys->norecursion.3")
+            end
+        end
+    end
+    if v._kind == "container" and string.find(tostring(v),"%[16%]%[%]") then
         if isKeyValueMatch(key) then
-            debugf(5,"print_keys->print_tile")
-            return print_key(string.format("%s[%d][%d]",field,x,y), v[x][y])
+            debugf(0,"print_keys->print_tile")
+            print_key(string.format("%s[%d][%d]",key,x,y), v[x][y])
+            return true
         end
     end
     return false
@@ -648,19 +831,10 @@ end
 function Query(t,query,parent,field,bprintparent)
     cur_depth = cur_depth + 1
     breturn_printedkeys=false
-    if not depth or cur_depth < depth then --We always have at least the default depth limit
+    if not maxdepth or cur_depth < maxdepth then --We always have at least the default depth limit
         parent = parent and parent or ""
         field = field and field or ""
         debugf(10,"we're inside query")
-        if type(t) == "table" then
-            --debugf(11,string.format("query: selected table. type: %s, value: %s, length: %s",type(t),t,TableLength(t)))
-        elseif type(t) == "userdata" then
-            if getmetatable(t) then
-                --debugf(11,string.format("query: selected table. type: %s, value: %s, _kind: %s, _type: %s, length: %s",type(t),t,t._kind,t._type,TableLength(t)))
-            else
-                --debugf(11,string.format("query: selected table. type: %s, value: %s, length: %s",type(t),t,TableLength(t)))
-            end
-        end
         if bprintkeys and hasMetadata(t) and t._kind == "enum-type" and isFieldValueMatch(field,value) then
             debugf(5,"query is going straight to print_keys")
             print_keys(parent,"",t,bprintparent)
@@ -709,71 +883,6 @@ function Query(t,query,parent,field,bprintparent)
     end
     cur_depth = cur_depth - 1
     return breturn_printedkeys
-end
-
-function main()
-    init_parameters()
-    pos = nil
-    x = nil
-    y = nil
-    block = nil
-    info=""
-    local selection = nil
-    if args.help then
-        print(help)
-    elseif args.table then
-        debugf(0,"table selection")
-        selection = parseTableString(args.table)
-        info=args.table
-    elseif args.unit then
-        debugf(0,"unit selection")
-        selection = dfhack.gui.getSelectedUnit()
-        info="unit"
-    elseif args.item then
-        debugf(0,"item selection")
-        selection = dfhack.gui.getSelectedItem()
-        info="item"
-    elseif args.tile then
-        debugf(0,"tile selection")
-        pos = copyall(df.global.cursor)
-        x = pos.x%16
-        y = pos.y%16
-        selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
-        info="block"
-    else
-        print(help)
-    end
-
-    msg=string.format("Selected %s is null. Invalid selection.",info)
-    debugf(0,selection,info)
-
-    if selection == nil then
-        qerror(msg)
-    end
-
-    if args.getfield then
-        debugf(0,"getfield..", args.getfield)
-        selection=parseKeyString(selection,args.getfield)
-        info=string.format("%s.%s",info,args.getfield)
-        if canRecurseField("","",selection) then --todo debug, I think this always fails
-            debugf(0,"getfield: query")
-            Query(selection, args.query, info)
-        elseif canRecurseKey("","",selection) then
-            debugf(0,"getfield: print_keys")
-            print_keys(info,args.getfield,selection,true)
-        else
-            debugf(0,"getfield: simple print")
-            print(string.format("%s: %s",info,selection))
-        end
-    else
-        if args.query then
-            debugf(0,"regular query")
-            Query(selection, args.query, info)
-        else
-            debugf(0,"empty query")
-            Query(selection, '', info)
-        end
-    end
 end
 
 main()
