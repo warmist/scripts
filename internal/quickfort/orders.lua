@@ -130,12 +130,18 @@ function create_orders(ctx)
     end
 end
 
--- ensure we don't reinit this; it contains allocated memory
-reactions = reactions or stockflow.collect_reactions()
+-- we only need to init this once, even if a new save is loaded, since we only
+-- care about the built-in reactions, not the mod-added ones.
+-- note that we also shouldn't reinit this because it contains allocated memory
+local function get_reactions()
+    g_reactions = g_reactions or stockflow.collect_reactions()
+    return g_reactions
+end
 
 function enqueue_building_orders(buildings, building_db, ctx)
     local order_specs = ctx.order_specs or {}
     ctx.order_specs = order_specs
+    local reactions = get_reactions()
     for _, b in ipairs(buildings) do
         local db_entry = building_db[b.type]
         log('processing %s, defined from spreadsheet cell(s): %s',
@@ -172,6 +178,7 @@ end
 function enqueue_container_orders(ctx, num_bins, num_barrels, num_wheelbarrows)
     local order_specs = ctx.order_specs or {}
     ctx.order_specs = order_specs
+    local reactions = get_reactions()
     if num_bins and num_bins > 0 then
         inc_order_spec(order_specs, num_bins, reactions, "wooden bin")
     end
