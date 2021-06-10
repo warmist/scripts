@@ -10,36 +10,28 @@ local validArgs = utils.invert({
  'item',
  'tile',
  'table',
+ 'getfield',
 
  'search',
- 'hasvalue',
-
+ 'findvalue',
  'maxdepth',
- 'maxtablelength',
-
- 'getfield',
- 'setvalue',
+ 'maxlength',
 
  'noblacklist',
- 'showall',
-
  'safer',
  'dumb',
+
+ 'setvalue',
  'disableprint',
  'debug',
  'devdebug',
- 'datadebug'
+ 'debugdata'
 })
 local args = utils.processArgs({...}, validArgs)
+new_value =nil
 maxdepth =nil
 cur_depth = -1
 
-newkeyvalue=nil
-bprintfields=nil
-bprintkeys=nil
-space_field="   "
-fN=0
---kN=25
 local help = [====[
 
 devel/query
@@ -75,17 +67,14 @@ A few important ones:
 
 Examples::
 
-  devel/query -table df -query dead
+  devel/query -table df -search dead
   devel/query -table df.global.ui.main -depth 0
   devel/query -table df.profession -querykeys WAR
-  devel/query -unit -query STRENGTH
-  devel/query -unit -query physical_attrs -listkeys
+  devel/query -unit -search STRENGTH
+  devel/query -unit -search physical_attrs -listkeys
   devel/query -unit -getfield id
 
 **Selection options:**
-
-These options are used to specify where the query will run,
-or specifically what key to print inside a unit.
 
 ``-unit``:              Selects the highlighted unit
 
@@ -100,21 +89,20 @@ or specifically what key to print inside a unit.
 
 ``-getfield <value>``:  Gets the specified field from the selection.
 
+                        Must use in conjunction with one of the above selection options.
                         Must use dot notation to denote sub-fields.
-                        Useful if there would be several matching
-                        fields with the input as a substring (eg. 'id', 'gui')
 
 **Query options:**
 
 ``-search <value>``:       Searches the selection for field names with substrings matching the specified value.
 
-``-hasvalue <value>``:     Searches the selection for field values matching the specified value.
+``-findvalue <value>``:    Searches the selection for field values matching the specified value.
 
-``-maxdepth <value>``:        Limits the field recursion depth (default: 10)
+``-maxdepth <value>``:     Limits the field recursion depth (default: 10)
 
-``-maxtablelength <value>``:  Limits the table sizes that will be walked (default: 257)
+``-maxlength <value>``:    Limits the table sizes that will be walked (default: 257)
 
-``-noblacklist``:   Removes blacklist filtering, and disregards readability of output.
+``-noblacklist``:   Disables blacklist filtering.
 
 ``-safer``:         Disables walking struct data.
 
@@ -128,32 +116,31 @@ or specifically what key to print inside a unit.
 
 **Command options:**
 
-``-debug <value>``: Enables debug log lines equal to or less than the value
-provided. Some lines are commented out entirely, and you probably won't even use
-this.. but hey, now you know it exists.
+``-setvalue <value>``: Attempts to set the values of any printed fields.
+                       Supported types: boolean,
 
-``-disableprint``: Disables printing fields and keys. Might be useful if you are
-debugging this script. Or to see if a query will crash (faster) but not sure
-what else you could use it for.
+``-disableprint``:     Disables printing. Might be useful if you are debugging this script.
+                       Or to see if a query will crash (faster) but not sure what else you could use it for.
+                       
+``-debug <value>``:    Enables debug log lines equal to or less than the value provided.
 
-``-help``: Prints this help information.
+``-debugdata``:        Enables debugging data. Prints type information under each field.
+
+``-help``:             Prints this help information.
 
 ]====]
 
 --[[ Test cases:
     These sections just have to do with when I made the tests and what their purpose at that time was.
     [safety] make sure the query doesn't crash itself or dfhack
-        1. devel/query -keydepth 3 -listall -table df
+        1. devel/query -maxdepth 3 -table df
         2. devel/query -dumb -table dfhack -search gui
         3. devel/query -dumb -table df
         4. devel/query -dumb -unit
     [validity] make sure the query output is not malformed, and does what is expected
-        1. devel/query -dumb -includeitall -listfields -unit
-        2. devel/query -dumb -includeitall -listfields -table dfhack
-        3. devel/query -dumb -includeitall -listfields -table df
-        4. devel/query -dumb -includeitall -listfields -table df -query job_skill
-        5. devel/query -dumb -includeitall -listall -table df -query job_skill
-        6. devel/query -dumb -includeitall -listall -table df -getfield job_skill
+        1. devel/query -dumb -table dfhack
+        2. devel/query -dumb -table df -search job_skill
+        3. devel/query -dumb -table df -getfield job_skill
 ]]
 
 --Section: entry/initialization
@@ -205,7 +192,7 @@ function getSelectionData()
         selection = findPath(selection,args.getfield)
         path_info = path_info .. "." .. args.getfield
     end
-    print(selection, path_info)
+    --print(selection, path_info)
     return selection, path_info, pos, tilex, tiley
 end
 
@@ -221,13 +208,13 @@ function processArguments()
         end
     else
         --Table Length
-        if not args.maxtablelength then
+        if not args.maxlength then
             --[[ Table length is inversely proportional to how useful the data is.
             257 was chosen with the intent of capturing all enums. Or hopefully most of them.
             ]]
-            args.maxtablelength = 257
+            args.maxlength = 257
         else
-            args.maxtablelength = tonumber(args.maxtablelength)
+            args.maxlength = tonumber(args.maxlength)
         end
     end
 
@@ -244,9 +231,9 @@ function processArguments()
 
     --Set Key [boolean parsing]
     if args.setkey == "true" then
-        newkeyvalue=true
+        new_value =true
     elseif args.setkey == "false" then
-        newkeyvalue=false
+        new_value =false
     end
 end
 
@@ -275,7 +262,7 @@ function query(t, tname, search_term, path)
         -- check that we can search
         if is_searchable(tname, t) then
             -- iterate over search space
-            for fname,v in pairs(t) do
+            for fname,v in safe_pairs(t) do
                 -- for each, make new parent string and recurse
                 --print(k,t[k],v)
                 local newTName = makeName(tname, fname)
@@ -303,10 +290,16 @@ function is_searchable(tname, t)
         if not isBlackListed(tname, t) and not df.isnull(t) then
             debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
             if not isEmpty(t) then
-                if not args.maxtablelength or runOnce(is_searchable) or countTableLength(t) <= args.maxtablelength then
+                if not args.maxlength or runOnce(is_searchable) or countTableLength(t) <= args.maxlength then
                     if getmetatable(t) then
                         if t._kind == "primitive" then
                             return false
+                        elseif t._kind == "struct" then
+                            if args.safer then
+                                return false
+                            else
+                                return true
+                            end
                         end
                         debugf(1,string.format("_kind: %s, _type: %s",t._kind,t._type))
                     end
@@ -320,9 +313,9 @@ function is_searchable(tname, t)
     return false
 end
 
-function is_match(field, value)
-    return (not args.hasvalue or value == args.hasvalue)
-            and (not args.search or string.find(tostring(field),args.search))
+function is_match(path, field, value)
+    return (not args.findvalue or value == args.findvalue)
+            and (not args.search or string.find(tostring(field),args.search) or string.find(path,args.search))
 end
 
 function is_recursive(path, field)
@@ -483,7 +476,7 @@ end
 bToggle = true
 function printField(path, field, value)
     if runOnce(printField) then
-        print(string.format("%s", path))
+        print(string.format("%s: %s", path, value))
         return
     end
     if not args.disableprint then
@@ -491,11 +484,11 @@ function printField(path, field, value)
         local bMatch = false
         if not args.search then
             indent = makeIndentation()
-        elseif is_match(field, value) then
+        elseif is_match(path, field, value) then
             bMatch = true
         end
         if indent ~= nil or bMatch then
-            local indentedField = bMatch and path or field
+            local indentedField = tostring(bMatch and path or field)
             if bMatch then
                 indentedField = string.format("%-80s ", indentedField .. ":")
             else
@@ -516,7 +509,7 @@ function printField(path, field, value)
             else
                 print(string.format("%s %s", indentedField, value))
             end
-            if args.datadebug then
+            if args.debugdata then
                 if hasMetadata(value) then
                     print(string.format("%s type(%s): %s\n%s _kind: %s\n%s _type: %s", indent, field, type(value), indent, field._kind, indent, field._type))
                 else
