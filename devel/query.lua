@@ -144,9 +144,9 @@ what else you could use it for.
     These sections just have to do with when I made the tests and what their purpose at that time was.
     [safety] make sure the query doesn't crash itself or dfhack
         1. devel/query -keydepth 3 -listall -table df
-        2. devel/query -depth 10 -keydepth 3 -includeitall -dumb -table dfhack -query gui -listall
-        3. devel/query -depth 10 -keydepth 3 -includeitall -dumb -table df -listfields
-        4. devel/query -depth 10 -keydepth 5 -includeitall -dumb -unit -listall
+        2. devel/query -dumb -table dfhack -search gui
+        3. devel/query -dumb -table df
+        4. devel/query -dumb -unit
     [validity] make sure the query output is not malformed, and does what is expected
         1. devel/query -dumb -includeitall -listfields -unit
         2. devel/query -dumb -includeitall -listfields -table dfhack
@@ -202,8 +202,10 @@ function getSelectionData()
         print(help)
     end
     if args.getfield then
-        selection = parseTableString(selection,args.getfield)
+        selection = findPath(selection,args.getfield)
+        path_info = path_info .. "." .. args.getfield
     end
+    print(selection, path_info)
     return selection, path_info, pos, tilex, tiley
 end
 
@@ -248,58 +250,69 @@ function processArguments()
     end
 end
 
+bRunOnce={}
+function runOnce(caller)
+    if bRunOnce[caller] == true then
+        return false
+    end
+    bRunOnce[caller] = true
+    return true
+end
+
 --Section: core logic
 function query(t, tname, search_term, path)
     --[[
+    * print info about t
     * increment depth
     * check depth
-    * print info about t
     * recurse structure
     * decrement depth
     ]]--
+    setValue(tname, t)
+    printField(path, tname, t)
     cur_depth = cur_depth + 1
-    if not maxdepth or cur_depth < maxdepth then
+    if not maxdepth or cur_depth <= maxdepth then
         -- check that we can search
-        -- print field t
-        setValue(t)
-        printField(path, tname, t)
-        --print()
-        if is_searchable(t, tname) then
+        if is_searchable(tname, t) then
             -- iterate over search space
-            for k,v in pairs(t) do
+            for fname,v in pairs(t) do
                 -- for each, make new parent string and recurse
                 --print(k,t[k],v)
-                local newTName = makeName(tname,k)
-                local newParent =  appendField(path,k)
-                query(t[k], newTName, search_term, newParent)
+                local newTName = makeName(tname, fname)
+                if not is_recursive(path, newTName) then
+                    local newPath =  appendField(path, fname)
+                    query(t[fname], newTName, search_term, newPath)
+                end
             end
         end
     end
     cur_depth = cur_depth - 1
 end
 
-function setValue(field)
+function setValue(tname, t)
     if args.setvalue then
-        if not args.search or is_match(path, tostring(field), field) then
-            field = args.setvalue
+        if not args.search or is_match(tname, t) then
+            t = args.setvalue
         end
     end
 end
 
 --Section: filters
-function is_searchable(t, tname)
-    if not isBlackListed(tname) and not df.isnull(t) then
-        debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
-        if not isEmpty(t) then
-            if not args.maxtablelength or runOnce(is_searchable) or countTableLength(t) <= args.maxtablelength then
-                if getmetatable(t) then
-                    if t._kind == "primitive" then
-                        return false
+function is_searchable(tname, t)
+    if type(t) ~= "function" then
+        if not isBlackListed(tname, t) and not df.isnull(t) then
+            debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
+            if not isEmpty(t) then
+                if not args.maxtablelength or runOnce(is_searchable) or countTableLength(t) <= args.maxtablelength then
+                    if getmetatable(t) then
+                        if t._kind == "primitive" then
+                            return false
+                        end
+                        debugf(1,string.format("_kind: %s, _type: %s",t._kind,t._type))
                     end
-                    debugf(1,string.format("_kind: %s, _type: %s",t._kind,t._type))
-                end
-                for _,_ in safe_pairs(t) do
-                    return true
+                    for _,_ in safe_pairs(t) do
+                        return true
+                    end
                 end
             end
         end
@@ -307,9 +320,8 @@ function is_searchable(t, tname)
     return false
 end
 
-function is_match(path, field, value)
-    return not is_recursive(path, field)
-            and (not args.hasvalue or value == args.hasvalue)
+function is_match(field, value)
+    return (not args.hasvalue or value == args.hasvalue)
             and (not args.search or string.find(tostring(field),args.search))
 end
 
@@ -317,7 +329,7 @@ function is_recursive(path, field)
     return string.find(path, tostring(field))
 end
 
-function isBlackListed(field)
+function isBlackListed(field, t)
     if not args.noblacklist then
         if string.find(field,"script") then
             return true
@@ -332,15 +344,6 @@ function isBlackListed(field)
         end
     end
     return false
-end
-
-bRunOnce={}
-function runOnce(caller)
-    if bRunOnce[caller] == true then
-        return false
-    end
-    bRunOnce[caller] = true
-    return true
 end
 
 --Section: table helpers
@@ -393,7 +396,7 @@ function getTableLength(t)
     return 0
 end
 
-function parseTableString(t, path)
+function findPath(t, path)
     debugf(1,"parsing",t, path)
     curTable = t
     keyParts = {}
@@ -403,9 +406,9 @@ function parseTableString(t, path)
     if not curTable then
         qerror("Looks like we're borked somehow.")
     end
-    for k,v in pairs(keyParts) do
+    for _,v in pairs(keyParts) do
         if v and curTable[v] ~= nil then
-            --debugf(1,"found something",v,curTable,curTable[v])
+            debugf(1,"found something",v,curTable,curTable[v])
             curTable = curTable[v]
         else
             qerror("Table" .. v .. " does not exist.")
@@ -468,11 +471,12 @@ function appendField(parent, field)
 end
 
 function makeIndentation()
-    indent="   "
+    local base="  "
+    local indent=""
     for i=1,(cur_depth) do
-        indent=string.format("  %s",indent)
+        indent=indent .. string.format("%s",base)
     end
-    indent=string.format("%s ",indent)
+    --indent=string.format("%s ",base)
     return indent
 end
 
@@ -484,21 +488,28 @@ function printField(path, field, value)
     end
     if not args.disableprint then
         local indent = nil
+        local bMatch = false
         if not args.search then
             indent = makeIndentation()
-        elseif is_match(path, field, value) then
-            indent = makeIndentation()
+        elseif is_match(field, value) then
+            bMatch = true
         end
-        if indent ~= nil then
-            local indentedField = field
-            indentedField = string.format("%-40s", field .. ":")
+        if indent ~= nil or bMatch then
+            local indentedField = bMatch and path or field
+            if bMatch then
+                indentedField = string.format("%-80s ", indentedField .. ":")
+            else
+                indentedField = string.format("%-40s ", indentedField .. ":")
+            end
             if bToggle then
                 indentedField = string.gsub(indentedField,"  "," ~")
                 bToggle = false
             else
                 bToggle = true
             end
-            indentedField = indent .. "| " .. indentedField
+            if not bMatch then
+                indentedField = indent .. "| " .. indentedField
+            end
             indent = string.format("%" .. string.len(indentedField) .. "s", "")
             if hasMetadata(value) then
                 print(string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind))
@@ -524,365 +535,6 @@ function debugf(level,...)
         end
         print(str)
     end
-end
-
-
-
-function hasPairs(value)
-    --debugf(11,"hasPairs()")
-    if type(value) == "table" then
-        --debugf(11,"hasPairs: stage 1")
-        return true
-    elseif type(value) == "userdata" then
-        --debugf(11,"hasPairs: stage 2")
-        if getmetatable(value) then
-            --debugf(11,"hasPairs: stage 3")
-            if value._kind == "primitive" then
-                return false
-            elseif value._kind == "container" or value._kind == "bitfield" then
-                --debugf(11,"hasPairs: stage 4")
-                return true
-            elseif value._kind == "struct" and not df.isnull(value) then
-                --debugf(11,"hasPairs: stage 5. struct is not null")
-                if args.safer then
-                    return false
-                else
-                    return true
-                end
-            end
-            debugf(11,"hasPairs: stage 6")
-            debugf(0,string.format("This shouldn't be reached.\n   input-value: %s, type: %s, _kind: %s",value,type(value),value._kind))
-            return (TableLength(value) ~= 0)
-        end
-    else
-        --debugf(11,"hasPairs: stage 7")
-        for k,v in safe_pairs(value) do
-            --debugf(11,"hasPairs: stage 8")
-            debugf(0,string.format("Pretty sure this is never going to proc, except on structs.\n   table-length: %d, input-value: %s, type: %s, k: %s, v: %s",TableLength(value),value,type(value),k,v))
-            return true
-        end
-    end
-    --debugf(11,"hasPairs: stage 0")
-    return false
-end
-
-function isFieldValueMatch(field,value)
-    --debugf(11,"isFieldValueMatch()")
-    if not (args.query or args.queryvalues) then
-        --debugf(11,"isFieldValueMatch: stage 1")
-        return true
-    end
-    --debugf(11,"isFieldValueMatch: stage 2,0")
-    bFieldMatches = not args.query or (args.query and string.find(tostring(field),args.query))
-    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
-    return bFieldMatches and bValueMatches
-end
-
-function isKeyValueMatch(key,value)
-    --debugf(11,"isKeyValueMatch()")
-    if not (args.querykeys or args.queryvalues) then
-        --debugf(11,"isKeyValueMatch: stage 1")
-        return true
-    end
-    --debugf(11,"isKeyValueMatch: stage 2,0")
-    bKeyMatches = not args.querykeys or (args.querykeys and string.find(key,args.querykeys))
-    bValueMatches = not args.queryvalues or (args.queryvalues and string.find(tostring(value),args.queryvalues))
-    return bKeyMatches and bValueMatches
-end
-
-
-
-function isFieldHumanReadable(field,value)
-    if args.includeitall then
-        return true
-    end
-    --debugf(11,"isFieldHumanReadable()")
-    tf=tonumber(field) and "number" or type(field)
-    tv=type(value)
-    if tf == "string" or hasPairs(value) then
-        --debugf(11,"isFieldHumanReadable: stage 1")
-        return true
-    elseif tf ~= "number" then
-        debugf(0,"field type is not a string, or a number. It is: ", tf)
-    else
-        debugf(1,string.format("field type: %s,  value type: %s",tf,tv))
-    end
-    --debugf(11,"isFieldHumanReadable: stage 0")
-    return false
-end
-
-function isKeyHumanReadable(key,value)
-    if args.includeitall then
-        return true
-    end
-    --debugf(11,"isKeyHumanReadable()")
-    tk=tonumber(key) and "number" or type(key)
-    tv=type(value)
-    debugf(4,string.format("isKeyHumanReadable: key=%s, value=%s, value-type=%s",key,value,type(value)))
-    if tk == "string" or tv == "string" then
-        --debugf(11,"isKeyHumanReadable: stage 1")
-        return true
-    elseif tk == "number" and getmetatable(value) then
-        --debugf(11,"isKeyHumanReadable: stage 2")
-        return true
-    elseif tk ~= "number" then
-        debugf(0,"key type is not a string, or a number. It is: ", tk)
-    else
-        debugf(1,string.format("field type: %s,  value type: %s",tk,tv))
-    end
-    --debugf(11,"isKeyHumanReadable: stage 0")
-    return false
-end
-
-function canRecurseField(parent,field,value)
-    debugf(10,"canRecurseField()",field,value)
-    if type(value) == "table" and hasPairs(value) and (not args.maxtablelength or TableLength(value) <= args.maxtablelength) then
-        --debugf(11,"canRecurseField: stage 1")
-        --check that we aren't going to walk through a pointer to the parent structure
-        if tonumber(field) then
-            --debugf(11,"canRecurseField: stage 2")
-            --[[if args.dumb or not string.find(parent,"%[[%d]+%]") then
-                --debugf(11,"canRecurseField: stage 3")
-                return true
-            end]]
-            return true
-        end
-        pattern=string.format("%%.%s",field)
-        if not string.find(parent,string.format("%s%%.",pattern)) and
-           not string.find(parent,pattern,1+parent:len()-pattern:len()) then
-            --debugf(11,"canRecurseField: stage 4")
-            --todo???if not tonumber(k) and (type(k) ~= "table" or depth) and not string.find(tostring(k), 'script') then
-            if not isBlackListed(field) then
-                --debugf(11,"canRecurseField: stage 5")
-                return true
-            end
-        end
-    end
-    --debugf(11,"canRecurseField: stage 0")
-    return false
-end
-
-function canRecurseKey(parent,key,value)
-    --debugf(11,"canRecurseKey()",key,value)
-    if hasPairs(value) and (not args.maxtablelength or TableLength(value) <= args.maxtablelength) then
-        --debugf(11,"canRecurseKey: stage 1")
-        --check that we aren't going to walk through a pointer to the parent structure
-        if tonumber(key) then
-            --debugf(11,"canRecurseKey: stage 2")
-            --[[if args.dumb or not string.find(parent,"%[[%d]+%]") then
-                --debugf(11,"canRecurseKey: stage 3")
-                return true
-            end]]
-            return true
-        end
-        pattern=string.format("%%.%s",key)
-        if not string.find(parent,string.format("%s%%.",pattern)) and
-           not string.find(parent,pattern,1+parent:len()-pattern:len()) then
-            --debugf(11,"canRecurseKey: stage 4")
-            --todo???if not tonumber(k) and (type(k) ~= "table" or depth) and not string.find(tostring(k), 'script') then
-            if not isBlackListed(key) then
-                --debugf(11,"canRecurseKey: stage 5")
-                return true
-            end
-        end
-    end
-    --debugf(11,"canRecurseKey: stage 0")
-    return false
-end
-
-function print_tile(key,v)
-    print(string.format("%s, v._kind: %s", v[x][y], v[x][y]._kind))
-    for k,v2 in safe_pairs(v[x][y]) do
-        if isKeyHumanReadable(k,v2) then
-            bprintparent=print_key(k,v2,bprintparent,parent,v2)
-            if canRecurseKey(parent,k,v2) then
-                debugf(3,"print_keys->print_keys.3")
-                print_keys(string.format(tonumber(k) and "%s[%s]" or "%s.%s",parent,k),k,v2,bprintparent)
-            else
-                debugf(3,"print_keys->norecursion.3")
-            end
-        end
-    end
-    if v._kind == "container" and string.find(tostring(v),"%[16%]%[%]") then
-        if isKeyValueMatch(key) then
-            debugf(0,"print_keys->print_tile")
-            print_key(string.format("%s[%d][%d]",key,x,y), v[x][y])
-            return true
-        end
-    end
-    return false
-end
-
-function print_keys(parent,field,value,bprintparent)
-    --debugf(11,"print_keys()")
-    cur_keydepth = cur_keydepth + 1
-    if not keydepth or (cur_keydepth <= keydepth) then
-        if hasMetadata(value) then
-            debugf(5,"print_keys: field value has metadata")
-            if value._kind == "enum-type" then
-                debugf(4,"print_keys: enum-type")
-                for i,v in ipairs(value) do
-                    if isKeyHumanReadable(i,value) then
-                        bprintparent=print_key(i,v,bprintparent,parent,value)
-                        if canRecurseKey(parent,i,v) then
-                            debugf(3,"print_keys->print_keys.1")
-                            print_keys(string.format("%s[%d]",parent,i),i,v,bprintparent)
-                        else
-                            debugf(3,"print_keys->norecursion.1")
-                        end
-                    end
-                end
-            elseif value._kind == "container" then
-                debugf(5,"print_keys: container")
-                if not args.tile or not print_tile(field,value) then
-                    debugf(4,"print_keys: not a tile exclusive data structure",string.format("_type: %s, length: %s", value._type, #value))
-                    for k,v in pairs(value) do
-                        if isKeyHumanReadable(k,v) then
-                            bprintparent=print_key(k,v,bprintparent,parent,value)
-                            if canRecurseKey(parent,k,v) then
-                                debugf(3,"print_keys->print_keys.2")
-                                print_keys(string.format(tonumber(k) and "%s[%s]" or "%s.%s",parent,k),k,v,bprintparent)
-                            else
-                                debugf(3,"print_keys->norecursion.2")
-                            end
-                        end
-                    end
-                end
-            else
-                debugf(5,string.format("print_keys:\n    # parent: %s\n    # field: %s\n    # _kind: %s\n    # type: %s\n    # value: %s",parent,field,value._kind,type(value),value))
-                if value._kind == "struct" then
-                    --debugf(11,string.format("struct length: %s",TableLength(value)))
-                end
-                for k,v in safe_pairs(value) do
-                    if isKeyHumanReadable(k,v) then
-                        bprintparent=print_key(k,v,bprintparent,parent,value)
-                        if canRecurseKey(parent,k,v) then
-                            debugf(3,"print_keys->print_keys.3")
-                            print_keys(string.format(tonumber(k) and "%s[%s]" or "%s.%s",parent,k),k,v,bprintparent)
-                        else
-                            debugf(3,"print_keys->norecursion.3")
-                        end
-                    end
-                end
-            end
-        else
-            debugf(5,string.format("print_keys:\n    # parent: %s\n    # field: %s\n    # type: %s\n    # value: %s",parent,field,type(value),value))
-            for k,v in pairs(value) do
-                if isKeyHumanReadable(k,v) then
-                    bprintparent=print_key(k,v,bprintparent,parent,value)
-                    if canRecurseKey(parent,k,v) then
-                        debugf(3,"print_keys->print_keys.4")
-                        print_keys(string.format(tonumber(k) and "%s[%s]" or "%s.%s",parent,k),k,v,bprintparent)
-                    else
-                        debugf(3,"print_keys->norecursion.4")
-                    end
-                end
-            end
-        end
-    end
-    cur_keydepth = cur_keydepth - 1
-    --debugf(11,"print_keys: exit")
-end
-
-function print_key(k,v,bprintparent,parent,v0)
-    if not args.disableprint and (k or v) and isKeyValueMatch(k,v) then
-        if bprintparent then
-            debugf(7,"print_key->print_field")
-            print_field(parent,v0)
-            bprintparent=false
-        end
-        if args.setkey then
-            set_key(v0,k)
-            v=v0[k]
-        end
-        key=string.format("%-4s ",tostring(k)..":")
-        indent="   |"
-        for i=1,(cur_keydepth) do
-            indent=string.format("  %s",indent)
-        end
-        indent=string.format("%s ",indent)
-        print(indent .. string.format("%s",key) .. tostring(v))
-    end
-    return bprintparent
-end
-
-function set_key(v0,k)
-    key_type=type(v0[k])
-    if key_type == "number" and tonumber(args.setkey) then
-        v0[k]=tonumber(args.setkey)
-    elseif key_type == "boolean" and newkeyvalue then
-        v0[k]=newkeyvalue
-    elseif key_type == "string" then
-        v0[k]=args.setkey
-    end
-end
-
-function print_field(field,v)
-    if not args.disableprint and (field or v) then
-        field=string.format("%s: ",tostring(field))
-        cN=string.len(field)
-        fN = cN >= fN and cN or fN
-        fN = fN >= 90 and 90 or fN
-        form="%-"..(fN+5).."s"
-        print(space_field .. string.gsub(string.format(form,field),"   "," ~ ") .. "[" .. type(v) .. "] " .. tostring(v))
-    end
-end
-
-function Query(t,query,parent,field,bprintparent)
-    cur_depth = cur_depth + 1
-    breturn_printedkeys=false
-    if not maxdepth or cur_depth < maxdepth then --We always have at least the default depth limit
-        parent = parent and parent or ""
-        field = field and field or ""
-        debugf(10,"we're inside query")
-        if bprintkeys and hasMetadata(t) and t._kind == "enum-type" and isFieldValueMatch(field,value) then
-            debugf(5,"query is going straight to print_keys")
-            print_keys(parent,"",t,bprintparent)
-            breturn_printedkeys=true
-        else
-            for field,value in pairs(t) do
-                debugf(10,"we're looping inside query")
-                if value then
-                    debugf(9,"query loop has a valid value",field,value)
-                    debugf(9,string.format("value-type: %s, field: %s, value: %s",type(value),field,value))
-                    newParent=""
-                    if tonumber(field) then
-                        newParent=string.format("%s[%s]",parent,field)
-                    else
-                        newParent=string.format("%s.%s",parent,field)
-                    end
-                    debugf(10,"query: stage 1")
-
-                    -- print field
-                    bprintparent=true
-                    if bprintfields and isFieldValueMatch(field,value) and isFieldHumanReadable(field,value) then
-                        debugf(8,"query->print_field")
-                        print_field(newParent,value)
-                        bprintparent=false
-                    end
-                    debugf(10,"query: stage 2")
-
-                    -- query recursively
-                    bprintedkeys=false
-                    if canRecurseField(parent,field,value) then
-                        debugf(8,"query->query")
-                        bprintedkeys=Query(t[field],query,newParent,field,bprintparent)
-                    end
-                    debugf(10,"query: stage 3")
-
-                    -- print keys
-                    if bprintkeys and not bprintedkeys and isFieldValueMatch(field,value) and canRecurseKey(parent,field,value) then
-                        debugf(8,"query->print_keys")
-                        print_keys(newParent,field,value,bprintparent)
-                        breturn_printedkeys=true
-                    end
-                    debugf(10,"query: stage 4")
-                end
-            end
-        end
-    end
-    cur_depth = cur_depth - 1
-    return breturn_printedkeys
 end
 
 main()
