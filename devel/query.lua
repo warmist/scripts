@@ -22,15 +22,17 @@ local validArgs = utils.invert({
  'dumb',
 
  'setvalue',
+ 'oneline',
  'disableprint',
  'debug',
  'devdebug',
  'debugdata'
 })
 local args = utils.processArgs({...}, validArgs)
-new_value =nil
-maxdepth =nil
-cur_depth = -1
+local new_value = nil
+local find_value = nil
+local maxdepth = nil
+local cur_depth = -1
 
 local help = [====[
 
@@ -67,7 +69,8 @@ A few important ones:
 
 Examples::
 
-  devel/query -table df -search dead
+  devel/query -table df -maxdepth 0
+  devel/query -tile -search "occup.*carv"
   devel/query -table df.global.ui.main -depth 0
   devel/query -table df.profession -querykeys WAR
   devel/query -unit -search STRENGTH
@@ -119,6 +122,8 @@ Examples::
 ``-setvalue <value>``: Attempts to set the values of any printed fields.
                        Supported types: boolean,
 
+``-oneline``:          Reduces output to one line, except when ``-debugdata`` is used.
+
 ``-disableprint``:     Disables printing. Might be useful if you are debugging this script.
                        Or to see if a query will crash (faster) but not sure what else you could use it for.
                        
@@ -150,7 +155,7 @@ function main()
         return
     end
     processArguments()
-    local selection,path_info,pos,tilex,tiley = table.unpack{getSelectionData()}
+    local selection,path_info = table.unpack{getSelectionData()}
     debugf(0, tostring(selection), path_info)
 
     if selection == nil then
@@ -160,12 +165,11 @@ function main()
     query(selection, path_info, args.search, path_info)
 end
 
+local tilex = nil
+local tiley = nil
 function getSelectionData()
     local selection = nil
     local path_info = nil
-    local pos = nil
-    local tilex = nil
-    local tiley = nil
     if args.table then
         debugf(0,"table selection")
         selection = findTable(args.table)
@@ -180,7 +184,7 @@ function getSelectionData()
         path_info = "item"
     elseif args.tile then
         debugf(0,"tile selection")
-        pos = copyall(df.global.cursor)
+        local pos = copyall(df.global.cursor)
         selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
         path_info = string.format("block[%d][%d][%d]",pos.x,pos.y,pos.z)
         tilex = pos.x%16
@@ -193,7 +197,7 @@ function getSelectionData()
         path_info = path_info .. "." .. args.getfield
     end
     --print(selection, path_info)
-    return selection, path_info, pos, tilex, tiley
+    return selection, path_info
 end
 
 function processArguments()
@@ -230,14 +234,11 @@ function processArguments()
     end
 
     --Set Key [boolean parsing]
-    if args.setkey == "true" then
-        new_value =true
-    elseif args.setkey == "false" then
-        new_value =false
-    end
+    new_value = toType(args.setvalue)
+    find_value = toType(args.findvalue)
 end
 
-bRunOnce={}
+local bRunOnce={}
 function runOnce(caller)
     if bRunOnce[caller] == true then
         return false
@@ -262,32 +263,45 @@ function query(t, tname, search_term, path)
         -- check that we can search
         if is_searchable(tname, t) then
             -- iterate over search space
-            for fname,v in safe_pairs(t) do
-                -- for each, make new parent string and recurse
-                --print(k,t[k],v)
+            function recurse(fname, value)
                 local newTName = makeName(tname, fname)
-                if not is_recursive(path, newTName) then
+                if is_tiledata(value) then
+                    local newPath =  appendField(path, string.format("%s[%d][%d]", fname,tilex,tiley))
+                    query(value[tilex][tiley], newTName, search_term, newPath)
+                elseif not is_looping(path, newTName) then
                     local newPath =  appendField(path, fname)
-                    query(t[fname], newTName, search_term, newPath)
+                    query(value, newTName, search_term, newPath)
                 end
             end
+            foreach(t, recurse)
         end
     end
     cur_depth = cur_depth - 1
 end
 
+function foreach(t, fn)
+    if getmetatable(t) and t._kind and t._kind == "enum-type" then
+        for k,v in ipairs(t) do
+            fn(k,v)
+        end
+    else
+        for k,v in safe_pairs(t) do
+            fn(k,v)
+        end
+    end
+end
+
 function setValue(tname, t)
     if args.setvalue then
         if not args.search or is_match(tname, t) then
-            t = args.setvalue
+            t = new_value
         end
     end
 end
 
 --Section: filters
 function is_searchable(tname, t)
-    if type(t) ~= "function" then
-        if not isBlackListed(tname, t) and not df.isnull(t) then
+    if not is_blacklisted(tname, t) and not df.isnull(t) then
             debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
             if not isEmpty(t) then
                 if not args.maxlength or runOnce(is_searchable) or countTableLength(t) <= args.maxlength then
@@ -309,20 +323,20 @@ function is_searchable(tname, t)
                 end
             end
         end
-    end
     return false
 end
 
 function is_match(path, field, value)
-    return (not args.findvalue or value == args.findvalue)
+    return (not args.findvalue or value == find_value)
             and (not args.search or string.find(tostring(field),args.search) or string.find(path,args.search))
 end
 
-function is_recursive(path, field)
+function is_looping(path, field)
     return string.find(path, tostring(field))
 end
 
-function isBlackListed(field, t)
+function is_blacklisted(field, t)
+    field = tostring(field)
     if not args.noblacklist then
         if string.find(field,"script") then
             return true
@@ -339,11 +353,36 @@ function isBlackListed(field, t)
     return false
 end
 
+function is_tiledata(value)
+    if args.tile and string.find(tostring(value),"%[16%]") then
+        if type(value) and string.find(tostring(value[tilex]),"%[16%]") then
+            return true
+        end
+    end
+    return false
+end
+
+function toType(str)
+    if str ~= nil then
+        if str == "true" then
+            return true
+        elseif str == "false" then
+            return false
+        elseif tonumber(str) then
+            return tonumber(str)
+        elseif string.find(str, "nil") then
+            return nil
+        else
+            return tostring(str)
+        end
+    end
+    return nil
+end
+
 --Section: table helpers
-function safe_pairs(item, keys_only)
-    --thanks goes to lethosor for this function
+function safe_pairs(t, keys_only)
     if keys_only then
-        local mt = debug.getmetatable(item)
+        local mt = debug.getmetatable(t)
         if mt and mt._index_table then
             local idx = 0
             return function()
@@ -354,7 +393,7 @@ function safe_pairs(item, keys_only)
             end
         end
     end
-    local ret = table.pack(pcall(function() return pairs(item) end))
+    local ret = table.pack(pcall(function() return pairs(t) end))
     local ok = ret[1]
     table.remove(ret, 1)
     if ok then
@@ -437,7 +476,7 @@ end
 
 function hasMetadata(value)
     if not isEmpty(value) then
-        if getmetatable(value) and value._kind then
+        if getmetatable(value) and value._kind and value._kind ~= nil then
             return true
         end
     end
@@ -480,6 +519,10 @@ function printField(path, field, value)
         return
     end
     if not args.disableprint then
+        if is_tiledata(value) then
+            value = value[tilex][tiley]
+            field = string.format("%s[%d][%d]", field,tilex,tiley)
+        end
         local indent = nil
         local bMatch = false
         if not args.search then
@@ -494,7 +537,7 @@ function printField(path, field, value)
             else
                 indentedField = string.format("%-40s ", indentedField .. ":")
             end
-            if bToggle then
+            if args.debugdata or not args.oneline or bToggle then
                 indentedField = string.gsub(indentedField,"  "," ~")
                 bToggle = false
             else
@@ -503,19 +546,37 @@ function printField(path, field, value)
             if not bMatch then
                 indentedField = indent .. "| " .. indentedField
             end
-            indent = string.format("%" .. string.len(indentedField) .. "s", "")
+            local N = math.min(90, string.len(indentedField))
+            indent = string.format("%" .. N .. "s", "")
+            local output = nil
             if hasMetadata(value) then
-                print(string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind))
+                if args.oneline then
+                    output = string.format("%s %s [%s]", indentedField, value, value._kind)
+                else
+                    output = string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind)
+                end
             else
-                print(string.format("%s %s", indentedField, value))
+                output = string.format("%s %s", indentedField, value)
             end
             if args.debugdata then
                 if hasMetadata(value) then
-                    print(string.format("%s type(%s): %s\n%s _kind: %s\n%s _type: %s", indent, field, type(value), indent, field._kind, indent, field._type))
+                    print(value)
+                    if not args.search and args.oneline then
+                        output = output .. string.format("\n%s type(%s): %s, _kind: %s, _type: %s",
+                                indent, field, type(value), field._kind, field._type)
+                    else
+                        output = output .. string.format("\n%s type(%s): %s\n%s _kind: %s\n%s _type: %s",
+                                indent, field, type(value), indent, field._kind, indent, field._type)
+                    end
                 else
-                    print(string.format("%s type(%s): %s", indent, field, type(value)))
+                    if args.oneline then
+                        output = output .. string.format(", type(%s): %s", path, type(value))
+                    else
+                        output = output .. string.format("\n%s type(%s): %s", indent, field, type(value))
+                    end
                 end
             end
+            print(output)
         end
     end
 end
