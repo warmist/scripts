@@ -1,5 +1,5 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
--- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-15
+-- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-10
 -- Version: 3.x
 --luacheck:skip-entirely
 local utils=require('utils')
@@ -16,16 +16,16 @@ local validArgs = utils.invert({
  'findvalue',
  'maxdepth',
  'maxlength',
+ 'excludetype',
+ 'excludekind',
 
  'noblacklist',
- 'safer',
  'dumb',
 
  'setvalue',
  'oneline',
  'disableprint',
  'debug',
- 'devdebug',
  'debugdata'
 })
 local args = utils.processArgs({...}, validArgs)
@@ -33,49 +33,35 @@ local new_value = nil
 local find_value = nil
 local maxdepth = nil
 local cur_depth = -1
+local bool_flags = {}
 
 local help = [====[
 
 devel/query
 ===========
 Query is a script useful for finding and reading values of data structure fields.
-Purposes will likely be exclusive to writing lua script code.
+Purposes will likely be exclusive to writing lua script code, possibly C++.
 
-This is a recursive script which takes your selected data {table,unit,item,tile}
-and then iterates through it, then iterates through anything it finds. It does
-this recursively until it has walked over everything it is allowed. Everything
-it walks over it checks against any (optional) string/value queries, and if it
-finds a match it then prints it to the console.
+This script takes your data selection eg.{table,unit,item,tile}
+then recursively iterates through it outputting names and values of what it finds.
 
-You can control most aspects of this process, the script is fairly flexible. So
-much so that you can easily create an infinitely recursing query and/or potentially
-crash Dwarf Fortress and DFHack. In previous iterations memory bloat was even a
-concern, where RAM would be used up in mere minutes or seconds; you can probably
-get this to happen as well if you are careless with the depth settings and don't
-print everything walked over (i.e. have a search term). The `kill-lua` command
-may be able to stop this script if it gets out of control.
+As it iterates you can have it do other things, like search for a specific structure pattern (see lua patterns)
+or set the value of fields matching the selection and any search pattern specified.
 
-Before recursing or printing things to the console the script checks several things.
-A few important ones:
-
- - Is the data structure capable of being iterated?
- - Is the data structure pointing to a parent data structure?
- - Is the current level of recursion too high, and do we need to unwind it first?
- - Is the number of entries too high (eg. 70,000 table entries that would be printed)?
- - Is the data going to be usefully readable?
- - Does the field or key match the field or key query or queries?
- - Is printing fields allowed?
- - Is printing keys allowed?
+If the script is taking too long to finish, or if it can't finish you should run ``dfhack-run kill-lua`` from a terminal.
 
 Examples::
 
-  devel/query -table df -maxdepth 0
-  devel/query -tile -search "occup.*carv"
-  devel/query -table df.global.ui.main -depth 0
-  devel/query -table df.profession -querykeys WAR
-  devel/query -unit -search STRENGTH
-  devel/query -unit -search physical_attrs -listkeys
   devel/query -unit -getfield id
+  devel/query -unit -search STRENGTH
+  devel/query -unit -search physical_attrs -maxdepth 2
+  devel/query -tile -search dig
+  devel/query -tile -search "occup.*carv"
+  devel/query -table df -maxdepth 2
+  devel/query -table df -maxdepth 2 -excludekind s -excludetype fsu -oneline
+  devel/query -table df.profession -findvalue FISH
+  devel/query -table df.global.ui.main -maxdepth 0
+  devel/query -table df.global.ui.main -maxdepth 0 -oneline
 
 **Selection options:**
 
@@ -101,21 +87,18 @@ Examples::
 
 ``-findvalue <value>``:    Searches the selection for field values matching the specified value.
 
-``-maxdepth <value>``:     Limits the field recursion depth (default: 10)
+``-maxdepth <value>``:     Limits the field recursion depth (default: 7)
 
 ``-maxlength <value>``:    Limits the table sizes that will be walked (default: 257)
 
+``-excludetype [a|bfnstu0]``:  Excludes data types: All | Boolean, Function, Number, String, Table, Userdata, nil
+
+``-excludekind [a|bces]``:     Excludes data types: All | Bit-fields, Class-type, Enum-type, Struct-type
+
 ``-noblacklist``:   Disables blacklist filtering.
 
-``-safer``:         Disables walking struct data.
-
-                    Unlike native Lua types, struct data can sometimes be misaligned,
-                    which can cause crashes when accessing it. This option may be useful
-                    if you're running an alpha or beta build of DFHack.
-
-``-dumb``:          Disables intelligent checks for things such as reasonable
-                    recursion depth [note: depth maximums are increased, not removed]
-                    and also checks for recursive data structures (ie. cycles)
+``-dumb``:          Disables intelligent checking for recursive data structures(loops)
+                    and increases the -maxdepth to 25 if a value is not already present
 
 **Command options:**
 
@@ -135,6 +118,8 @@ Examples::
 
 ]====]
 
+
+
 --[[ Test cases:
     These sections just have to do with when I made the tests and what their purpose at that time was.
     [safety] make sure the query doesn't crash itself or dfhack
@@ -147,6 +132,58 @@ Examples::
         2. devel/query -dumb -table df -search job_skill
         3. devel/query -dumb -table df -getfield job_skill
 ]]
+
+--Section: core logic
+function query(t, tname, search_term, path)
+    --[[
+    * print info about t
+    * increment depth
+    * check depth
+    * recurse structure
+    * decrement depth
+    ]]--
+    setValue(tname, t)
+    printField(path, tname, t)
+    cur_depth = cur_depth + 1
+    if not maxdepth or cur_depth <= maxdepth then
+        -- check that we can search
+        if is_searchable(tname, t) then
+            -- iterate over search space
+            function recurse(fname, value)
+                local newTName = makeName(tname, fname)
+                if is_tiledata(value) then
+                    local newPath =  appendField(path, string.format("%s[%d][%d]", fname,tilex,tiley))
+                    query(value[tilex][tiley], newTName, search_term, newPath)
+                elseif not is_looping(path, newTName) then
+                    local newPath =  appendField(path, fname)
+                    query(value, newTName, search_term, newPath)
+                end
+            end
+            foreach(t, recurse)
+        end
+    end
+    cur_depth = cur_depth - 1
+end
+
+function foreach(t, fn)
+    if getmetatable(t) and t._kind and t._kind == "enum-type" then
+        for k,v in ipairs(t) do
+            fn(k,v)
+        end
+    else
+        for k,v in safe_pairs(t) do
+            fn(k,v)
+        end
+    end
+end
+
+function setValue(tname, t)
+    if args.setvalue then
+        if not args.search or is_match(tname, t) then
+            t = new_value
+        end
+    end
+end
 
 --Section: entry/initialization
 function main()
@@ -201,41 +238,61 @@ function getSelectionData()
 end
 
 function processArguments()
-    --Dumb Queries
-    if args.dumb then
-        --[[ Let's make the recursion dumber, but let's not do it infinitely.
-        There are many recursive structures which would cause this to happen.
-        ]]
-        if not args.maxdepth then
-            maxdepth = 25
-            args.maxdepth = maxdepth
-        end
-    else
-        --Table Length
-        if not args.maxlength then
-            --[[ Table length is inversely proportional to how useful the data is.
-            257 was chosen with the intent of capturing all enums. Or hopefully most of them.
-            ]]
-            args.maxlength = 257
-        else
-            args.maxlength = tonumber(args.maxlength)
-        end
-    end
-
     --Table Recursion
     if args.maxdepth then
         maxdepth = tonumber(args.maxdepth)
         if not maxdepth then
             qerror(string.format("Must provide a number with -depth"))
         end
+    elseif args.dumb then
+        maxdepth = 25
     else
-        maxdepth = 10
-        args.maxdepth = maxdepth
+        maxdepth = 7
+    end
+    args.maxdepth = maxdepth
+
+    --Table Length
+    if not args.maxlength then
+        --[[ Table length is inversely proportional to how useful the data is.
+        257 was chosen with the intent of capturing all enums. Or hopefully most of them.
+        ]]
+        args.maxlength = 257
+    else
+        args.maxlength = tonumber(args.maxlength)
     end
 
-    --Set Key [boolean parsing]
     new_value = toType(args.setvalue)
     find_value = toType(args.findvalue)
+
+    args.excludetype = args.excludetype and args.excludetype or ""
+    args.excludekind = args.excludekind and args.excludekind or ""
+    if string.find(args.excludetype, 'a') then
+        bool_flags["boolean"] = true
+        bool_flags["function"] = true
+        bool_flags["number"] = true
+        bool_flags["string"] = true
+        bool_flags["table"] = true
+        bool_flags["userdata"] = true
+    else
+        bool_flags["boolean"] = string.find(args.excludetype, 'b') and true or false
+        bool_flags["function"] = string.find(args.excludetype, 'f') and true or false
+        bool_flags["number"] = string.find(args.excludetype, 'n') and true or false
+        bool_flags["string"] = string.find(args.excludetype, 's') and true or false
+        bool_flags["table"] = string.find(args.excludetype, 't') and true or false
+        bool_flags["userdata"] = string.find(args.excludetype, 'u') and true or false
+    end
+
+    if string.find(args.excludekind, 'a') then
+        bool_flags["bit-field"] = true
+        bool_flags["class-type"] = true
+        bool_flags["enum-type"] = true
+        bool_flags["struct-type"] = true
+    else
+        bool_flags["bit-field"] = string.find(args.excludekind, 'b') and true or false
+        bool_flags["class-type"] = string.find(args.excludekind, 'c') and true or false
+        bool_flags["enum-type"] = string.find(args.excludekind, 'e') and true or false
+        bool_flags["struct-type"] = string.find(args.excludekind, 's') and true or false
+    end
 end
 
 local bRunOnce={}
@@ -245,58 +302,6 @@ function runOnce(caller)
     end
     bRunOnce[caller] = true
     return true
-end
-
---Section: core logic
-function query(t, tname, search_term, path)
-    --[[
-    * print info about t
-    * increment depth
-    * check depth
-    * recurse structure
-    * decrement depth
-    ]]--
-    setValue(tname, t)
-    printField(path, tname, t)
-    cur_depth = cur_depth + 1
-    if not maxdepth or cur_depth <= maxdepth then
-        -- check that we can search
-        if is_searchable(tname, t) then
-            -- iterate over search space
-            function recurse(fname, value)
-                local newTName = makeName(tname, fname)
-                if is_tiledata(value) then
-                    local newPath =  appendField(path, string.format("%s[%d][%d]", fname,tilex,tiley))
-                    query(value[tilex][tiley], newTName, search_term, newPath)
-                elseif not is_looping(path, newTName) then
-                    local newPath =  appendField(path, fname)
-                    query(value, newTName, search_term, newPath)
-                end
-            end
-            foreach(t, recurse)
-        end
-    end
-    cur_depth = cur_depth - 1
-end
-
-function foreach(t, fn)
-    if getmetatable(t) and t._kind and t._kind == "enum-type" then
-        for k,v in ipairs(t) do
-            fn(k,v)
-        end
-    else
-        for k,v in safe_pairs(t) do
-            fn(k,v)
-        end
-    end
-end
-
-function setValue(tname, t)
-    if args.setvalue then
-        if not args.search or is_match(tname, t) then
-            t = new_value
-        end
-    end
 end
 
 --Section: filters
@@ -327,12 +332,16 @@ function is_searchable(tname, t)
 end
 
 function is_match(path, field, value)
-    return (not args.findvalue or value == find_value)
-            and (not args.search or string.find(tostring(field),args.search) or string.find(path,args.search))
+    if not args.search or string.find(tostring(field),args.search) or string.find(path,args.search) then
+        if not args.findvalue or (not type(value) == "string" and value == find_value) or string.find(value,find_value) then
+            return true
+        end
+    end
+    return false
 end
 
 function is_looping(path, field)
-    return string.find(path, tostring(field))
+    return not args.dumb and string.find(path, tostring(field))
 end
 
 function is_blacklisted(field, t)
@@ -360,6 +369,10 @@ function is_tiledata(value)
         end
     end
     return false
+end
+
+function is_excluded(value)
+    return bool_flags[type(value)] or not isEmpty(value) and getmetatable(value) and bool_flags[value._kind]
 end
 
 function toType(str)
@@ -518,16 +531,17 @@ function printField(path, field, value)
         print(string.format("%s: %s", path, value))
         return
     end
-    if not args.disableprint then
+    if not args.disableprint and not is_excluded(value) then
         if is_tiledata(value) then
             value = value[tilex][tiley]
             field = string.format("%s[%d][%d]", field,tilex,tiley)
         end
         local indent = nil
         local bMatch = false
-        if not args.search then
+        if not args.search and not args.findvalue then
             indent = makeIndentation()
         elseif is_match(path, field, value) then
+            --print(path,field,value,args.findvalue,find_value)
             bMatch = true
         end
         if indent ~= nil or bMatch then
@@ -556,7 +570,11 @@ function printField(path, field, value)
                     output = string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind)
                 end
             else
-                output = string.format("%s %s", indentedField, value)
+                if args.debugdata then
+                    output = string.format("%s type(%s) = %s", indentedField, value, type(value))
+                else
+                    output = string.format("%s %s", indentedField, value)
+                end
             end
             if args.debugdata then
                 if hasMetadata(value) then
