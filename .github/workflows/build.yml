@@ -23,8 +23,9 @@ jobs:
         ln -sv $(pwd) $HOME/dfhack/scripts
     - name: Build docs
       run: |
-        sphinx-build -qW -j3 $HOME/dfhack html
+        sphinx-build -W --keep-going -j3 $HOME/dfhack html
     - name: Check for missing docs
+      if: success() || failure()
       run: python $HOME/dfhack/travis/script-docs.py .
     - name: Upload docs
       if: success() || failure()

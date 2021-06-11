@@ -91,7 +91,7 @@ end
 ---   :reset: boolean, or nil.
 function assign(skills, unit, reset)
     assert(not skills or type(skills) == "table")
-    assert(not unit or type(unit) == "number" or type(unit) == "userdata")
+    assert(not unit or type(unit) == "number" or df.unit:is_instance(unit))
     assert(not reset or type(reset) == "boolean")
 
     skills = skills or {}

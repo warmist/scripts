@@ -28,7 +28,7 @@ def display_death_unit(u)
         puts str.chomp(',')
     else
         death_info = u.counters.death_tg
-        killer = death_info.killer_tg if death_info
+        killer = death_info.criminal_tg if death_info
 
         str << " died" if !u.flags2.slaughter
         str << " was slaughtered" if u.flags2.slaughter

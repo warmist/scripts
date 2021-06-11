@@ -88,7 +88,7 @@ end
 
 -- Go back to root folder so dfhack does not break, returns true if successfully
 function move_back_to_main_folder()
-    return dfhack.filesystem.chdir(dfhack.getDFPath())
+    return dfhack.filesystem.restore_cwd()
 end
 
 -- Set default folder name

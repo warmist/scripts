@@ -124,17 +124,23 @@ loaded!
 
 **Module Usage:**
 
-To use this script as a module put the following somewhere in your own script::
+To use this script as a module put the following somewhere in your own script:
+
+.. code-block:: lua
 
     local buildmenu = reqscript "change-build-menu"
 
 Then you can call the functions documented here like so:
 
-    - Example: Remove the carpenters workshop::
+    - Example: Remove the carpenters workshop:
+
+    .. code-block:: lua
 
         buildmenu.ChangeBuilding("CARPENTERS", "WORKSHOPS", false)
 
-    - Example: Make it impossible to build walls (not recommended!)::
+    - Example: Make it impossible to build walls (not recommended!):
+
+    .. code-block:: lua
 
         local typ, styp = df.building_type.Construction, df.construction_type.Wall
         buildmenu.ChangeBuildingAdv(typ, styp, -1, "CONSTRUCTIONS", false)
