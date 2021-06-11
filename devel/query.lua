@@ -39,16 +39,19 @@ local help = [====[
 
 devel/query
 ===========
-Query is a script useful for finding and reading values of data structure fields.
-Purposes will likely be exclusive to writing lua script code, possibly C++.
+Query is a script useful for finding and reading values of data structure
+fields. Purposes will likely be exclusive to writing lua script code,
+possibly C++.
 
-This script takes your data selection eg.{table,unit,item,tile}
-then recursively iterates through it outputting names and values of what it finds.
+This script takes your data selection eg.{table,unit,item,tile} then recursively
+iterates through it outputting names and values of what it finds.
 
-As it iterates you can have it do other things, like search for a specific structure pattern (see lua patterns)
-or set the value of fields matching the selection and any search pattern specified.
+As it iterates you can have it do other things, like search for a specific
+structure pattern (see lua patterns) or set the value of fields matching the
+selection and any search pattern specified.
 
-If the script is taking too long to finish, or if it can't finish you should run ``dfhack-run kill-lua`` from a terminal.
+If the script is taking too long to finish, or if it can't finish you should run
+``dfhack-run kill-lua`` from a terminal.
 
 Examples::
 
@@ -69,7 +72,8 @@ Examples::
 
 ``-item``:              Selects the highlighted item.
 
-``-tile``:              Selects the highlighted tile's block and then attempts to find the tile, and perform your queries on it.
+``-tile``:              Selects the highlighted tile's block and then attempts
+                        to find the tile, and perform your queries on it.
 
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
@@ -78,41 +82,50 @@ Examples::
 
 ``-getfield <value>``:  Gets the specified field from the selection.
 
-                        Must use in conjunction with one of the above selection options.
-                        Must use dot notation to denote sub-fields.
+                        Must use in conjunction with one of the above selection
+                        options. Must use dot notation to denote sub-fields.
 
 **Query options:**
 
-``-search <value>``:       Searches the selection for field names with substrings matching the specified value.
+``-search <value>``:       Searches the selection for field names with
+                           substrings matching the specified value.
 
-``-findvalue <value>``:    Searches the selection for field values matching the specified value.
+``-findvalue <value>``:    Searches the selection for field values matching the
+                           specified value.
 
 ``-maxdepth <value>``:     Limits the field recursion depth (default: 7)
 
-``-maxlength <value>``:    Limits the table sizes that will be walked (default: 257)
+``-maxlength <value>``:    Limits the table sizes that will be walked
+                           (default: 257)
 
-``-excludetype [a|bfnstu0]``:  Excludes data types: All | Boolean, Function, Number, String, Table, Userdata, nil
+``-excludetype [a|bfnstu0]``:  Excludes data types: All | Boolean, Function,
+                               Number, String, Table, Userdata, nil
 
-``-excludekind [a|bces]``:     Excludes data types: All | Bit-fields, Class-type, Enum-type, Struct-type
+``-excludekind [a|bces]``:     Excludes data types: All | Bit-fields,
+                               Class-type, Enum-type, Struct-type
 
 ``-noblacklist``:   Disables blacklist filtering.
 
-``-dumb``:          Disables intelligent checking for recursive data structures(loops)
-                    and increases the -maxdepth to 25 if a value is not already present
+``-dumb``:          Disables intelligent checking for recursive data
+                    structures(loops) and increases the -maxdepth to 25 if a
+                    value is not already present
 
 **Command options:**
 
 ``-setvalue <value>``: Attempts to set the values of any printed fields.
                        Supported types: boolean,
 
-``-oneline``:          Reduces output to one line, except when ``-debugdata`` is used.
+``-oneline``:          Reduces output to one line, except with ``-debugdata``
 
-``-disableprint``:     Disables printing. Might be useful if you are debugging this script.
-                       Or to see if a query will crash (faster) but not sure what else you could use it for.
+``-disableprint``:     Disables printing. Might be useful if you are debugging
+                       this script. Or to see if a query will crash (faster) but
+                       not sure what else you could use it for.
                        
-``-debug <value>``:    Enables debug log lines equal to or less than the value provided.
+``-debug <value>``:    Enables debug log lines equal to or less than the value
+                       provided.
 
-``-debugdata``:        Enables debugging data. Prints type information under each field.
+``-debugdata``:        Enables debugging data. Prints type information under
+                       each field.
 
 ``-help``:             Prints this help information.
 
@@ -601,7 +614,7 @@ end
 
 function debugf(level,...)
     if args.debug and level <= tonumber(args.debug) then
-        str=string.format(" #  %s",select(1, ...))
+        local str=string.format(" #  %s",select(1, ...))
         for i = 2, select('#', ...) do
             str=string.format("%s\t%s",str,select(i, ...))
         end
