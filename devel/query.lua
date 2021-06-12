@@ -33,6 +33,8 @@ local new_value = nil
 local find_value = nil
 local maxdepth = nil
 local cur_depth = -1
+local tilex = nil
+local tiley = nil
 local bool_flags = {}
 
 local help = [====[
@@ -215,8 +217,7 @@ function main()
     query(selection, path_info, args.search, path_info)
 end
 
-local tilex = nil
-local tiley = nil
+
 function getSelectionData()
     local selection = nil
     local path_info = nil
