@@ -26,6 +26,8 @@ Arguments::
         Include this if you want to remove all webs
         without freeing any units
 
+See also `fix/drop-webs`.
+
 ]====]
 
 local utils = require 'utils'

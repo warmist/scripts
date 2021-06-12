@@ -11,6 +11,8 @@ surface. This addresses :bug:`595`.
 Use ``fix/drop-webs -all`` to turn all webs into projectiles, causing webs to
 fall out of branches, etc.
 
+Use `clear-webs` to remove webs entirely.
+
 ]====]
 local utils = require "utils"
 
