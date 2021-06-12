@@ -5,8 +5,11 @@
 
 fix/drop-webs
 =============
-Turns floating webs into projectiles, causing them to fall down to a valid surface
-Use ``fix/drop-webs -all`` to turn all webs into projectiles, causing webs to fall out of branches, etc.
+Turns floating webs into projectiles, causing them to fall down to a valid
+surface. This addresses :bug:`595`.
+
+Use ``fix/drop-webs -all`` to turn all webs into projectiles, causing webs to
+fall out of branches, etc.
 
 ]====]
 local utils = require "utils"
