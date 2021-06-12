@@ -624,3 +624,4 @@ function debugf(level,...)
 end
 
 main()
+print()
