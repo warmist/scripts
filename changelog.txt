@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `clear-webs`: removes all webs on the map and/or frees any webbed creatures
 - `devel/block-borders`: overlay that displays map block borders
 - `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
 - `fix/drop-webs`: causes floating webs to fall to the ground
