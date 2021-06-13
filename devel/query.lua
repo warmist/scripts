@@ -154,7 +154,7 @@ Examples::
 ]]
 
 --Section: core logic
-function query(t, tname, search_term, path)
+function query(table, name, search_term, path)
     --[[
     * print info about t
     * increment depth
@@ -162,49 +162,52 @@ function query(t, tname, search_term, path)
     * recurse structure
     * decrement depth
     ]]--
-    setValue(tname, t)
-    printField(path, tname, t)
+    setValue(path, name, table, new_value)
+    printField(path, name, table)
     cur_depth = cur_depth + 1
     if cur_depth <= maxdepth then
         -- check that we can search
-        if is_searchable(tname, t) then
+        if is_searchable(path, name, table) then
             -- iterate over search space
-            function recurse(fname, value)
-                local newTName = makeName(tname, fname)
+            function recurse(field, value)
+                local new_tname = tostring(makeName(name, field))
                 if is_tiledata(value) then
-                    local newPath =  appendField(path, string.format("%s[%d][%d]", fname,tilex,tiley))
-                    query(value[tilex][tiley], newTName, search_term, newPath)
-                elseif not is_looping(path, newTName) then
-                    local newPath =  appendField(path, fname)
-                    query(value, newTName, search_term, newPath)
+                    local indexing = string.format("%s[%d][%d]", field,tilex,tiley)
+                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing))
+                elseif not is_looping(path, new_tname) then
+                    query(value, new_tname, search_term, appendField(path, field))
                 elseif args.printlinkedlist then
-                    print_linked_list(fname, value)
+                    print("# Linked List possibly found #")
+                    print_linked_list(field, value, path)
                 else
-                    printField(path, tname, t)
+                    print("hello")
+                    printField(path, field, value)
                 end
             end
-            foreach(t, recurse)
+            foreach(table, recurse)
         end
     end
     cur_depth = cur_depth - 1
 end
 
-function foreach(t, fn)
-    if getmetatable(t) and t._kind and t._kind == "enum-type" then
-        for k,v in ipairs(t) do
-            fn(k,v)
+function foreach(table, callback)
+    if getmetatable(table) and table._kind and table._kind == "enum-type" then
+        for idx, value in ipairs(table) do
+            callback(idx, value)
         end
     else
-        for k,v in safe_pairs(t) do
-            fn(k,v)
+        for field, value in safe_pairs(table) do
+            callback(field, value)
         end
     end
 end
 
-function setValue(tname, t)
+function setValue(path, field, value, new_value)
     if args.setvalue then
-        if not args.search or is_match(tname, t) then
-            t = new_value
+        if not args.search or is_match(path, field, value) then
+            if type(value) == type(new_value) then
+                value = new_value
+            end
         end
     end
 end
@@ -347,29 +350,32 @@ function toType(str)
 end
 
 --Section: filters
-function is_searchable(tname, t)
-    if not is_blacklisted(tname, t) and not df.isnull(t) then
-            debugf(1,string.format("is_searchable( %s ): type: %s, length: %s, count: %s",t,type(t),getTableLength(t), countTableLength(t)))
-            if not isEmpty(t) then
-                if not args.maxlength or runOnce(is_searchable) or countTableLength(t) <= args.maxlength then
-                    if getmetatable(t) then
-                        if t._kind == "primitive" then
+function is_searchable(path, field, value)
+    if args.printlinkedlist and string.find(path,"%.next%.") and string.find(field, "prev") then
+        return false
+    end
+    if not is_blacklisted(field, value) and not df.isnull(value) then
+        debugf(3,string.format("is_searchable( %s ): type: %s, length: %s, count: %s", value,type(value),getTableLength(value), countTableLength(value)))
+        if not isEmpty(value) then
+            if not args.maxlength or runOnce(is_searchable) or countTableLength(value) <= args.maxlength then
+                if getmetatable(value) then
+                    if value._kind == "primitive" then
+                        return false
+                    elseif value._kind == "struct" then
+                        if args.safer then
                             return false
-                        elseif t._kind == "struct" then
-                            if args.safer then
-                                return false
-                            else
-                                return true
-                            end
+                        else
+                            return true
                         end
-                        debugf(1,string.format("_kind: %s, _type: %s",t._kind,t._type))
                     end
-                    for _,_ in safe_pairs(t) do
-                        return true
-                    end
+                    debugf(3,string.format("_kind: %s, _type: %s", value._kind, value._type))
+                end
+                for _,_ in safe_pairs(value) do
+                    return true
                 end
             end
         end
+    end
     return false
 end
 
@@ -631,19 +637,26 @@ function printField(path, field, value)
     end
 end
 
-function print_linked_list(name, next)
-    if string.find(name, "next") then
+function print_linked_list(field, next, path)
+    if string.find(field, "next") then
+        cur_depth = cur_depth - 1
+        maxdepth = maxdepth - 1
         local JobListItem=next --danke F.F.
+        local index = 1
         while(JobListItem.next) do
-            JobListItem=JobListItem.next
+            index = index + 1
             local item = JobListItem.item
             args.printlinkedlist = false
             local dumb = args.dumb
             args.dumb = true
-            query(item, "V.next.item", args.search, "**next.item")
+            --local m = tostring(JobListItem.next):gsub("<.*: ",""):gsub(">.*",""):gsub("0x", "0x"):gsub("%x%x%x%x%x%x","%1 ",1)
+            query(item, string.format("*[%d].next.item", index), args.search, "**next.item")
             args.printlinkedlist = true
             args.dumb = dumb
+            JobListItem=JobListItem.next
         end
+        cur_depth = cur_depth + 1
+        maxdepth = maxdepth + 1
     end
 end
 
