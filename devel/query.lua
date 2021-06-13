@@ -25,6 +25,7 @@ local validArgs = utils.invert({
  'setvalue',
  'oneline',
  '1',
+ 'printlinkedlist',
  'disableprint',
  'debug',
  'debugdata'
@@ -164,7 +165,7 @@ function query(t, tname, search_term, path)
     setValue(tname, t)
     printField(path, tname, t)
     cur_depth = cur_depth + 1
-    if not maxdepth or cur_depth <= maxdepth then
+    if cur_depth <= maxdepth then
         -- check that we can search
         if is_searchable(tname, t) then
             -- iterate over search space
@@ -176,6 +177,10 @@ function query(t, tname, search_term, path)
                 elseif not is_looping(path, newTName) then
                     local newPath =  appendField(path, fname)
                     query(value, newTName, search_term, newPath)
+                elseif args.printlinkedlist then
+                    print_linked_list(fname, value)
+                else
+                    printField(path, tname, t)
                 end
             end
             foreach(t, recurse)
@@ -220,7 +225,6 @@ function main()
     end
     query(selection, path_info, args.search, path_info)
 end
-
 
 function getSelectionData()
     local selection = nil
@@ -325,6 +329,23 @@ function runOnce(caller)
     return true
 end
 
+function toType(str)
+    if str ~= nil then
+        if str == "true" then
+            return true
+        elseif str == "false" then
+            return false
+        elseif tonumber(str) then
+            return tonumber(str)
+        elseif string.find(str, "nil") then
+            return nil
+        else
+            return tostring(str)
+        end
+    end
+    return nil
+end
+
 --Section: filters
 function is_searchable(tname, t)
     if not is_blacklisted(tname, t) and not df.isnull(t) then
@@ -396,21 +417,11 @@ function is_excluded(value)
     return bool_flags[type(value)] or not isEmpty(value) and getmetatable(value) and bool_flags[value._kind]
 end
 
-function toType(str)
-    if str ~= nil then
-        if str == "true" then
-            return true
-        elseif str == "false" then
-            return false
-        elseif tonumber(str) then
-            return tonumber(str)
-        elseif string.find(str, "nil") then
-            return nil
-        else
-            return tostring(str)
-        end
+function has_next(value)
+    if value.next then
+        return true
     end
-    return nil
+    return false
 end
 
 --Section: table helpers
@@ -463,7 +474,7 @@ function getTableLength(t)
 end
 
 function findPath(t, path)
-    debugf(1,"parsing",t, path)
+    debugf(0,string.format("findPath(%s, %s)",t, path))
     curTable = t
     keyParts = {}
     for word in string.gmatch(path, '([^.]+)') do --thanks stack overflow
@@ -484,7 +495,7 @@ function findPath(t, path)
     return curTable
 end
 
-function findTable(path)
+function findTable(path) --this is the tricky part
     tableParts = {}
     for word in string.gmatch(path, '([^.]+)') do --thanks stack overflow
         table.insert(tableParts, word)
@@ -616,6 +627,22 @@ function printField(path, field, value)
                 end
             end
             print(output)
+        end
+    end
+end
+
+function print_linked_list(name, next)
+    if string.find(name, "next") then
+        local JobListItem=next --danke F.F.
+        while(JobListItem.next) do
+            JobListItem=JobListItem.next
+            local item = JobListItem.item
+            args.printlinkedlist = false
+            local dumb = args.dumb
+            args.dumb = true
+            query(item, "V.next.item", args.search, "**next.item")
+            args.printlinkedlist = true
+            args.dumb = dumb
         end
     end
 end
