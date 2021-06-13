@@ -199,3 +199,17 @@ function test.render_selected()
             expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
         end)
 end
+
+--auto enter and leave cursor-supporting mode
+
+-- clear and reshow ui if gui/blueprint is run while currently shown
+
+-- mouse support for selecting boundary tiles
+
+-- live status line showing the dimensions of the currently selected area
+
+-- edit widget for setting the blueprint name
+
+-- widgets to configure which blueprint phases to output
+
+-- presetting config values from commandline parameters
