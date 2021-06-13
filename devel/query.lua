@@ -24,6 +24,7 @@ local validArgs = utils.invert({
 
  'setvalue',
  'oneline',
+ '1',
  'disableprint',
  'debug',
  'debugdata'
@@ -67,6 +68,7 @@ Examples::
   devel/query -table df.profession -findvalue FISH
   devel/query -table df.global.ui.main -maxdepth 0
   devel/query -table df.global.ui.main -maxdepth 0 -oneline
+  devel/query -table df.global.ui.main -maxdepth 0 -1
 
 **Selection options:**
 
@@ -118,6 +120,8 @@ Examples::
                        Supported types: boolean,
 
 ``-oneline``:          Reduces output to one line, except with ``-debugdata``
+
+``-1``:                Reduces output to one line, except with ``-debugdata``
 
 ``-disableprint``:     Disables printing. Might be useful if you are debugging
                        this script. Or to see if a query will crash (faster) but
@@ -252,6 +256,9 @@ function getSelectionData()
 end
 
 function processArguments()
+    if args["1"] then
+        args.oneline = true
+    end
     --Table Recursion
     if args.maxdepth then
         maxdepth = tonumber(args.maxdepth)
@@ -530,9 +537,9 @@ function appendField(parent, field)
 end
 
 function makeIndentation()
-    local base="  "
+    local base="| "
     local indent=""
-    for i=1,(cur_depth) do
+    for i=0,(cur_depth) do
         indent=indent .. string.format("%s",base)
     end
     --indent=string.format("%s ",base)
@@ -572,7 +579,7 @@ function printField(path, field, value)
                 bToggle = true
             end
             if not bMatch then
-                indentedField = indent .. "| " .. indentedField
+                indentedField = indent .. indentedField
             end
             local N = math.min(90, string.len(indentedField))
             indent = string.format("%" .. N .. "s", "")
