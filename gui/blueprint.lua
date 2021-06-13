@@ -78,10 +78,48 @@ function BlueprintUI:init()
     }
 end
 
+-- the sidebar modes that we know how to get back to
+local basic_ui_sidebar_modes = {
+    [df.ui_sidebar_mode.Default]='',
+    [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
+    [df.ui_sidebar_mode.LookAround]='D_LOOK',
+    [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',
+    [df.ui_sidebar_mode.Stockpiles]='D_STOCKPILES',
+    [df.ui_sidebar_mode.Zones]='D_CIVZONE',
+}
+
+-- Send ESC keycodes until we get to dwarfmode/Default and then enter the
+-- specified sidebar mode. If we don't get to Default after 10 presses of ESC,
+-- error. The target sidebar mode must be a member of basic_ui_sidebar_modes.
+local function switch_ui_sidebar_mode(sidebar_mode)
+    for i=1,10 do
+        if df.global.ui.main.mode == df.ui_sidebar_mode.Default and
+                dfhack.gui.getCurFocus(true) == 'dwarfmode/Default' then
+            if sidebar_mode ~= df.ui_sidebar_mode.Default then
+                gui.simulateInput(dfhack.gui.getCurViewscreen(true),
+                                basic_ui_sidebar_modes[sidebar_mode])
+            end
+            return
+        end
+        gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
+    end
+    qerror('Unable to get into target sidebar mode from current UI viewscreen.')
+end
+
 function BlueprintUI:onAboutToShow()
     if not dfhack.isMapLoaded() then
         qerror('Please load a fortress map.')
     end
+
+    self.saved_mode = df.global.ui.main.mode
+    switch_ui_sidebar_mode(df.ui_sidebar_mode.LookAround)
+end
+
+function BlueprintUI:onDismiss()
+    if not basic_ui_sidebar_modes[self.saved_mode] then
+        self.saved_mode = df.ui_sidebar_mode.Default
+    end
+    switch_ui_sidebar_mode(self.saved_mode)
 end
 
 function BlueprintUI:on_mark(pos)

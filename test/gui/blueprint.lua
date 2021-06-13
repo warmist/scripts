@@ -24,18 +24,9 @@ local function send_keys(...)
 end
 
 local function load_ui()
-    -- remove screen mode switching once gui/blueprint supports it natively
-    for i=1,10 do
-        if df.global.ui.main.mode == df.ui_sidebar_mode.Default and
-                'dwarfmode/Default' == dfhack.gui.getCurFocus(true) then
-            send_keys('D_LOOK')
-            local view = b.BlueprintUI{}
-            view:show()
-            return view
-        end
-        send_keys('LEAVESCREEN')
-    end
-    error('Unable to get into look mode from current UI viewscreen.')
+    local view = b.BlueprintUI{}
+    view:show()
+    return view
 end
 
 function test.minimal_happy_path()
@@ -58,7 +49,7 @@ function test.minimal_happy_path()
             expect.table_eq({'2', '3', '-4', 'blueprint', '--cursor=10,20,33'},
                             mock_run.call_args[1])
             send_keys('SELECT') -- dismiss the success messagebox
-            delay() -- allow the messagebox and view to disappear
+            while view:isActive() do delay() end -- wait for view to disappear
             expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
         end)
 end
@@ -86,7 +77,7 @@ function test.cancel_selection()
             {blueprint, 'run', mock_run},
         },
         function()
-            load_ui()
+            local view = load_ui()
             expect.eq('dfhack/lua/blueprint', dfhack.gui.getCurFocus(true))
             guidm.setCursorPos({x=10, y=20, z=30})
             send_keys('SELECT') -- set first cursor position
@@ -102,7 +93,7 @@ function test.cancel_selection()
                             '--cursor=11,22,27'},
                             mock_run.call_args[1])
             send_keys('SELECT') -- dismiss the success messagebox
-            delay() -- allow the messagebox and view to disappear
+            while view:isActive() do delay() end -- wait for view to disappear
             expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
         end)
 end
@@ -202,6 +193,43 @@ end
 
 --auto enter and leave cursor-supporting mode
 
+function test.restore_mode()
+    df.global.ui.main.mode = df.ui_sidebar_mode.Stockpiles
+    load_ui()
+    expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
+    send_keys('LEAVESCREEN') -- cancel out of ui
+    expect.eq(df.ui_sidebar_mode.Stockpiles, df.global.ui.main.mode)
+    send_keys('LEAVESCREEN') -- get back to Default mode
+end
+
+function test.restore_default_on_unknown_mode()
+    df.global.ui.main.mode = df.ui_sidebar_mode.Burrows
+    load_ui()
+    expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
+    send_keys('LEAVESCREEN') -- cancel out of ui
+    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+end
+
+function test.fail_to_find_default_mode()
+    df.global.ui.main.mode = df.ui_sidebar_mode.Burrows
+    mock.patch(gui, 'simulateInput', mock.func(),
+        function()
+            expect.error_match('Unable to get into target sidebar mode',
+                               function() load_ui() end)
+        end)
+    send_keys('LEAVESCREEN') -- cancel out of ui
+    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+end
+
+function test.exit_out_of_other_ui()
+    dfhack.run_script('gui/mass-remove') -- some other script that displays a ui
+    expect.ne('dfhack/lua/blueprint', dfhack.gui.getCurFocus(true))
+    expect.true_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
+    load_ui()
+    expect.eq('dfhack/lua/blueprint', dfhack.gui.getCurFocus(true))
+    send_keys('LEAVESCREEN') -- cancel out of ui
+end
+
 -- clear and reshow ui if gui/blueprint is run while currently shown
 
 -- mouse support for selecting boundary tiles
@@ -213,3 +241,4 @@ end
 -- widgets to configure which blueprint phases to output
 
 -- presetting config values from commandline parameters
+
