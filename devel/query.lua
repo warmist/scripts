@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
--- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-10
--- Version: 3.x
+-- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
+-- Version: 3.0
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -164,6 +164,7 @@ function query(table, name, search_term, path)
     ]]--
     setValue(path, name, table, new_value)
     printField(path, name, table)
+    --print("table/field printed")
     cur_depth = cur_depth + 1
     if cur_depth <= maxdepth then
         -- check that we can search
@@ -176,24 +177,30 @@ function query(table, name, search_term, path)
                     query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing))
                 elseif not is_looping(path, new_tname) then
                     query(value, new_tname, search_term, appendField(path, field))
-                elseif args.printlinkedlist then
-                    print("# Linked List possibly found #")
-                    print_linked_list(field, value, path)
                 else
-                    print("hello")
+                    -- I don't know when this prints (if ever)
                     printField(path, field, value)
                 end
             end
-            foreach(table, recurse)
+            --print(name, path, "hello")
+            foreach(table, name, recurse)
         end
     end
     cur_depth = cur_depth - 1
 end
 
-function foreach(table, callback)
+function foreach(table, name, callback)
     if getmetatable(table) and table._kind and table._kind == "enum-type" then
         for idx, value in ipairs(table) do
             callback(idx, value)
+        end
+    elseif string.find(name,".*list") and table["next"] then
+        local index = 0
+        for field, value in utils.listpairs(table) do
+            local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
+            local s = string.format("next{%d}.item [next: %s]", index, m)
+            callback(s, value)
+            index = index + 1
         end
     else
         for field, value in safe_pairs(table) do
@@ -338,10 +345,10 @@ function toType(str)
             return true
         elseif str == "false" then
             return false
+        elseif str == "nil" then
+            return nil
         elseif tonumber(str) then
             return tonumber(str)
-        elseif string.find(str, "nil") then
-            return nil
         else
             return tostring(str)
         end
@@ -634,29 +641,6 @@ function printField(path, field, value)
             end
             print(output)
         end
-    end
-end
-
-function print_linked_list(field, next, path)
-    if string.find(field, "next") then
-        cur_depth = cur_depth - 1
-        maxdepth = maxdepth - 1
-        local JobListItem=next --danke F.F.
-        local index = 1
-        while(JobListItem.next) do
-            index = index + 1
-            local item = JobListItem.item
-            args.printlinkedlist = false
-            local dumb = args.dumb
-            args.dumb = true
-            --local m = tostring(JobListItem.next):gsub("<.*: ",""):gsub(">.*",""):gsub("0x", "0x"):gsub("%x%x%x%x%x%x","%1 ",1)
-            query(item, string.format("*[%d].next.item", index), args.search, "**next.item")
-            args.printlinkedlist = true
-            args.dumb = dumb
-            JobListItem=JobListItem.next
-        end
-        cur_depth = cur_depth + 1
-        maxdepth = maxdepth + 1
     end
 end
 
