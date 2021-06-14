@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.0
+-- Version: 3.0.1
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -25,7 +25,6 @@ local validArgs = utils.invert({
  'setvalue',
  'oneline',
  '1',
- 'printlinkedlist',
  'disableprint',
  'debug',
  'debugdata'
@@ -168,7 +167,7 @@ function query(table, name, search_term, path)
     cur_depth = cur_depth + 1
     if cur_depth <= maxdepth then
         -- check that we can search
-        if is_searchable(path, name, table) then
+        if is_searchable(name, table) then
             -- iterate over search space
             function recurse(field, value)
                 local new_tname = tostring(makeName(name, field))
@@ -196,6 +195,9 @@ function foreach(table, name, callback)
         end
     elseif string.find(name,".*list") and table["next"] then
         local index = 0
+        for field, value in safe_pairs(table) do
+            callback(field, value)
+        end
         for field, value in utils.listpairs(table) do
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
             local s = string.format("next{%d}.item [next: %s]", index, m)
@@ -357,10 +359,7 @@ function toType(str)
 end
 
 --Section: filters
-function is_searchable(path, field, value)
-    if args.printlinkedlist and string.find(path,"%.next%.") and string.find(field, "prev") then
-        return false
-    end
+function is_searchable(field, value)
     if not is_blacklisted(field, value) and not df.isnull(value) then
         debugf(3,string.format("is_searchable( %s ): type: %s, length: %s, count: %s", value,type(value),getTableLength(value), countTableLength(value)))
         if not isEmpty(value) then
