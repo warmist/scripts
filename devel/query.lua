@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.0.1
+-- Version: 3.1.0
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -22,6 +22,7 @@ local validArgs = utils.invert({
  'noblacklist',
  'dumb',
 
+ 'showpaths',
  'setvalue',
  'oneline',
  '1',
@@ -30,6 +31,8 @@ local validArgs = utils.invert({
  'debugdata'
 })
 local args = utils.processArgs({...}, validArgs)
+local selection = nil
+local path_info = nil
 local new_value = nil
 local find_value = nil
 local maxdepth = nil
@@ -116,6 +119,8 @@ Examples::
 
 **Command options:**
 
+``-showpaths``:        Displays the full path of a field instead of indenting.
+
 ``-setvalue <value>``: Attempts to set the values of any printed fields.
                        Supported types: boolean,
 
@@ -153,7 +158,7 @@ Examples::
 ]]
 
 --Section: core logic
-function query(table, name, search_term, path)
+function query(table, name, search_term, path, bprinted_parent)
     --[[
     * print info about t
     * increment depth
@@ -161,8 +166,11 @@ function query(table, name, search_term, path)
     * recurse structure
     * decrement depth
     ]]--
+    if bprinted_parent == nil then
+        bprinted_parent = false
+    end
     setValue(path, name, table, new_value)
-    printField(path, name, table)
+    local bprinted = printField(path, name, table, bprinted_parent)
     --print("table/field printed")
     cur_depth = cur_depth + 1
     if cur_depth <= maxdepth then
@@ -173,9 +181,9 @@ function query(table, name, search_term, path)
                 local new_tname = tostring(makeName(name, field))
                 if is_tiledata(value) then
                     local indexing = string.format("%s[%d][%d]", field,tilex,tiley)
-                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing))
+                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing), bprinted)
                 elseif not is_looping(path, new_tname) then
-                    query(value, new_tname, search_term, appendField(path, field))
+                    query(value, new_tname, search_term, appendField(path, field), bprinted)
                 else
                     -- I don't know when this prints (if ever)
                     printField(path, field, value)
@@ -186,27 +194,44 @@ function query(table, name, search_term, path)
         end
     end
     cur_depth = cur_depth - 1
+    return bprinted
 end
 
 function foreach(table, name, callback)
+    local index = 0
     if getmetatable(table) and table._kind and table._kind == "enum-type" then
         for idx, value in ipairs(table) do
+            if is_exceeding_maxlength(index) then
+                return
+            end
             callback(idx, value)
+            index = index + 1
         end
     elseif string.find(name,".*list") and table["next"] then
-        local index = 0
         for field, value in safe_pairs(table) do
+            if is_exceeding_maxlength(index) then
+                return
+            end
             callback(field, value)
+            index = index + 1
         end
+        index = 0
         for field, value in utils.listpairs(table) do
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
-            local s = string.format("next{%d}.item [next: %s]", index, m)
+            local s = string.format("next{%d}->item", index)
+            if is_exceeding_maxlength(index) then
+                return
+            end
             callback(s, value)
             index = index + 1
         end
     else
         for field, value in safe_pairs(table) do
+            if is_exceeding_maxlength(index) then
+                return
+            end
             callback(field, value)
+            index = index + 1
         end
     end
 end
@@ -228,7 +253,7 @@ function main()
         return
     end
     processArguments()
-    local selection,path_info = table.unpack{getSelectionData()}
+    selection, path_info = table.unpack{getSelectionData()}
     debugf(0, tostring(selection), path_info)
 
     if selection == nil then
@@ -363,22 +388,20 @@ function is_searchable(field, value)
     if not is_blacklisted(field, value) and not df.isnull(value) then
         debugf(3,string.format("is_searchable( %s ): type: %s, length: %s, count: %s", value,type(value),getTableLength(value), countTableLength(value)))
         if not isEmpty(value) then
-            if not args.maxlength or runOnce(is_searchable) or countTableLength(value) <= args.maxlength then
-                if getmetatable(value) then
-                    if value._kind == "primitive" then
+            if getmetatable(value) then
+                if value._kind == "primitive" then
+                    return false
+                elseif value._kind == "struct" then
+                    if args.safer then
                         return false
-                    elseif value._kind == "struct" then
-                        if args.safer then
-                            return false
-                        else
-                            return true
-                        end
+                    else
+                        return true
                     end
-                    debugf(3,string.format("_kind: %s, _type: %s", value._kind, value._type))
                 end
-                for _,_ in safe_pairs(value) do
-                    return true
-                end
+                debugf(3,string.format("_kind: %s, _type: %s", value._kind, value._type))
+            end
+            for _,_ in safe_pairs(value) do
+                return true
             end
         end
     end
@@ -429,11 +452,8 @@ function is_excluded(value)
     return bool_flags[type(value)] or not isEmpty(value) and getmetatable(value) and bool_flags[value._kind]
 end
 
-function has_next(value)
-    if value.next then
-        return true
-    end
-    return false
+function is_exceeding_maxlength(index)
+    return args.maxlength and not (index < args.maxlength)
 end
 
 --Section: table helpers
@@ -569,60 +589,72 @@ function makeIndentation()
     return indent
 end
 
+function printOnce(key, msg)
+    if runOnce(key) then
+        print(msg)
+    end
+end
+
+function printParents(path, field)
+    path = path:gsub(path_info, "")
+    local cd = cur_depth
+    cur_depth = 0
+    local cur_path = path_info
+    for word in string.gmatch(path, '([^.]+)') do
+        if word ~= field then
+            cur_path = appendField(cur_path, word)
+            printOnce(cur_path, string.format("%s%s", makeIndentation(),word))
+        end
+        cur_depth = cur_depth + 1
+    end
+    cur_depth = cd
+end
+
 bToggle = true
-function printField(path, field, value)
+function printField(path, field, value, bprinted_parent)
     if runOnce(printField) then
         print(string.format("%s: %s", path, value))
         return
     end
     if not args.disableprint and not is_excluded(value) then
-        if is_tiledata(value) then
-            value = value[tilex][tiley]
-            field = string.format("%s[%d][%d]", field,tilex,tiley)
-        end
-        local indent = nil
-        local bMatch = false
-        if not args.search and not args.findvalue then
-            indent = makeIndentation()
-        elseif is_match(path, field, value) then
-            --print(path,field,value,args.findvalue,find_value)
-            bMatch = true
-        end
-        if indent ~= nil or bMatch then
-            local indentedField = tostring(bMatch and path or field)
-            if bMatch then
-                indentedField = string.format("%-80s ", indentedField .. ":")
-            else
-                indentedField = string.format("%-40s ", indentedField .. ":")
+        if not args.search and not args.findvalue or is_match(path, field, value) then
+            if not args.showpaths and not bprinted_parent then
+                printParents(path, field)
             end
+            if is_tiledata(value) then
+                value = value[tilex][tiley]
+                field = string.format("%s[%d][%d]", field,tilex,tiley)
+            end
+            local indent = not args.showpaths and makeIndentation() or ""
+            local indented_field = string.format("%-40s ", tostring(args.showpaths and path or field) .. ":")
+
             if args.debugdata or not args.oneline or bToggle then
-                indentedField = string.gsub(indentedField,"  "," ~")
+                indented_field = string.gsub(indented_field,"  "," ~")
                 bToggle = false
             else
                 bToggle = true
             end
-            if not bMatch then
-                indentedField = indent .. indentedField
-            end
-            local N = math.min(90, string.len(indentedField))
-            indent = string.format("%" .. N .. "s", "")
+            indented_field = indent .. indented_field
             local output = nil
             if hasMetadata(value) then
                 if args.oneline then
-                    output = string.format("%s %s [%s]", indentedField, value, value._kind)
+                    output = string.format("%s %s [%s]", indented_field, value, value._kind)
                 else
-                    output = string.format("%s %s\n%s [has metatable; _kind: %s]", indentedField, value, indent, value._kind)
+                    local N = math.min(90, string.len(indented_field))
+                    indent = string.format("%" .. N .. "s", "")
+                    output = string.format("%s %s\n%s [has metatable; _kind: %s]", indented_field, value, indent, value._kind)
                 end
             else
                 if args.debugdata then
-                    output = string.format("%s type(%s) = %s", indentedField, value, type(value))
+                    output = string.format("%s type(%s) = %s", indented_field, value, type(value))
                 else
-                    output = string.format("%s %s", indentedField, value)
+                    output = string.format("%s %s", indented_field, value)
                 end
             end
             if args.debugdata then
+                local N = math.min(90, string.len(indented_field))
+                indent = string.format("%" .. N .. "s", "")
                 if hasMetadata(value) then
-                    print(value)
                     if not args.search and args.oneline then
                         output = output .. string.format("\n%s type(%s): %s, _kind: %s, _type: %s",
                                 indent, field, type(value), field._kind, field._type)
@@ -639,8 +671,10 @@ function printField(path, field, value)
                 end
             end
             print(output)
+            return true
         end
     end
+    return false
 end
 
 function debugf(level,...)
