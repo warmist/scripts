@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.1.0
+-- Version: 3.1.1
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -33,6 +33,7 @@ local validArgs = utils.invert({
 local args = utils.processArgs({...}, validArgs)
 local selection = nil
 local path_info = nil
+local path_info_pattern = nil
 local new_value = nil
 local find_value = nil
 local maxdepth = nil
@@ -283,6 +284,7 @@ function getSelectionData()
         local pos = copyall(df.global.cursor)
         selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
         path_info = string.format("block[%d][%d][%d]",pos.x,pos.y,pos.z)
+        path_info_pattern = string.format("block%%[%d%%]%%[%d%%]%%[%d%%]",pos.x,pos.y,pos.z)
         tilex = pos.x%16
         tiley = pos.y%16
     else
@@ -596,7 +598,7 @@ function printOnce(key, msg)
 end
 
 function printParents(path, field)
-    path = path:gsub(path_info, "")
+    path = string.gsub(path, path_info_pattern, "")
     local cd = cur_depth
     cur_depth = 0
     local cur_path = path_info
@@ -613,7 +615,7 @@ end
 bToggle = true
 function printField(path, field, value, bprinted_parent)
     if runOnce(printField) then
-        print(string.format("%s: %s", path, value))
+        printOnce(path,string.format("%s: %s", path, value))
         return
     end
     if not args.disableprint and not is_excluded(value) then
