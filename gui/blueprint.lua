@@ -112,6 +112,9 @@ function BlueprintUI:onAboutToShow()
     end
 
     self.saved_mode = df.global.ui.main.mode
+    if dfhack.gui.getCurFocus(true):find('^dfhack/') then
+        self.saved_mode = df.ui_sidebar_mode.Default
+    end
     switch_ui_sidebar_mode(df.ui_sidebar_mode.LookAround)
 end
 
