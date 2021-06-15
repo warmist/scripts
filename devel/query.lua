@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.1.1
+-- Version: 3.1.2
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -187,7 +187,7 @@ function query(table, name, search_term, path, bprinted_parent)
                     query(value, new_tname, search_term, appendField(path, field), bprinted)
                 else
                     -- I don't know when this prints (if ever)
-                    printField(path, field, value)
+                    printField(path, field, value, bprinted)
                 end
             end
             --print(name, path, "hello")
@@ -208,15 +208,7 @@ function foreach(table, name, callback)
             callback(idx, value)
             index = index + 1
         end
-    elseif string.find(name,".*list") and table["next"] then
-        for field, value in safe_pairs(table) do
-            if is_exceeding_maxlength(index) then
-                return
-            end
-            callback(field, value)
-            index = index + 1
-        end
-        index = 0
+    elseif (name == "list" or string.find(name,"%.list")) and table["next"] then
         for field, value in utils.listpairs(table) do
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
             local s = string.format("next{%d}->item", index)
@@ -271,14 +263,17 @@ function getSelectionData()
         debugf(0,"table selection")
         selection = findTable(args.table)
         path_info = args.table
+        path_info_pattern = path_info
     elseif args.unit then
         debugf(0,"unit selection")
         selection = dfhack.gui.getSelectedUnit()
         path_info = "unit"
+        path_info_pattern = path_info
     elseif args.item then
         debugf(0,"item selection")
         selection = dfhack.gui.getSelectedItem()
         path_info = "item"
+        path_info_pattern = path_info
     elseif args.tile then
         debugf(0,"tile selection")
         local pos = copyall(df.global.cursor)
@@ -293,6 +288,8 @@ function getSelectionData()
     if args.getfield then
         selection = findPath(selection,args.getfield)
         path_info = path_info .. "." .. args.getfield
+        path_info_pattern = path_info_pattern .. "." .. args.getfield
+        print(path_info_pattern)
     end
     --print(selection, path_info)
     return selection, path_info
@@ -598,10 +595,13 @@ function printOnce(key, msg)
 end
 
 function printParents(path, field)
+    --print("tony!", path, field, path_info_pattern)
     path = string.gsub(path, path_info_pattern, "")
+    field = string.gsub(field, path_info_pattern, "")
     local cd = cur_depth
     cur_depth = 0
     local cur_path = path_info
+
     for word in string.gmatch(path, '([^.]+)') do
         if word ~= field then
             cur_path = appendField(cur_path, word)
