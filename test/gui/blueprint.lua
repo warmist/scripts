@@ -203,6 +203,30 @@ end
 --auto enter and leave cursor-supporting mode
 
 -- clear and reshow ui if gui/blueprint is run while currently shown
+function test.replace_ui()
+    dfhack.run_script('gui/blueprint')
+    expect.eq('dfhack/lua/blueprint', dfhack.gui.getCurFocus(true))
+    local view = b.active_screen
+    expect.true_(not not view)
+    dfhack.run_script('gui/blueprint')
+    expect.eq('dfhack/lua/blueprint', dfhack.gui.getCurFocus(true))
+    expect.true_(not not b.active_screen)
+    expect.ne(view, b.active_screen)
+    send_keys('LEAVESCREEN') -- cancel out of ui
+    expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'),
+                'ensure the original ui is not still on the stack')
+end
+
+function test.reset_ui()
+    dfhack.run_script('gui/blueprint')
+    send_keys('SELECT') -- set cursor position
+    expect.true_(not not b.active_screen.mark)
+    dfhack.run_script('gui/blueprint')
+    expect.nil_(b.active_screen.mark)
+    send_keys('LEAVESCREEN') -- cancel out of ui
+    expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'),
+                'ensure the original ui is not still on the stack')
+end
 
 -- mouse support for selecting boundary tiles
 
