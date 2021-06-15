@@ -43,7 +43,7 @@ function ActionPanel:init()
             frame={t=0},
         },
         widgets.Label{
-            text='with the cursor.',
+            text='with the cursor or mouse.',
             frame={t=1},
         },
     }
@@ -140,8 +140,20 @@ end
 function BlueprintUI:onInput(keys)
     if self:inputToSubviews(keys) then return true end
 
-    if keys.SELECT then
-        local pos = guidm.getCursorPos()
+    local pos = nil
+    if keys._MOUSE_L then
+        local x, y = dfhack.screen.getMousePos()
+        if gui.is_in_rect(guidm.getPanelLayout().map, x, y) then
+            pos = xyz2pos(df.global.window_x + x - 1,
+                          df.global.window_y + y - 1,
+                          df.global.window_z)
+            guidm.setCursorPos(pos)
+        end
+    elseif keys.SELECT then
+        pos = guidm.getCursorPos()
+    end
+
+    if pos then
         if self.mark then
             self:commit(pos)
         else
