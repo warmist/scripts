@@ -25,6 +25,20 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local widgets = require('gui.widgets')
 
+ResizingPanel = defclass(ResizingPanel, widgets.Panel)
+function ResizingPanel:init()
+    if not self.frame then self.frame = {} end
+end
+function ResizingPanel:postUpdateLayout()
+    local h = 0
+    for _,subview in ipairs(self.subviews) do
+        if subview.visible then
+            h = h + subview.frame.h
+        end
+    end
+    self.frame.h = h
+end
+
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
             math.abs(pos1.y - pos2.y) + 1,
@@ -32,7 +46,7 @@ local function get_dims(pos1, pos2)
     return width, height, depth
 end
 
-ActionPanel = defclass(ActionPanel, widgets.Panel)
+ActionPanel = defclass(ActionPanel, ResizingPanel)
 ActionPanel.ATTRS{
     get_mark_fn=DEFAULT_NIL,
 }
@@ -46,13 +60,27 @@ function ActionPanel:init()
             text='with the cursor or mouse.',
             frame={t=1},
         },
+        widgets.Label{
+            view_id='selected_area',
+            text={{text=self:callback('get_area_text')}},
+            frame={t=2,l=1},
+        },
     }
+end
+function ActionPanel:preUpdateLayout()
+    self.subviews.selected_area.visible = self.get_mark_fn() ~= nil
 end
 function ActionPanel:get_action_text()
     if self.get_mark_fn() then
         return 'Select the second corner'
     end
     return 'Select the first corner'
+end
+function ActionPanel:get_area_text()
+    local width, height, depth = get_dims(self.get_mark_fn(), df.global.cursor)
+    local tiles = width * height * depth
+    local plural = tiles > 1 and 's' or ''
+    return ('%dx%dx%d (%d tile%s)'):format(width, height, depth, tiles, plural)
 end
 
 BlueprintUI = defclass(BlueprintUI, guidm.MenuOverlay)
@@ -68,13 +96,12 @@ function BlueprintUI:init()
     }
 
     self:addviews{
-        widgets.Label{text='Blueprint', frame={t=0}},
-        widgets.Label{text=summary, text_pen=COLOR_GREY, frame={t=2}},
-        ActionPanel{get_mark_fn=function() return self.mark end, frame={t=5}},
+        widgets.Label{text='Blueprint'},
+        widgets.Label{text=summary, text_pen=COLOR_GREY},
+        ActionPanel{get_mark_fn=function() return self.mark end},
         widgets.Label{text={{text=function() return self:get_cancel_label() end,
                              key='LEAVESCREEN', key_sep=': ',
-                             on_activate=function() self:on_cancel() end}},
-                             frame={t=8}},
+                             on_activate=function() self:on_cancel() end}}},
     }
 end
 
@@ -97,6 +124,8 @@ end
 
 function BlueprintUI:on_mark(pos)
     self.mark = pos
+    self:updateSubviewLayout()
+    self:updateLayout()
 end
 
 function BlueprintUI:get_cancel_label()
@@ -109,9 +138,23 @@ end
 function BlueprintUI:on_cancel()
     if self.mark then
         self.mark = nil
+        self:updateSubviewLayout()
+        self:updateLayout()
     else
         self:dismiss()
     end
+end
+
+function BlueprintUI:postUpdateLayout()
+    -- lay out subviews, adding an extra line of space between widgets
+    local y = 0
+    for _,subview in ipairs(self.subviews) do
+        subview.frame.t = y
+        if subview.visible then
+            y = y + subview.frame.h + 1
+        end
+    end
+    self:updateSubviewLayout()
 end
 
 -- Sorts and returns the given arguments.
