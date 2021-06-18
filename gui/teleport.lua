@@ -11,7 +11,6 @@ using the in-game cursor.
 ]====]
 
 guidm = require 'gui.dwarfmode'
-teleport = reqscript 'teleport'
 widgets = require 'gui.widgets'
 
 function uiMultipleUnits()
@@ -67,7 +66,7 @@ function TeleportSidebar:choose()
         self.in_pick_pos = true
         df.global.ui.main.mode = df.ui_sidebar_mode.LookAround
     else
-        teleport.teleport(self.unit, xyz2pos(pos2xyz(df.global.cursor)))
+        dfhack.units.teleport(self.unit, xyz2pos(pos2xyz(df.global.cursor)))
         self:dismiss()
     end
 end
