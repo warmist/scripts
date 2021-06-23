@@ -91,7 +91,7 @@ function BlueprintUI:onAboutToShow()
 end
 
 function BlueprintUI:onDismiss()
-    if not basic_ui_sidebar_modes[self.saved_mode] then
+    if not guidm.SIDEBAR_MODE_KEYS[self.saved_mode] then
         self.saved_mode = df.ui_sidebar_mode.Default
     end
     guidm.enterSidebarMode(self.saved_mode)
