@@ -200,7 +200,7 @@ end
 
 function foreach(table, name, callback)
     local index = 0
-    if getmetatable(table) and table._kind and table._kind == "enum-type" then
+    if getmetatable(table) and table._kind and (table._kind == "enum-type" or table._kind == "bitfield-type") then
         for idx, value in ipairs(table) do
             if is_exceeding_maxlength(index) then
                 return
@@ -344,12 +344,12 @@ function processArguments()
     end
 
     if string.find(args.excludekind, 'a') then
-        bool_flags["bit-field"] = true
+        bool_flags["bitfield-type"] = true
         bool_flags["class-type"] = true
         bool_flags["enum-type"] = true
         bool_flags["struct-type"] = true
     else
-        bool_flags["bit-field"] = string.find(args.excludekind, 'b') and true or false
+        bool_flags["bitfield-type"] = string.find(args.excludekind, 'b') and true or false
         bool_flags["class-type"] = string.find(args.excludekind, 'c') and true or false
         bool_flags["enum-type"] = string.find(args.excludekind, 'e') and true or false
         bool_flags["struct-type"] = string.find(args.excludekind, 's') and true or false
@@ -588,28 +588,93 @@ function makeIndentation()
     return indent
 end
 
+function makeIndentedField(path, field, value)
+    if is_tiledata(value) then
+        value = value[tilex][tiley]
+        field = string.format("%s[%d][%d]", field,tilex,tiley)
+    end
+    local indent = not args.showpaths and makeIndentation() or ""
+    local indented_field = string.format("%-40s ", tostring(args.showpaths and path or field) .. ":")
+
+    if args.debugdata or not args.oneline or bToggle then
+        indented_field = string.gsub(indented_field,"  "," ~")
+        bToggle = false
+    else
+        bToggle = true
+    end
+    indented_field = indent .. indented_field
+    local output = nil
+    if hasMetadata(value) then
+        --print simple meta data
+        if args.oneline then
+            output = string.format("%s %s [%s]", indented_field, value, value._kind)
+        else
+            local N = math.min(90, string.len(indented_field))
+            indent = string.format("%" .. N .. "s", "")
+            output = string.format("%s %s\n%s [has metatable; _kind: %s]", indented_field, value, indent, value._kind)
+        end
+    else
+        --print regular field and value
+        if args.debugdata then
+            --also print value type
+            output = string.format("%s %s; type(%s) = %s", indented_field, value, field, type(value))
+        else
+            output = string.format("%s %s", indented_field, value)
+        end
+    end
+    if args.debugdata then
+        local N = math.min(90, string.len(indented_field))
+        indent = string.format("%" .. N .. "s", "")
+        if hasMetadata(value) then
+            --print lots of meta data
+            if not args.search and args.oneline then
+                output = output .. string.format("\n%s type(%s): %s, _kind: %s, _type: %s",
+                        indent, field, type(value), field._kind, field._type)
+            else
+                output = output .. string.format("\n%s type(%s): %s\n%s _kind: %s\n%s _type: %s",
+                        indent, field, type(value), indent, field._kind, indent, field._type)
+            end
+        end
+    end
+    return output
+end
+
 function printOnce(key, msg)
     if runOnce(key) then
         print(msg)
     end
 end
 
-function printParents(path, field)
+--sometimes used to print fields, always used to print parents of fields
+function printParents(path, field, value)
     --print("tony!", path, field, path_info_pattern)
+    local value_printed = false
     path = string.gsub(path, path_info_pattern, "")
     field = string.gsub(field, path_info_pattern, "")
     local cd = cur_depth
     cur_depth = 0
     local cur_path = path_info
+    local words = {}
+    local index = 1
 
     for word in string.gmatch(path, '([^.]+)') do
-        if word ~= field then
+        words[index] = word
+        index = index + 1
+    end
+    local last_index = index - 1
+    for i,word in ipairs(words) do
+        if i ~= last_index then
             cur_path = appendField(cur_path, word)
             printOnce(cur_path, string.format("%s%s", makeIndentation(),word))
+        elseif string.find(word,"%a+%[%d+%]%[%d+%]") then
+            value_printed = true
+            cur_path = appendField(cur_path, word)
+            print(makeIndentedField(path, word, value))
         end
         cur_depth = cur_depth + 1
     end
     cur_depth = cd
+    return value_printed
 end
 
 bToggle = true
@@ -620,59 +685,13 @@ function printField(path, field, value, bprinted_parent)
     end
     if not args.disableprint and not is_excluded(value) then
         if not args.search and not args.findvalue or is_match(path, field, value) then
+            local bprinted_field = false
             if not args.showpaths and not bprinted_parent then
-                printParents(path, field)
+                bprinted_field = printParents(path, field, value)
             end
-            if is_tiledata(value) then
-                value = value[tilex][tiley]
-                field = string.format("%s[%d][%d]", field,tilex,tiley)
+            if not bprinted_field then
+                print(makeIndentedField(path, field, value))
             end
-            local indent = not args.showpaths and makeIndentation() or ""
-            local indented_field = string.format("%-40s ", tostring(args.showpaths and path or field) .. ":")
-
-            if args.debugdata or not args.oneline or bToggle then
-                indented_field = string.gsub(indented_field,"  "," ~")
-                bToggle = false
-            else
-                bToggle = true
-            end
-            indented_field = indent .. indented_field
-            local output = nil
-            if hasMetadata(value) then
-                if args.oneline then
-                    output = string.format("%s %s [%s]", indented_field, value, value._kind)
-                else
-                    local N = math.min(90, string.len(indented_field))
-                    indent = string.format("%" .. N .. "s", "")
-                    output = string.format("%s %s\n%s [has metatable; _kind: %s]", indented_field, value, indent, value._kind)
-                end
-            else
-                if args.debugdata then
-                    output = string.format("%s type(%s) = %s", indented_field, value, type(value))
-                else
-                    output = string.format("%s %s", indented_field, value)
-                end
-            end
-            if args.debugdata then
-                local N = math.min(90, string.len(indented_field))
-                indent = string.format("%" .. N .. "s", "")
-                if hasMetadata(value) then
-                    if not args.search and args.oneline then
-                        output = output .. string.format("\n%s type(%s): %s, _kind: %s, _type: %s",
-                                indent, field, type(value), field._kind, field._type)
-                    else
-                        output = output .. string.format("\n%s type(%s): %s\n%s _kind: %s\n%s _type: %s",
-                                indent, field, type(value), indent, field._kind, indent, field._type)
-                    end
-                else
-                    if args.oneline then
-                        output = output .. string.format(", type(%s): %s", path, type(value))
-                    else
-                        output = output .. string.format("\n%s type(%s): %s", indent, field, type(value))
-                    end
-                end
-            end
-            print(output)
             return true
         end
     end
