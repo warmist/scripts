@@ -49,7 +49,7 @@ function test.minimal_happy_path()
             expect.table_eq({'2', '3', '-4', 'blueprint', '--cursor=10,20,33'},
                             mock_run.call_args[1])
             send_keys('SELECT') -- dismiss the success messagebox
-            while view:isActive() do delay() end -- wait for view to disappear
+            delay_until(view:callback('isDismissed'))
             expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
         end)
 end
@@ -93,7 +93,7 @@ function test.cancel_selection()
                             '--cursor=11,22,27'},
                             mock_run.call_args[1])
             send_keys('SELECT') -- dismiss the success messagebox
-            while view:isActive() do delay() end -- wait for view to disappear
+            delay_until(view:callback('isDismissed'))
             expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
         end)
 end
