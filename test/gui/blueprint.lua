@@ -194,7 +194,7 @@ end
 --auto enter and leave cursor-supporting mode
 
 function test.restore_mode()
-    df.global.ui.main.mode = df.ui_sidebar_mode.Stockpiles
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Stockpiles)
     load_ui()
     expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
     send_keys('LEAVESCREEN') -- cancel out of ui
@@ -202,8 +202,9 @@ function test.restore_mode()
     send_keys('LEAVESCREEN') -- get back to Default mode
 end
 
-function test.restore_default_on_unknown_mode()
-    df.global.ui.main.mode = df.ui_sidebar_mode.Burrows
+function test.restore_default_on_unsupported_mode()
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
+    send_keys('D_BURROWS')
     load_ui()
     expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
     send_keys('LEAVESCREEN') -- cancel out of ui
