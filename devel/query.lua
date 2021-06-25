@@ -81,6 +81,11 @@ Examples::
 
 **Selection options:**
 
+``-tile``:              Selects the highlighted tile's block, and then
+                        uses the tile's local position to index the 2D data.
+
+``-block``:             Selects the highlighted tile's block.
+
 ``-unit``:              Selects the highlighted unit
 
 ``-item``:              Selects the highlighted item.
@@ -92,11 +97,6 @@ Examples::
 ``-job``:               Selects the highlighted job.
 
 ``-workshopjob``:       Selects the highlighted job in a workshop.
-
-``-tile``:              Selects the highlighted tile's block, and then
-                        uses the tile's local position to index the data.
-
-``-block``:             Selects the highlighted tile's block.
 
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
