@@ -102,7 +102,12 @@ function do_command(args)
         })
     local blueprint_name = other_args[1]
     if not blueprint_name or blueprint_name == '' then
-        qerror("expected <list_num> or <blueprint_name> parameter")
+        qerror('expected <list_num> or <blueprint_name> parameter')
+    end
+    if #other_args > 1 then
+        local extra = other_args[2]
+        qerror(('unexpected argument: "%s"; did you mean "-n %s"?')
+               :format(extra, extra))
     end
 
     local mode = nil
