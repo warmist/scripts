@@ -96,7 +96,7 @@ Examples::
 ``-tile``:              Selects the highlighted tile's block, and then
                         uses the tile's local position to index the data.
 
-``-block``:              Selects the highlighted tile's block.
+``-block``:             Selects the highlighted tile's block.
 
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
