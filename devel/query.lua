@@ -8,7 +8,12 @@ local validArgs = utils.invert({
 
  'unit',
  'item',
+ 'plant',
+ 'building',
+ 'job',
+ 'workshopjob',
  'tile',
+ 'block',
  'table',
  'getfield',
 
@@ -58,7 +63,7 @@ structure pattern (see lua patterns) or set the value of fields matching the
 selection and any search pattern specified.
 
 If the script is taking too long to finish, or if it can't finish you should run
-``dfhack-run kill-lua`` from a terminal.
+``dfhack-run kill-lua`` from another terminal.
 
 Examples::
 
@@ -80,8 +85,18 @@ Examples::
 
 ``-item``:              Selects the highlighted item.
 
-``-tile``:              Selects the highlighted tile's block and then attempts
-                        to find the tile, and perform your queries on it.
+``-plant``:             Selects the highlighted plant.
+
+``-building``:          Selects the highlighted building.
+
+``-job``:               Selects the highlighted job.
+
+``-workshopjob``:       Selects the highlighted job in a workshop.
+
+``-tile``:              Selects the highlighted tile's block, and then
+                        uses the tile's local position to index the data.
+
+``-block``:              Selects the highlighted tile's block.
 
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
@@ -274,14 +289,42 @@ function getSelectionData()
         selection = dfhack.gui.getSelectedItem()
         path_info = "item"
         path_info_pattern = path_info
+    elseif args.plant then
+        debugf(0,"plant selection")
+        selection = dfhack.gui.getSelectedPlant()
+        path_info = "plant"
+        path_info_pattern = path_info
+    elseif args.building then
+        debugf(0,"item selection")
+        selection = dfhack.gui.getSelectedBuilding()
+        path_info = "building"
+        path_info_pattern = path_info
+    elseif args.job then
+        debugf(0,"job selection")
+        selection = dfhack.gui.getSelectedJob()
+        path_info = "job"
+        path_info_pattern = path_info
+    elseif args.workshopjob then
+        debugf(0,"workshop job selection")
+        selection = dfhack.gui.getSelectedWorkshopJob()
+        path_info = "workshop job"
+        path_info_pattern = path_info
     elseif args.tile then
         debugf(0,"tile selection")
         local pos = copyall(df.global.cursor)
         selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
-        path_info = string.format("block[%d][%d][%d]",pos.x,pos.y,pos.z)
-        path_info_pattern = string.format("block%%[%d%%]%%[%d%%]%%[%d%%]",pos.x,pos.y,pos.z)
+        bpos = selection.map_pos
+        path_info = string.format("blocks[%d][%d][%d]",bpos.x,bpos.y,bpos.z)
+        path_info_pattern = string.format("blocks%%[%d%%]%%[%d%%]%%[%d%%]",bpos.x,bpos.y,bpos.z)
         tilex = pos.x%16
         tiley = pos.y%16
+    elseif args.block then
+        debugf(0,"tile selection")
+        local pos = copyall(df.global.cursor)
+        selection = dfhack.maps.ensureTileBlock(pos.x,pos.y,pos.z)
+        bpos = selection.map_pos
+        path_info = string.format("blocks[%d][%d][%d]",bpos.x,bpos.y,bpos.z)
+        path_info_pattern = string.format("blocks%%[%d%%]%%[%d%%]%%[%d%%]",bpos.x,bpos.y,bpos.z)
     else
         print(help)
     end
