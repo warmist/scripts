@@ -410,11 +410,11 @@ end
 
 function toType(str)
     if str ~= nil then
-        if str == "true" then
+        if string.find(str,"true") then
             return true
-        elseif str == "false" then
+        elseif string.find(str,"false") then
             return false
-        elseif str == "nil" then
+        elseif string.find(str,"nil") then
             return nil
         elseif tonumber(str) then
             return tonumber(str)
@@ -451,8 +451,9 @@ function is_searchable(field, value)
 end
 
 function is_match(path, field, value)
+    debugf(3, string.format("path: %s\nfield: %s\nvalue: %s", path, field, value))
     if not args.search or string.find(tostring(field),args.search) or string.find(path,args.search) then
-        if not args.findvalue or (not type(value) == "string" and value == find_value) or string.find(value,find_value) then
+        if not args.findvalue or (type(value) == type(find_value) and (value == find_value or (type(value) == "string" and string.find(value,find_value)))) then
             return true
         end
     end
