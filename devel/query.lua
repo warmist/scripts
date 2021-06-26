@@ -11,7 +11,6 @@ local validArgs = utils.invert({
  'plant',
  'building',
  'job',
- 'workshopjob',
  'tile',
  'block',
  'table',
@@ -96,8 +95,6 @@ Examples::
 
 ``-job``:               Selects the highlighted job.
 
-``-workshopjob``:       Selects the highlighted job in a workshop.
-
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
                         Must use dot notation to denote sub-tables.
@@ -174,7 +171,7 @@ Examples::
 ]]
 
 --Section: core logic
-function query(table, name, search_term, path, bprinted_parent)
+function query(table, name, search_term, path, bprinted_parent, parent_table)
     --[[
     * print info about t
     * increment depth
@@ -185,7 +182,12 @@ function query(table, name, search_term, path, bprinted_parent)
     if bprinted_parent == nil then
         bprinted_parent = false
     end
-    setValue(path, name, table, new_value)
+    if parent_table ~= nil then
+        --todo: have this run before the field is printed so we see the updated value. BUT HOW?! I don't know.
+        if setValue(parent_table, path, name, table, new_value) then
+            table = new_value
+        end
+    end
     local bprinted = printField(path, name, table, bprinted_parent)
     --print("table/field printed")
     cur_depth = cur_depth + 1
@@ -197,9 +199,9 @@ function query(table, name, search_term, path, bprinted_parent)
                 local new_tname = tostring(makeName(name, field))
                 if is_tiledata(value) then
                     local indexing = string.format("%s[%d][%d]", field,tilex,tiley)
-                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing), bprinted)
+                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing), bprinted, table)
                 elseif not is_looping(path, new_tname) then
-                    query(value, new_tname, search_term, appendField(path, field), bprinted)
+                    query(value, new_tname, search_term, appendField(path, field), bprinted, table)
                 else
                     -- I don't know when this prints (if ever)
                     printField(path, field, value, bprinted)
@@ -244,14 +246,17 @@ function foreach(table, name, callback)
     end
 end
 
-function setValue(path, field, value, new_value)
+function setValue(table, path, field, value, new_value)
     if args.setvalue then
         if not args.search or is_match(path, field, value) then
             if type(value) == type(new_value) then
-                value = new_value
+                table[field] = new_value
+                print(string.format("Set %s value to %d, from %d", field, new_value, value))
+                return true
             end
         end
     end
+    return false
 end
 
 --Section: entry/initialization
@@ -303,11 +308,6 @@ function getSelectionData()
         debugf(0,"job selection")
         selection = dfhack.gui.getSelectedJob()
         path_info = "job"
-        path_info_pattern = path_info
-    elseif args.workshopjob then
-        debugf(0,"workshop job selection")
-        selection = dfhack.gui.getSelectedWorkshopJob()
-        path_info = "workshop job"
         path_info_pattern = path_info
     elseif args.tile then
         debugf(0,"tile selection")
