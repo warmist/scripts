@@ -232,10 +232,11 @@ function test.set_with_mouse()
 
     click_mouse_and_test(5, 7, true, 'interior tile')
 
-    local screen_width, screen_height = dfhack.screen.getWindowSize()
-    click_mouse_and_test(screen_width - (guidm.MENU_WIDTH+3), 7, true,
+    local _, screen_height = dfhack.screen.getWindowSize()
+    local map_x2 = dfhack.gui.getDwarfmodeViewDims().map_x2
+    click_mouse_and_test(map_x2, 7, true,
                          'just to left of border between map and blueprint gui')
-    click_mouse_and_test(screen_width - (guidm.MENU_WIDTH+2), 7, false,
+    click_mouse_and_test(map_x2 + 1, 7, false,
                          'on border between map and blueprint gui')
     click_mouse_and_test(5, screen_height - 2, true, 'above bottom border')
     click_mouse_and_test(5, screen_height - 1, false, 'on bottom border')
