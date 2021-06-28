@@ -212,7 +212,8 @@ function test.restore_default_on_unsupported_mode()
 end
 
 function test.fail_to_find_default_mode()
-    df.global.ui.main.mode = df.ui_sidebar_mode.Burrows
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
+    send_keys('D_BURROWS')
     mock.patch(gui, 'simulateInput', mock.func(),
         function()
             expect.error_match('Unable to get into target sidebar mode',
