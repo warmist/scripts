@@ -90,23 +90,6 @@ local function truncate(text, width, max_lines)
     return table.concat(truncated_text, '\n')
 end
 
-local function wrap(text, width)
-    local wrapped_text = {}
-    for line in text:gmatch('[^\n]*') do
-        local here = 1
-        local wrapped_line = line:gsub(
-            '(%s+)()(%S+)()',
-            function(sp, st, word, fi)
-                if fi - here > width then
-                    here = st
-                    return '\n' .. word
-                end
-            end)
-        table.insert(wrapped_text, wrapped_line)
-    end
-    return table.concat(wrapped_text, '\n')
-end
-
 local function get_id(text)
     local _, _, id = text:find('^(%d+)')
     return tonumber(id)
@@ -153,7 +136,7 @@ function BlueprintDialog:onInput(keys)
     if keys.STANDARDSCROLL_RIGHT and obj then
         BlueprintDetails{
             frame_title='Details',
-            text=wrap(obj.full_text, self.frame_body.width)
+            text=obj.full_text:wrap(self.frame_body.width)
         }:show()
     elseif keys.CUSTOM_ALT_O and obj then
         self.on_orders(idx, obj)
@@ -210,7 +193,7 @@ local function dialog_command(command, text)
     quickfort_command.finish_command(ctx, section_name, true)
     if command == 'run' and #ctx.messages > 0 then
         dialogs.showMessage('Attention',
-                            wrap(table.concat(ctx.messages, '\n\n'),
+                            table.concat(ctx.messages, '\n\n'):wrap(
                                  min_dialog_width))
     elseif command == 'orders' then
         local count = 0
@@ -218,7 +201,7 @@ local function dialog_command(command, text)
         local message = string.format(
             '%d orders enqueued for %s.', count,
             quickfort_parse.format_command(nil, blueprint_name, section_name))
-        dialogs.showMessage('Orders enqueued', wrap(message, min_dialog_width))
+        dialogs.showMessage('Orders enqueued', message:wrap(min_dialog_width))
     end
 end
 
