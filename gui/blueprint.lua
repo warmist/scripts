@@ -124,7 +124,6 @@ end
 
 function BlueprintUI:on_mark(pos)
     self.mark = pos
-    self:updateSubviewLayout()
     self:updateLayout()
 end
 
@@ -138,15 +137,16 @@ end
 function BlueprintUI:on_cancel()
     if self.mark then
         self.mark = nil
-        self:updateSubviewLayout()
         self:updateLayout()
     else
         self:dismiss()
     end
 end
 
-function BlueprintUI:postUpdateLayout()
-    -- lay out subviews, adding an extra line of space between widgets
+function BlueprintUI:updateLayout(parent_rect)
+    -- set frame boundaries and calculate subframe heights
+    BlueprintUI.super.updateLayout(self, parent_rect)
+    -- vertically lay out subviews, adding an extra line of space between each
     local y = 0
     for _,subview in ipairs(self.subviews) do
         subview.frame.t = y
@@ -154,6 +154,7 @@ function BlueprintUI:postUpdateLayout()
             y = y + subview.frame.h + 1
         end
     end
+    -- recalculate widget frames
     self:updateSubviewLayout()
 end
 
