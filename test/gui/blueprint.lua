@@ -117,10 +117,10 @@ end
 function test.render_labels()
     local view = load_ui()
     view:onRender()
-    local action_label = view.subviews[3].subviews[1]
+    local action_label = view.subviews.action_label
     local action_word_pos = {x=action_label.frame_body.x1+11,
                              y=action_label.frame_body.y1}
-    local cancel_label = view.subviews[4]
+    local cancel_label = view.subviews.cancel_label
     expect.eq('first', get_screen_word(action_word_pos))
     expect.eq('Back', get_screen_word(get_cancel_word_pos(cancel_label)))
     guidm.setCursorPos({x=10, y=20, z=30})
@@ -303,7 +303,7 @@ end
 -- live status line showing the dimensions of the currently selected area
 function test.render_status_line()
     local view = load_ui()
-    local status_label = view.subviews[3].subviews.selected_area
+    local status_label = view.subviews.selected_area
     local status_text_pos = {x=status_label.frame_body.x1,
                              y=status_label.frame_body.y1}
     view:onRender()

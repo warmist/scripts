@@ -53,6 +53,7 @@ ActionPanel.ATTRS{
 function ActionPanel:init()
     self:addviews{
         widgets.Label{
+            view_id='action_label',
             text={{text=self:callback('get_action_text')}},
             frame={t=0},
         },
@@ -99,7 +100,8 @@ function BlueprintUI:init()
         widgets.Label{text='Blueprint'},
         widgets.Label{text=summary, text_pen=COLOR_GREY},
         ActionPanel{get_mark_fn=function() return self.mark end},
-        widgets.Label{text={{text=function() return self:get_cancel_label() end,
+        widgets.Label{view_id='cancel_label',
+                      text={{text=function() return self:get_cancel_label() end,
                              key='LEAVESCREEN', key_sep=': ',
                              on_activate=function() self:on_cancel() end}}},
     }
