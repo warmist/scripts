@@ -213,6 +213,13 @@ function BlueprintUI:commit(pos)
     }:show()
 end
 
-if not dfhack_flags.module then
-    BlueprintUI{}:show()
+if dfhack_flags.module then
+    return
 end
+
+if active_screen then
+    active_screen:dismiss()
+end
+
+active_screen = BlueprintUI{}
+active_screen:show()
