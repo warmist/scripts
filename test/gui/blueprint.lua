@@ -304,10 +304,10 @@ end
 -- live status line showing the dimensions of the currently selected area
 function test.render_status_line()
     local view = load_ui()
+    view:updateLayout()
     local status_label = view.subviews.selected_area
     local status_text_pos = {x=status_label.frame_body.x1,
                              y=status_label.frame_body.y1}
-    view:updateLayout()
     view:onRender()
     expect.false_(status_label.visible)
     guidm.setCursorPos({x=10, y=20, z=30})
