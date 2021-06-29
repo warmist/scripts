@@ -191,6 +191,16 @@ function test.render_selected()
         end)
 end
 
+function test.preset_cursor()
+    guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
+    guidm.setCursorPos({x=10, y=20, z=30})
+    dfhack.run_script('gui/blueprint', '--cursor=11,12,13')
+    local view = b.active_screen
+    expect.table_eq({x=11, y=12, z=13}, guidm.getCursorPos())
+    expect.true_(not not view.mark)
+    send_keys('LEAVESCREEN', 'LEAVESCREEN') -- cancel selection and ui
+end
+
 --auto enter and leave cursor-supporting mode
 
 function test.restore_mode()
@@ -303,6 +313,3 @@ end
 -- edit widget for setting the blueprint name
 
 -- widgets to configure which blueprint phases to output
-
--- presetting config values from commandline parameters
-
