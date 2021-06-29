@@ -116,6 +116,7 @@ end
 
 function test.render_labels()
     local view = load_ui()
+    view:updateLayout()
     view:onRender()
     local action_label = view.subviews.action_label
     local action_word_pos = {x=action_label.frame_body.x1+11,
@@ -306,6 +307,7 @@ function test.render_status_line()
     local status_label = view.subviews.selected_area
     local status_text_pos = {x=status_label.frame_body.x1,
                              y=status_label.frame_body.y1}
+    view:updateLayout()
     view:onRender()
     expect.false_(status_label.visible)
     guidm.setCursorPos({x=10, y=20, z=30})
