@@ -73,37 +73,19 @@ local function paintMapTile(dc, vp, cursor, pos, ...)
     end
 end
 
--- Adapted from quickfort/query.lua
-local function switch_to_look_mode(parent)
-    for i=1,10 do
-        if df.global.ui.main.mode == df.ui_sidebar_mode.Default then
-            gui.simulateInput(parent, df.interface_key.D_LOOK)
-            return
-        end
-        gui.simulateInput(parent, df.interface_key.LEAVESCREEN)
-    end
-    qerror('Unable to get into look mode from current UI viewscreen.')
-end
-
-local function switch_to_default_mode()
-    for i=1,2 do
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true), df.interface_key.LEAVESCREEN)
-    end
-end
-
 local function ableToSuspend(job)
     local buildingHolder = dfhack.job.getGeneralRef(job, df.general_ref_type.BUILDING_HOLDER)
     local ret = not buildingHolder or not buildingplan.isPlannedBuilding(buildingHolder:getBuilding())
     return ret
 end
 
-function MassRemoveUI:onAboutToShow(parent)
-    switch_to_look_mode(parent)
+function MassRemoveUI:onAboutToShow()
+    guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
 end
 
 function MassRemoveUI:onDestroy()
     persistTable.GlobalTable.massRemoveAction=self.action
-    switch_to_default_mode()
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
 end
 
 function MassRemoveUI:changeSuspendState(x, y, z, new_state)

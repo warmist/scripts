@@ -56,31 +56,6 @@ local function handle_modifiers(token, modifiers)
     return false
 end
 
--- the sidebar modes that we know how to get back to if the player starts there
--- instead of query mode
-local basic_ui_sidebar_modes = {
-    [df.ui_sidebar_mode.QueryBuilding]='D_BUILDJOB',
-    [df.ui_sidebar_mode.LookAround]='D_LOOK',
-    [df.ui_sidebar_mode.BuildingItems]='D_BUILDITEM',
-    [df.ui_sidebar_mode.Stockpiles]='D_STOCKPILES',
-    [df.ui_sidebar_mode.Zones]='D_CIVZONE',
-}
-
--- Send ESC keycodes until we get to Dwarfmode/Default and enter the specified
--- sidebar mode. If we don't get to Default after 10 presses of ESC, throw an
--- error. The target sidebar mode must be a member of basic_ui_sidebar_modes.
-local function switch_ui_sidebar_mode(sidebar_mode)
-    for i=1,10 do
-        if df.global.ui.main.mode == df.ui_sidebar_mode.Default then
-            gui.simulateInput(dfhack.gui.getCurViewscreen(true),
-                              basic_ui_sidebar_modes[sidebar_mode])
-            return
-        end
-        gui.simulateInput(dfhack.gui.getCurViewscreen(true), 'LEAVESCREEN')
-    end
-    qerror('Unable to get into target sidebar mode from current UI viewscreen.')
-end
-
 -- If a tile starts or ends with one of these focus strings, the start and end
 -- focus strings can differ without us flagging it as an error.
 local exempt_focus_strings = utils.invert({
@@ -100,7 +75,7 @@ function do_run(zlevel, grid, ctx)
     local dry_run = ctx.dry_run
     local saved_mode = df.global.ui.main.mode
     if not dry_run and saved_mode ~= df.ui_sidebar_mode.QueryBuilding then
-        switch_ui_sidebar_mode(df.ui_sidebar_mode.QueryBuilding)
+        guidm.enterSidebarMode(df.ui_sidebar_mode.QueryBuilding)
     end
 
     for y, row in pairs(grid) do
@@ -167,8 +142,8 @@ function do_run(zlevel, grid, ctx)
 
     if not dry_run then
         if saved_mode ~= df.ui_sidebar_mode.QueryBuilding
-                and basic_ui_sidebar_modes[saved_mode] then
-            switch_ui_sidebar_mode(saved_mode)
+                and guidm.SIDEBAR_MODE_KEYS[saved_mode] then
+            guidm.enterSidebarMode(saved_mode)
         end
         quickfort_map.move_cursor(ctx.cursor)
     end
