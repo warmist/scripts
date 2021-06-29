@@ -91,6 +91,16 @@ function BlueprintUI:onAboutToShow()
     guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
 end
 
+function BlueprintUI:onShow()
+    local start = self.presets.start
+    if not start or not dfhack.maps.isValidTilePos(start) then
+        return
+    end
+    guidm.setCursorPos(start)
+    dfhack.gui.revealInDwarfmodeMap(start, true)
+    self:on_mark(start)
+end
+
 function BlueprintUI:onDismiss()
     guidm.enterSidebarMode(self.saved_mode)
 end
@@ -219,5 +229,17 @@ if active_screen then
     active_screen:dismiss()
 end
 
-active_screen = BlueprintUI{}
+local options, args = {}, {...}
+local ok, err = dfhack.pcall(blueprint.parse_gui_commandline, options, args)
+if not ok then
+    dfhack.printerr(tostring(err))
+    options.help = true
+end
+
+if options.help then
+    print(dfhack.script_help())
+    return
+end
+
+active_screen = BlueprintUI{presets=options}
 active_screen:show()
