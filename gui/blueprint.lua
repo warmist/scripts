@@ -84,16 +84,14 @@ function BlueprintUI:onAboutToShow()
     end
 
     self.saved_mode = df.global.ui.main.mode
-    if dfhack.gui.getCurFocus(true):find('^dfhack/') then
+    if dfhack.gui.getCurFocus(true):find('^dfhack/')
+            or not guidm.SIDEBAR_MODE_KEYS[self.saved_mode] then
         self.saved_mode = df.ui_sidebar_mode.Default
     end
     guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
 end
 
 function BlueprintUI:onDismiss()
-    if not guidm.SIDEBAR_MODE_KEYS[self.saved_mode] then
-        self.saved_mode = df.ui_sidebar_mode.Default
-    end
     guidm.enterSidebarMode(self.saved_mode)
 end
 
