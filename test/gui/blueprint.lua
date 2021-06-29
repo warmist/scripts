@@ -286,6 +286,7 @@ function test.set_with_mouse()
 
     click_mouse_and_test(5, 7, true, 'interior tile')
 
+    guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
     local _, screen_height = dfhack.screen.getWindowSize()
     local map_x2 = dfhack.gui.getDwarfmodeViewDims().map_x2
     click_mouse_and_test(map_x2, 7, true,
@@ -294,6 +295,7 @@ function test.set_with_mouse()
                          'on border between map and blueprint gui')
     click_mouse_and_test(5, screen_height - 2, true, 'above bottom border')
     click_mouse_and_test(5, screen_height - 1, false, 'on bottom border')
+    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
 end
 
 -- live status line showing the dimensions of the currently selected area
