@@ -110,26 +110,29 @@ local function get_screen_word(screen_pos)
     return str
 end
 
+local function get_cancel_word_pos(cancel_label)
+    return {x=cancel_label.frame_body.x1+5, y=cancel_label.frame_body.y1}
+end
+
 function test.render_labels()
     local view = load_ui()
+    view:updateLayout()
     view:onRender()
-    local action_label = view.subviews[3].subviews[1]
+    local action_label = view.subviews.action_label
     local action_word_pos = {x=action_label.frame_body.x1+11,
                              y=action_label.frame_body.y1}
-    local cancel_label = view.subviews[4]
-    local cancel_word_pos = {x=cancel_label.frame_body.x1+5,
-                             y=cancel_label.frame_body.y1}
+    local cancel_label = view.subviews.cancel_label
     expect.eq('first', get_screen_word(action_word_pos))
-    expect.eq('Back', get_screen_word(cancel_word_pos))
+    expect.eq('Back', get_screen_word(get_cancel_word_pos(cancel_label)))
     guidm.setCursorPos({x=10, y=20, z=30})
     send_keys('SELECT')
     view:onRender()
     expect.eq('second', get_screen_word(action_word_pos))
-    expect.eq('Cancel', get_screen_word(cancel_word_pos))
+    expect.eq('Cancel', get_screen_word(get_cancel_word_pos(cancel_label)))
     send_keys('LEAVESCREEN') -- cancel selection
     view:onRender()
     expect.eq('first', get_screen_word(action_word_pos))
-    expect.eq('Back', get_screen_word(cancel_word_pos))
+    expect.eq('Back', get_screen_word(get_cancel_word_pos(cancel_label)))
     send_keys('LEAVESCREEN') -- leave UI
     expect.nil_(dfhack.gui.getCurFocus(true):find('^dfhack/'))
 end
@@ -309,6 +312,34 @@ function test.set_with_mouse()
 end
 
 -- live status line showing the dimensions of the currently selected area
+function test.render_status_line()
+    local view = load_ui()
+    view:updateLayout()
+    local status_label = view.subviews.selected_area
+    local status_text_pos = {x=status_label.frame_body.x1,
+                             y=status_label.frame_body.y1}
+    view:onRender()
+    expect.false_(status_label.visible)
+    guidm.setCursorPos({x=10, y=20, z=30})
+    send_keys('SELECT')
+    view:onRender()
+    expect.true_(status_label.visible)
+    expect.eq('1x1x1', get_screen_word(status_text_pos))
+
+    send_keys('CURSOR_LEFT', 'CURSOR_DOWN', 'CURSOR_DOWN')
+    view:onRender()
+    expect.eq('2x3x1', get_screen_word(status_text_pos))
+
+    send_keys('CURSOR_UP_Z', 'CURSOR_UP_Z', 'CURSOR_UP_Z')
+    view:onRender()
+    expect.eq('2x3x4', get_screen_word(status_text_pos))
+
+    send_keys('LEAVESCREEN') -- cancel selection
+    view:onRender()
+    expect.false_(status_label.visible)
+
+    send_keys('LEAVESCREEN') -- leave UI
+end
 
 -- edit widget for setting the blueprint name
 
