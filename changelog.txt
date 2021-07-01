@@ -27,6 +27,7 @@ that repo.
 - `bodyswap`: stopped prior party members from tagging along after bodyswapping and reloading the map
 - `bodyswap`: made companions of bodyswapping targets get added to the adventurer party - they can now be viewed using the in-game party system
 - `color-schemes`: fixed an error in the ``register`` subcommand when the DF path contains certain punctuation characters
+- `gui/advfort`: fixed an issue where starting a workshop job while not standing at the center of the workshop required advancing time manually
 - `gui/unit-info-viewer`: fixed size description displaying unrelated values instead of size
 - `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. a cell with a single '#' marker in it, though, will still stop the parser from reading further in the row
 - `quickfort`: fixed an off-by-one line number accounting in blueprints with implicit ``#dig`` modelines
@@ -38,6 +39,7 @@ that repo.
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
+- `gui/advfort`: added workshop name to workshop UI
 - `quickfort`: now supports the ``--cursor`` option for running a blueprint at specific coordinates instead of starting at the game cursor position
 - `quickfort`: now prints more helpful error messages for invalid modeline markers
 - `quickfort`: added support for extra space characters in blueprints
