@@ -520,7 +520,7 @@ function mkscreen()
 end
 
 if initialized == nil then
-    local major_version = tonumber(dfhack.getDFVersion():split('.')[2])
+    local major_version = tonumber(dfhack.getDFVersion():split('.', true)[2])
     if not major_version or major_version < 40 then
         qerror('gui/load-screen only supports DF 0.40.xx and above')
     end
