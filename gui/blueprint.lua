@@ -23,6 +23,7 @@ local blueprint = require('plugins.blueprint')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 ResizingPanel = defclass(ResizingPanel, widgets.Panel)
@@ -84,6 +85,68 @@ function ActionPanel:get_area_text()
     return ('%dx%dx%d (%d tile%s)'):format(width, height, depth, tiles, plural)
 end
 
+NamePanel = defclass(NamePanel, ResizingPanel)
+NamePanel.ATTRS{
+    name='blueprint',
+}
+function NamePanel:init()
+    self:addviews{
+        widgets.EditField{
+            view_id='name',
+            frame={t=0,h=1},
+            key='CUSTOM_N',
+            active=false,
+            text=self.name,
+            on_change=self:callback('detect_name_collision'),
+        },
+        widgets.Label{
+            view_id='name_help',
+            frame={t=1,l=2},
+            text={{text=self:callback('get_name_help', 1),
+                   pen=self:callback('get_help_pen')}, '\n',
+                  {text=self:callback('get_name_help', 2),
+                   pen=self:callback('get_help_pen')}}
+        },
+    }
+
+    self:detect_name_collision()
+end
+function NamePanel:detect_name_collision()
+    -- don't let base names start with a slash - it would get ignored by
+    -- the blueprint plugin later anyway
+    local name = utils.normalizePath(self.subviews.name.text):gsub('^/','')
+    self.subviews.name.text = name
+
+    if name == '' then
+        self.has_name_collision = false
+        return
+    end
+
+    local suffix_pos = #name + 1
+
+    local paths = dfhack.filesystem.listdir_recursive('blueprints', nil, false)
+    for _,v in ipairs(paths) do
+        if (v.isdir and v.path..'/' == name) or
+                (v.path:startswith(name) and
+                 v.path:sub(suffix_pos,suffix_pos):find('[.-]')) then
+            self.has_name_collision = true
+            return
+        end
+    end
+    self.has_name_collision = false
+end
+function NamePanel:get_name_help(line_number)
+    if self.has_name_collision then
+        return ({'Warning: may overwrite',
+                 'existing files.'})[line_number]
+    end
+    return ({'Set base name for the',
+             'generated blueprint files.'})[line_number]
+end
+function NamePanel:get_help_pen()
+    return self.has_name_collision and COLOR_RED or COLOR_GREY
+end
+
 BlueprintUI = defclass(BlueprintUI, guidm.MenuOverlay)
 BlueprintUI.ATTRS {
     presets={},
@@ -100,6 +163,7 @@ function BlueprintUI:init()
         widgets.Label{text='Blueprint'},
         widgets.Label{text=summary, text_pen=COLOR_GREY},
         ActionPanel{get_mark_fn=function() return self.mark end},
+        NamePanel{name=self.presets.name},
         widgets.Label{view_id='cancel_label',
                       text={{text=function() return self:get_cancel_label() end,
                              key='LEAVESCREEN', key_sep=': ',
@@ -205,6 +269,31 @@ function BlueprintUI:onRenderBody()
 end
 
 function BlueprintUI:onInput(keys)
+    -- the 'name' edit field must have its 'active' state managed at this level.
+    -- we also have to implement 'cancel edit' logic here
+    local name_view = self.subviews.name
+    if not name_view.active and keys[name_view.key] then
+        self.saved_name = name_view.text
+        if name_view.text == 'blueprint' then
+            name_view.text = ''
+            name_view:on_change()
+        end
+        name_view.active = true
+        return true
+    end
+    if name_view.active then
+        if keys.SELECT or keys.LEAVESCREEN then
+            name_view.active = false
+            if keys.LEAVESCREEN or name_view.text == '' then
+                name_view.text = self.saved_name
+                name_view:on_change()
+            end
+            return true
+        end
+        name_view:onInput(keys)
+        return true
+    end
+
     if self:inputToSubviews(keys) then return true end
 
     local pos = nil
@@ -241,7 +330,7 @@ function BlueprintUI:commit(pos)
         depth = -depth
     end
 
-    local name = 'blueprint'
+    local name = self.subviews.name.text
     local params = {tostring(width), tostring(height), tostring(depth), name}
 
     -- set cursor to top left corner of the *uppermost* z-level

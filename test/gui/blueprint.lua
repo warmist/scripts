@@ -1,5 +1,10 @@
+local function test_wrapper(test_fn)
+    mock.patch(dfhack.filesystem, 'listdir_recursive', mock.func({}), test_fn)
+end
+
 config = {
     mode = 'fortress',
+    wrapper = test_wrapper,
 }
 
 local b = reqscript('gui/blueprint')
@@ -24,7 +29,9 @@ local function send_keys(...)
 end
 
 local function load_ui()
-    local view = b.BlueprintUI{}
+    local options = {}
+    blueprint.parse_gui_commandline(options, {})
+    local view = b.BlueprintUI{presets=options}
     view:show()
     return view
 end
@@ -201,7 +208,8 @@ function test.preset_cursor()
     local view = b.active_screen
     expect.table_eq({x=11, y=12, z=13}, guidm.getCursorPos())
     expect.true_(not not view.mark)
-    send_keys('LEAVESCREEN', 'LEAVESCREEN') -- cancel selection and ui
+    -- cancel selection, ui, and look mode
+    send_keys('LEAVESCREEN', 'LEAVESCREEN', 'LEAVESCREEN')
 end
 
 --auto enter and leave cursor-supporting mode
@@ -342,5 +350,99 @@ function test.render_status_line()
 end
 
 -- edit widget for setting the blueprint name
+function test.preset_basename()
+    dfhack.run_script('gui/blueprint', 'imaname')
+    local view = b.active_screen
+    expect.eq('imaname', view.subviews.name.text)
+    send_keys('LEAVESCREEN') -- leave UI
+end
+
+function test.edit_basename()
+    local view = load_ui()
+    local name_widget = view.subviews.name
+    expect.eq('blueprint', name_widget.text)
+    send_keys('CUSTOM_N')
+    expect.eq('', name_widget.text)
+    view:onInput({_STRING=string.byte('h')})
+    view:onInput({_STRING=string.byte('i')})
+    send_keys('SELECT')
+    expect.eq('hi', name_widget.text)
+    send_keys('LEAVESCREEN') -- leave UI
+end
+
+function test.cancel_name_edit()
+    local view = load_ui()
+    local name_widget = view.subviews.name
+    expect.eq('blueprint', name_widget.text)
+    send_keys('CUSTOM_N')
+    expect.eq('', name_widget.text)
+    view:onInput({_STRING=string.byte('h')})
+    view:onInput({_STRING=string.byte('i')})
+    send_keys('LEAVESCREEN') -- cancel edit
+    expect.eq('blueprint', name_widget.text)
+    send_keys('LEAVESCREEN') -- leave UI
+end
+
+function test.name_no_collision()
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blue-dig.csv'}}),
+        function()
+            local view = load_ui()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Set', get_screen_word(name_help_text_pos))
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
+
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blueprint'}}),
+        function()
+            local view = load_ui()
+            view.subviews.name.text = 'blueprint/'
+            view.subviews.name.on_change()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Set', get_screen_word(name_help_text_pos),
+                      'dirname does not conflict with similar filename')
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
+end
+
+function test.name_collision()
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blueprint-dig.csv'}}),
+        function()
+            local view = load_ui()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Warning:', get_screen_word(name_help_text_pos))
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
+
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blueprint', isdir=true}}),
+        function()
+            local view = load_ui()
+            view.subviews.name.text = 'blueprint/'
+            view.subviews.name.on_change()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Warning:', get_screen_word(name_help_text_pos),
+                      'dirname match generates warning')
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
+end
 
 -- widgets to configure which blueprint phases to output
