@@ -256,7 +256,7 @@ local preference_functions = {
     -- ---------------- LIKECREATURE ---------------- --
     LIKECREATURE = function(token)
         local creature_id
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             creature_id = parts[1]
         else
@@ -368,7 +368,7 @@ local preference_functions = {
     -- ---------------- HATECREATURE ---------------- --
     HATECREATURE = function(token)
         local creature_id
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             creature_id = parts[1]
         else
@@ -402,7 +402,7 @@ local preference_functions = {
     LIKEITEM = function(token)
         local item_type
         local item_subtype = -1
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             item_type = df.item_type[parts[1]]
         else
@@ -444,7 +444,7 @@ local preference_functions = {
     -- ---------------- LIKEPLANT ---------------- --
     LIKEPLANT = function(token)
         local plant_id
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             plant_id = parts[1]
         else
@@ -477,7 +477,7 @@ local preference_functions = {
     -- ---------------- LIKETREE ---------------- --
     LIKETREE = function(token)
         local plant_id
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             plant_id = parts[1]
         else
@@ -510,7 +510,7 @@ local preference_functions = {
     -- ---------------- LIKECOLOR ---------------- --
     LIKECOLOR = function(token)
         local color_name
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             color_name = parts[1]
         else
@@ -544,7 +544,7 @@ local preference_functions = {
     -- ---------------- LIKESHAPE ---------------- --
     LIKESHAPE = function(token)
         local shape_name
-        local parts = utils.split_string(token, ":")
+        local parts = token:split(":")
         if #parts == 1 then
             shape_name = parts[1]
         else
