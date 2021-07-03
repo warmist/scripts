@@ -126,8 +126,9 @@ function NamePanel:detect_name_collision()
 
     local paths = dfhack.filesystem.listdir_recursive('blueprints', nil, false)
     for _,v in ipairs(paths) do
-        if v.path:startswith(name) and
-                v.path:sub(suffix_pos,suffix_pos):find('[.-]') then
+        if (v.isdir and v.path..'/' == name) or
+                (v.path:startswith(name) and
+                 v.path:sub(suffix_pos,suffix_pos):find('[.-]')) then
             self.has_name_collision = true
             return
         end

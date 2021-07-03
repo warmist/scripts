@@ -29,7 +29,9 @@ local function send_keys(...)
 end
 
 local function load_ui()
-    local view = b.BlueprintUI{}
+    local options = {}
+    blueprint.parse_gui_commandline(options, {})
+    local view = b.BlueprintUI{presets=options}
     view:show()
     return view
 end
@@ -394,6 +396,22 @@ function test.name_no_collision()
             expect.eq('Set', get_screen_word(name_help_text_pos))
             send_keys('LEAVESCREEN') -- cancel ui
         end)
+
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blueprint'}}),
+        function()
+            local view = load_ui()
+            view.subviews.name.text = 'blueprint/'
+            view.subviews.name.on_change()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Set', get_screen_word(name_help_text_pos),
+                      'dirname does not conflict with similar filename')
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
 end
 
 function test.name_collision()
@@ -407,6 +425,22 @@ function test.name_collision()
                                         y=name_help_label.frame_body.y1}
             view:onRender()
             expect.eq('Warning:', get_screen_word(name_help_text_pos))
+            send_keys('LEAVESCREEN') -- cancel ui
+        end)
+
+    mock.patch(dfhack.filesystem, 'listdir_recursive',
+               mock.func({{path='blueprint', isdir=true}}),
+        function()
+            local view = load_ui()
+            view.subviews.name.text = 'blueprint/'
+            view.subviews.name.on_change()
+            view:updateLayout()
+            local name_help_label = view.subviews.name_help
+            local name_help_text_pos = {x=name_help_label.frame_body.x1,
+                                        y=name_help_label.frame_body.y1}
+            view:onRender()
+            expect.eq('Warning:', get_screen_word(name_help_text_pos),
+                      'dirname match generates warning')
             send_keys('LEAVESCREEN') -- cancel ui
         end)
 end
