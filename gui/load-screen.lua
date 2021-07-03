@@ -102,12 +102,6 @@ function paintStringCenter(pen, y, str)
     local cols, rows = dfhack.screen.getWindowSize()
     paintString(pen, math.floor((cols - #str) / 2), y, str)
 end
-function string:split(sep)
-    local sep, fields = sep or " ", {}
-    local pattern = string.format("([^%s]+)", sep)
-    self:gsub(pattern, function(c) fields[#fields+1] = c end)
-    return fields
-end
 
 load_screen = defclass(load_screen, gui.Screen)
 load_screen.focus_path = 'load_screen'
