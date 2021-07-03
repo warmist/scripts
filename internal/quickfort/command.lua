@@ -5,6 +5,7 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
+local argparse = require('argparse')
 local utils = require('utils')
 local guidm = require('gui.dwarfmode')
 local quickfort_common = reqscript('internal/quickfort/common')
@@ -75,13 +76,12 @@ function finish_command(ctx, section_name, quiet)
     end
 end
 
-local function parse_cursor(arg)
-    local _, _, x, y, z = arg:find('^(-?%d+),(-?%d+),(-?%d+)$')
-    if not x then
-        qerror(('invalid argument for --cursor option: "%s"; expected format' ..
-                ' is "<x>,<y>,<z>", for example: "30,60,150"'):format(arg))
+local function check_cursor_arg(arg)
+    local cursor = argparse.coords(arg)
+    if dfhack.maps.isValidTilePos(cursor) then
+        return cursor
     end
-    return {x=tonumber(x), y=tonumber(y), z=tonumber(z)}
+    return nil
 end
 
 function do_command(args)
@@ -91,9 +91,9 @@ function do_command(args)
     end
     local cursor = guidm.getCursorPos()
     local quiet, verbose, dry_run, section_name = false, false, false, nil
-    local other_args = utils.processArgsGetopt(args, {
+    local other_args = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
-             handler=function(optarg) cursor = parse_cursor(optarg) end},
+             handler=function(optarg) cursor = check_cursor_arg(optarg) end},
             {'d', 'dry-run', handler=function() dry_run = true end},
             {'n', 'name', hasArg=true,
              handler=function(optarg) section_name = optarg end},
