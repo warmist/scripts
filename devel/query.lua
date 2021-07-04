@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.1.3
+-- Version: 3.1.4
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -273,7 +273,7 @@ function setValue(table, path, field, value, new_value)
         if not args.search or is_match(path, field, value) then
             if type(table[field]) == type(value) and type(value) == type(new_value) then
                 table[field] = new_value
-                print(string.format("Set %s value to %d, from %d", path, new_value, value))
+                print(string.format("Set %s value to %s, from %s", path, new_value, value)) --will call tostring
                 return true
             end
         end

@@ -40,7 +40,7 @@ that repo.
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
 - `gui/advfort`: added workshop name to workshop UI
-- `devel/query`: updated script to v3.1.2 - ie. major rewrite. improved [dramatically] script maintainability and readability.
+- `devel/query`: updated script to v3.1.4 - ie. major rewrite. improved [dramatically] script maintainability and readability.
 - `devel/query`: merged options ``-query`` and ``-querykeys`` into ``-query``
 - `devel/query`: merged options ``-depth`` and ``-keydepth`` into ``-maxdepth``
 - `devel/query`: replaced option ``-safer`` with ``-excludetypes`` and ``-excludekinds``
