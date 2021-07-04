@@ -76,14 +76,6 @@ function finish_command(ctx, section_name, quiet)
     end
 end
 
-local function check_cursor_arg(arg)
-    local cursor = argparse.coords(arg)
-    if dfhack.maps.isValidTilePos(cursor) then
-        return cursor
-    end
-    return nil
-end
-
 function do_command(args)
     local command = args.action
     if not command or not command_switch[command] then
@@ -93,7 +85,7 @@ function do_command(args)
     local quiet, verbose, dry_run, section_name = false, false, false, nil
     local other_args = argparse.processArgsGetopt(args, {
             {'c', 'cursor', hasArg=true,
-             handler=function(optarg) cursor = check_cursor_arg(optarg) end},
+             handler=function(optarg) cursor = argparse.coords(optarg) end},
             {'d', 'dry-run', handler=function() dry_run = true end},
             {'n', 'name', hasArg=true,
              handler=function(optarg) section_name = optarg end},
