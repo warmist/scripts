@@ -14,9 +14,11 @@ that repo.
 # Future
 
 ## New Scripts
+- `clear-webs`: removes all webs on the map and/or frees any webbed creatures
 - `devel/block-borders`: overlay that displays map block borders
 - `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
-- `gui/blueprint`: interactive frontend for the `blueprint` plugin
+- `fix/drop-webs`: causes floating webs to fall to the ground
+- `gui/blueprint`: interactive frontend for the `blueprint` plugin (with mouse support!)
 - `gui/mass-remove`: mass removal/suspension tool for buildings and constructions
 - `reveal-hidden-sites`: exposes all undiscovered sites
 - `set-timeskip-duration`: changes the duration of the "Updating World" process preceding the start of a new game, enabling you to jump in earlier or later than usual
@@ -25,6 +27,7 @@ that repo.
 - `bodyswap`: stopped prior party members from tagging along after bodyswapping and reloading the map
 - `bodyswap`: made companions of bodyswapping targets get added to the adventurer party - they can now be viewed using the in-game party system
 - `color-schemes`: fixed an error in the ``register`` subcommand when the DF path contains certain punctuation characters
+- `gui/advfort`: fixed an issue where starting a workshop job while not standing at the center of the workshop required advancing time manually
 - `gui/unit-info-viewer`: fixed size description displaying unrelated values instead of size
 - `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. a cell with a single '#' marker in it, though, will still stop the parser from reading further in the row
 - `quickfort`: fixed an off-by-one line number accounting in blueprints with implicit ``#dig`` modelines
@@ -36,6 +39,7 @@ that repo.
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
+- `gui/advfort`: added workshop name to workshop UI
 - `devel/query`: updated script to v3.1.2 - ie. major rewrite. improved [dramatically] script maintainability and readability.
 - `devel/query`: merged options ``-query`` and ``-querykeys`` into ``-query``
 - `devel/query`: merged options ``-depth`` and ``-keydepth`` into ``-maxdepth``
