@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.1.2
+-- Version: 3.1.3
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -20,8 +20,8 @@ local validArgs = utils.invert({
  'findvalue',
  'maxdepth',
  'maxlength',
- 'excludetype',
- 'excludekind',
+ 'excludetypes',
+ 'excludekinds',
 
  'noblacklist',
  'dumb',
@@ -88,7 +88,7 @@ Examples::
   devel/query -tile -search dig
   devel/query -tile -search "occup.*carv"
   devel/query -table df -maxdepth 2
-  devel/query -table df -maxdepth 2 -excludekind s -excludetype fsu -oneline
+  devel/query -table df -maxdepth 2 -excludekinds s -excludetypes fsu -oneline
   devel/query -table df.profession -findvalue FISH
   devel/query -table df.global.ui.main -maxdepth 0
   devel/query -table df.global.ui.main -maxdepth 0 -oneline
@@ -134,10 +134,10 @@ Examples::
 ``-maxlength <value>``:    Limits the table sizes that will be walked
                            (default: 257)
 
-``-excludetype [a|bfnstu0]``:  Excludes data types: All | Boolean, Function,
+``-excludetypes [a|bfnstu0]``:  Excludes data types: All | Boolean, Function,
                                Number, String, Table, Userdata, nil
 
-``-excludekind [a|bces]``:     Excludes data types: All | Bit-fields,
+``-excludekinds [a|bces]``:     Excludes data types: All | Bit-fields,
                                Class-type, Enum-type, Struct-type
 
 ``-noblacklist``:   Disables blacklist filtering.
@@ -390,9 +390,9 @@ function processArguments()
     new_value = toType(args.setvalue)
     find_value = toType(args.findvalue)
 
-    args.excludetype = args.excludetype and args.excludetype or ""
-    args.excludekind = args.excludekind and args.excludekind or ""
-    if string.find(args.excludetype, 'a') then
+    args.excludetypes = args.excludetypes and args.excludetypes or ""
+    args.excludekinds = args.excludekinds and args.excludekinds or ""
+    if string.find(args.excludetypes, 'a') then
         bool_flags["boolean"] = true
         bool_flags["function"] = true
         bool_flags["number"] = true
@@ -400,24 +400,24 @@ function processArguments()
         bool_flags["table"] = true
         bool_flags["userdata"] = true
     else
-        bool_flags["boolean"] = string.find(args.excludetype, 'b') and true or false
-        bool_flags["function"] = string.find(args.excludetype, 'f') and true or false
-        bool_flags["number"] = string.find(args.excludetype, 'n') and true or false
-        bool_flags["string"] = string.find(args.excludetype, 's') and true or false
-        bool_flags["table"] = string.find(args.excludetype, 't') and true or false
-        bool_flags["userdata"] = string.find(args.excludetype, 'u') and true or false
+        bool_flags["boolean"] = string.find(args.excludetypes, 'b') and true or false
+        bool_flags["function"] = string.find(args.excludetypes, 'f') and true or false
+        bool_flags["number"] = string.find(args.excludetypes, 'n') and true or false
+        bool_flags["string"] = string.find(args.excludetypes, 's') and true or false
+        bool_flags["table"] = string.find(args.excludetypes, 't') and true or false
+        bool_flags["userdata"] = string.find(args.excludetypes, 'u') and true or false
     end
 
-    if string.find(args.excludekind, 'a') then
+    if string.find(args.excludekinds, 'a') then
         bool_flags["bitfield-type"] = true
         bool_flags["class-type"] = true
         bool_flags["enum-type"] = true
         bool_flags["struct-type"] = true
     else
-        bool_flags["bitfield-type"] = string.find(args.excludekind, 'b') and true or false
-        bool_flags["class-type"] = string.find(args.excludekind, 'c') and true or false
-        bool_flags["enum-type"] = string.find(args.excludekind, 'e') and true or false
-        bool_flags["struct-type"] = string.find(args.excludekind, 's') and true or false
+        bool_flags["bitfield-type"] = string.find(args.excludekinds, 'b') and true or false
+        bool_flags["class-type"] = string.find(args.excludekinds, 'c') and true or false
+        bool_flags["enum-type"] = string.find(args.excludekinds, 'e') and true or false
+        bool_flags["struct-type"] = string.find(args.excludekinds, 's') and true or false
     end
 end
 
