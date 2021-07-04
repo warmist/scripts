@@ -54,15 +54,31 @@ Query is a script useful for finding and reading values of data structure
 fields. Purposes will likely be exclusive to writing lua script code,
 possibly C++.
 
-This script takes your data selection eg.{table,unit,item,tile} then recursively
-iterates through it outputting names and values of what it finds.
+This script takes your data selection eg.{table,unit,item,tile,etc.} then recursively
+iterates through it, outputting names and values of what it finds.
 
 As it iterates you can have it do other things, like search for a specific
 structure pattern (see lua patterns) or set the value of fields matching the
 selection and any search pattern specified.
 
 If the script is taking too long to finish, or if it can't finish you should run
-``dfhack-run kill-lua`` from another terminal.
+`kill-lua` from another terminal with the help of `dfhack-run`.
+eg. '$ dfhack-run kill-lua'
+
+Notes::
+
+    This is a recursive search function. The data structures are also recursive.
+    So there are a few things that must be considered (in order):
+
+        - Is the search depth too high? (Default: 7)
+        - Is the data capable of being iterated, or does it only have a value?
+        - Is the data blacklisted?
+          (ie. 'script','saves','movie','font' or 'texpos')
+        - How can the data be iterated?
+        - Is the iteration count for the data too high? (Default: 257)
+        - Does the user want to exclude the data's type?
+        - Is the data recursively indexing (eg. A.B.C.A.*)?
+        - Does the data match the search pattern?
 
 Examples::
 
@@ -100,7 +116,7 @@ Examples::
                         Must use dot notation to denote sub-tables.
                         (eg. ``-table df.global.world``)
 
-``-getfield <value>``:  Gets the specified field from the selection.
+``-getfield <name>``:   Gets the specified field from the selection.
 
                         Must use in conjunction with one of the above selection
                         options. Must use dot notation to denote sub-fields.
@@ -172,19 +188,19 @@ Examples::
 
 --Section: core logic
 function query(table, name, search_term, path, bprinted_parent, parent_table)
-    --[[
-    * print info about t
-    * increment depth
-    * check depth
-    * recurse structure
-    * decrement depth
-    ]]--
+    -- Is the search depth too high? (Default: 7)
+    -- Is the data capable of being iterated, or does it only have a value?
+    -- Is the data recursively indexing (eg. A.B.C.A.*)?
+
     if bprinted_parent == nil then
         bprinted_parent = false
     end
     if parent_table ~= nil then
-        --todo: have this run before the field is printed so we see the updated value. BUT HOW?! I don't know.
-        if setValue(parent_table, path, name, table, new_value) then
+        if is_tiledata(parent_table) then
+            if setValue(parent_table[tilex], path, tiley, table, new_value) then
+                table = new_value
+            end
+        elseif setValue(parent_table, path, name, table, new_value) then
             table = new_value
         end
     end
@@ -196,10 +212,12 @@ function query(table, name, search_term, path, bprinted_parent, parent_table)
         if is_searchable(name, table) then
             -- iterate over search space
             function recurse(field, value)
+                -- Is the data recursively indexing (eg. A.B.C.A.*)?
+
                 local new_tname = tostring(makeName(name, field))
                 if is_tiledata(value) then
-                    local indexing = string.format("%s[%d][%d]", field,tilex,tiley)
-                    query(value[tilex][tiley], new_tname, search_term, appendField(path, indexing), bprinted, table)
+                    local indexed_name = string.format("%s[%d][%d]", field,tilex,tiley)
+                    query(value[tilex][tiley], indexed_name, search_term, appendField(path, indexed_name), bprinted, value)
                 elseif not is_looping(path, new_tname) then
                     query(value, new_tname, search_term, appendField(path, field), bprinted, table)
                 else
@@ -207,7 +225,6 @@ function query(table, name, search_term, path, bprinted_parent, parent_table)
                     printField(path, field, value, bprinted)
                 end
             end
-            --print(name, path, "hello")
             foreach(table, name, recurse)
         end
     end
@@ -216,6 +233,9 @@ function query(table, name, search_term, path, bprinted_parent, parent_table)
 end
 
 function foreach(table, name, callback)
+    -- How can the data be iterated?
+    -- Is the iteration count for the data too high? (Default: 257)
+
     local index = 0
     if getmetatable(table) and table._kind and (table._kind == "enum-type" or table._kind == "bitfield-type") then
         for idx, value in ipairs(table) do
@@ -247,11 +267,13 @@ function foreach(table, name, callback)
 end
 
 function setValue(table, path, field, value, new_value)
+    -- Does the data match the search pattern?
+
     if args.setvalue then
         if not args.search or is_match(path, field, value) then
-            if type(value) == type(new_value) then
+            if type(table[field]) == type(value) and type(value) == type(new_value) then
                 table[field] = new_value
-                print(string.format("Set %s value to %d, from %d", field, new_value, value))
+                print(string.format("Set %s value to %d, from %d", path, new_value, value))
                 return true
             end
         end
@@ -427,6 +449,10 @@ end
 
 --Section: filters
 function is_searchable(field, value)
+    -- Is the data capable of being iterated, or does it only have a value?
+    -- Is the data blacklisted?
+    -- (ie. 'script','saves','movie','font' or 'texpos')
+
     if not is_blacklisted(field, value) and not df.isnull(value) then
         debugf(3,string.format("is_searchable( %s ): type: %s, length: %s, count: %s", value,type(value),getTableLength(value), countTableLength(value)))
         if not isEmpty(value) then
@@ -723,6 +749,8 @@ end
 
 bToggle = true
 function printField(path, field, value, bprinted_parent)
+    -- Does the data match the search pattern?
+
     if runOnce(printField) then
         printOnce(path,string.format("%s: %s", path, value))
         return
