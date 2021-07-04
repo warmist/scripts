@@ -250,7 +250,7 @@ function GmEditorUi:find_id(force_dialog)
         return a.weight > b.weight
     end)
     local message = {{pen=COLOR_LIGHTRED, text="Note: "}}
-    for _, line in ipairs(utils.split_string(raw_message, '\n')) do
+    for _, line in ipairs(raw_message:split('\n')) do
         table.insert(message, line)
         table.insert(message, NEWLINE)
     end
