@@ -13,6 +13,7 @@ local validArgs = utils.invert({
  'job',
  'tile',
  'block',
+ 'module',
  'table',
  'getfield',
 
@@ -28,8 +29,10 @@ local validArgs = utils.invert({
 
  'showpaths',
  'setvalue',
+ 'alignto',
  'oneline',
  '1',
+ 'nopointers',
  'disableprint',
  'debug',
  'debugdata'
@@ -44,6 +47,7 @@ local maxdepth = nil
 local cur_depth = -1
 local tilex = nil
 local tiley = nil
+local bToggle = true
 local bool_flags = {}
 
 local help = [====[
@@ -61,11 +65,7 @@ As it iterates you can have it do other things, like search for a specific
 structure pattern (see lua patterns) or set the value of fields matching the
 selection and any search pattern specified.
 
-If the script is taking too long to finish, or if it can't finish you should run
-`kill-lua` from another terminal with the help of `dfhack-run`.
-eg. '$ dfhack-run kill-lua'
-
-Notes::
+.. Notes::
 
     This is a recursive search function. The data structures are also recursive.
     So there are a few things that must be considered (in order):
@@ -79,6 +79,10 @@ Notes::
         - Does the user want to exclude the data's type?
         - Is the data recursively indexing (eg. A.B.C.A.*)?
         - Does the data match the search pattern?
+
+If the script is taking too long to finish, or if it can't finish you should run
+`kill-lua` from another terminal with the help of `dfhack-run`.
+$ dfhack-run kill-lua'
 
 Examples::
 
@@ -110,6 +114,8 @@ Examples::
 ``-building``:          Selects the highlighted building.
 
 ``-job``:               Selects the highlighted job.
+
+``-script``:            Selects the script/module.
 
 ``-table <value>``:     Selects the specified table (ie. 'value').
 
@@ -157,6 +163,10 @@ Examples::
 
 ``-1``:                Reduces output to one line, except with ``-debugdata``
 
+``-alignto <value>``:  Specifies the value alignment column.
+
+``-nopointers``:       Disables printing values which contain memory addresses.
+
 ``-disableprint``:     Disables printing. Might be useful if you are debugging
                        this script. Or to see if a query will crash (faster) but
                        not sure what else you could use it for.
@@ -170,21 +180,6 @@ Examples::
 ``-help``:             Prints this help information.
 
 ]====]
-
-
-
---[[ Test cases:
-    These sections just have to do with when I made the tests and what their purpose at that time was.
-    [safety] make sure the query doesn't crash itself or dfhack
-        1. devel/query -maxdepth 3 -table df
-        2. devel/query -dumb -table dfhack -search gui
-        3. devel/query -dumb -table df
-        4. devel/query -dumb -unit
-    [validity] make sure the query output is not malformed, and does what is expected
-        1. devel/query -dumb -table dfhack
-        2. devel/query -dumb -table df -search job_skill
-        3. devel/query -dumb -table df -getfield job_skill
-]]
 
 --Section: core logic
 function query(table, name, search_term, path, bprinted_parent, parent_table)
@@ -306,6 +301,10 @@ function getSelectionData()
         selection = findTable(args.table)
         path_info = args.table
         path_info_pattern = path_info
+    elseif args.module then
+        selection = reqscript(args.module)
+        path_info = args.module
+        path_info_pattern = path_info
     elseif args.unit then
         debugf(0,"unit selection")
         selection = dfhack.gui.getSelectedUnit()
@@ -354,7 +353,6 @@ function getSelectionData()
         selection = findPath(selection,args.getfield)
         path_info = path_info .. "." .. args.getfield
         path_info_pattern = path_info_pattern .. "." .. args.getfield
-        print(path_info_pattern)
     end
     --print(selection, path_info)
     return selection, path_info
@@ -658,51 +656,59 @@ function makeIndentation()
     return indent
 end
 
-function makeIndentedField(path, field, value)
-    if is_tiledata(value) then
-        value = value[tilex][tiley]
-        field = string.format("%s[%d][%d]", field,tilex,tiley)
+function presentField(path, field, value)
+    local output = tostring(args.showpaths and path or field)
+    local leading_indent = not args.showpaths and makeIndentation() or ""
+    output = leading_indent .. output
+    local align = 40
+    if tonumber(args.alignto) then
+        align = tonumber(args.alignto)
     end
-    local indent = not args.showpaths and makeIndentation() or ""
-    local indented_field = string.format("%-40s ", tostring(args.showpaths and path or field) .. ":")
-
+    output = string.format("%-"..align.."s ", output .. ":")
     if args.debugdata or not args.oneline or bToggle then
-        indented_field = string.gsub(indented_field,"  "," ~")
+        if not args.nopointers or not string.find(tostring(value), "0x%x%x%x%x%x%x") then
+            output = string.gsub(output,"  "," ~")
+        end
         bToggle = false
     else
         bToggle = true
     end
-    indented_field = indent .. indented_field
-    local output = nil
-    if hasMetadata(value) then
-        --print simple meta data
-        if args.oneline then
-            output = string.format("%s %s [%s]", indented_field, value, value._kind)
+    return output
+end
+
+function presentValue(field, value)
+    local output = ""
+    if not args.nopointers or not string.find(tostring(value), "0x%x%x%x%x%x%x") then
+        if not args.debugdata then
+            output = string.format(" %s", value)
+        elseif hasMetadata(value) then
+            if args.oneline then
+                output = string.format(" %s [%s]", value, value._kind)
+            else
+                local N = math.min(90, string.len(indented_field))
+                local newline_indent = string.format("%" .. N .. "s", "")
+                output = string.format("%s %s\n%s [has metatable; _kind: %s]", output, value, newline_indent, value._kind)
+            end
         else
-            local N = math.min(90, string.len(indented_field))
-            indent = string.format("%" .. N .. "s", "")
-            output = string.format("%s %s\n%s [has metatable; _kind: %s]", indented_field, value, indent, value._kind)
-        end
-    else
-        --print regular field and value
-        if args.debugdata then
-            --also print value type
-            output = string.format("%s %s; type(%s) = %s", indented_field, value, field, type(value))
-        else
-            output = string.format("%s %s", indented_field, value)
+            output = string.format("%s %s; type(%s) = %s", output, value, field, type(value))
         end
     end
+    return output
+end
+
+function presentDebugData(presentedField, field, value)
+    local output = ""
     if args.debugdata then
-        local N = math.min(90, string.len(indented_field))
-        indent = string.format("%" .. N .. "s", "")
+        local N = math.min(90, string.len(presentedField))
+        local newline_indent = string.format("%" .. N .. "s", "")
         if hasMetadata(value) then
-            --print lots of meta data
+            -- why not search?
             if not args.search and args.oneline then
                 output = output .. string.format("\n%s type(%s): %s, _kind: %s, _type: %s",
-                        indent, field, type(value), field._kind, field._type)
+                        newline_indent, field, type(value), value._kind, value._type)
             else
                 output = output .. string.format("\n%s type(%s): %s\n%s _kind: %s\n%s _type: %s",
-                        indent, field, type(value), indent, field._kind, indent, field._type)
+                        newline_indent, field, type(value), newline_indent, value._kind, newline_indent, value._type)
             end
         end
     end
@@ -747,11 +753,11 @@ function printParents(path, field, value)
     return value_printed
 end
 
-bToggle = true
 function printField(path, field, value, bprinted_parent)
     -- Does the data match the search pattern?
 
     if runOnce(printField) then
+        -- print selection
         printOnce(path,string.format("%s: %s", path, value))
         return
     end
@@ -762,7 +768,13 @@ function printField(path, field, value, bprinted_parent)
                 bprinted_field = printParents(path, field, value)
             end
             if not bprinted_field then
-                print(makeIndentedField(path, field, value))
+                if is_tiledata(value) then
+                    value = value[tilex][tiley]
+                    field = string.format("%s[%d][%d]", field,tilex,tiley)
+                end
+                local f = presentField(path, field, value)
+                local v = presentValue(field, value)
+                print(f .. v .. presentDebugData(f, field, value))
             end
             return true
         end
