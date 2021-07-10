@@ -16,6 +16,9 @@ that repo.
 ## Fixes
 - `quickfort`: allow machines (e.g. screw pumps) to be built on ramps just like DF allows
 
+## Internals
+- Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
+
 # 0.47.05-r2
 
 ## New Scripts
@@ -52,9 +55,6 @@ that repo.
 - `quickfort`: made more quiet when the ``--quiet`` parameter is specified
 - `setfps`: improved error handling
 - `unretire-anyone`: the historical figure selection list now includes the ``SYN_NAME`` (necromancer, vampire, etc) of figures where applicable
-
-## Internals
-- Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
 
 # 0.47.05-r1
 
