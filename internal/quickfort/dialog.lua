@@ -5,9 +5,9 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
+local argparse = require('argparse')
 local dialogs = require('gui.dialogs')
 local guidm = require('gui.dwarfmode')
-local utils = require('utils')
 local quickfort_command = reqscript('internal/quickfort/command')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_parse = reqscript('internal/quickfort/parse')
@@ -207,7 +207,7 @@ end
 
 function do_dialog(args)
     -- allow passed-in flags and strings to pre-set our dialog flags and filter
-    local filter_strings = utils.processArgsGetopt(args, {
+    local filter_strings = argparse.processArgsGetopt(args, {
             {'l', 'library', handler=function() show_library = true end},
             {'h', 'hidden', handler=function() show_hidden = true end},
         })
