@@ -13,10 +13,12 @@ that repo.
 
 # Future
 
+# 0.47.05-r2
+
 ## New Scripts
 - `clear-webs`: removes all webs on the map and/or frees any webbed creatures
 - `devel/block-borders`: overlay that displays map block borders
-- `devel/luacov`: generate code test coverage reports for script development. define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
+- `devel/luacov`: generate code test coverage reports for script development. Define the ``DFHACK_ENABLE_LUACOV=1`` environment variable to start gathering coverage metrics.
 - `fix/drop-webs`: causes floating webs to fall to the ground
 - `gui/blueprint`: interactive frontend for the `blueprint` plugin (with mouse support!)
 - `gui/mass-remove`: mass removal/suspension tool for buildings and constructions
@@ -29,24 +31,24 @@ that repo.
 - `color-schemes`: fixed an error in the ``register`` subcommand when the DF path contains certain punctuation characters
 - `gui/advfort`: fixed an issue where starting a workshop job while not standing at the center of the workshop required advancing time manually
 - `gui/unit-info-viewer`: fixed size description displaying unrelated values instead of size
-- `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. a cell with a single '#' marker in it, though, will still stop the parser from reading further in the row
+- `quickfort`: comments in blueprint cells no longer prevent the rest of the row from being read. A cell with a single '#' marker in it, though, will still stop the parser from reading further in the row.
 - `quickfort`: fixed an off-by-one line number accounting in blueprints with implicit ``#dig`` modelines
 - `quickfort`: changed to properly detect and report an error on sub-alias params with no values instead of just failing to apply the alias later (if you really want an empty value, use ``{Empty}`` instead)
 - `quickfort`: improved handling of non-rectangular and non-solid extent-based structures (like fancy-shaped stockpiles and farm plots)
 - `quickfort`: fixed conversion of numbers to DF keycodes in ``#query`` blueprints
 - `quickfort`: fixed various errors with cropping across the map edge
-- `quickfort`: properly reset config to default values in ``quickfort reset`` even if if the ``dfhack-config/quickfort/quickfort.txt`` config file doesn't mention all config vars. also now works even if the config file doesn't exist.
+- `quickfort`: properly reset config to default values in ``quickfort reset`` even if if the ``dfhack-config/quickfort/quickfort.txt`` config file doesn't mention all config vars. Also now works even if the config file doesn't exist.
 
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
 - `gui/advfort`: added workshop name to workshop UI
-- `quickfort`: now supports the ``--cursor`` option for running a blueprint at specific coordinates instead of starting at the game cursor position
-- `quickfort`: now prints more helpful error messages for invalid modeline markers
+- `quickfort`: added the ``--cursor`` option for running a blueprint at specific coordinates instead of starting at the game cursor position
+- `quickfort`: added more helpful error messages for invalid modeline markers
 - `quickfort`: added support for extra space characters in blueprints
-- `quickfort`: now prints a warning when an invalid alias is encountered instead of silently ignoring it
-- `quickfort`: is now more quiet when the ``--quiet`` parameter is specified
+- `quickfort`: added a warning when an invalid alias is encountered instead of silently ignoring it
+- `quickfort`: made more quiet when the ``--quiet`` parameter is specified
 - `setfps`: improved error handling
-- `unretire-anyone`: the historical figure selection list now includes the SYN_NAME (necromancer, vampire, etc) of figures where applicable
+- `unretire-anyone`: the historical figure selection list now includes the ``SYN_NAME`` (necromancer, vampire, etc) of figures where applicable
 
 # 0.47.05-r1
 
