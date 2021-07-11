@@ -147,6 +147,89 @@ function NamePanel:get_help_pen()
     return self.has_name_collision and COLOR_RED or COLOR_GREY
 end
 
+CycleHotkeyLabel = defclass(CycleHotkeyLabel, widgets.Label)
+CycleHotkeyLabel.ATTRS{
+    key=DEFAULT_NIL,
+    label=DEFAULT_NIL,
+    label_width=DEFAULT_NIL,
+    options=DEFAULT_NIL,
+    option_idx=1,
+    help=DEFAULT_NIL,
+    on_change=DEFAULT_NIL,
+}
+function CycleHotkeyLabel:init()
+    local contents = {
+        {text=self.label, width=self.label_width, key=self.key, key_sep=': ',
+         on_activate=self:callback('cycle')},
+        '  ',
+        {text=function() return self.options[self.option_idx] end},
+    }
+    if self.help then
+        table.insert(contents, '\n')
+        for _,line in ipairs(self.help) do
+            table.insert(contents, {gap=2, text=line, pen=COLOR_GREY})
+            table.insert(contents, '\n')
+        end
+    end
+    self:setText(contents)
+end
+function CycleHotkeyLabel:cycle()
+    if self.option_idx == #self.options then
+        self.option_idx = 1
+    else
+        self.option_idx = self.option_idx + 1
+    end
+    if self.on_change then self.on_change() end
+end
+
+ToggleHotkeyLabel = defclass(ToggleHotkeyLabel, CycleHotkeyLabel)
+ToggleHotkeyLabel.ATTRS{
+    options={'On', 'Off'},
+}
+
+PhasesPanel = defclass(PhasesPanel, ResizingPanel)
+PhasesPanel.ATTRS{
+    phases={},
+    on_layout_change=DEFAULT_NIL,
+}
+function PhasesPanel:init()
+    self:addviews{
+        CycleHotkeyLabel{
+            view_id='phases',
+            frame={t=0},
+            key='CUSTOM_A',
+            label='phases',
+            options={'Autodetect','Custom'},
+            option_idx=self.phases.auto_phase and 1 or 2,
+            help={'Select blueprint phases',
+                  'to export.'},
+            on_change=self.on_layout_change,
+        },
+        -- we need an explicit spacer since the panel height is autocalculated
+        -- from the subviews
+        widgets.Panel{frame={t=3,h=1}},
+        ToggleHotkeyLabel{frame={t=4}, key='CUSTOM_D', label='dig',
+                          option_idx=self:get_default('dig'), label_width=5},
+        ToggleHotkeyLabel{frame={t=5}, key='CUSTOM_B', label='build',
+                          option_idx=self:get_default('build')},
+        ToggleHotkeyLabel{frame={t=6}, key='CUSTOM_P', label='place',
+                          option_idx=self:get_default('place')},
+        ToggleHotkeyLabel{frame={t=7}, key='CUSTOM_Q', label='query',
+                          option_idx=self:get_default('query')},
+    }
+end
+function PhasesPanel:get_default(label)
+    return (self.phases.auto_phase or self.phases[label]) and 1 or 2
+end
+function PhasesPanel:preUpdateLayout()
+    local is_custom = self.subviews.phases.option_idx > 1
+    for _,subview in ipairs(self.subviews) do
+        if not subview.view_id then
+            subview.visible = is_custom
+        end
+    end
+end
+
 BlueprintUI = defclass(BlueprintUI, guidm.MenuOverlay)
 BlueprintUI.ATTRS {
     presets={},
@@ -164,6 +247,9 @@ function BlueprintUI:init()
         widgets.Label{text=summary, text_pen=COLOR_GREY},
         ActionPanel{get_mark_fn=function() return self.mark end},
         NamePanel{name=self.presets.name},
+        PhasesPanel{phases=self.presets,
+                    view_id='phases_panel',
+                    on_layout_change=self:callback('updateLayout')},
         widgets.Label{view_id='cancel_label',
                       text={{text=function() return self:get_cancel_label() end,
                              key='LEAVESCREEN', key_sep=': ',
@@ -332,6 +418,15 @@ function BlueprintUI:commit(pos)
 
     local name = self.subviews.name.text
     local params = {tostring(width), tostring(height), tostring(depth), name}
+
+    local phases_view = self.subviews.phases
+    if phases_view.options[phases_view.option_idx] == 'Custom' then
+        for _,sv in ipairs(self.subviews.phases_panel.subviews) do
+            if sv.options and sv.options[sv.option_idx] == 'On' then
+                table.insert(params, sv.label)
+            end
+        end
+    end
 
     -- set cursor to top left corner of the *uppermost* z-level
     local x, y, z = math.min(mark.x, pos.x), math.min(mark.y, pos.y),
