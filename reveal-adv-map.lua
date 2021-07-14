@@ -24,20 +24,6 @@ Arguments::
 ]====]
 
 local utils = require 'utils'
-local validArgs = utils.invert({
-  'hide',
-  'help'
-})
-local args = utils.processArgs({...}, validArgs)
-
-if dfhack_flags.module then
-  return
-end
-
-if args.help then
-  print(usage)
-  return
-end
 
 function revealAdvMap(hide)
   local world = df.global.world.world_data
@@ -59,6 +45,21 @@ function revealAdvMap(hide)
     view.max_discovered.x = (hide and player.x) or world.world_width-1
     view.max_discovered.y = (hide and player.y) or world.world_height-1
   end
+end
+
+local validArgs = utils.invert({
+  'hide',
+  'help'
+})
+local args = utils.processArgs({...}, validArgs)
+
+if dfhack_flags.module then
+  return
+end
+
+if args.help then
+  print(usage)
+  return
 end
 
 if df.global.gamemode ~= df.game_mode.ADVENTURE then
