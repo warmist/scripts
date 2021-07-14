@@ -5,9 +5,9 @@ questport
 =========
 Teleports your adventurer to the location of your quest log map cursor.
 
-To use, simply open your quest log, move the cursor to your target location,
-and run the script. Note that this can be done both within and outside of
-fast travel mode, and it is possible to questport in situations where
+Use by opening the quest log map and moving the cursor to your target location
+before running the script. Note that this can be done both within and outside of
+fast travel mode, and that it is possible to questport in situations where
 fast travel is normally prohibited.
 
 It is currently not possible to questport into inaccessible locations like
