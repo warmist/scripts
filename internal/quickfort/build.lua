@@ -82,6 +82,11 @@ local function is_valid_tile_has_space(pos)
             shape == df.tiletype_shape.SHRUB
 end
 
+local function is_valid_tile_machine(pos)
+    local shape = df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape
+    return is_valid_tile_has_space(pos) or shape == df.tiletype_shape.RAMP
+end
+
 local function is_valid_tile_construction(pos)
     local material = df.tiletype.attrs[dfhack.maps.getTileType(pos)].material
     return is_valid_tile_has_space(pos) and
@@ -184,7 +189,7 @@ local function make_screw_pump_entry(direction)
             type=df.building_type.ScrewPump,
             min_width=width, max_width=width,
             min_height=height, max_height=height,
-            direction=direction, is_valid_tile_fn=is_valid_tile_has_space}
+            direction=direction, is_valid_tile_fn=is_valid_tile_machine}
 end
 
 local roller_data = {
@@ -203,7 +208,7 @@ local function make_roller_entry(direction, speed)
         max_height=roller_data[direction].vertical and 10 or 1,
         direction=direction,
         fields={speed=speed},
-        is_valid_tile_fn=is_valid_tile_has_space
+        is_valid_tile_fn=is_valid_tile_machine
     }
 end
 
@@ -290,15 +295,15 @@ local building_db = {
          min_width=3, max_width=3, min_height=1, max_height=1,
          is_valid_tile_fn=is_valid_tile_has_space},
     Mg={label='Gear Assembly', type=df.building_type.GearAssembly,
-        is_valid_tile_fn=is_valid_tile_has_space},
+        is_valid_tile_fn=is_valid_tile_machine},
     Mh={label='Horizontal Axle (E/W)', type=df.building_type.AxleHorizontal,
         min_width=1, max_width=10, min_height=1, max_height=1,
-        is_valid_tile_fn=is_valid_tile_has_space},
+        is_valid_tile_fn=is_valid_tile_has_space}, -- impeded by ramps
     Mhs={label='Horizontal Axle (N/S)', type=df.building_type.AxleHorizontal,
          min_width=1, max_width=1, min_height=1, max_height=10, direction=1,
-         is_valid_tile_fn=is_valid_tile_has_space},
+         is_valid_tile_fn=is_valid_tile_has_space}, -- impeded by ramps
     Mv={label='Vertical Axle', type=df.building_type.AxleVertical,
-        is_valid_tile_fn=is_valid_tile_has_space},
+        is_valid_tile_fn=is_valid_tile_machine},
     Mr=make_roller_entry(df.screw_pump_direction.FromNorth, 50000),
     Mrq=make_roller_entry(df.screw_pump_direction.FromNorth, 40000),
     Mrqq=make_roller_entry(df.screw_pump_direction.FromNorth, 30000),
