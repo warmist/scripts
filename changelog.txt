@@ -13,6 +13,9 @@ that repo.
 
 # Future
 
+## New Scripts
+- `reveal-adv-map`: exposes/hides all world map tiles in adventure mode
+
 ## Fixes
 - `quickfort`: allow machines (e.g. screw pumps) to be built on ramps just like DF allows
 
