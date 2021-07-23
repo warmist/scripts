@@ -24,7 +24,6 @@ local validArgs = utils.invert({
  'excludetypes',
  'excludekinds',
 
- 'noblacklist',
  'dumb',
 
  'showpaths',
@@ -72,8 +71,6 @@ selection and any search pattern specified.
 
         - Is the search depth too high? (Default: 7)
         - Is the data capable of being iterated, or does it only have a value?
-        - Is the data blacklisted?
-          (ie. 'script','saves','movie','font' or 'texpos')
         - How can the data be iterated?
         - Is the iteration count for the data too high? (Default: 257)
         - Does the user want to exclude the data's type?
@@ -129,7 +126,7 @@ Examples::
 
 **Query options:**
 
-``-search <value>``:       Searches the selection for field names with
+``-search <values>``:      Searches the selection for field names with
                            substrings matching the specified value.
 
 ``-findvalue <value>``:    Searches the selection for field values matching the
@@ -141,12 +138,10 @@ Examples::
                            (default: 257)
 
 ``-excludetypes [a|bfnstu0]``:  Excludes data types: All | Boolean, Function,
-                               Number, String, Table, Userdata, nil
+                                Number, String, Table, Userdata, nil
 
 ``-excludekinds [a|bces]``:     Excludes data types: All | Bit-fields,
-                               Class-type, Enum-type, Struct-type
-
-``-noblacklist``:   Disables blacklist filtering.
+                                Class-type, Enum-type, Struct-type
 
 ``-dumb``:          Disables intelligent checking for recursive data
                     structures(loops) and increases the -maxdepth to 25 if a
@@ -448,10 +443,8 @@ end
 --Section: filters
 function is_searchable(field, value)
     -- Is the data capable of being iterated, or does it only have a value?
-    -- Is the data blacklisted?
-    -- (ie. 'script','saves','movie','font' or 'texpos')
 
-    if not is_blacklisted(field, value) and not df.isnull(value) then
+    if not df.isnull(value) then
         debugf(3,string.format("is_searchable( %s ): type: %s, length: %s, count: %s", value,type(value),getTableLength(value), countTableLength(value)))
         if not isEmpty(value) then
             if getmetatable(value) then
@@ -486,24 +479,6 @@ end
 
 function is_looping(path, field)
     return not args.dumb and string.find(path, tostring(field))
-end
-
-function is_blacklisted(field, t)
-    field = tostring(field)
-    if not args.noblacklist then
-        if string.find(field,"script") then
-            return true
-        elseif string.find(field,"saves") then
-            return true
-        elseif string.find(field,"movie") then
-            return true
-        elseif string.find(field,"font") then
-            return true
-        elseif string.find(field,"texpos") then
-            return true
-        end
-    end
-    return false
 end
 
 function is_tiledata(value)
