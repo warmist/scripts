@@ -126,7 +126,7 @@ Examples::
 
 **Query options:**
 
-``-search <values>``:      Searches the selection for field names with
+``-search <value>``:      Searches the selection for field names with
                            substrings matching the specified value.
 
 ``-findvalue <value>``:    Searches the selection for field values matching the
