@@ -19,6 +19,9 @@ that repo.
 ## Fixes
 - `quickfort`: allow machines (e.g. screw pumps) to be built on ramps just like DF allows
 
+## Misc Improvements
+- `gui/gm-editor`: made search case-insensitive
+
 ## Internals
 - Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
 
