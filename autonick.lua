@@ -18,28 +18,24 @@ You may wish to use this script with the "repeat" command, e.g:
 
 ]====]
 
-names = {}
-
-path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
-
--- grab list, put in array
-for line in io.lines(path) do
-    line = line:trim()
-    if (line ~= "") and (not line:startswith('#')) then
-        table.insert(names, line)
-    end
-end
-
+local taken = {}
 --check current nicknames
 for _,unit in ipairs(df.global.world.units.active) do
     if dfhack.units.isCitizen(unit) and
     unit.name.nickname ~= "" then
-        for i,name in ipairs(names) do
-            if name == unit.name.nickname then
-                --remove current nickname from array
-                table.remove(names, i)
-            end
-        end
+        taken[unit.name.nickname] = true
+    end
+end
+
+local names = {}
+-- grab list, put in array
+local path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
+for line in io.lines(path) do
+    line = line:trim()
+    if (line ~= "")
+    and (not line:startswith('#'))
+    and (not taken[line]) then
+        table.insert(names, line)
     end
 end
 
