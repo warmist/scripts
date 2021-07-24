@@ -57,14 +57,14 @@ Query is a script useful for finding and reading values of data structure
 fields. Purposes will likely be exclusive to writing lua script code,
 possibly C++.
 
-This script takes your data selection eg.{table,unit,item,tile,etc.} then recursively
-iterates through it, outputting names and values of what it finds.
+This script takes your data selection eg.{table,unit,item,tile,etc.} then
+recursively iterates through it, outputting names and values of what it finds.
 
 As it iterates you can have it do other things, like search for a specific
 structure pattern (see lua patterns) or set the value of fields matching the
 selection and any search pattern specified.
 
-.. Notes::
+.. Note::
 
     This is a recursive search function. The data structures are also recursive.
     So there are a few things that must be considered (in order):
@@ -77,11 +77,20 @@ selection and any search pattern specified.
         - Is the data recursively indexing (eg. A.B.C.A.*)?
         - Does the data match the search pattern?
 
-If the script is taking too long to finish, or if it can't finish you should run
-`kill-lua` from another terminal with the help of `dfhack-run`.
-$ dfhack-run kill-lua'
+.. Warning::
 
-Examples::
+  This is a recursive script that's primary use is to search recursive data
+  structures. You can, fairly easily, cause an infinite loop. You can even
+  more easily run a query that simply requires an inordinate amount of time
+  to complete.
+
+.. Tip::
+
+  Should the need arise, you can kill the command from another shell.
+  Just run ``kill-lua`` from another terminal with the help of ``dfhack-run``.
+  ``$ dfhack-run kill-lua``
+
+Usage examples::
 
   devel/query -unit -getfield id
   devel/query -unit -search STRENGTH
@@ -97,82 +106,102 @@ Examples::
 
 **Selection options:**
 
-``-tile``:              Selects the highlighted tile's block, and then
-                        uses the tile's local position to index the 2D data.
+``-tile``
+  Selects the highlighted tile's block, and then
+  uses the tile's local position to index the 2D data.
 
-``-block``:             Selects the highlighted tile's block.
+``-block``
+  Selects the highlighted tile's block.
 
-``-unit``:              Selects the highlighted unit
+``-unit``
+  Selects the highlighted unit
 
-``-item``:              Selects the highlighted item.
+``-item``
+  Selects the highlighted item.
 
-``-plant``:             Selects the highlighted plant.
+``-plant``
+  Selects the highlighted plant.
 
-``-building``:          Selects the highlighted building.
+``-building``
+  Selects the highlighted building.
 
-``-job``:               Selects the highlighted job.
+``-job``
+  Selects the highlighted job.
 
-``-script``:            Selects the script/module.
+``-script``
+  Selects the script/module.
 
-``-table <value>``:     Selects the specified table (ie. 'value').
+``-table <value>``
+  Selects the specified table (ie. 'value').
 
-                        Must use dot notation to denote sub-tables.
-                        (eg. ``-table df.global.world``)
+  .. Note::
 
-``-getfield <name>``:   Gets the specified field from the selection.
+    You must use dot notation to denote sub-tables.
+    eg. ``df.global.world``
 
-                        Must use in conjunction with one of the above selection
-                        options. Must use dot notation to denote sub-fields.
+``-getfield <name>``
+  Gets the specified field from the selection.
+
+  Must use in conjunction with one of the above selection
+  options. Must use dot notation to denote sub-fields.
 
 **Query options:**
 
-``-search <value>``:      Searches the selection for field names with
-                           substrings matching the specified value.
+``-search <value>``
+  Searches the selection for field names with substrings
+  matching the specified value.
 
-``-findvalue <value>``:    Searches the selection for field values matching the
-                           specified value.
+``-findvalue <value>``
+  Searches the selection for field values matching the specified value.
 
-``-maxdepth <value>``:     Limits the field recursion depth (default: 7)
+``-maxdepth <value>``
+  Limits the field recursion depth (default: 7)
 
-``-maxlength <value>``:    Limits the table sizes that will be walked
-                           (default: 257)
+``-maxlength <value>``
+  Limits the table sizes that will be walked (default: 257)
 
-``-excludetypes [a|bfnstu0]``:  Excludes data types: All | Boolean, Function,
-                                Number, String, Table, Userdata, nil
+``-excludetypes [a|bfnstu0]``
+  Excludes data types: All | Boolean, Function, Number, String, Table, Userdata, nil
 
-``-excludekinds [a|bces]``:     Excludes data types: All | Bit-fields,
-                                Class-type, Enum-type, Struct-type
+``-excludekinds [a|bces]``
+  Excludes data types: All | Bitfield-type, Class-type, Enum-type, Struct-type
 
-``-dumb``:          Disables intelligent checking for recursive data
-                    structures(loops) and increases the -maxdepth to 25 if a
-                    value is not already present
+``-dumb``
+  Disables intelligent checking for recursive data
+  structures(loops) and increases the -maxdepth to 25 if a
+  value is not already present
 
-**Command options:**
+**General options:**
 
-``-showpaths``:        Displays the full path of a field instead of indenting.
+``-showpaths``
+  Displays the full path of a field instead of indenting.
 
-``-setvalue <value>``: Attempts to set the values of any printed fields.
-                       Supported types: boolean,
+``-setvalue <value>``
+  Attempts to set the values of any printed fields.
+  Supported types: boolean, string, integer
 
-``-oneline``:          Reduces output to one line, except with ``-debugdata``
+``-oneline``, ``-1``
+  Reduces output to one line, except with ``-debugdata``
 
-``-1``:                Reduces output to one line, except with ``-debugdata``
+``-alignto <value>``
+  Specifies the alignment column.
 
-``-alignto <value>``:  Specifies the value alignment column.
+``-nopointers``
+  Disables printing values which contain memory addresses.
 
-``-nopointers``:       Disables printing values which contain memory addresses.
-
-``-disableprint``:     Disables printing. Might be useful if you are debugging
-                       this script. Or to see if a query will crash (faster) but
-                       not sure what else you could use it for.
+``-disableprint``
+  Disables printing. Might be useful if you are debugging
+  this script. Or to see if a query will crash (faster) but
+  not sure what else you could use it for.
                        
-``-debug <value>``:    Enables debug log lines equal to or less than the value
-                       provided.
+``-debug <value>``
+  Enables debug log lines equal to or less than the value provided.
 
-``-debugdata``:        Enables debugging data. Prints type information under
-                       each field.
+``-debugdata``
+  Enables debugging data. Prints type information under each field.
 
-``-help``:             Prints this help information.
+``-help``
+  Prints this help information.
 
 ]====]
 
