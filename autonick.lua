@@ -24,7 +24,8 @@ path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
 
 -- grab list, put in array
 for line in io.lines(path) do
-    if (line:trim() ~= "") and (line:sub(1, 1) ~= "#") then
+    line = line:trim();
+    if (line ~= "") and (line:sub(1, 1) ~= "#") then
         table.insert(names, line);
     end;
 end;
