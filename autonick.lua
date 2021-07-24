@@ -45,12 +45,14 @@ end;
 
 --assign names
 for _,unit in ipairs(df.global.world.units.active) do
-    if #names > 0 then --if there are any names left
-        if dfhack.units.isCitizen(unit) and
-        unit.name.nickname == "" then
-            newnameIndex = math.random (#names);
-            dfhack.units.setNickname(unit, names[newnameIndex]);
-            table.remove(names, newnameIndex);
+    if #names <= 0 then break end;
+
+    --if there are any names left
+    if dfhack.units.isCitizen(unit) and
+    unit.name.nickname == "" then
+        newnameIndex = math.random (#names);
+        dfhack.units.setNickname(unit, names[newnameIndex]);
+        table.remove(names, newnameIndex);
         end;
     end;
 end;
