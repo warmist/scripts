@@ -3,7 +3,7 @@
 
 autonick
 ========
-Automatically nickname dwarves according to ``data/init/names.txt``.
+Automatically nickname dwarves according to ``dfhack-config/autonick.txt``.
 
 One nickname per line, or an empty line. Repeat entries are discarded.
 
@@ -20,7 +20,7 @@ You may wish to use this script with the "repeat" command, e.g:
 names = {};
 index = 1;
 
-path = dfhack.getDFPath () .. "/data/init/names.txt";
+path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
 
 -- grab list, put in array
 for line in io.lines(path) do
