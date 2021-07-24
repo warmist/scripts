@@ -18,15 +18,13 @@ You may wish to use this script with the "repeat" command, e.g:
 ]====]
 
 names = {};
-index = 1;
 
 path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
 
 -- grab list, put in array
 for line in io.lines(path) do
     if line ~= "" then
-        names [index] = line;
-        index = (index + 1);
+        table.insert(names, line);
     end;
 end;
 
