@@ -5,7 +5,8 @@ autonick
 ========
 Automatically nickname dwarves according to ``dfhack-config/autonick.txt``.
 
-One nickname per line, or an empty line. Repeat entries are discarded.
+One nickname per line.
+Empty lines, lines beginning with ``#`` and repeat entries are discarded.
 
 Dwarves with manually set nicknames are ignored.
 
@@ -23,7 +24,7 @@ path = dfhack.getDFPath () .. "/dfhack-config/autonick.txt";
 
 -- grab list, put in array
 for line in io.lines(path) do
-    if (line:trim() ~= "") then
+    if (line:trim() ~= "") or (line:sub(1, 1) == "#") then
         table.insert(names, line);
     end;
 end;
