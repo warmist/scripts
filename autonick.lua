@@ -3,7 +3,7 @@
 
 autonick
 ========
-Automatically nickname dwarves according to ``dfhack-config/autonick.txt``.
+Gives dwarves unique nicknames chosen randomly from ``dfhack-config/autonick.txt``.
 
 One nickname per line.
 Empty lines, lines beginning with ``#`` and repeat entries are discarded.
