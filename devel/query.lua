@@ -406,12 +406,22 @@ function processArguments()
         ]]
         args.maxlength = 257
     else
+    if args.maxlength then
         args.maxlength = tonumber(args.maxlength)
+    elseif args.dumb then
+        args.maxlength = 10000
+    else
+        --257 was chosen with the intent of capturing all enums. Or hopefully most of them.
+        args.maxlength = 257
     end
 
     new_value = toType(args.setvalue)
     find_value = toType(args.findvalue)
 
+    -- singular or plural
+    args.excludetypes = args.excludetypes and args.excludetypes or args.excludetype
+    args.excludekinds = args.excludekinds and args.excludekinds or args.excludekind
+    -- must be a string
     args.excludetypes = args.excludetypes and args.excludetypes or ""
     args.excludekinds = args.excludekinds and args.excludekinds or ""
     if string.find(args.excludetypes, 'a') then
