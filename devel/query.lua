@@ -400,12 +400,6 @@ function processArguments()
     args.maxdepth = maxdepth
 
     --Table Length
-    if not args.maxlength then
-        --[[ Table length is inversely proportional to how useful the data is.
-        257 was chosen with the intent of capturing all enums. Or hopefully most of them.
-        ]]
-        args.maxlength = 257
-    else
     if args.maxlength then
         args.maxlength = tonumber(args.maxlength)
     elseif args.dumb then
