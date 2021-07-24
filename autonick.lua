@@ -3,7 +3,7 @@
 
 autonick
 ========
-Automatically nickname dwarves according to "data/init/names.txt".
+Automatically nickname dwarves according to ``data/init/names.txt``.
 
 One nickname per line, or an empty line. Repeat entries are discarded.
 
@@ -13,7 +13,7 @@ If there are fewer available nicknames than dwarves, the remaining
 dwarves will go un-nicknamed.
 
 You may wish to use this script with the "repeat" command, e.g:
-repeat -name autonick -time 3 -timeUnits months -command [ autonick ]
+``repeat -name autonick -time 3 -timeUnits months -command [ autonick ]``
 
 ]====]
 
