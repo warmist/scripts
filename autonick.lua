@@ -18,12 +18,12 @@ You may wish to use this script with the "repeat" command, e.g:
 
 ]====]
 
-local taken = {}
+local seen = {}
 --check current nicknames
 for _,unit in ipairs(df.global.world.units.active) do
     if dfhack.units.isCitizen(unit) and
     unit.name.nickname ~= "" then
-        taken[unit.name.nickname] = true
+        seen[unit.name.nickname] = true
     end
 end
 
@@ -34,8 +34,9 @@ for line in io.lines(path) do
     line = line:trim()
     if (line ~= "")
     and (not line:startswith('#'))
-    and (not taken[line]) then
+    and (not seen[line]) then
         table.insert(names, line)
+        seen[line] = true
     end
 end
 
