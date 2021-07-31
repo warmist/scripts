@@ -1,4 +1,5 @@
 -- Boosts the priority of jobs of the selected types
+--@module = true
 --[====[
 
 prioritize
@@ -107,10 +108,10 @@ local function status()
     local first = true
     for k,v in pairs(watched_job_types) do
         if first then
-            print('Automatically prioritizing jobs of type:')
+            print('Automatically prioritized jobs:')
             first = false
         end
-        print(('  ') .. df.job_type[k])
+        print(('%d\t%s'):format(v, df.job_type[k]))
     end
     if first then print('Not automatically prioritizing any jobs.') end
 end
@@ -171,7 +172,7 @@ local function remove_watch(job_types, quiet)
     update_handlers()
 end
 
-local function current_jobs(job_types)
+local function print_current_jobs(job_types)
     local job_counts_by_type = {}
     local filtered = has_elements(job_types)
     for_all_live_postings(
@@ -194,7 +195,7 @@ local function current_jobs(job_types)
     if first then print('No current jobs.') end
 end
 
-local function registry()
+local function print_registry()
     print('Valid job types:')
     for k,v in ipairs(df.job_type) do
         if v and df.job_type[v] and v:find('^%u%l') then
@@ -204,14 +205,14 @@ local function registry()
 end
 
 local function parse_commandline(args)
-    local opts = {action=status}
+    local opts, action = {}, status
     local positionals = argparse.processArgsGetopt(args, {
-            {'a', 'add', handler=function() opts.action = boost_and_watch end},
-            {'d', 'delete', handler=function() opts.action = remove_watch end},
+            {'a', 'add', handler=function() action = boost_and_watch end},
+            {'d', 'delete', handler=function() action = remove_watch end},
             {'h', 'help', handler=function() opts.help = true end},
-            {'j', 'jobs', handler=function() opts.action = current_jobs end},
+            {'j', 'jobs', handler=function() action = print_current_jobs end},
             {'q', 'quiet', handler=function() opts.quiet = true end},
-            {'r', 'registry', handler=function() opts.action = registry end},
+            {'r', 'registry', handler=function() action = print_registry end},
         })
 
     if positionals[1] == 'help' then opts.help = true end
@@ -229,15 +230,30 @@ local function parse_commandline(args)
     end
     opts.job_types = job_types
 
-    if #job_types >= 1 then
-        if opts.action == status then opts.action = boost end
+    if action == status and has_elements(job_types) then
+        action = boost
     end
+    opts.action = action
 
     return opts
 end
 
--- main script
-local opts = parse_commandline({...})
-if opts.help then print(dfhack.script_help()) return end
+if not dfhack_flags.module then
+    -- main script
+    local opts = parse_commandline({...})
+    if opts.help then print(dfhack.script_help()) return end
 
-opts.action(opts.job_types, opts.quiet)
+    opts.action(opts.job_types, opts.quiet)
+end
+
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        status=status,
+        boost=boost,
+        boost_and_watch=boost_and_watch,
+        remove_watch=remove_watch,
+        print_current_jobs=print_current_jobs,
+        print_registry=print_registry,
+        parse_commandline=parse_commandline,
+    }
+end
