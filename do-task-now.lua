@@ -14,10 +14,11 @@ mark this job as high priority. There is no visual indicator, please look
 at the dfhack console for output. If a work order is selected, every job
 currently present job from this work order is affected, but not the future ones.
 
-For best experience add following to your `dfhack*.init`::
+For best experience add following to your ``dfhack*.init``::
 
     keybinding add Alt-N do-task-now
 
+Also see ``do-job-now`` `tweak`.
 ]====]
 end
 
