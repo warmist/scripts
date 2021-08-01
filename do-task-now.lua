@@ -56,11 +56,10 @@ local function doItemJobNow(item)
         qerror(dfhack.items.getDescription(item, 0) .. " must be in a job! (look for 'TSK')")
     end
 
-    for _, sref in ipairs(item.specific_refs) do
-        if sref.type == df.specific_ref_type.JOB then
-            doJobNow(sref.data.job)
-            return
-        end
+    local sref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
+    if sref then
+        doJobNow(sref.data.job)
+        return
     end
     print("Couldn't find any job for " .. dfhack.items.getDescription(item, 0))
 end
@@ -77,7 +76,7 @@ local function doBuildingJobNow(building)
         doJobNow(building.jobs[0])
         return
     end
-    print("Couldn't find any job for " .. utils.getBuildingName(building))
+    print("Couldn't find neither construct nor destroy building job for " .. utils.getBuildingName(building))
 end
 
 local function doUnitJobNow(unit)
@@ -147,7 +146,7 @@ local function doWorkOrderJobsNow(order)
     end
 end
 
-local function getSelectedWorkOrder(silent)
+local function getSelectedWorkOrder()
     local scr = dfhack.gui.getCurViewscreen()
     local orders
     local idx
@@ -164,7 +163,7 @@ local function getSelectedWorkOrder(silent)
         if idx < #orders then
             return orders[idx]
         else
-            if not silent then qerror("Invalid work order selected") end
+            qerror("Invalid work order selected")
         end
     end
 
@@ -208,7 +207,7 @@ local function doSelectedEntityJobNow()
     end
 
     -- do we have a work order selected?
-    local order = getSelectedWorkOrder(true)
+    local order = getSelectedWorkOrder()
     if order then
         doWorkOrderJobsNow(order)
         return
