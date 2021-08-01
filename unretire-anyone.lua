@@ -61,7 +61,7 @@ function showNemesisPrompt(advSetUpScreen)
             name = name .. ' ' .. curse.name
           end
           if curse.undead_name ~= '' then
-            name = curse.undead_name .. " - undead " .. name
+            name = curse.undead_name .. " - reanimated " .. name
           end
         end
         if histFlags.ghost then
