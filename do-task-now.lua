@@ -14,7 +14,7 @@ mark this job as high priority. There is no visual indicator, please look
 at the dfhack console for output. If a work order is selected, every job
 currently present job from this work order is affected, but not the future ones.
 
-For best experience add following to your ``dfhack*.init``::
+For best experience add the following to your ``dfhack*.init``::
 
     keybinding add Alt-N do-task-now
 
@@ -77,7 +77,7 @@ local function doBuildingJobNow(building)
         doJobNow(building.jobs[0])
         return
     end
-    print("Couldn't find neither construct nor destroy building job for " .. utils.getBuildingName(building))
+    print("Couldn't find either construct or destroy building job for " .. utils.getBuildingName(building))
 end
 
 local function doUnitJobNow(unit)
