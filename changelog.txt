@@ -21,6 +21,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/gm-editor`: made search case-insensitive
+- `unretire-anyone`: replaced the 'undead' descriptor with 'reanimated' to make it more mod-friendly
 
 ## Internals
 - Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
