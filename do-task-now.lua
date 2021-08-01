@@ -7,10 +7,17 @@ local function print_help()
 
 do-task-now
 ===========
-Select anything in the game and execute ``do-task-now`` to make
-a related job high priority. For a building only construct and
-deconstruct jobs are considered. For a work order, all its jobs
-are affected.
+
+The script will try its best to find a job related to the selected entity
+(which can be a job, dwarf, animal, item, building, plant or work order) and then
+mark this job as high priority. There is no visual indicator, please look
+at the dfhack console for output. If a work order is selected, every job
+currently present job from this work order is affected, but not the future ones.
+
+For best experience add following to your `dfhack*.init`::
+
+    keybinding add Alt-N do-task-now
+
 ]====]
 end
 
