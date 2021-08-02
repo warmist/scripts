@@ -116,8 +116,13 @@ local function status()
     if first then print('Not automatically prioritizing any jobs.') end
 end
 
+-- encapsulate this in a function so unit tests can mock it out
+function get_postings()
+    return df.global.world.jobs.postings
+end
+
 local function for_all_live_postings(cb)
-    for _,posting in ipairs(df.global.world.jobs.postings) do
+    for _,posting in ipairs(get_postings()) do
         if posting.job and not posting.flags.dead then
             cb(posting)
         end
@@ -159,7 +164,7 @@ local function remove_watch(job_types, quiet)
     for job_type in pairs(job_types) do
         if not watched_job_types[job_type] then
             if not quiet then
-                print('Skipping unwatched type: '..df.job_type[job_type])
+                print('Skipping unwatched type: ' .. df.job_type[job_type])
             end
         else
             watched_job_types[job_type] = nil
