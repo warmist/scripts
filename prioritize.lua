@@ -62,17 +62,14 @@ Options:
 local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 
--- set of job types that we are watching
-watched_job_types = watched_job_types or {}
+-- set of job types that we are watching. this needs to be global so we don't
+-- lose player-set state when the script is reparsed. Also a getter function
+-- that can be mocked out by unit tests.
+g_watched_job_types = g_watched_job_types or {}
+function get_watched_job_types() return g_watched_job_types end
 
 eventful.enableEvent(eventful.eventType.UNLOAD, 1)
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 5)
-
-local function clear_watched_job_types()
-    watched_job_types = {}
-    eventful.onUnload.prioritize = nil
-    eventful.onJobInitiated.prioritize = nil
-end
 
 local function boost_job_if_member(job, job_types)
     if job_types[job.job_type] and not job.flags.do_now then
@@ -83,6 +80,7 @@ local function boost_job_if_member(job, job_types)
 end
 
 local function on_new_job(job)
+    local watched_job_types = get_watched_job_types()
     if boost_job_if_member(job, watched_job_types) then
         watched_job_types[job.job_type] = watched_job_types[job.job_type] + 1
     end
@@ -93,7 +91,17 @@ local function has_elements(collection)
     return false
 end
 
+local function clear_watched_job_types()
+    local watched_job_types = get_watched_job_types()
+    for job_type in pairs(watched_job_types) do
+        watched_job_types[job_type] = nil
+    end
+    eventful.onUnload.prioritize = nil
+    eventful.onJobInitiated.prioritize = nil
+end
+
 local function update_handlers()
+    local watched_job_types = get_watched_job_types()
     if has_elements(watched_job_types) then
         eventful.onUnload.prioritize = clear_watched_job_types
         eventful.onJobInitiated.prioritize = on_new_job
@@ -104,6 +112,7 @@ end
 
 local function status()
     local first = true
+    local watched_job_types = get_watched_job_types()
     for k,v in pairs(watched_job_types) do
         if first then
             print('Automatically prioritized jobs:')
@@ -136,12 +145,13 @@ local function boost(job_types, quiet)
             end
         end)
     if not quiet then
-        print(('Prioritized %d jobs.'):format(count))
+        print(('Prioritized %d job%s.'):format(count, count == 1 and '' or 's'))
     end
 end
 
 local function boost_and_watch(job_types, quiet)
     boost(job_types, quiet)
+    local watched_job_types = get_watched_job_types()
     for job_type in pairs(job_types) do
         if watched_job_types[job_type] then
             if not quiet then
@@ -159,6 +169,7 @@ local function boost_and_watch(job_types, quiet)
 end
 
 local function remove_watch(job_types, quiet)
+    local watched_job_types = get_watched_job_types()
     for job_type in pairs(job_types) do
         if not watched_job_types[job_type] then
             if not quiet then
@@ -251,6 +262,8 @@ end
 
 if dfhack.internal.IN_TEST then
     unit_test_hooks = {
+        clear_watched_job_types=clear_watched_job_types,
+        on_new_job=on_new_job,
         status=status,
         boost=boost,
         boost_and_watch=boost_and_watch,
