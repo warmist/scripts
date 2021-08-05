@@ -18,6 +18,7 @@ that repo.
 
 ## Fixes
 - `quickfort`: allow machines (e.g. screw pumps) to be built on ramps just like DF allows
+- `quickfort`: fix error message when the requested label is not found in the blueprint file
 
 ## Misc Improvements
 - `gui/gm-editor`: made search case-insensitive
