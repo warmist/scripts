@@ -17,12 +17,10 @@ types is cleared whenever you load a new map, so you can add a line like the one
 below to your onMapLoad.init file to ensure important job types are always
 completed promptly in your forts::
 
-    prioritize -a StoreItemInVehicle PullLever DestroyBuilding RemoveConstruction
+    prioritize -a StoreItemInVehicle PullLever DestroyBuilding RemoveConstruction RecoverWounded FillPond DumpItem SlaughterAnimal
 
 Also see the ``do-job-now`` `tweak` for adding a hotkey to the jobs screen that
-can toggle the priority of specific individual jobs and the `do-task-now`
-script, which sets the priority of jobs related to the selected
-job/unit/item/building/order.
+can toggle the priority of specific individual jobs.
 
 Usage::
 
