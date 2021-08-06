@@ -42,7 +42,7 @@ that repo.
 ## Misc Improvements
 - `devel/annc-monitor`: added ``report enable|disable`` subcommand to filter combat reports
 - `gui/advfort`: added workshop name to workshop UI
-- `devel/query`: updated script to v3.1.4 - ie. major rewrite. improved [dramatically] script maintainability and readability.
+- `devel/query`: updated script to v3.2 - ie. major rewrite. improved [dramatically] script maintainability and readability.
 - `devel/query`: merged options ``-query`` and ``-querykeys`` into ``-query``
 - `devel/query`: merged options ``-depth`` and ``-keydepth`` into ``-maxdepth``
 - `devel/query`: replaced option ``-safer`` with ``-excludetypes`` and ``-excludekinds``
@@ -52,6 +52,7 @@ that repo.
 - `devel/query`: added option ``-nopointers`` to disable printing values with memory addresses
 - `devel/query`: added option ``-alignto`` to set the value column's alignment
 - `devel/query`: added options ``-oneline`` and alias ``-1`` to avoid using two lines for fields with metadata
+- `devel/query`: added support for matching multiple patterns
 - `devel/query`: added support for selecting the highlighted job data
 - `devel/query`: added support for selecting the highlighted plant data
 - `devel/query`: added support for selecting the highlighted building data

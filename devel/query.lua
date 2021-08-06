@@ -1,6 +1,6 @@
 -- Query is a script useful for finding and reading values of data structure fields. Purposes will likely be exclusive to writing lua script code.
 -- Written by Josh Cooper(cppcooper) on 2017-12-21, last modified: 2021-06-13
--- Version: 3.1.4
+-- Version: 3.2
 --luacheck:skip-entirely
 local utils=require('utils')
 local validArgs = utils.invert({
@@ -131,7 +131,7 @@ Usage examples::
 ``-script``
   Selects the script/module.
 
-``-table <value>``
+``-table <identifier>``
   Selects the specified table (ie. 'value').
 
   .. Note::
@@ -147,9 +147,14 @@ Usage examples::
 
 **Query options:**
 
-``-search <value>``
+``-search <pattern>``
   Searches the selection for field names with substrings
   matching the specified value.
+
+  .. Usage::
+
+    ``devel/query -table dfhack -search pattern``
+    ``devel/query -table dfhack -search [ pattern1 pattern2 ]``
 
 ``-findvalue <value>``
   Searches the selection for field values matching the specified value.
@@ -500,9 +505,22 @@ function is_searchable(field, value)
     return false
 end
 
+function match_searcharg(path,field)
+    if type(args.search) == "table" then
+        for _,pattern in pairs(args.search) do
+            if string.find(tostring(field),pattern) or string.find(path,pattern) then
+                return true
+            end
+        end
+    elseif string.find(tostring(field),args.search) or string.find(path,args.search) then
+        return true
+    end
+    return false
+end
+
 function is_match(path, field, value)
     debugf(3, string.format("path: %s\nfield: %s\nvalue: %s", path, field, value))
-    if not args.search or string.find(tostring(field),args.search) or string.find(path,args.search) then
+    if not args.search or match_searcharg(path,field) then
         if not args.findvalue or (type(value) == type(find_value) and (value == find_value or (type(value) == "string" and string.find(value,find_value)))) then
             return true
         end
