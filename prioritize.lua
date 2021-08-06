@@ -7,9 +7,9 @@ prioritize
 
 The prioritize script sets the ``do_now`` flag on all of the specified types of
 jobs that are currently ready to be picked up by a dwarf. This will force them
-to complete the jobs as soon as possible. This script can also continue to
-monitor creation of new jobs and automatically boost the priority of newly
-created jobs of specific types.
+to complete those jobs as soon as possible. This script can also continue to
+monitor creation of new jobs and automatically boost the priority of jobs of
+the specified types.
 
 This is most useful for ensuring important (but low-priority -- according to DF)
 tasks don't get indefinitely ignored in busy forts. The list of monitored job
@@ -30,16 +30,16 @@ Examples:
 
 ``prioritize``
     Prints out which job types are being automatically prioritized and how many
-    jobs of each type we have modified since we started watching them.
+    jobs of each type we have prioritized since we started watching them.
+
+``prioritize -j``
+    Prints out the list of active job types that you can prioritize right now.
 
 ``prioritize ConstructBuilding DestroyBuilding``
     Prioritizes all current building construction and destruction jobs.
 
 ``prioritize -a StoreItemInVehicle``
     Prioritizes all current and future vehicle loading jobs.
-
-``prioritize -d StoreItemInVehicle``
-    Stops automatically prioritizing new vehicle loading jobs.
 
 Options:
 
