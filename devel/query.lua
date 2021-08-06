@@ -151,7 +151,7 @@ Usage examples::
   Searches the selection for field names with substrings
   matching the specified value.
 
-  .. Usage::
+  Usage::
 
     ``devel/query -table dfhack -search pattern``
     ``devel/query -table dfhack -search [ pattern1 pattern2 ]``
