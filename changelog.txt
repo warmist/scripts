@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `reveal-adv-map`: exposes/hides all world map tiles in adventure mode
+- `autonick`: automatically nicknames dwarves
 
 ## Fixes
 - `devel/export-dt-ini`: fixed incorrect vtable address on Windows
