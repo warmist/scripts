@@ -17,6 +17,7 @@ that repo.
 - `reveal-adv-map`: exposes/hides all world map tiles in adventure mode
 
 ## Fixes
+- `devel/export-dt-ini`: fixed incorrect vtable address on Windows
 - `quickfort`: allow machines (e.g. screw pumps) to be built on ramps just like DF allows
 - `quickfort`: fix error message when the requested label is not found in the blueprint file
 
