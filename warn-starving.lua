@@ -36,9 +36,8 @@ end
 
 local checkOnlySane = false
 if args.sane then
-{
     checkOnlySane = true
-}
+end
 
 warning = defclass(warning, gui.FramedScreen)
 warning.ATTRS = {
@@ -129,7 +128,7 @@ function doCheck()
         local unit = units[i]
         local rraw = findRaceCaste(unit)
         if rraw and dfhack.units.isActive(unit) and not dfhack.units.isOpposedToLife(unit) then
-            if not checkOnlySane or dfhack.units.isSane(unit) then 
+            if not checkOnlySane or dfhack.units.isSane(unit) then
                 table.insert(messages, checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit))
                 table.insert(messages, checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit))
                 table.insert(messages, checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit))
