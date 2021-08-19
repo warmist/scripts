@@ -39,6 +39,7 @@ that repo.
 - `devel/query`: added support for selecting a lua module (e.g. `dorf_tables`)
 - `devel/query`: removed options ``-listall``, ``-listfields``, and ``-listkeys`` - these are now simply default behaviour
 - `dorf_tables`: integrated `devel/query` to show the table definitions when requested with ``-list``
+- `geld`: fixed ``-help`` option
 - `gui/gm-editor`: made search case-insensitive
 - `quickfort`: accept multiple commands, list numbers, and/or blueprint lables on a single commandline
 - `unretire-anyone`: replaced the 'undead' descriptor with 'reanimated' to make it more mod-friendly
