@@ -1,12 +1,12 @@
--- do-task-now makes a job involving current selection high priority.
+-- do-job-now makes a job involving current selection high priority.
 
 -- place this file in your /df/hack/scripts folder.
 
 local function print_help()
     print [====[
 
-do-task-now
-===========
+do-job-now
+==========
 
 The script will try its best to find a job related to the selected entity
 (which can be a job, dwarf, animal, item, building, plant or work order) and then
@@ -16,7 +16,7 @@ currently present job from this work order is affected, but not the future ones.
 
 For best experience add the following to your ``dfhack*.init``::
 
-    keybinding add Alt-N do-task-now
+    keybinding add Alt-N do-job-now
 
 Also see ``do-job-now`` `tweak`.
 ]====]
