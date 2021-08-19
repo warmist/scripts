@@ -13,7 +13,7 @@ local validArgs = utils.invert({
  'job',
  'tile',
  'block',
- 'module',
+ 'script',
  'table',
  'getfield',
 
@@ -128,8 +128,8 @@ Usage examples::
 ``-job``
   Selects the highlighted job.
 
-``-script``
-  Selects the script/module.
+``-script <script name>``
+  Selects the specified script (which must support being included with ``reqscript()``).
 
 ``-table <identifier>``
   Selects the specified table (ie. 'value').
@@ -330,9 +330,9 @@ function getSelectionData()
         selection = findTable(args.table)
         path_info = args.table
         path_info_pattern = path_info
-    elseif args.module then
-        selection = reqscript(args.module)
-        path_info = args.module
+    elseif args.script then
+        selection = reqscript(args.script)
+        path_info = args.script
         path_info_pattern = path_info
     elseif args.unit then
         debugf(0,"unit selection")

@@ -487,17 +487,17 @@ types = {
 
 if args.list then
     if args.list == "all" then
-        dfhack.run_command("devel/query -1 -alignto 38 -module dorf_tables -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 38 -script dorf_tables -nopointers")
     elseif args.list == "job_distributions" then
-        dfhack.run_command("devel/query -1 -alignto 21 -module dorf_tables -getfield job_distributions -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 21 -script dorf_tables -getfield job_distributions -nopointers")
     elseif args.list == "attrib_levels" then
-        dfhack.run_command("devel/query -1 -alignto 21 -module dorf_tables -getfield attrib_levels -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 21 -script dorf_tables -getfield attrib_levels -nopointers")
     elseif args.list == "jobs" then
-        dfhack.run_command("devel/query -1 -alignto 18 -module dorf_tables -getfield jobs -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 18 -script dorf_tables -getfield jobs -nopointers")
     elseif args.list == "professions" then
-        dfhack.run_command("devel/query -1 -alignto 28 -module dorf_tables -getfield professions -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 28 -script dorf_tables -getfield professions -nopointers")
     elseif args.list == "types" then
-        dfhack.run_command("devel/query -1 -alignto 38 -module dorf_tables -getfield types -nopointers")
+        dfhack.run_command("devel/query -1 -alignto 38 -script dorf_tables -getfield types -nopointers")
     else
         error("Invalid argument provided.")
     end
