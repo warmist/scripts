@@ -24,24 +24,21 @@ that repo.
 - `quickfort`: fix error message when the requested label is not found in the blueprint file
 
 ## Misc Improvements
-- `devel/query`: updated script to v3.2 - ie. major rewrite. improved [dramatically] script maintainability and readability.
+- `devel/query`: updated script to v3.2 (i.e. major rewrite for maintainability/readability)
 - `devel/query`: merged options ``-query`` and ``-querykeys`` into ``-query``
 - `devel/query`: merged options ``-depth`` and ``-keydepth`` into ``-maxdepth``
 - `devel/query`: replaced option ``-safer`` with ``-excludetypes`` and ``-excludekinds``
-- `devel/query`: improved how tile data is dealt with [identification, iteration, and searching]
+- `devel/query`: improved how tile data is dealt with identification, iteration, and searching
 - `devel/query`: added option ``-findvalue``
 - `devel/query`: added option ``-showpaths`` to print full data paths instead of nested fields
 - `devel/query`: added option ``-nopointers`` to disable printing values with memory addresses
 - `devel/query`: added option ``-alignto`` to set the value column's alignment
 - `devel/query`: added options ``-oneline`` and alias ``-1`` to avoid using two lines for fields with metadata
 - `devel/query`: added support for matching multiple patterns
-- `devel/query`: added support for selecting the highlighted job data
-- `devel/query`: added support for selecting the highlighted plant data
-- `devel/query`: added support for selecting the highlighted building data
-- `devel/query`: added support for selecting the highlighted block data (ie. without a specific tile in mind)
-- `devel/query`: added support for selecting a lua module (eg. dorf_tables)
-- `devel/query`: removed options ``-listall`` ``-listfields`` ``-listkeys`` this is now simply default behaviour
-- `dorf_tables`: integrated devel/query to easily show users the table definitions upon request
+- `devel/query`: added support for selecting the highlighted job, plant, building, and map block data
+- `devel/query`: added support for selecting a lua module (e.g. `dorf_tables`)
+- `devel/query`: removed options ``-listall``, ``-listfields``, and ``-listkeys`` - these are now simply default behaviour
+- `dorf_tables`: integrated `devel/query` to show the table definitions when requested with ``-list``
 - `gui/gm-editor`: made search case-insensitive
 - `quickfort`: accept multiple commands, list numbers, and/or blueprint lables on a single commandline
 - `unretire-anyone`: replaced the 'undead' descriptor with 'reanimated' to make it more mod-friendly
