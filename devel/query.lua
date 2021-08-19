@@ -86,9 +86,8 @@ selection and any search pattern specified.
 
 .. Tip::
 
-  Should the need arise, you can kill the command from another shell.
-  Just run ``kill-lua`` from another terminal with the help of ``dfhack-run``.
-  ``$ dfhack-run kill-lua``
+  Should the need arise, you can kill the command from another shell with
+  `kill-lua`, e.g. by running it with `dfhack-run` from another terminal.
 
 Usage examples::
 
@@ -153,8 +152,8 @@ Usage examples::
 
   Usage::
 
-    ``devel/query -table dfhack -search pattern``
-    ``devel/query -table dfhack -search [ pattern1 pattern2 ]``
+    devel/query -table dfhack -search pattern
+    devel/query -table dfhack -search [ pattern1 pattern2 ]
 
 ``-findvalue <value>``
   Searches the selection for field values matching the specified value.
@@ -166,14 +165,16 @@ Usage examples::
   Limits the table sizes that will be walked (default: 257)
 
 ``-excludetypes [a|bfnstu0]``
-  Excludes data types: All | Boolean, Function, Number, String, Table, Userdata, nil
+  Excludes native Lua data types. Single letters correspond to (in order):
+  All types listed here, Boolean, Function, Number, String, Table, Userdata, nil
 
 ``-excludekinds [a|bces]``
-  Excludes data types: All | Bitfield-type, Class-type, Enum-type, Struct-type
+  Excludes DF data types. Single letters correspond to (in order):
+  All types listed here, Bitfield-type, Class-type, Enum-type, Struct-type
 
 ``-dumb``
   Disables intelligent checking for recursive data
-  structures(loops) and increases the -maxdepth to 25 if a
+  structures (loops) and increases the ``-maxdepth`` to 25 if a
   value is not already present
 
 **General options:**
