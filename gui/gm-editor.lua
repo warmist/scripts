@@ -505,13 +505,13 @@ function getStringValue(trg,field)
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     local trg=self:currentTarget()
-    local filter=self.subviews.filter_input.text
+    local filter=self.subviews.filter_input.text:lower()
 
     if reindex then
         trg.keys={}
         for k,v in pairs(trg.target) do
             if filter~= "" then
-                local ok,ret=dfhack.pcall(string.match,tostring(k),filter)
+                local ok,ret=dfhack.pcall(string.match,tostring(k):lower(),filter)
                 if not ok then
                     table.insert(trg.keys,k)
                 elseif ret then

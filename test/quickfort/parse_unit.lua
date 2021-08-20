@@ -449,8 +449,14 @@ function test.process_levels()
     local reader = MockReader{}
     local start = {x=10, y=20, z=30}
 
-    -- label not found
-    expect.error(function() parse.process_levels(reader, '1', start) end)
+    -- label not found (no data)
+    expect.error_match('no data found',
+                       function() parse.process_levels(reader, nil, start) end)
+
+    -- label not found (mismatch)
+    reader:reset({{'#build'},{'Tl'}})
+    expect.error_match('not found',
+                       function() parse.process_levels(reader, '2', start) end)
 
     -- implicit #dig modeline
     reader:reset({{'d'}})

@@ -332,7 +332,7 @@ local function process_levels(reader, label, start_cursor_coord)
                 label_str = string.format('label "%s" not found', label)
             end
             qerror(string.format(
-                    "%s in %s", label_str, reader:description()))
+                    "%s in %s", label_str, reader.filepath))
         end
         modeline = parse_modeline(row_tokens[1], reader.filepath,
                                   modeline_id)
