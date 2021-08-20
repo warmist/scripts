@@ -14,6 +14,7 @@ local validArgs = utils.invert({
  'tile',
  'block',
  'script',
+ 'json',
  'table',
  'getfield',
 
@@ -129,6 +130,14 @@ Usage examples::
 
 ``-script <script name>``
   Selects the specified script (which must support being included with ``reqscript()``).
+
+``-json <file>``
+  Loads the specified json file as a table to query.
+
+  .. Note::
+
+    The path starts at the DF root directory.
+    eg. -json /hack/scripts/dwarf_profiles.json
 
 ``-table <identifier>``
   Selects the specified table (ie. 'value').
@@ -331,6 +340,16 @@ function getSelectionData()
         selection = findTable(args.table)
         path_info = args.table
         path_info_pattern = path_info
+    elseif args.json then
+        local json = require("json")
+        local json_file = string.format("%s%s", dfhack.getDFPath(), args.json)
+        if dfhack.filesystem.isfile(json_file) then
+            selection = json.decode_file(json_file)
+            path_info = args.json
+            path_info_pattern = path_info
+        else
+            qerror(string.format("File '%s' not found.", json_file))
+        end
     elseif args.script then
         selection = reqscript(args.script)
         path_info = args.script
