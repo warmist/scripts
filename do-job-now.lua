@@ -16,7 +16,7 @@ For best experience add the following to your ``dfhack*.init``::
 
     keybinding add Alt-N do-job-now
 
-Also see ``do-job-now`` `tweak`.
+Also see ``do-job-now`` `tweak` and `prioritize`.
 ]====]
 end
 
