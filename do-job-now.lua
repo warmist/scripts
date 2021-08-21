@@ -1,6 +1,4 @@
--- do-job-now makes a job involving current selection high priority.
-
--- place this file in your /df/hack/scripts folder.
+-- makes a job involving current selection high priority
 
 local function print_help()
     print [====[
