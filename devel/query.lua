@@ -342,7 +342,7 @@ function getSelectionData()
         path_info_pattern = path_info
     elseif args.json then
         local json = require("json")
-        local json_file = string.format("%s%s", dfhack.getDFPath(), args.json)
+        local json_file = string.format("%s/%s", dfhack.getDFPath(), args.json)
         if dfhack.filesystem.isfile(json_file) then
             selection = json.decode_file(json_file)
             path_info = args.json
