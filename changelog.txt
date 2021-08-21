@@ -38,6 +38,7 @@ that repo.
 - `devel/query`: added support for matching multiple patterns
 - `devel/query`: added support for selecting the highlighted job, plant, building, and map block data
 - `devel/query`: added support for selecting a Lua script (e.g. `dorf_tables`)
+- `devel/query`: added support for selecting a Json file (e.g. dwarf_profiles.json)
 - `devel/query`: removed options ``-listall``, ``-listfields``, and ``-listkeys`` - these are now simply default behaviour
 - `dorf_tables`: integrated `devel/query` to show the table definitions when requested with ``-list``
 - `geld`: fixed ``-help`` option
