@@ -570,28 +570,6 @@ function is_exceeding_maxlength(index)
 end
 
 --Section: table helpers
-function safe_pairs(t, keys_only)
-    if keys_only then
-        local mt = debug.getmetatable(t)
-        if mt and mt._index_table then
-            local idx = 0
-            return function()
-                idx = idx + 1
-                if mt._index_table[idx] then
-                    return mt._index_table[idx]
-                end
-            end
-        end
-    end
-    local ret = table.pack(pcall(function() return pairs(t) end))
-    local ok = ret[1]
-    table.remove(ret, 1)
-    if ok then
-        return table.unpack(ret)
-    else
-        return function() end
-    end
-end
 
 function isEmpty(t)
     for _,_ in safe_pairs(t) do
