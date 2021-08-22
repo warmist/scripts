@@ -598,20 +598,17 @@ end
 
 function findPath(t, path)
     debugf(0,string.format("findPath(%s, %s)",t, path))
-    curTable = t
-    keyParts = {}
-    for word in string.gmatch(path, '([^.]+)') do --thanks stack overflow
-        table.insert(keyParts, word)
-    end
+    local curTable = t
     if not curTable then
-        qerror("Looks like we're borked somehow.")
+        error("no table to search")
     end
+    local keyParts = string.split(path, '.', true)
     for _,v in pairs(keyParts) do
         if v and curTable[v] ~= nil then
             debugf(1,"found something",v,curTable,curTable[v])
             curTable = curTable[v]
         else
-            qerror("Table not recognized: " .. v)
+            qerror("Key not found: " .. v)
         end
     end
     --debugf(1,"returning",curTable)
