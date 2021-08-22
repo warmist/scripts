@@ -611,7 +611,7 @@ function findPath(t, path)
             debugf(1,"found something",v,curTable,curTable[v])
             curTable = curTable[v]
         else
-            qerror("Table" .. v .. " does not exist.")
+            qerror("Table not recognized: " .. v)
         end
     end
     --debugf(1,"returning",curTable)
@@ -629,13 +629,13 @@ function findTable(path) --this is the tricky part
             if _G[v] ~= nil then
                 curTable = _G[v]
             else
-                qerror("Table" .. v .. " does not exist.")
+                qerror("Table not recognized: " .. v)
             end
         else
             if curTable[v] ~= nil then
                 curTable = curTable[v]
             else
-                qerror("Table" .. v .. " does not exist.")
+                qerror("Table not recognized: " .. v)
             end
         end
     end
