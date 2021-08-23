@@ -20,7 +20,7 @@ always completed promptly in your forts::
     prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel PullLever
     prioritize -a DestroyBuilding RemoveConstruction RecoverWounded DumpItem
     prioritize -a CleanSelf SlaughterAnimal PrepareRawFish ExtractFromRawFish
-    prioritize -a --hauler-type=Food StoreItemInStockpile
+    prioritize -a --haul-labor=Food StoreItemInStockpile
 
 Tanning hides is also a time-sensitive task, but it doesn't have a specific job
 type associated with it. You can prioritize them via::
@@ -50,8 +50,8 @@ Examples:
 ``prioritize ConstructBuilding DestroyBuilding``
     Prioritizes all current building construction and destruction jobs.
 
-``prioritize -a --hauler-type=Food StoreItemInStockpile StoreItemInVehicle``
-    Prioritizes all current and future vehicle loading jobs.
+``prioritize -a --haul-labor=Food StoreItemInStockpile StoreItemInVehicle``
+    Prioritizes all current and future food hauling and vehicle loading jobs.
 
 Options:
 
@@ -65,22 +65,22 @@ Options:
     Print out how many jobs of each type there are. This is useful for
     discovering the types of the jobs which you can prioritize right now. If any
     job types are specified, only returns the current count for those types.
+:``-l``, ``--haul-labor`` <labor>[,<labor>...]:
+    For StoreItemInStockpile jobs, restrict prioritization to the specified
+    hauling labor(s). Valid types are: "Stone", "Wood", "Body", "Food",
+    "Refuse", "Item", "Furniture", and "Animals". If not specified, defaults to
+    all.
 :``-q``, ``--quiet``:
     Suppress informational output (error messages are still printed).
 :``-r``, ``--registry``:
     Print out the full list of valid job types.
-:``-t``, ``--hauler-type`` <type>[,<type>...]:
-    For StoreItemInStockpile jobs, restrict prioritization to the specified
-    hauler type(s). Valid types are: "Any", "Stone", "Wood", "Item", "Bin",
-    "Body", "Food", "Refuse", "Furniture", and "Animal". "Bin" includes any
-    kind of container. If not specified, defaults to "Any".
 ]====]
 
 local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 
 -- set of job types that we are watching. maps job_type=number to
--- {num_prioritized=number, hauler_types=map of type to num_prioritized} this
+-- {num_prioritized=number, unit_labors=map of type to num_prioritized} this
 -- needs to be global so we don't lose player-set state when the script is
 -- reparsed. Also a getter function that can be mocked out by unit tests.
 g_watched_job_matchers = g_watched_job_matchers or {}
@@ -89,14 +89,14 @@ function get_watched_job_matchers() return g_watched_job_matchers end
 eventful.enableEvent(eventful.eventType.UNLOAD, 1)
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 5)
 
-local function make_job_matcher(hauler_types)
+local function make_job_matcher(unit_labors)
     local matcher = {num_prioritized=0}
-    if hauler_types then
-        local ht_table = {}
-        for _,ht in ipairs(hauler_types) do
-            ht_table[ht] = 0
+    if unit_labors then
+        local ul_table = {}
+        for _,ul in ipairs(unit_labors) do
+            ul_table[ul] = 0
         end
-        matcher.hauler_matchers = ht_table
+        matcher.hauler_matchers = ul_table
     end
     return matcher
 end
@@ -153,6 +153,14 @@ local function update_handlers()
     end
 end
 
+local function get_unit_labor_str(unit_labor)
+    if not unit_labor then
+        return ''
+    end
+    local labor_str = df.unit_labor[unit_labor]
+    return (' (%s%s)'):format(labor_str:sub(6,6), labor_str:sub(7):lower())
+end
+
 local function status()
     local first = true
     local watched_job_matchers = get_watched_job_matchers()
@@ -163,8 +171,8 @@ local function status()
         end
         if v.hauler_matchers then
             for hk,hv in pairs(v.hauler_matchers) do
-                print(('%d\t%s (%s)')
-                      :format(hv, df.job_type[k], df.hauler_type[hk]))
+                print(('%d\t%s%s')
+                      :format(hv, df.job_type[k], get_unit_labor_str(hk)))
             end
         else
             print(('%d\t%s'):format(v.num_prioritized, df.job_type[k]))
@@ -199,23 +207,16 @@ local function boost(job_matchers, opts)
     end
 end
 
-local function get_hauler_type_str(hauler_type)
-    if not hauler_type then
-        return ''
-    end
-    return (' (%s)'):format(df.hauler_type[hauler_type])
-end
-
-local function print_add_message(job_type, hauler_type)
-    local ht_str = get_hauler_type_str(hauler_type)
+local function print_add_message(job_type, unit_labor)
+    local ul_str = get_unit_labor_str(unit_labor)
     print(('Automatically prioritizing future jobs of type: %s%s')
-          :format(df.job_type[job_type], ht_str))
+          :format(df.job_type[job_type], ul_str))
 end
 
-local function print_skip_add_message(job_type, hauler_type)
-    local ht_str = get_hauler_type_str(hauler_type)
+local function print_skip_add_message(job_type, unit_labor)
+    local ul_str = get_unit_labor_str(unit_labor)
     print(('Skipping already-watched type: %s%s')
-          :format(df.job_type[job_type], ht_str))
+          :format(df.job_type[job_type], ul_str))
 end
 
 local function boost_and_watch(job_matchers, opts)
@@ -230,10 +231,10 @@ local function boost_and_watch(job_matchers, opts)
                 if not quiet then
                     local hms = job_matcher.hauler_matchers
                     if not hms then
-                        print_add_message(job_type, df.hauler_type.Any)
+                        print_add_message(job_type)
                     else
-                        for ht in pairs(hms) do
-                            print_add_message(job_type, ht)
+                        for ul in pairs(hms) do
+                            print_add_message(job_type, ul)
                         end
                     end
                 end
@@ -241,29 +242,29 @@ local function boost_and_watch(job_matchers, opts)
                 if not wjm.hauler_matchers
                         and not job_matcher.hauler_matchers then
                     if not quiet then
-                        print_skip_add_message(job_type, df.hauler_type.Any)
+                        print_skip_add_message(job_type)
                     end
                 elseif not wjm.hauler_matchers then
-                    for ht in pairs(job_matcher.hauler_matchers) do
+                    for ul in pairs(job_matcher.hauler_matchers) do
                         if not quiet then
-                            print_skip_add_message(job_type, ht)
+                            print_skip_add_message(job_type, ul)
                         end
                     end
                 elseif not job_matcher.hauler_matchers then
                     if not quiet then
-                        print_add_message(job_type, df.hauler_type.Any)
+                        print_add_message(job_type)
                     end
                     wjm.hauler_matchers = nil
                 else
-                    for ht in pairs(job_matcher.hauler_matchers) do
-                        if wjm.hauler_matchers[ht] then
+                    for ul in pairs(job_matcher.hauler_matchers) do
+                        if wjm.hauler_matchers[ul] then
                             if not quiet then
-                                print_skip_add_message(job_type, ht)
+                                print_skip_add_message(job_type, ul)
                             end
                         else
-                            wjm.hauler_matchers[ht] = 0
+                            wjm.hauler_matchers[ul] = 0
                             if not quiet then
-                                print_add_message(job_type, ht)
+                                print_add_message(job_type, ul)
                             end
                         end
                     end
@@ -283,16 +284,16 @@ local function boost_and_watch(job_matchers, opts)
     update_handlers()
 end
 
-local function print_del_message(job_type, hauler_type)
-    local ht_str = get_hauler_type_str(hauler_type)
+local function print_del_message(job_type, unit_labor)
+    local ul_str = get_unit_labor_str(unit_labor)
     print(('No longer automatically prioritizing jobs of type: %s%s')
-          :format(df.job_type[job_type], ht_str))
+          :format(df.job_type[job_type], ul_str))
 end
 
-local function print_skip_del_message(job_type, hauler_type)
-    local ht_str = get_hauler_type_str(hauler_type)
+local function print_skip_del_message(job_type, unit_labor)
+    local ul_str = get_unit_labor_str(unit_labor)
     print(('Skipping unwatched type: %s%s')
-          :format(df.job_type[job_type], ht_str))
+          :format(df.job_type[job_type], ul_str))
 end
 
 local function remove_watch(job_matchers, opts)
@@ -312,21 +313,22 @@ local function remove_watch(job_matchers, opts)
         else
             if not wjm.hauler_matchers then
                 wjm.hauler_matchers = {}
-                for id in ipairs(df.hauler_type) do
-                    if id ~= df.hauler_type.Any then
+                for id,name in ipairs(df.unit_labor) do
+                    if name:startswith('HAUL_')
+                            and id <= df.unit_labor.HAUL_ANIMALS then
                         wjm.hauler_matchers[id] = 0
                     end
                 end
             end
-            for ht in pairs(job_matcher.hauler_matchers) do
-                if wjm.hauler_matchers[ht] then
+            for ul in pairs(job_matcher.hauler_matchers) do
+                if wjm.hauler_matchers[ul] then
                     if not quiet then
-                        print_del_message(job_type, ht)
+                        print_del_message(job_type, ul)
                     end
-                    wjm.hauler_matchers[ht] = nil
+                    wjm.hauler_matchers[ul] = nil
                 else
                     if not quiet then
-                        print_skip_del_message(job_type, ht)
+                        print_skip_del_message(job_type, ul)
                     end
                 end
             end
@@ -341,7 +343,7 @@ local function get_job_type_str(job)
     if job_type ~= df.job_type.StoreItemInStockpile then
         return job_type_str
     end
-    return ('%s%s'):format(job_type_str, get_hauler_type_str(job.item_subtype))
+    return ('%s%s'):format(job_type_str, get_unit_labor_str(job.item_subtype))
 end
 
 local function print_current_jobs(job_matchers, opts)
@@ -378,39 +380,36 @@ local function print_registry()
 end
 
 local function parse_commandline(args)
-    local opts, action, hauler_types = {}, status, nil
+    local opts, action, unit_labors = {}, status, nil
     local positionals = argparse.processArgsGetopt(args, {
             {'a', 'add', handler=function() action = boost_and_watch end},
             {'d', 'delete', handler=function() action = remove_watch end},
             {'h', 'help', handler=function() opts.help = true end},
             {'j', 'jobs', handler=function() action = print_current_jobs end},
+            {'l', 'haul-labor', hasArg=true,
+             handler=function(arg) unit_labors = argparse.stringList(arg) end},
             {'q', 'quiet', handler=function() opts.quiet = true end},
             {'r', 'registry', handler=function() action = print_registry end},
-            {'t', 'hauler-type', hasArg=true,
-             handler=function(arg) hauler_types = argparse.stringList(arg) end},
         })
 
     if positionals[1] == 'help' then opts.help = true end
     if opts.help then return opts end
 
     -- validate any specified hauler types and convert the list to ids
-    if hauler_types then
-        local ht_ids = nil
-        for _,htype in ipairs(hauler_types) do
-            if not df.hauler_type[htype] then
-                dfhack.printerr(('Ignoring unknown hauler type: "%s". Run' ..
-                    ' "prioritize -h" for a list of valid hauler types.')
-                    :format(htype))
+    if unit_labors then
+        local ul_ids = nil
+        for _,ulabor in ipairs(unit_labors) do
+            ulabor = 'HAUL_'..ulabor:upper()
+            if not df.unit_labor[ulabor] then
+                dfhack.printerr(('Ignoring unknown unit labor: "%s". Run' ..
+                    ' "prioritize -h" for a list of valid hauling labors.')
+                    :format(ulabor))
             else
-                if htype == df.hauler_type.Any then
-                    ht_ids = nil
-                    break
-                end
-                ht_ids = ht_ids or {}
-                table.insert(ht_ids, df.hauler_type[htype])
+                ul_ids = ul_ids or {}
+                table.insert(ul_ids, df.unit_labor[ulabor])
             end
         end
-        hauler_types = ht_ids
+        unit_labors = ul_ids
     end
 
     -- validate the specified job types and create matchers
@@ -424,7 +423,7 @@ local function parse_commandline(args)
         else
             local job_matcher = make_job_matcher(
                     job_type == df.job_type.StoreItemInStockpile
-                        and hauler_types or nil)
+                        and unit_labors or nil)
             job_matchers[job_type] = job_matcher
         end
     end
