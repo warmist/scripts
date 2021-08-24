@@ -1,5 +1,6 @@
 local eventful = require('plugins.eventful')
 local prioritize = reqscript('prioritize')
+local utils = require('utils')
 local p = prioritize.unit_test_hooks
 
 -- mock out state and external dependencies
@@ -26,6 +27,15 @@ end
 config.wrapper = test_wrapper
 
 local DIG, EAT, REST = df.job_type.Dig, df.job_type.Eat, df.job_type.Rest
+local STORE_ITEM_IN_STOCKPILE = df.job_type.StoreItemInStockpile
+local SUTURE = df.job_type.Suture
+
+local HAUL_FOOD, HAUL_ITEM = df.unit_labor.HAUL_FOOD, df.unit_labor.HAUL_ITEM
+
+local HAUL_STONE, HAUL_WOOD = df.unit_labor.HAUL_STONE, df.unit_labor.HAUL_WOOD
+local HAUL_BODY, HAUL_FOOD = df.unit_labor.HAUL_BODY, df.unit_labor.HAUL_FOOD
+local HAUL_REFUSE, HAUL_ITEM = df.unit_labor.HAUL_REFUSE, df.unit_labor.HAUL_ITEM
+local HAUL_FURNITURE, HAUL_ANIMALS = df.unit_labor.HAUL_FURNITURE, df.unit_labor.HAUL_ANIMALS
 
 function test.status()
     p.status()
@@ -37,7 +47,21 @@ function test.status()
     p.status()
     expect.eq(3, mock_print.call_count)
     expect.eq('Automatically prioritized jobs:', mock_print.call_args[2][1])
-    expect.true_(mock_print.call_args[3][1]:find('Rest'))
+    expect.find('Rest', mock_print.call_args[3][1])
+end
+
+function test.status_labor()
+    p.status()
+    expect.eq(1, mock_print.call_count)
+    expect.eq('Not automatically prioritizing any jobs.',
+              mock_print.call_args[1][1])
+
+    mock_watched_job_matchers[STORE_ITEM_IN_STOCKPILE] =
+            {num_prioritized=5, hauler_matchers={[HAUL_BODY]=2}}
+    p.status()
+    expect.eq(3, mock_print.call_count)
+    expect.eq('Automatically prioritized jobs:', mock_print.call_args[2][1])
+    expect.find('Stockpile.*Body', mock_print.call_args[3][1])
 end
 
 function test.boost()
@@ -78,14 +102,14 @@ end
 function test.boost_and_watch()
     p.boost_and_watch({[DIG]={num_prioritized=0}}, {})
     expect.eq(2, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('^Prioritized'))
-    expect.true_(mock_print.call_args[2][1]:find('^Automatically'))
+    expect.find('^Prioritized', mock_print.call_args[1][1])
+    expect.find('^Automatically', mock_print.call_args[2][1])
     expect.table_eq({[DIG]={num_prioritized=0}}, mock_watched_job_matchers)
 
     p.boost_and_watch({[DIG]={num_prioritized=0}}, {})
     expect.eq(4, mock_print.call_count)
-    expect.true_(mock_print.call_args[3][1]:find('^Prioritized'))
-    expect.true_(mock_print.call_args[4][1]:find('^Skipping'))
+    expect.find('^Prioritized', mock_print.call_args[3][1])
+    expect.find('^Skipping', mock_print.call_args[4][1])
     expect.table_eq({[DIG]={num_prioritized=0}}, mock_watched_job_matchers)
 end
 
@@ -102,13 +126,13 @@ end
 function test.remove_watch()
     p.remove_watch({[DIG]={num_prioritized=0}}, {})
     expect.eq(1, mock_print.call_count)
-    expect.true_(mock_print.call_args[1][1]:find('Skipping unwatched'))
+    expect.find('Skipping unwatched', mock_print.call_args[1][1])
     expect.table_eq({}, mock_watched_job_matchers)
 
     mock_watched_job_matchers[DIG] = {num_prioritized=0}
     p.remove_watch({[DIG]={num_prioritized=0}}, {})
     expect.eq(2, mock_print.call_count)
-    expect.true_(mock_print.call_args[2][1]:find('No longer'))
+    expect.find('No longer', mock_print.call_args[2][1])
 end
 
 function test.remove_watch_quiet()
@@ -120,6 +144,115 @@ function test.remove_watch_quiet()
     p.remove_watch({[DIG]={num_prioritized=0}}, {quiet=true})
     expect.eq(0, mock_print.call_count)
     expect.table_eq({}, mock_watched_job_matchers)
+end
+
+function test.boost_and_watch_labor()
+    mock_postings = {{job={job_type=DIG, flags={}}, flags={}},
+        {job={job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_FOOD,
+              flags={}}, flags={}},
+        {job={job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_ITEM,
+              flags={}}, flags={}},
+        {job={job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_ITEM,
+              flags={}}, flags={}},
+        {job={job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_ITEM,
+              flags={}}, flags={dead=true}}}
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0}}},
+                      {})
+    expect.eq(2, mock_print.call_count)
+    expect.find('^Prioritized 2', mock_print.call_args[1][1])
+    expect.find('^Automatically', mock_print.call_args[2][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0}}},
+                    mock_watched_job_matchers)
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}}, {})
+    expect.eq(4, mock_print.call_count)
+    expect.find('^Prioritized 1', mock_print.call_args[3][1])
+    expect.find('^Automatically', mock_print.call_args[4][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}},
+                    mock_watched_job_matchers)
+end
+
+function test.boost_and_watch_store_all_labors()
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}}, {})
+    expect.eq(2, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[1][1])
+    expect.find('^Automatically', mock_print.call_args[2][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}},
+                    mock_watched_job_matchers)
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}}, {})
+    expect.eq(4, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[3][1])
+    expect.find('^Skipping', mock_print.call_args[4][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}},
+                    mock_watched_job_matchers)
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0}}}, {})
+    expect.eq(6, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[3][1])
+    expect.find('^Skipping.*Item', mock_print.call_args[4][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0}},
+                    mock_watched_job_matchers)
+end
+
+function test.boost_and_watch_store_add_labors()
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0}}}, {})
+    expect.eq(2, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[1][1])
+    expect.find('^Automatically.*Item', mock_print.call_args[2][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0}}},
+                    mock_watched_job_matchers)
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_FOOD]=0}}}, {})
+    expect.eq(4, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[3][1])
+    expect.find('^Automatically.*Food', mock_print.call_args[4][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0, [HAUL_FOOD]=0}}},
+                    mock_watched_job_matchers)
+
+    p.boost_and_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_FOOD]=0}}}, {})
+    expect.eq(6, mock_print.call_count)
+    expect.find('^Prioritized 0', mock_print.call_args[5][1])
+    expect.find('^Skipping.*Food', mock_print.call_args[6][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_ITEM]=0, [HAUL_FOOD]=0}}},
+                    mock_watched_job_matchers)
+end
+
+function test.remove_one_labor_from_all()
+    -- top-level num_prioritized should be persisted
+    mock_watched_job_matchers = {[STORE_ITEM_IN_STOCKPILE]={num_prioritized=5}}
+
+    p.remove_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_FOOD]=0}}},
+                      {})
+    expect.eq(1, mock_print.call_count)
+    expect.find('No longer.*Food', mock_print.call_args[1][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=5,
+        hauler_matchers={[HAUL_STONE]=0, [HAUL_WOOD]=0, [HAUL_BODY]=0,
+                         [HAUL_REFUSE]=0, [HAUL_ITEM]=0, [HAUL_FURNITURE]=0,
+                         [HAUL_ANIMALS]=0}}},
+                    mock_watched_job_matchers)
+
+    p.remove_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
+                            hauler_matchers={[HAUL_FOOD]=0}}},
+                      {})
+    expect.eq(2, mock_print.call_count)
+    expect.find('Skipping.*Food', mock_print.call_args[2][1])
+    expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=5,
+        hauler_matchers={[HAUL_STONE]=0, [HAUL_WOOD]=0, [HAUL_BODY]=0,
+                         [HAUL_REFUSE]=0, [HAUL_ITEM]=0, [HAUL_FURNITURE]=0,
+                         [HAUL_ANIMALS]=0}}},
+                    mock_watched_job_matchers)
 end
 
 function test.eventful_hook_lifecycle()
@@ -147,7 +280,7 @@ function test.eventful_callbacks()
     expect.table_eq(expected, job)
 
     -- watched job
-    local expected = {job_type=DIG, flags={do_now=true}}
+    expected = {job_type=DIG, flags={do_now=true}}
     p.boost_and_watch({[DIG]={num_prioritized=0}}, {quiet=true})
     p.on_new_job(job)
     expect.table_eq(expected, job)
@@ -157,6 +290,32 @@ function test.eventful_callbacks()
     expect.table_eq({}, mock_watched_job_matchers)
     expect.nil_(mock_eventful_onUnload.prioritize)
     expect.nil_(mock_eventful_onJobInitiated.prioritize)
+end
+
+function test.eventful_callbacks_labor()
+    mock_watched_job_matchers[STORE_ITEM_IN_STOCKPILE] =
+            {num_prioritized=0, hauler_matchers={[HAUL_FOOD]=0}}
+
+    -- unwatched job
+    local job = {job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_BODY,
+                 flags={}}
+    local expected_job = utils.clone(job)
+    local expected_watched_job_matchers = utils.clone(mock_watched_job_matchers)
+    p.on_new_job(job)
+    expect.table_eq(expected_job, job)
+    expect.table_eq(expected_watched_job_matchers, mock_watched_job_matchers)
+
+    -- watched job
+    job = {job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_FOOD,
+           flags={}}
+    expected_job = {job_type=STORE_ITEM_IN_STOCKPILE, item_subtype=HAUL_FOOD,
+           flags={do_now=true}}
+    expected_watched_job_matchers =
+            {[STORE_ITEM_IN_STOCKPILE]={num_prioritized=1,
+                                        hauler_matchers={[HAUL_FOOD]=1}}}
+    p.on_new_job(job)
+    expect.table_eq(expected_job, job)
+    expect.table_eq(expected_watched_job_matchers, mock_watched_job_matchers)
 end
 
 function test.print_current_jobs_empty()
@@ -170,20 +329,24 @@ function test.print_current_jobs_full()
                      {job={job_type=DIG}, flags={}},
                      {job={job_type=EAT}, flags={dead=true}},
                      {job={job_type=EAT}, flags={}},
-                     {job={job_type=REST}, flags={dead=true}}}
+                     {job={job_type=REST}, flags={dead=true}},
+                     {job={job_type=STORE_ITEM_IN_STOCKPILE,
+                           item_subtype=HAUL_FOOD, flags={}}, flags={}}}
     p.print_current_jobs({})
-    expect.eq(3, mock_print.call_count)
+    expect.eq(4, mock_print.call_count)
     expect.eq('Current job counts by type:', mock_print.call_args[1][1])
     local result = {}
     for i,v in ipairs(mock_print.call_args) do
         if i == 1 then goto continue end
-        local _,_,num,job_type = v[1]:find('(%d+)%s+(%S+)')
+        local _,_,num,job_type = v[1]:find('^(%d+)%s+(%S+)')
         expect.ne(nil, num)
         expect.nil_(result[job_type])
         result[job_type] = num
         ::continue::
     end
-    expect.table_eq({[df.job_type[DIG]]='2', [df.job_type[EAT]]='1'}, result)
+    expect.table_eq({[df.job_type[DIG]]='2', [df.job_type[EAT]]='1',
+                     [df.job_type[STORE_ITEM_IN_STOCKPILE]]='1'},
+                    result)
 end
 
 function test.print_current_jobs_filtered()
@@ -217,13 +380,12 @@ function test.print_registry()
             goto continue
         end
         expect.ne('nil', tostring(out))
-        expect.true_(out:find('^%u%l'))
+        expect.find('^%u%l', out)
         expect.ne('NONE', out)
         ::continue::
     end
 end
 
-local SUTURE = df.job_type['Suture']
 function test.parse_commandline()
     expect.table_eq({help=true}, p.parse_commandline{'help'})
     expect.table_eq({help=true}, p.parse_commandline{'-h'})
@@ -243,6 +405,11 @@ function test.parse_commandline()
             expect.table_eq({action=p.boost,
                              job_matchers={[SUTURE]={num_prioritized=0}}},
                             p.parse_commandline{'XSutureX', 'Suture'})
+        end)
+    expect.printerr_match('Ignoring unknown unit labor',
+        function()
+            expect.table_eq({action=p.status, job_matchers={}},
+                            p.parse_commandline{'-lXFoodX'})
         end)
 
     expect.table_eq({action=p.status, job_matchers={}, quiet=true},
@@ -272,6 +439,18 @@ function test.parse_commandline()
     expect.table_eq({action=p.print_current_jobs,
                      job_matchers={[SUTURE]={num_prioritized=0}}},
                     p.parse_commandline{'--jobs', 'Suture'})
+
+
+    expect.table_eq({action=p.status, job_matchers={}},
+                    p.parse_commandline{'-lfood'})
+    expect.table_eq({action=p.print_current_jobs,
+                     job_matchers={[SUTURE]={num_prioritized=0}}},
+                    p.parse_commandline{'-jlfood', 'Suture'})
+    expect.table_eq({action=p.print_current_jobs,
+                     job_matchers={[STORE_ITEM_IN_STOCKPILE]=
+                                   {num_prioritized=0,
+                                    hauler_matchers={[HAUL_FOOD]=0}}}},
+                    p.parse_commandline{'-jlfood', 'StoreItemInStockpile'})
 
     expect.table_eq({action=p.print_registry, job_matchers={}},
                     p.parse_commandline{'-r'})
