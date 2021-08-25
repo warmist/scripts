@@ -41,6 +41,7 @@ that repo.
 - `devel/query`: added support for selecting a Lua script (e.g. `dorf_tables`)
 - `devel/query`: added support for selecting a Json file (e.g. dwarf_profiles.json)
 - `devel/query`: removed options ``-listall``, ``-listfields``, and ``-listkeys`` - these are now simply default behaviour
+- `devel/query`: ``-table`` now accepts the same abbreviations (global names, ``unit``, ``screen``, etc.) as `lua` and `gui/gm-editor`
 - `dorf_tables`: integrated `devel/query` to show the table definitions when requested with ``-list``
 - `geld`: fixed ``-help`` option
 - `gui/gm-editor`: made search case-insensitive
