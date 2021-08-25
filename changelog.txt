@@ -47,6 +47,7 @@ that repo.
 - `gui/gm-editor`: made search case-insensitive
 - `quickfort`: accept multiple commands, list numbers, and/or blueprint lables on a single commandline
 - `unretire-anyone`: replaced the 'undead' descriptor with 'reanimated' to make it more mod-friendly
+- `warn-starving`: added an option to only check sane dwarves
 
 ## Internals
 - Install tests in the scripts repo into hack/scripts/test/scripts when the CMake variable BUILD_TESTS is defined
