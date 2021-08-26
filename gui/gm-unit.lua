@@ -69,10 +69,11 @@ end
 
 
 -------------------------------various subeditors---------
+------- skill editor
 editor_skills = reqscript("gui/editor_skills")
 add_editor(editor_skills.Editor_Skills)
 
-------- civ editor
+------- civilization editor
 editor_civ = reqscript("gui/editor_civilization")
 add_editor(editor_civ.Editor_Civ)
 
@@ -80,59 +81,9 @@ add_editor(editor_civ.Editor_Civ)
 editor_counters = reqscript("gui/editor_counters")
 add_editor(editor_counters.Editor_Counters)
 
-prof_editor = defclass(prof_editor, gui.FramedScreen)
-prof_editor.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Profession editor",
-    target_unit = DEFAULT_NIL,
-}
-
-function prof_editor:init()
-    local u = self.target_unit
-    local opts = {}
-    local craw = df.creature_raw.find(u.race)
-    for i in ipairs(df.profession) do
-        if i ~= df.profession.NONE then
-            local attrs = df.profession.attrs[i]
-            local caption = attrs.caption or '?'
-            local tile = string.char(attrs.military and craw.creature_soldier_tile ~= 0 and
-                craw.creature_soldier_tile or craw.creature_tile)
-            table.insert(opts, {
-                text = {
-                    (i == u.profession and '*' or ' ') .. ' ',
-                    {text = tile, pen = dfhack.units.getCasteProfessionColor(u.race, u.caste, i)},
-                    ' ' .. caption
-                },
-                profession = i,
-                search_key = caption:lower(),
-            })
-        end
-    end
-
-    self:addviews{
-        widgets.FilteredList{
-            frame = {t=1, l=1, b=2},
-            choices = opts,
-            view_id = 'professions',
-            on_submit = self:callback('save_profession'),
-        },
-        widgets.Label{
-            frame = {b=0,l=1},
-            text = {
-                {key = "LEAVESCREEN", text= ": exit editor ",
-                on_activate = self:callback("dismiss")},
-            }
-        }
-    }
-end
-
-function prof_editor:save_profession(_, choice)
-    self.target_unit.profession = choice.profession
-    self.target_unit.profession2 = choice.profession
-    self:dismiss()
-end
-
-add_editor(prof_editor)
+------- profession editor
+editor_prof = reqscript("gui/editor_profession")
+add_editor(editor_prof.Editor_Prof)
 
 -------------------
 editor_wounds=defclass(editor_wounds,gui.FramedScreen)
