@@ -9,15 +9,8 @@ An editor for various unit attributes.
 
 ]====]
 local gui = require 'gui'
-local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
-local guiScript = require 'gui.script'
-local utils = require 'utils'
 local args = {...}
-local setbelief = dfhack.reqscript("modtools/set-belief")
-local setpersonality = dfhack.reqscript("modtools/set-personality")
-local setneed = dfhack.reqscript("modtools/set-need")
-local setorientation = dfhack.reqscript("set-orientation")
 
 Editor = defclass(Editor, gui.FramedScreen)
 Editor.ATTRS = {
@@ -114,15 +107,12 @@ editor_personality = reqscript("gui/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
-unit_editor = defclass(unit_editor, gui.FramedScreen)
-unit_editor.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "GameMaster's unit editor",
-    target_unit = DEFAULT_NIL,
+Editor_Unit = defclass(Editor_Unit, Editor)
+Editor_Unit.ATTRS = {
+    frame_title = "GameMaster's unit editor"
 }
 
-
-function unit_editor:init(args)
+function Editor_Unit:init(args)
     self:addviews{
         widgets.FilteredList{
             frame = {l=1, t=1},
@@ -145,4 +135,4 @@ function unit_editor:init(args)
 end
 
 
-unit_editor{target_unit=target}:show()
+Editor_Unit{target_unit=target}:show()
