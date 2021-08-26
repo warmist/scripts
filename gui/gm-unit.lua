@@ -93,70 +93,9 @@ add_editor(editor_wounds.Editor_Wounds)
 editor_attrs = reqscript("gui/editor_attributes")
 add_editor(editor_attrs.Editor_Attrs)
 
--- Orientation editor
-editor_orientation=defclass(editor_orientation,gui.FramedScreen)
-editor_orientation.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Orientation editor",
-    target_unit = DEFAULT_NIL,
-}
-
-function editor_orientation:sexSelected(index, choice)
-  local newInterest = choice.interest + 1
-  -- Cycle back around if out of bounds
-  if newInterest > 2 then
-    newInterest = 0
-  end
-
-  setorientation.setOrientation(self.target_unit, choice.sex, newInterest)
-  self:updateChoices()
-end
-
-function editor_orientation:random()
-  local index, choice = self.subviews.sex:getSelected()
-
-  setorientation.randomiseOrientation(self.target_unit, choice.sex)
-  self:updateChoices()
-end
-
-function editor_orientation:updateChoices()
-  local choices = {}
-  -- Male
-  local maleInterest = setorientation.getInterest(self.target_unit, "male")
-  local maleInterestString = setorientation.getInterestString(maleInterest)
-  table.insert(choices, {text = "Male: " .. maleInterestString, interest = maleInterest, sex = 1})
-  -- Female
-  local femaleInterest = setorientation.getInterest(self.target_unit, "female")
-  local femaleInterestString = setorientation.getInterestString(femaleInterest)
-  table.insert(choices, {text = "Female: " .. femaleInterestString, interest = femaleInterest, sex = 0})
-
-  self.subviews.sex:setChoices(choices)
-end
-
-function editor_orientation:init(args)
-  if self.target_unit == nil then
-    qerror("invalid unit")
-  end
-
-  self:addviews{
-    widgets.List{
-      frame = {t=0, b=1,l=1},
-      view_id = "sex",
-      on_submit = self:callback("sexSelected"),
-    },
-    widgets.Label{
-      frame = {b=0, l=1},
-      text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
-        {text = ": cycle selected ", key = "SELECT"},
-        {text = ": randomise selected", key = "CUSTOM_R", on_activate = self:callback("random")},
-      },
-    }
-  }
-
-  self:updateChoices()
-end
-add_editor(editor_orientation)
+------- orientation editor
+editor_orientation = reqscript("gui/editor_orientation")
+add_editor(editor_orientation.Editor_Orientation)
 
 -- Body / Body Part editor
 -- TODO: Trigger recalculation of body sizes after size is edited
