@@ -10,7 +10,6 @@ Editor_Skills = defclass(Editor_Skills, gmunit.Editor)
 
 Editor_Skills.ATTRS = {
     frame_title = "Skill editor",
-    target_unit = DEFAULT_NIL,
     learned_only = false
 }
 
