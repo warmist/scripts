@@ -1,8 +1,6 @@
 -- Orientation editor module for gui/gm-unit.
 --@ module = true
 
-
-local gui = require 'gui'
 local widgets = require 'gui.widgets'
 local setorientation = dfhack.reqscript("set-orientation")
 
@@ -10,9 +8,7 @@ local gmunit = reqscript("gui/gm-unit")
 
 Editor_Orientation=defclass(Editor_Orientation, gmunit.Editor)
 Editor_Orientation.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Orientation editor",
-    target_unit = DEFAULT_NIL,
+    frame_title = "Orientation editor"
 }
 
 function Editor_Orientation:sexSelected(index, choice)
