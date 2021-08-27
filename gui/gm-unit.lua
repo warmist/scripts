@@ -63,47 +63,47 @@ end
 
 -------------------------------various subeditors---------
 ------- skill editor
-editor_skills = reqscript("gui/editor_skills")
+editor_skills = reqscript("internal/gm-unit/editor_skills")
 add_editor(editor_skills.Editor_Skills)
 
 ------- civilization editor
-editor_civ = reqscript("gui/editor_civilization")
+editor_civ = reqscript("internal/gm-unit/editor_civilization")
 add_editor(editor_civ.Editor_Civ)
 
 ------- counters editor
-editor_counters = reqscript("gui/editor_counters")
+editor_counters = reqscript("internal/gm-unit/editor_counters")
 add_editor(editor_counters.Editor_Counters)
 
 ------- profession editor
-editor_prof = reqscript("gui/editor_profession")
+editor_prof = reqscript("internal/gm-unit/editor_profession")
 add_editor(editor_prof.Editor_Prof)
 
 ------- wounds editor
-editor_wounds = reqscript("gui/editor_wounds")
+editor_wounds = reqscript("internal/gm-unit/editor_wounds")
 add_editor(editor_wounds.Editor_Wounds)
 
 ------- attributes editor
-editor_attrs = reqscript("gui/editor_attributes")
+editor_attrs = reqscript("internal/gm-unit/editor_attributes")
 add_editor(editor_attrs.Editor_Attrs)
 
 ------- orientation editor
-editor_orientation = reqscript("gui/editor_orientation")
+editor_orientation = reqscript("internal/gm-unit/editor_orientation")
 add_editor(editor_orientation.Editor_Orientation)
 
 ------- body / body part editor
-editor_body = reqscript("gui/editor_body")
+editor_body = reqscript("internal/gm-unit/editor_body")
 add_editor(editor_body.Editor_Body)
 
 ------- colors editor
-editor_colors = reqscript("gui/editor_colors")
+editor_colors = reqscript("internal/gm-unit/editor_colors")
 add_editor(editor_colors.Editor_Colors)
 
 ------- beliefs editor
-editor_beliefs = reqscript("gui/editor_beliefs")
+editor_beliefs = reqscript("internal/gm-unit/editor_beliefs")
 add_editor(editor_beliefs.Editor_Beliefs)
 
 ------- personality editor
-editor_personality = reqscript("gui/editor_personality")
+editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
