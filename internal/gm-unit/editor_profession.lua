@@ -1,12 +1,10 @@
 -- Profession editor module for gui/gm-unit.
 --@ module = true
 
-local gui = require 'gui'
 local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
 
-local gmunit = reqscript("gui/gm-unit")
-
-Editor_Prof = defclass(Editor_Prof, gmunit.Editor)
+Editor_Prof = defclass(Editor_Prof, base_editor.Editor)
 Editor_Prof.ATTRS = {
     frame_title = "Profession editor"
 }

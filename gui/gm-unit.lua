@@ -7,15 +7,10 @@ gui/gm-unit
 An editor for various unit attributes.
 
 ]====]
-local gui = require 'gui'
-local widgets = require 'gui.widgets'
-local args = {...}
 
-Editor = defclass(Editor, gui.FramedScreen)
-Editor.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
-    target_unit = DEFAULT_NIL
-}
+local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
+local args = {...}
 
 rng = rng or dfhack.random.new(nil, 10)
 
@@ -106,7 +101,7 @@ editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
-Editor_Unit = defclass(Editor_Unit, Editor)
+Editor_Unit = defclass(Editor_Unit, base_editor.Editor)
 Editor_Unit.ATTRS = {
     frame_title = "GameMaster's unit editor"
 }

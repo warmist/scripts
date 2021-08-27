@@ -1,15 +1,13 @@
 -- Colors editor module for gui/gm-unit.
 --@ module = true
 
-local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
 
-Editor_Colors=defclass(Editor_Colors, gui.FramedScreen)
+Editor_Colors=defclass(Editor_Colors, base_editor.Editor)
 Editor_Colors.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Colors editor",
-    target_unit = DEFAULT_NIL,
+    frame_title = "Colors editor"
 }
 
 function patternString(patternId)

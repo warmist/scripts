@@ -1,18 +1,16 @@
 -- Beliefs editor module for gui/gm-unit.
 --@ module = true
 
-local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
 local setpersonality = dfhack.reqscript("modtools/set-personality")
 local setneed = dfhack.reqscript("modtools/set-need")
 
 
-Editor_Personality = defclass(Editor_Personality, gui.FramedScreen)
+Editor_Personality = defclass(Editor_Personality, base_editor.Editor)
 Editor_Personality.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Personality editor",
-    target_unit = DEFAULT_NIL
+    frame_title = "Personality editor"
 }
 
 function Editor_Personality:randomiseSelected()

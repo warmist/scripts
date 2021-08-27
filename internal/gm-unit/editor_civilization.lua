@@ -1,9 +1,9 @@
 -- Civilization editor module for gui/gm-unit.
 --@ module = true
 
-local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
 
 
 RaceBox = defclass(RaceBox, dialog.ListBox)
@@ -128,11 +128,9 @@ function showCivPrompt(title, text, tcolor, on_select, on_cancel, min_width,allo
     }:show()
 end
 
-Editor_Civ=defclass(Editor_Civ, gui.FramedScreen)
+Editor_Civ=defclass(Editor_Civ, base_editor.Editor)
 Editor_Civ.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "Civilization editor",
-    target_unit = DEFAULT_NIL
+    frame_title = "Civilization editor"
 }
 
 function Editor_Civ:update_curren_civ()

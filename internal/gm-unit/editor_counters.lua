@@ -1,15 +1,13 @@
 -- Counters editor module for gui/gm-unit.
 --@ module = true
 
-local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
+local base_editor = reqscript("internal/gm-unit/base_editor")
 
-Editor_Counters=defclass(Editor_Counters, gui.FramedScreen)
+Editor_Counters=defclass(Editor_Counters, base_editor.Editor)
 Editor_Counters.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
     frame_title = "Counters editor",
-    target_unit = DEFAULT_NIL,
     counters1={
     "think_counter",
     "job_counter",
