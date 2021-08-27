@@ -57,47 +57,47 @@ end
 
 -------------------------------various subeditors---------
 ------- skill editor
-editor_skills = reqscript("internal/gm-unit/editor_skills")
+local editor_skills = reqscript("internal/gm-unit/editor_skills")
 add_editor(editor_skills.Editor_Skills)
 
 ------- civilization editor
-editor_civ = reqscript("internal/gm-unit/editor_civilization")
+local editor_civ = reqscript("internal/gm-unit/editor_civilization")
 add_editor(editor_civ.Editor_Civ)
 
 ------- counters editor
-editor_counters = reqscript("internal/gm-unit/editor_counters")
+local editor_counters = reqscript("internal/gm-unit/editor_counters")
 add_editor(editor_counters.Editor_Counters)
 
 ------- profession editor
-editor_prof = reqscript("internal/gm-unit/editor_profession")
+local editor_prof = reqscript("internal/gm-unit/editor_profession")
 add_editor(editor_prof.Editor_Prof)
 
 ------- wounds editor
-editor_wounds = reqscript("internal/gm-unit/editor_wounds")
+local editor_wounds = reqscript("internal/gm-unit/editor_wounds")
 add_editor(editor_wounds.Editor_Wounds)
 
 ------- attributes editor
-editor_attrs = reqscript("internal/gm-unit/editor_attributes")
+local editor_attrs = reqscript("internal/gm-unit/editor_attributes")
 add_editor(editor_attrs.Editor_Attrs)
 
 ------- orientation editor
-editor_orientation = reqscript("internal/gm-unit/editor_orientation")
+local editor_orientation = reqscript("internal/gm-unit/editor_orientation")
 add_editor(editor_orientation.Editor_Orientation)
 
 ------- body / body part editor
-editor_body = reqscript("internal/gm-unit/editor_body")
+local editor_body = reqscript("internal/gm-unit/editor_body")
 add_editor(editor_body.Editor_Body)
 
 ------- colors editor
-editor_colors = reqscript("internal/gm-unit/editor_colors")
+local editor_colors = reqscript("internal/gm-unit/editor_colors")
 add_editor(editor_colors.Editor_Colors)
 
 ------- beliefs editor
-editor_beliefs = reqscript("internal/gm-unit/editor_beliefs")
+local editor_beliefs = reqscript("internal/gm-unit/editor_beliefs")
 add_editor(editor_beliefs.Editor_Beliefs)
 
 ------- personality editor
-editor_personality = reqscript("internal/gm-unit/editor_personality")
+local editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
