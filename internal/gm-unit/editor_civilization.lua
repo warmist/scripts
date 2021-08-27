@@ -5,7 +5,6 @@ local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
 
-local gmunit = reqscript("gui/gm-unit")
 
 RaceBox = defclass(RaceBox, dialog.ListBox)
 RaceBox.focus_path = 'RaceBox'
@@ -129,9 +128,11 @@ function showCivPrompt(title, text, tcolor, on_select, on_cancel, min_width,allo
     }:show()
 end
 
-Editor_Civ=defclass(Editor_Civ, gmunit.Editor)
+Editor_Civ=defclass(Editor_Civ, gui.FramedScreen)
 Editor_Civ.ATTRS={
-    frame_title = "Civilization editor"
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Civilization editor",
+    target_unit = DEFAULT_NIL
 }
 
 function Editor_Civ:update_curren_civ()

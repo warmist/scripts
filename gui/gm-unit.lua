@@ -1,5 +1,4 @@
 -- Interface powered, user friendly, unit editor
---@ module = true
 
 --[====[
 

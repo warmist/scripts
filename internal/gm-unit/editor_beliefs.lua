@@ -1,16 +1,17 @@
 -- Beliefs editor module for gui/gm-unit.
 --@ module = true
 
+local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
 local setbelief = reqscript("modtools/set-belief")
 local setneed = reqscript("modtools/set-need")
 
-local gmunit = reqscript("gui/gm-unit")
-
-Editor_Beliefs = defclass(Editor_Beliefs, gmunit.Editor)
+Editor_Beliefs = defclass(Editor_Beliefs, gui.FramedScreen)
 Editor_Beliefs.ATTRS = {
-    frame_title = "Beliefs editor"
+  frame_style = gui.GREY_LINE_FRAME,
+  frame_title = "Beliefs editor",
+  target_unit = DEFAULT_NIL
 }
 
 function Editor_Beliefs:randomiseSelected()

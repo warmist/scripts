@@ -1,17 +1,17 @@
 -- Body editor module for gui/gm-unit.
 --@ module = true
 
+local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
 
-local gmunit = reqscript("gui/gm-unit")
-
 -- TODO: Trigger recalculation of body sizes after size is edited
 
-Editor_Body_Modifier=defclass(Editor_Body_Modifier, gmunit.Editor)
+Editor_Body_Modifier=defclass(Editor_Body_Modifier, gui.FramedScreen)
 
 function showModifierScreen(target_unit, partChoice)
   Editor_Body_Modifier{
+    frame_style = gui.GREY_LINE_FRAME,
     frame_title = "Select a modifier",
     target_unit = target_unit,
     partChoice = partChoice
@@ -165,9 +165,11 @@ function Editor_Body_Modifier:init(args)
   self:updateChoices()
 end
 
-Editor_Body=defclass(Editor_Body, gmunit.Editor)
+Editor_Body=defclass(Editor_Body, gui.FramedScreen)
 Editor_Body.ATTRS={
-    frame_title = "Body appearance editor"
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Body appearance editor",
+    target_unit = DEFAULT_NIL
 }
 
 function makePartList(caste)

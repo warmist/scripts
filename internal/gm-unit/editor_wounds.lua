@@ -1,14 +1,16 @@
 -- Wounds editor module for gui/gm-unit.
 --@ module = true
 
+local gui = require 'gui'
 local widgets = require 'gui.widgets'
 local utils = require 'utils'
 
-local gmunit = reqscript("gui/gm-unit")
 
-Editor_Wounds=defclass(Editor_Wounds, gmunit.Editor)
+Editor_Wounds=defclass(Editor_Wounds, gui.FramedScreen)
 Editor_Wounds.ATTRS={
-    frame_title = "Wound editor"
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Wounds editor",
+    target_unit = DEFAULT_NIL,
     --filter
 }
 function is_scar( wound_part )

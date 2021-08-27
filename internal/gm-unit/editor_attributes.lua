@@ -1,14 +1,16 @@
 -- Attributes editor module for gui/gm-unit.
 --@ module = true
 
+local gui = require 'gui'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
 
-local gmunit = reqscript("gui/gm-unit")
 
-Editor_Attrs = defclass(Editor_Attrs, gmunit.Editor)
+Editor_Attrs = defclass(Editor_Attrs, gui.FramedScreen)
 Editor_Attrs.ATTRS = {
-    frame_title = "Attributes editor"
+    frame_style = gui.GREY_LINE_FRAME,
+    frame_title = "Attributes editor",
+    target_unit = DEFAULT_NIL
 }
 function format_attr( name ,max_len)
     local n=name

@@ -1,15 +1,17 @@
 -- Skill editor module for gui/gm-unit.
 --@ module = true
 
+local gui = require 'gui'
 local utils = require("utils")
 local widgets = require("gui.widgets")
-local gmunit = reqscript("gui/gm-unit")
 
 --TODO set local should or better yet skills vector to reduce long skill list access typing
-Editor_Skills = defclass(Editor_Skills, gmunit.Editor)
+Editor_Skills = defclass(Editor_Skills, gui.FramedScreen)
 
 Editor_Skills.ATTRS = {
+    frame_style = gui.GREY_LINE_FRAME,
     frame_title = "Skill editor",
+    target_unit = DEFAULT_NIL,
     learned_only = false
 }
 
