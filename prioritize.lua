@@ -19,17 +19,11 @@ one below to your ``onMapLoad.init`` file to ensure important job types are
 always completed promptly in your forts::
 
     prioritize -a --haul-labor=Food StoreItemInStockpile
+    prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
     prioritize -a PullLever CleanSelf RecoverWounded DumpItem
     prioritize -a DestroyBuilding RemoveConstruction
     prioritize -a StoreItemInVehicle StoreItemInBag StoreItemInBarrel
     prioritize -a SlaughterAnimal PrepareRawFish ExtractFromRawFish
-
-Tanning hides is also a time-sensitive task, but it doesn't have a specific job
-type associated with it. You can prioritize them via::
-
-   prioritize -a CustomReaction
-
-but this is likely to prioritize other, unrelated jobs as well.
 
 It is important to automatically prioritize only the *most* important job types.
 If you add too many job types, or if there are simply too many jobs of those
@@ -38,7 +32,7 @@ the same problem the ``prioritize`` script is designed to solve. The example
 commands above have been extensively playtested and are a good default set. If
 you need a bunch of jobs of a specific type prioritized *right now*, consider
 running ``prioritize`` without the ``-a`` parameter, which only affects
-currently available jobs. For example::
+currently available (but unassigned) jobs. For example::
 
     prioritize ConstructBuilding
 
@@ -63,8 +57,8 @@ Examples:
 ``prioritize ConstructBuilding DestroyBuilding``
     Prioritizes all current building construction and destruction jobs.
 
-``prioritize -a --haul-labor=Food StoreItemInStockpile StoreItemInVehicle``
-    Prioritizes all current and future food hauling and vehicle loading jobs.
+``prioritize -a --haul-labor=Food,Body StoreItemInStockpile``
+    Prioritizes all current and future food and corpse hauling jobs.
 
 Options:
 
@@ -83,17 +77,24 @@ Options:
     hauling labor(s). Valid types are: "Stone", "Wood", "Body", "Food",
     "Refuse", "Item", "Furniture", and "Animals". If not specified, defaults to
     matching all StoreItemInStockpile jobs.
+:``-n``, ``--reaction-name`` <name>[,<name>...]:
+    For CustomReaction jobs, restrict prioritization to the specified reaction
+    name(s). See the registry output (``-r``) for the full list. If not,
+    specified, defaults to matching all CustomReaction jobs.
 :``-q``, ``--quiet``:
     Suppress informational output (error messages are still printed).
 :``-r``, ``--registry``:
-    Print out the full list of valid job types.
+    Print out the full list of valid job types, hauling labors, and reaction
+    names.
 ]====]
 
 local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 
 -- set of job types that we are watching. maps job_type (as a number) to
--- {num_prioritized=number, hauler_matchers=map of type to num_prioritized}
+-- {num_prioritized=number,
+--  hauler_matchers=map of type to num_prioritized,
+--  reaction_matchers=map of string to num_prioritized}
 -- this needs to be global so we don't lose player-set state when the script is
 -- reparsed. Also a getter function that can be mocked out by unit tests.
 g_watched_job_matchers = g_watched_job_matchers or {}
@@ -102,26 +103,36 @@ function get_watched_job_matchers() return g_watched_job_matchers end
 eventful.enableEvent(eventful.eventType.UNLOAD, 1)
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 5)
 
-local function make_job_matcher(unit_labors)
-    local matcher = {num_prioritized=0}
-    if unit_labors then
-        local ul_table = {}
-        for _,ul in ipairs(unit_labors) do
-            ul_table[ul] = 0
-        end
-        matcher.hauler_matchers = ul_table
+local function make_matcher_map(keys)
+    if not keys then return nil end
+    local t = {}
+    for _,key in ipairs(keys) do
+        t[key] = 0
     end
+    return t
+end
+
+local function make_job_matcher(unit_labors, reaction_names)
+    local matcher = {num_prioritized=0}
+    matcher.hauler_matchers = make_matcher_map(unit_labors)
+    matcher.reaction_matchers = make_matcher_map(reaction_names)
     return matcher
 end
 
 local function matches(job_matcher, job)
     if not job_matcher then return false end
-    if job_matcher.hauler_matchers then
-        return job_matcher.hauler_matchers[job.item_subtype]
+    if job_matcher.hauler_matchers and
+            not job_matcher.hauler_matchers[job.item_subtype] then
+        return false
+    end
+    if job_matcher.reaction_matchers and
+            not job_matcher.reaction_matchers[job.reaction_name] then
+        return false
     end
     return true
 end
 
+-- returns true if the job is matched and it is not already high priority
 local function boost_job_if_matches(job, job_matchers)
     if matches(job_matchers[job.job_type], job) and not job.flags.do_now then
         job.flags.do_now = true
@@ -139,6 +150,10 @@ local function on_new_job(job)
             local hms = jm.hauler_matchers
             hms[job.item_subtype] = hms[job.item_subtype] + 1
         end
+        if jm.reaction_matchers then
+            local rms = jm.reaction_matchers
+            rms[job.reaction_name] = rms[job.reaction_name] + 1
+        end
     end
 end
 
@@ -149,6 +164,9 @@ end
 
 local function clear_watched_job_matchers()
     local watched_job_matchers = get_watched_job_matchers()
+    if has_elements(watched_job_matchers) then
+        print('map unloaded: cleared watched job types for prioritize script')
+    end
     for job_type in pairs(watched_job_matchers) do
         watched_job_matchers[job_type] = nil
     end
@@ -166,12 +184,26 @@ local function update_handlers()
     end
 end
 
-local function get_unit_labor_str(unit_labor)
-    if not unit_labor then
-        return ''
+local function get_annotation_str(annotation)
+    if not annotation then
+        return nil
     end
+    return (' (%s)'):format(annotation)
+end
+
+local function get_unit_labor_str(unit_labor)
+    if not unit_labor then return nil end
     local labor_str = df.unit_labor[unit_labor]
-    return (' (%s%s)'):format(labor_str:sub(6,6), labor_str:sub(7):lower())
+    return ('%s%s'):format(labor_str:sub(6,6), labor_str:sub(7):lower())
+end
+
+local function get_unit_labor_annotation_str(unit_labor)
+    return get_annotation_str(get_unit_labor_str(unit_labor))
+end
+
+local function print_status_line(num_jobs, job_type, annotation)
+    annotation = annotation or ''
+    print(('%d\t%s%s'):format(num_jobs, df.job_type[job_type], annotation))
 end
 
 local function status()
@@ -184,19 +216,25 @@ local function status()
         end
         if v.hauler_matchers then
             for hk,hv in pairs(v.hauler_matchers) do
-                print(('%d\t%s%s')
-                      :format(hv, df.job_type[k], get_unit_labor_str(hk)))
+                print_status_line(hv, k, get_unit_labor_annotation_str(hk))
+            end
+        elseif v.reaction_matchers then
+            for rk,rv in pairs(v.reaction_matchers) do
+                print_status_line(rv, k, get_annotation_str(rk))
             end
         else
-            print(('%d\t%s'):format(v.num_prioritized, df.job_type[k]))
+            print_status_line(v.num_prioritized, k)
         end
     end
     if first then print('Not automatically prioritizing any jobs.') end
 end
 
--- encapsulate this in a function so unit tests can mock it out
+-- encapsulate df state in functions so unit tests can mock them out
 function get_postings()
     return df.global.world.jobs.postings
+end
+function get_reactions()
+    return df.global.world.raws.reactions.reactions
 end
 
 local function for_all_live_postings(cb)
@@ -220,16 +258,73 @@ local function boost(job_matchers, opts)
     end
 end
 
-local function print_add_message(job_type, unit_labor)
-    local ul_str = get_unit_labor_str(unit_labor)
+local function print_add_message(job_type, annotation)
+    annotation = annotation or ''
     print(('Automatically prioritizing future jobs of type: %s%s')
-          :format(df.job_type[job_type], ul_str))
+          :format(df.job_type[job_type], annotation))
 end
 
-local function print_skip_add_message(job_type, unit_labor)
-    local ul_str = get_unit_labor_str(unit_labor)
+local function print_skip_add_message(job_type, annotation)
+    annotation = annotation or ''
     print(('Skipping already-watched type: %s%s')
-          :format(df.job_type[job_type], ul_str))
+          :format(df.job_type[job_type], annotation))
+end
+
+local function boost_and_watch_special(job_type, job_matcher,
+                                       get_special_matchers_fn,
+                                       clear_special_matchers_fn, annotation_fn,
+                                       quiet)
+    local watched_job_matchers = get_watched_job_matchers()
+    local watched_job_matcher = watched_job_matchers[job_type]
+    local special_matchers = get_special_matchers_fn(job_matcher)
+    local wspecial_matchers = watched_job_matcher and
+            get_special_matchers_fn(watched_job_matcher) or nil
+    if not watched_job_matcher then
+        -- no similar job already being watched; add the matcher verbatim
+        watched_job_matchers[job_type] = job_matcher
+        if not quiet then
+            if not special_matchers then
+                print_add_message(job_type)
+            else
+                for key in pairs(special_matchers) do
+                    print_add_message(job_type, annotation_fn(key))
+                end
+            end
+        end
+    elseif not wspecial_matchers and not special_matchers then
+        -- no special matchers for existing matcher or new matcher; nothing new
+        -- to watch
+        if not quiet then
+            print_skip_add_message(job_type)
+        end
+    elseif not wspecial_matchers then
+        -- existing matcher is broader than new matchers; nothing new to watch
+        for key in pairs(special_matchers) do
+            if not quiet then
+                print_skip_add_message(job_type, annotation_fn(key))
+            end
+        end
+    elseif not special_matchers then
+        -- new matcher is broader than existing matcher; overwrite with new
+        if not quiet then
+            print_add_message(job_type)
+        end
+        clear_special_matchers_fn(watched_job_matcher)
+    else
+        -- diff new matcher into existing matcher
+        for key in pairs(special_matchers) do
+            if wspecial_matchers[key] then
+                if not quiet then
+                    print_skip_add_message(job_type, annotation_fn(key))
+                end
+            else
+                wspecial_matchers[key] = 0
+                if not quiet then
+                    print_add_message(job_type, annotation_fn(key))
+                end
+            end
+        end
+    end
 end
 
 local function boost_and_watch(job_matchers, opts)
@@ -237,53 +332,17 @@ local function boost_and_watch(job_matchers, opts)
     boost(job_matchers, opts)
     local watched_job_matchers = get_watched_job_matchers()
     for job_type,job_matcher in pairs(job_matchers) do
-        local wjm = watched_job_matchers[job_type]
         if job_type == df.job_type.StoreItemInStockpile then
-            if not wjm then
-                watched_job_matchers[job_type] = job_matcher
-                if not quiet then
-                    local hms = job_matcher.hauler_matchers
-                    if not hms then
-                        print_add_message(job_type)
-                    else
-                        for ul in pairs(hms) do
-                            print_add_message(job_type, ul)
-                        end
-                    end
-                end
-            else
-                if not wjm.hauler_matchers
-                        and not job_matcher.hauler_matchers then
-                    if not quiet then
-                        print_skip_add_message(job_type)
-                    end
-                elseif not wjm.hauler_matchers then
-                    for ul in pairs(job_matcher.hauler_matchers) do
-                        if not quiet then
-                            print_skip_add_message(job_type, ul)
-                        end
-                    end
-                elseif not job_matcher.hauler_matchers then
-                    if not quiet then
-                        print_add_message(job_type)
-                    end
-                    wjm.hauler_matchers = nil
-                else
-                    for ul in pairs(job_matcher.hauler_matchers) do
-                        if wjm.hauler_matchers[ul] then
-                            if not quiet then
-                                print_skip_add_message(job_type, ul)
-                            end
-                        else
-                            wjm.hauler_matchers[ul] = 0
-                            if not quiet then
-                                print_add_message(job_type, ul)
-                            end
-                        end
-                    end
-                end
-            end
-        elseif wjm then
+            boost_and_watch_special(job_type, job_matcher,
+                function(jm) return jm.hauler_matchers end,
+                function(jm) jm.hauler_matchers = nil end,
+                get_unit_labor_annotation_str, quiet)
+        elseif job_type == df.job_type.CustomReaction then
+            boost_and_watch_special(job_type, job_matcher,
+                function(jm) return jm.reaction_matchers end,
+                function(jm) jm.reaction_matchers = nil end,
+                get_annotation_str, quiet)
+        elseif watched_job_matchers[job_type] then
             if not quiet then
                 print_skip_add_message(job_type)
             end
@@ -297,16 +356,49 @@ local function boost_and_watch(job_matchers, opts)
     update_handlers()
 end
 
-local function print_del_message(job_type, unit_labor)
-    local ul_str = get_unit_labor_str(unit_labor)
+local function print_del_message(job_type, annotation)
+    annotation = annotation or ''
     print(('No longer automatically prioritizing jobs of type: %s%s')
-          :format(df.job_type[job_type], ul_str))
+          :format(df.job_type[job_type], annotation))
 end
 
-local function print_skip_del_message(job_type, unit_labor)
-    local ul_str = get_unit_labor_str(unit_labor)
+local function print_skip_del_message(job_type, annotation)
+    annotation = annotation or ''
     print(('Skipping unwatched type: %s%s')
-          :format(df.job_type[job_type], ul_str))
+          :format(df.job_type[job_type], annotation))
+end
+
+local function remove_watch_special(job_type, job_matcher,
+                                    get_special_matchers_fn,
+                                    fill_special_matcher_fn,
+                                    annotation_fn, quiet)
+    local watched_job_matchers = get_watched_job_matchers()
+    local watched_job_matcher = watched_job_matchers[job_type]
+    local special_matchers = get_special_matchers_fn(job_matcher)
+    local wspecial_matchers = watched_job_matcher and
+            get_special_matchers_fn(watched_job_matcher) or nil
+    if not wspecial_matchers then
+        -- if we're removing specific subtypes from an all-inclusive spec, then
+        -- add all the possible individual subtypes before we remove the ones
+        -- that were specified.
+        wspecial_matchers = fill_special_matcher_fn(watched_job_matcher)
+    end
+    -- remove the specified subtypes
+    for key in pairs(special_matchers) do
+        if wspecial_matchers[key] then
+            if not quiet then
+                print_del_message(job_type, annotation_fn(key))
+            end
+            wspecial_matchers[key] = nil
+        else
+            if not quiet then
+                print_skip_del_message(job_type, annotation_fn(key))
+            end
+        end
+    end
+    if not has_elements(wspecial_matchers) then
+        watched_job_matchers[job_type] = nil
+    end
 end
 
 local function remove_watch(job_matchers, opts)
@@ -315,36 +407,45 @@ local function remove_watch(job_matchers, opts)
     for job_type,job_matcher in pairs(job_matchers) do
         local wjm = watched_job_matchers[job_type]
         if not wjm then
+            -- job type not being watched; nothing to remove
             if not quiet then
                 print_skip_del_message(job_type)
             end
-        elseif not job_matcher.hauler_matchers then
+        elseif not job_matcher.hauler_matchers
+                and not job_matcher.reaction_matchers then
+            -- no special matchers in job_matchers; stop watching all
             watched_job_matchers[job_type] = nil
             if not quiet then
                 print_del_message(job_type)
             end
+        elseif job_type == df.job_type.StoreItemInStockpile then
+            remove_watch_special(job_type, job_matcher,
+                function(jm) return jm.hauler_matchers end,
+                function(jm)
+                    jm.hauler_matchers = {}
+                    for id,name in ipairs(df.unit_labor) do
+                        if name:startswith('HAUL_')
+                                and id <= df.unit_labor.HAUL_ANIMALS then
+                            jm.hauler_matchers[id] = 0
+                        end
+                    end
+                    return jm.hauler_matchers
+                end,
+                get_unit_labor_annotation_str, quiet)
+        elseif job_type == df.job_type.CustomReaction then
+            remove_watch_special(job_type, job_matcher,
+                function(jm) return jm.reaction_matchers end,
+                function(jm)
+                    jm.reaction_matchers = {}
+                    for _,v in ipairs(get_reactions())
+                            do
+                        jm.reaction_matchers[v.code] = 0
+                    end
+                    return jm.reaction_matchers
+                end,
+                get_annotation_str, quiet)
         else
-            if not wjm.hauler_matchers then
-                wjm.hauler_matchers = {}
-                for id,name in ipairs(df.unit_labor) do
-                    if name:startswith('HAUL_')
-                            and id <= df.unit_labor.HAUL_ANIMALS then
-                        wjm.hauler_matchers[id] = 0
-                    end
-                end
-            end
-            for ul in pairs(job_matcher.hauler_matchers) do
-                if wjm.hauler_matchers[ul] then
-                    if not quiet then
-                        print_del_message(job_type, ul)
-                    end
-                    wjm.hauler_matchers[ul] = nil
-                else
-                    if not quiet then
-                        print_skip_del_message(job_type, ul)
-                    end
-                end
-            end
+            error('unhandled case') -- should not ever happen
         end
     end
     update_handlers()
@@ -353,10 +454,15 @@ end
 local function get_job_type_str(job)
     local job_type = job.job_type
     local job_type_str = df.job_type[job_type]
-    if job_type ~= df.job_type.StoreItemInStockpile then
+    if job_type == df.job_type.StoreItemInStockpile then
+        return ('%s%s'):format(job_type_str,
+                               get_unit_labor_annotation_str(job.item_subtype))
+    elseif job_type == df.job_type.CustomReaction then
+        return ('%s%s'):format(job_type_str,
+                               get_annotation_str(job.reaction_name))
+    else
         return job_type_str
     end
-    return ('%s%s'):format(job_type_str, get_unit_labor_str(job.item_subtype))
 end
 
 local function print_current_jobs(job_matchers, opts)
@@ -383,17 +489,54 @@ local function print_current_jobs(job_matchers, opts)
     if first then print('No current jobs.') end
 end
 
-local function print_registry()
-    print('Valid job types:')
-    for k,v in ipairs(df.job_type) do
-        if v and df.job_type[v] and v:find('^%u%l') then
-            print('  ' .. v)
-        end
+local function print_registry_section(header, t)
+    print('\n' .. header .. ':')
+    table.sort(t)
+    for _,v in ipairs(t) do
+        print('  ' .. v)
     end
 end
 
+local function print_registry()
+    local t = {}
+    for _,v in ipairs(df.job_type) do
+        -- don't clutter the output with esoteric or non-prioritizable job types
+        if v and df.job_type[v] and v:find('^%u%l')
+                and not v:find('^StrangeMood') then
+            table.insert(t, v)
+        end
+    end
+    print_registry_section('Job types', t)
+
+    t = {}
+    for i,v in ipairs(df.unit_labor) do
+        if v:startswith('HAUL_') then
+            table.insert(t, get_unit_labor_str(i))
+        end
+        if i >= df.unit_labor.HAUL_ANIMALS then
+            -- don't include irrelevant HAUL_TRADE or HAUL_WATER labors
+            break
+        end
+    end
+    print_registry_section('Hauling labors (for StoreItemInStockpile jobs)', t)
+
+    t = {}
+    for _,v in ipairs(get_reactions()) do
+        -- don't clutter the output with generated reactions (like instrument
+        -- piece creation reactions). space characters seem to be a good
+        -- discriminator.
+        if not v.code:find(' ') then
+            table.insert(t, v.code)
+        end
+    end
+    if not has_elements(t) then
+        t = {'Load a game to see reactions'}
+    end
+    print_registry_section('Reaction names (for CustomReaction jobs)', t)
+end
+
 local function parse_commandline(args)
-    local opts, action, unit_labors = {}, status, nil
+    local opts, action, unit_labors, reaction_names = {}, status, nil, nil
     local positionals = argparse.processArgsGetopt(args, {
             {'a', 'add', handler=function() action = boost_and_watch end},
             {'d', 'delete', handler=function() action = remove_watch end},
@@ -401,6 +544,9 @@ local function parse_commandline(args)
             {'j', 'jobs', handler=function() action = print_current_jobs end},
             {'l', 'haul-labor', hasArg=true,
              handler=function(arg) unit_labors = argparse.stringList(arg) end},
+            {'n', 'reaction-name', hasArg=true,
+             handler=function(arg)
+                reaction_names = argparse.stringList(arg) end},
             {'q', 'quiet', handler=function() opts.quiet = true end},
             {'r', 'registry', handler=function() action = print_registry end},
         })
@@ -425,6 +571,29 @@ local function parse_commandline(args)
         unit_labors = ul_ids
     end
 
+    -- validate any specified reaction names
+    if reaction_names then
+        local rns = nil
+        for _,v in ipairs(reaction_names) do
+            local found = false
+            for _,r in ipairs(get_reactions()) do
+                if r.code == v then
+                    found = true
+                    break
+                end
+            end
+            if not found then
+                dfhack.printerr(('Ignoring unknown reaction name: "%s". Run' ..
+                    ' "prioritize -r" for a list of valid reaction names.')
+                    :format(v))
+            else
+                rns = rns or {}
+                table.insert(rns, v)
+            end
+        end
+        reaction_names = rns
+    end
+
     -- validate the specified job types and create matchers
     local job_matchers = {}
     for _,job_type_name in ipairs(positionals) do
@@ -435,8 +604,10 @@ local function parse_commandline(args)
                 :format(job_type_name))
         else
             local job_matcher = make_job_matcher(
-                    job_type == df.job_type.StoreItemInStockpile
-                        and unit_labors or nil)
+                    job_type == df.job_type.StoreItemInStockpile and
+                        unit_labors or nil,
+                    job_type == df.job_type.CustomReaction and
+                        reaction_names or nil)
             job_matchers[job_type] = job_matcher
         end
     end

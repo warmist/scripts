@@ -12,13 +12,16 @@ local function get_mock_watched_job_matchers()
 end
 local mock_postings = {}
 local function get_mock_postings() return mock_postings end
+local mock_reactions = {}
+local function get_mock_reactions() return mock_reactions end
 local function test_wrapper(test_fn)
     mock.patch({{eventful, 'onUnload', mock_eventful_onUnload},
                 {eventful, 'onJobInitiated', mock_eventful_onJobInitiated},
                 {prioritize, 'print', mock_print},
                 {prioritize, 'get_watched_job_matchers',
                  get_mock_watched_job_matchers},
-                {prioritize, 'get_postings', get_mock_postings}},
+                {prioritize, 'get_postings', get_mock_postings},
+                {prioritize, 'get_reactions', get_mock_reactions}},
                test_fn)
     mock_eventful_onUnload, mock_eventful_onJobInitiated = {}, {}
     mock_print = mock.func()
@@ -376,7 +379,7 @@ function test.print_registry()
     for i,v in ipairs(mock_print.call_args) do
         local out = v[1]:trim()
         if i == 1 then
-            expect.eq('Valid job types:', out)
+            expect.eq('Job types:', out)
             goto continue
         end
         expect.ne('nil', tostring(out))
