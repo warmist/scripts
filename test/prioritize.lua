@@ -12,7 +12,7 @@ local function get_mock_watched_job_matchers()
 end
 local mock_postings = {}
 local function get_mock_postings() return mock_postings end
-local mock_reactions = {}
+local mock_reactions = {{code='TAN_A_HIDE'}}
 local function get_mock_reactions() return mock_reactions end
 local function test_wrapper(test_fn)
     mock.patch({{eventful, 'onUnload', mock_eventful_onUnload},
@@ -26,11 +26,13 @@ local function test_wrapper(test_fn)
     mock_eventful_onUnload, mock_eventful_onJobInitiated = {}, {}
     mock_print = mock.func()
     mock_watched_job_matchers, mock_postings = {}, {}
+    mock_reactions = {{code='TAN_A_HIDE'}}
 end
 config.wrapper = test_wrapper
 
 local DIG, EAT, REST = df.job_type.Dig, df.job_type.Eat, df.job_type.Rest
 local STORE_ITEM_IN_STOCKPILE = df.job_type.StoreItemInStockpile
+local CUSTOM_REACTION = df.job_type.CustomReaction
 local SUTURE = df.job_type.Suture
 
 local HAUL_STONE, HAUL_WOOD = df.unit_labor.HAUL_STONE, df.unit_labor.HAUL_WOOD
@@ -54,17 +56,21 @@ function test.status()
 end
 
 function test.status_labor()
-    p.status()
-    expect.eq(1, mock_print.call_count)
-    expect.eq('Not automatically prioritizing any jobs.',
-              mock_print.call_args[1][1])
-
     mock_watched_job_matchers[STORE_ITEM_IN_STOCKPILE] =
             {num_prioritized=5, hauler_matchers={[HAUL_BODY]=2}}
     p.status()
-    expect.eq(3, mock_print.call_count)
-    expect.eq('Automatically prioritized jobs:', mock_print.call_args[2][1])
-    expect.str_find('Stockpile.*Body', mock_print.call_args[3][1])
+    expect.eq(2, mock_print.call_count)
+    expect.eq('Automatically prioritized jobs:', mock_print.call_args[1][1])
+    expect.str_find('Stockpile.*Body', mock_print.call_args[2][1])
+end
+
+function test.status_reaction()
+    mock_watched_job_matchers[CUSTOM_REACTION] =
+            {num_prioritized=5, reaction_matchers={TAN_A_HIDE=2}}
+    p.status()
+    expect.eq(2, mock_print.call_count)
+    expect.eq('Automatically prioritized jobs:', mock_print.call_args[1][1])
+    expect.str_find('Custom.*TAN_A_HIDE', mock_print.call_args[2][1])
 end
 
 function test.boost()
@@ -231,6 +237,17 @@ function test.boost_and_watch_store_add_labors()
                     mock_watched_job_matchers)
 end
 
+function test.boost_and_watch_reactions()
+    p.boost_and_watch({[CUSTOM_REACTION]={num_prioritized=0,
+                                    reaction_matchers={TAN_A_HIDE=0}}}, {})
+    expect.eq(2, mock_print.call_count)
+    expect.str_find('^Prioritized 0', mock_print.call_args[1][1])
+    expect.str_find('^Automatically.*TAN_A_HIDE', mock_print.call_args[2][1])
+    expect.table_eq({[CUSTOM_REACTION]={num_prioritized=0,
+                                        reaction_matchers={TAN_A_HIDE=0}}},
+                    mock_watched_job_matchers)
+end
+
 function test.remove_one_labor_from_all()
     -- top-level num_prioritized should be persisted
     mock_watched_job_matchers = {[STORE_ITEM_IN_STOCKPILE]={num_prioritized=5}}
@@ -248,7 +265,7 @@ function test.remove_one_labor_from_all()
 
     p.remove_watch({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=0,
                             hauler_matchers={[HAUL_FOOD]=0}}},
-                      {})
+                   {})
     expect.eq(2, mock_print.call_count)
     expect.str_find('Skipping.*Food', mock_print.call_args[2][1])
     expect.table_eq({[STORE_ITEM_IN_STOCKPILE]={num_prioritized=5,
@@ -256,6 +273,20 @@ function test.remove_one_labor_from_all()
                          [HAUL_REFUSE]=0, [HAUL_ITEM]=0, [HAUL_FURNITURE]=0,
                          [HAUL_ANIMALS]=0}}},
                     mock_watched_job_matchers)
+end
+
+function test.remove_all_reactions_from_all()
+    mock_watched_job_matchers = {[CUSTOM_REACTION]={num_prioritized=5}}
+
+    -- we only have one reaction in our mock registry. if we remove it by name
+    -- from an unrestricted CUSTOM_REACTION matcher, the entire matcher should
+    -- disappear
+    p.remove_watch({[CUSTOM_REACTION]={num_prioritized=0,
+                                       reaction_matchers={TAN_A_HIDE=0}}},
+                   {})
+    expect.eq(1, mock_print.call_count)
+    expect.str_find('No longer.*TAN_A_HIDE', mock_print.call_args[1][1])
+    expect.table_eq({}, mock_watched_job_matchers)
 end
 
 function test.eventful_hook_lifecycle()
@@ -321,6 +352,31 @@ function test.eventful_callbacks_labor()
     expect.table_eq(expected_watched_job_matchers, mock_watched_job_matchers)
 end
 
+function test.eventful_callbacks_reaction()
+    mock_watched_job_matchers[CUSTOM_REACTION] =
+            {num_prioritized=0, reaction_matchers={TAN_A_HIDE=0}}
+
+    -- unwatched job
+    local job = {job_type=CUSTOM_REACTION, reaction_name='STEEL_MAKING',
+                 flags={}}
+    local expected_job = utils.clone(job)
+    local expected_watched_job_matchers = utils.clone(mock_watched_job_matchers)
+    p.on_new_job(job)
+    expect.table_eq(expected_job, job)
+    expect.table_eq(expected_watched_job_matchers, mock_watched_job_matchers)
+
+    -- watched job
+    job = {job_type=CUSTOM_REACTION, reaction_name='TAN_A_HIDE', flags={}}
+    expected_job = {job_type=CUSTOM_REACTION, reaction_name='TAN_A_HIDE',
+           flags={do_now=true}}
+    expected_watched_job_matchers =
+            {[CUSTOM_REACTION]={num_prioritized=1,
+                                reaction_matchers={TAN_A_HIDE=1}}}
+    p.on_new_job(job)
+    expect.table_eq(expected_job, job)
+    expect.table_eq(expected_watched_job_matchers, mock_watched_job_matchers)
+end
+
 function test.print_current_jobs_empty()
     p.print_current_jobs({})
     expect.eq(1, mock_print.call_count)
@@ -334,9 +390,11 @@ function test.print_current_jobs_full()
                      {job={job_type=EAT}, flags={}},
                      {job={job_type=REST}, flags={dead=true}},
                      {job={job_type=STORE_ITEM_IN_STOCKPILE,
-                           item_subtype=HAUL_FOOD, flags={}}, flags={}}}
+                           item_subtype=HAUL_FOOD, flags={}}, flags={}},
+                     {job={job_type=CUSTOM_REACTION,
+                           reaction_name='TAN_A_HIDE', flags={}}, flags={}}}
     p.print_current_jobs({})
-    expect.eq(4, mock_print.call_count)
+    expect.eq(5, mock_print.call_count)
     expect.eq('Current job counts by type:', mock_print.call_args[1][1])
     local result = {}
     for i,v in ipairs(mock_print.call_args) do
@@ -348,7 +406,8 @@ function test.print_current_jobs_full()
         ::continue::
     end
     expect.table_eq({[df.job_type[DIG]]='2', [df.job_type[EAT]]='1',
-                     [df.job_type[STORE_ITEM_IN_STOCKPILE]]='1'},
+                     [df.job_type[STORE_ITEM_IN_STOCKPILE]]='1',
+                     [df.job_type[CUSTOM_REACTION]]='1'},
                     result)
 end
 
@@ -375,18 +434,20 @@ end
 
 function test.print_registry()
     p.print_registry()
-    expect.lt(0, mock_print.call_count)
+    expect.lt(1, mock_print.call_count)
     for i,v in ipairs(mock_print.call_args) do
         local out = v[1]:trim()
-        if i == 1 then
-            expect.eq('Job types:', out)
-            goto continue
-        end
         expect.ne('nil', tostring(out))
-        expect.str_find('^%u%l', out)
         expect.ne('NONE', out)
-        ::continue::
     end
+end
+
+function test.print_registry_no_raws()
+    mock_reactions = {}
+    p.print_registry()
+    expect.lt(1, mock_print.call_count)
+    expect.eq('Load a game to see reactions',
+              mock_print.call_args[#mock_print.call_args][1]:trim())
 end
 
 function test.parse_commandline()
@@ -413,6 +474,11 @@ function test.parse_commandline()
         function()
             expect.table_eq({action=p.status, job_matchers={}},
                             p.parse_commandline{'-lXFoodX'})
+        end)
+    expect.printerr_match('Ignoring unknown reaction name',
+        function()
+            expect.table_eq({action=p.status, job_matchers={}},
+                            p.parse_commandline{'-nXTAN_A_HIDEX'})
         end)
 
     expect.table_eq({action=p.status, job_matchers={}, quiet=true},
@@ -454,6 +520,21 @@ function test.parse_commandline()
                                    {num_prioritized=0,
                                     hauler_matchers={[HAUL_FOOD]=0}}}},
                     p.parse_commandline{'-jlfood', 'StoreItemInStockpile'})
+
+    expect.table_eq({action=p.status, job_matchers={}},
+                    p.parse_commandline{'-nTAN_A_HIDE'})
+    expect.table_eq({action=p.boost,
+                     job_matchers={[SUTURE]={num_prioritized=0}}},
+                    p.parse_commandline{'-nTAN_A_HIDE', 'Suture'})
+    expect.table_eq({action=p.boost,
+                     job_matchers={[STORE_ITEM_IN_STOCKPILE]=
+                                   {num_prioritized=0}}},
+                    p.parse_commandline{'-nTAN_A_HIDE', 'StoreItemInStockpile'})
+    expect.table_eq({action=p.boost,
+                     job_matchers={[CUSTOM_REACTION]=
+                                   {num_prioritized=0,
+                                    reaction_matchers={TAN_A_HIDE=0}}}},
+                    p.parse_commandline{'-nTAN_A_HIDE', 'CustomReaction'})
 
     expect.table_eq({action=p.print_registry, job_matchers={}},
                     p.parse_commandline{'-r'})
