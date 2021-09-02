@@ -17,7 +17,7 @@ that repo.
 - `autonick`: gives dwarves unique nicknames
 - `build-now`: instantly completes planned building constructions
 - `do-job-now`: makes a job involving current selection high priority
-- `prioritize`: automatically boosts the priority of current and/or future jobs of the selected types
+- `prioritize`: automatically boosts the priority of current and/or future jobs of specified types, such as hauling food, tanning hides, or pulling levers
 - `reveal-adv-map`: exposes/hides all world map tiles in adventure mode
 
 ## Fixes
