@@ -25,6 +25,7 @@ that repo.
 - `quickfort`: fix incorrect directions for tracks that extend south or east from a track segment pair specified with expansion syntax (e.g. T(4x4))
 - `quickfort`: fix parsing of multi-part extended zone configs (e.g. when you set custom supply limits for hospital zones AND set custom flags for a pond)
 - `quickfort`: fix error when attempting to set a custom limit for plaster powder in a hospital zone
+- `exportlegneds`: fix issue where birth year was outputted as birth seconds
 
 ## Misc Improvements
 - `gui/blueprint`: support the new ``--splitby`` and ``--format`` options for `blueprint`
