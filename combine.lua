@@ -149,14 +149,13 @@ function Combineitems(building, tabl, food, bool)
     else
         local foodCount = getItems(rootItems, food, 0, bool)
         local removedFood = { } --as:bool[]
-        food.max=max
-        if f.args.max then max = tonumber(f.args.max)
-            if tonumber(f.args.max)== 0 then max = 500
+        if f.args.max then food.max = tonumber(f.args.max)
+            if tonumber(f.args.max)== 0 then food.max = 500
             end
         end
         for i=0,(foodCount-2) do
             local currentFood = food[i] --as:df.item_foodst
-            local itemsNeeded = max - currentFood.stack_size
+            local itemsNeeded = food.max - currentFood.stack_size
 
             if removedFood[currentFood.id] == nil and itemsNeeded > 0 then
                 local j = i+1
