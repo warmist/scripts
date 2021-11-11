@@ -65,6 +65,13 @@ fat.max     =   20
 roasts.max  =   20
 fish.max    =   10
 
+if f.args.drinks then drinks.max = tonumber(f.args.drinks) end
+if f.args.plants then plants.max = tonumber(f.args.plants) end
+if f.args.meats then meats.max = tonumber(f.args.meats) end
+if f.args.fat then fat.max = tonumber(f.args.fat) end
+if f.args.roasts then roasts.max = tonumber(f.args.roasts) end
+if f.args.fish then fish.max = tonumber(f.args.fish) end
+
 --Not sure if these are needed.
 drinks.Tot=0 drinks.xTot=0
 plants.Tot=0 plants.xTot=0
