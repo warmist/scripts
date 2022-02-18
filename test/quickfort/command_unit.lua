@@ -131,15 +131,15 @@ end
 function test.do_command_repeat_down()
     c.do_command({commands={'run'}, '-q', '-r>5', '10'})
     expect.eq(5, mock_dig_do_run.call_count)
-    expect.eq(100, get_ctx(mock_dig_do_run, 1).zmax)
-    expect.eq(96, get_ctx(mock_dig_do_run, 1).zmin)
+    expect.eq(100, get_ctx(mock_dig_do_run, 5).zmax)
+    expect.eq(96, get_ctx(mock_dig_do_run, 5).zmin)
 end
 
 function test.do_command_repeat_up()
     c.do_command({commands={'run'}, '-q', '-r<5', '10'})
     expect.eq(5, mock_dig_do_run.call_count)
-    expect.eq(104, get_ctx(mock_dig_do_run, 1).zmax)
-    expect.eq(100, get_ctx(mock_dig_do_run, 1).zmin)
+    expect.eq(104, get_ctx(mock_dig_do_run, 5).zmax)
+    expect.eq(100, get_ctx(mock_dig_do_run, 5).zmin)
 end
 
 function test.do_command_multi_command_multi_list_num()
