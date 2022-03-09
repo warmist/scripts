@@ -1,9 +1,9 @@
 ===[[[
 This file contains changes specific to the scripts repo. See docs/changelog.txt
 in the dfhack repo for a full description, or
-https://docs.dfhack.org/en/latest/docs/Compile.html#build-changelog
+https://docs.dfhack.org/en/latest/docs/Documentation.html#building-the-changelogs
 
-NOTE: currently, gen_changelog.txt expects a "Future" section to exist at the
+NOTE: currently, gen_changelog.py expects a "Future" section to exist at the
 top of this file (even if no changes are listed under it), or you will get a
 "Entry without section" error. Also, to maintain proper sorting in the generated
 changelogs when making a new release, docs/changelog.txt in the dfhack repo must
@@ -14,6 +14,14 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Removed
+
+## Fixes
+
+## Misc Improvements
+
+# 0.47.05-r4
 
 ## Fixes
 - `quickfort`: produce a useful error message instead of a code error when a bad query blueprint key sequence leaves the game in a mode that does not have an active cursor
