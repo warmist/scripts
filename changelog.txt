@@ -18,6 +18,7 @@ that repo.
 ## Removed
 
 ## Fixes
+- `gui/advfort`: encrust and stud jobs no longer consume reagents without actually improving the target item
 - `setfps`: keep internal ratio of processing FPS to graphics FPS in sync when updating FPS
 
 ## Misc Improvements
