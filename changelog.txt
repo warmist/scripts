@@ -22,6 +22,7 @@ that repo.
 - `setfps`: keep internal ratio of processing FPS to graphics FPS in sync when updating FPS
 
 ## Misc Improvements
+- `quickfort`: support transformations for blueprints that use expansion syntax
 
 # 0.47.05-r4
 
