@@ -24,20 +24,30 @@ valid_modes = utils.invert({
 -- format: {width, height, specified}, where width and height are numbers and
 -- specified is true when an extent was explicitly specified. this function
 -- assumes that text has been trimmed of leading and trailing spaces.
-function parse_cell(text)
+-- if the extent is specified, it will be transformed according ctx.transform_fn
+-- so that the extent extends in the intended direction.
+function parse_cell(ctx, text)
     -- first try to match expansion syntax
     local _, _, keys, width, height =
-            text:find('^([^(][^(]-)%s*%(%s*(%d+)%s*x%s*(%d+)%s*%)$')
+            text:find('^([^(][^(]-)%s*%(%s*(%-?%d+)%s*x%s*(%-?%d+)%s*%)$')
     local specified = nil
     if keys then
-        width = tonumber(width)
-        height = tonumber(height)
+        width, height = tonumber(width), tonumber(height)
         specified = width and height and true
     else
         _, _, keys = text:find('(.+)')
     end
-    if not specified or width <= 0 then width = 1 end
-    if not specified or height <= 0 then height = 1 end
+    if not specified then
+        width, height = 1, 1
+    else
+        if width == 0 then
+            qerror('invalid expansion syntax: width cannot be 0: ' .. text)
+        elseif height == 0 then
+            qerror('invalid expansion syntax: height cannot be 0: ' .. text)
+        end
+        local transformed = ctx.transform_fn(xy2pos(width, height), true)
+        width, height = transformed.x, transformed.y
+    end
     return keys, {width=width, height=height, specified=specified}
 end
 

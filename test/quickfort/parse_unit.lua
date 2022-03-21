@@ -8,26 +8,41 @@ function test.module()
 end
 
 function test.parse_cell()
-    expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell('')})
+    local ctx = {transform_fn=function(pos) return pos end}
 
-    expect.table_eq({'()', {width=1, height=1}}, {parse.parse_cell('()')})
-    expect.table_eq({'a()', {width=1, height=1}}, {parse.parse_cell('a()')})
-    expect.table_eq({'a(x)', {width=1, height=1}}, {parse.parse_cell('a(x)')})
-    expect.table_eq({'a(5)', {width=1, height=1}}, {parse.parse_cell('a(5)')})
-    expect.table_eq({'a(5x)', {width=1, height=1}}, {parse.parse_cell('a(5x)')})
+    expect.table_eq({nil, {width=1, height=1}}, {parse.parse_cell(ctx, '')})
+
+    expect.table_eq({'()', {width=1, height=1}}, {parse.parse_cell(ctx, '()')})
+    expect.table_eq({'a()', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a()')})
+    expect.table_eq({'a(x)', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a(x)')})
+    expect.table_eq({'a(5)', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a(5)')})
+    expect.table_eq({'a(5x)', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a(5x)')})
     expect.table_eq({'ab(5x6 ', {width=1, height=1}},
-                    {parse.parse_cell('ab(5x6 ')})
-    expect.table_eq({'a5', {width=1, height=1}}, {parse.parse_cell('a5')})
-    expect.table_eq({'a5x', {width=1, height=1}}, {parse.parse_cell('a5x')})
-    expect.table_eq({'a5x2', {width=1, height=1}}, {parse.parse_cell('a5x2')})
+                    {parse.parse_cell(ctx, 'ab(5x6 ')})
+    expect.table_eq({'a5', {width=1, height=1}}, {parse.parse_cell(ctx, 'a5')})
+    expect.table_eq({'a5x', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a5x')})
+    expect.table_eq({'a5x2', {width=1, height=1}},
+                    {parse.parse_cell(ctx, 'a5x2')})
 
-    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell('a')})
+    expect.table_eq({'a', {width=1, height=1}}, {parse.parse_cell(ctx, 'a')})
     expect.table_eq({'ab', {width=5, height=6, specified=true}},
-                    {parse.parse_cell('ab(5x6)')})
+                    {parse.parse_cell(ctx, 'ab(5x6)')})
     expect.table_eq({'ab', {width=5, height=6, specified=true}},
-                    {parse.parse_cell('ab  (  5  x  6  )')})
-    expect.table_eq({'ab', {width=1, height=1, specified=true}},
-                    {parse.parse_cell('ab(0x0)')})
+                    {parse.parse_cell(ctx, 'ab  (  5  x  6  )')})
+
+    expect.error_match('width cannot be 0',
+            function() parse.parse_cell(ctx, 'ab(0x1)') end)
+    expect.error_match('height cannot be 0',
+            function() parse.parse_cell(ctx, 'ab(1x0)') end)
+
+    ctx.transform_fn = function(pos) return xy2pos(pos.y, pos.x) end
+    expect.table_eq({'ab', {width=6, height=5, specified=true}},
+                    {parse.parse_cell(ctx, 'ab(5x6)')})
 end
 
 function test.coord2d_lt()

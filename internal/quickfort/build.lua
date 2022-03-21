@@ -780,7 +780,7 @@ function do_run(zlevel, grid, ctx)
     local buildings = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, buildings, building_db, building_aliases)
+                ctx, zlevel, grid, buildings, building_db, building_aliases)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
                 ctx, buildings, building_db)
@@ -805,7 +805,7 @@ function do_orders(zlevel, grid, ctx)
     local buildings = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, buildings, building_db, building_aliases)
+                ctx, zlevel, grid, buildings, building_db, building_aliases)
     quickfort_orders.enqueue_building_orders(buildings, building_db, ctx)
 end
 
@@ -828,7 +828,7 @@ function do_undo(zlevel, grid, ctx)
     local buildings = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, buildings, building_db, building_aliases)
+                ctx, zlevel, grid, buildings, building_db, building_aliases)
 
     for _, s in ipairs(buildings) do
         for extent_x, col in ipairs(s.extent_grid) do

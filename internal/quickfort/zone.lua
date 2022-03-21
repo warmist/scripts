@@ -222,7 +222,7 @@ function do_run(zlevel, grid, ctx)
     local zones = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, zones, zone_db)
+                ctx, zlevel, grid, zones, zone_db)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
                 ctx, zones, zone_db)
@@ -264,7 +264,7 @@ function do_undo(zlevel, grid, ctx)
     local zones = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, zones, zone_db)
+                ctx, zlevel, grid, zones, zone_db)
 
     -- ensure a zone is not currently selected when we delete it. that causes
     -- crashes. note that we move the cursor, but we have to keep the ui mode

@@ -64,14 +64,17 @@ local function make_transform_fn(prev_transform_fn, modifiers, cursor)
     if modifiers.transform_fn_stack == 0 and modifiers.shift_fn_stack == 0 then
         return prev_transform_fn
     end
-    return function(pos)
+    local origin = xy2pos(0, 0)
+    return function(pos, no_shift)
         for _,tfn in ipairs(modifiers.transform_fn_stack) do
-            pos = tfn(pos, cursor)
+            pos = tfn(pos, no_shift and origin or cursor)
         end
-        for _,sfn in ipairs(modifiers.shift_fn_stack) do
-            pos = sfn(pos)
+        if not no_shift then
+            for _,sfn in ipairs(modifiers.shift_fn_stack) do
+                pos = sfn(pos)
+            end
         end
-        return prev_transform_fn(pos)
+        return prev_transform_fn(pos, no_shift)
     end
 end
 

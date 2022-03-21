@@ -658,13 +658,21 @@ local function do_run_impl(zlevel, grid, ctx)
             log('applying spreadsheet cell %s with text "%s" to map' ..
                 ' coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local db_entry = nil
-            local keys, extent = quickfort_parse.parse_cell(text)
+            local keys, extent = quickfort_parse.parse_cell(ctx, text)
             if keys then db_entry = dig_db[keys] end
             if not db_entry then
                 print(string.format('invalid key sequence: "%s" in cell %s',
                                     text, cell))
                 stats.invalid_keys.value = stats.invalid_keys.value + 1
                 goto continue
+            end
+            if extent.specified then
+                -- shift pos to the upper left corner of the extent and convert
+                -- the extent dimenions to positive, simplifying the logic below
+                pos.x = math.min(pos.x, pos.x + extent.width + 1)
+                pos.y = math.min(pos.y, pos.y + extent.height + 1)
+                extent.width = math.abs(extent.width)
+                extent.height = math.abs(extent.height)
             end
             for extent_x=1,extent.width do
                 for extent_y=1,extent.height do
