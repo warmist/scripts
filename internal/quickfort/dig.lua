@@ -302,20 +302,7 @@ local function do_track(digctx)
             not is_hard(digctx.tileattrs) then
         return nil
     end
-    local direction = digctx.direction
-    if not direction.north and not  direction.south and
-            not direction.east and not direction.west then
-        print('ambiguous direction for track; please use T(width x height)' ..
-              ' syntax (specify both width > 1 and height > 1 for a' ..
-              ' track that extends both South and East from this corner')
-        return nil
-    end
-    if not direction.single_tile and direction.north and direction.west then
-        -- we're in the "empty" interior of a track extent - tracks can only be
-        -- built in lines along the top or left of a non-single-tile extent.
-        return nil
-    end
-    local occupancy = digctx.occupancy
+    local direction, occupancy = digctx.direction, digctx.occupancy
     return function()
         -- don't overwrite all directions, only 'or' in the new bits. we could
         -- be adding to a previously-designated track.
@@ -648,6 +635,30 @@ local function should_preserve_engraving(ctx, db_entry, engraving)
             engraving.quality >= ctx.preserve_engravings
 end
 
+-- returns a map of which track directions should be enabled
+-- width and height can be negative
+local function get_track_direction(x, y, width, height)
+    local neg_width, w = width < 0, math.abs(width)
+    local neg_height, h = height < 0, math.abs(height)
+
+    -- initialize assuming positive width and height
+    local north = x == 1 and y > 1
+    local east = x < w and y == 1
+    local south = x == 1 and y < h
+    local west = x > 1 and y == 1
+
+    if neg_width then
+        north = x == w and y > 1
+        south = x == w and y < h
+    end
+    if neg_height then
+        east = x < w and y == h
+        west = x > 1 and y == h
+    end
+
+    return {north=north, east=east, south=south, west=west}
+end
+
 local function do_run_impl(zlevel, grid, ctx)
     local stats = ctx.stats
     ctx.bounds = ctx.bounds or quickfort_map.MapBoundsChecker{}
@@ -661,8 +672,19 @@ local function do_run_impl(zlevel, grid, ctx)
             local keys, extent = quickfort_parse.parse_cell(ctx, text)
             if keys then db_entry = dig_db[keys] end
             if not db_entry then
-                print(string.format('invalid key sequence: "%s" in cell %s',
-                                    text, cell))
+                dfhack.printerr(('invalid key sequence: "%s" in cell %s')
+                                :format(text, cell))
+                stats.invalid_keys.value = stats.invalid_keys.value + 1
+                goto continue
+            end
+            if db_entry.action == do_track and not db_entry.direction and
+                    math.abs(extent.width) == 1 and
+                    math.abs(extent.height) == 1 then
+                dfhack.printerr(('Warning: ambiguous direction for track:' ..
+                    ' "%s" in cell %s; please use T(width x height) syntax' ..
+                    ' (e.g. specify both width > 1 and height > 1 for a' ..
+                    ' track that extends both South and East from this corner')
+                               :format(text, cell))
                 stats.invalid_keys.value = stats.invalid_keys.value + 1
                 goto continue
             end
@@ -671,11 +693,9 @@ local function do_run_impl(zlevel, grid, ctx)
                 -- the extent dimenions to positive, simplifying the logic below
                 pos.x = math.min(pos.x, pos.x + extent.width + 1)
                 pos.y = math.min(pos.y, pos.y + extent.height + 1)
-                extent.width = math.abs(extent.width)
-                extent.height = math.abs(extent.height)
             end
-            for extent_x=1,extent.width do
-                for extent_y=1,extent.height do
+            for extent_x=1,math.abs(extent.width) do
+                for extent_y=1,math.abs(extent.height) do
                     local extent_pos = xyz2pos(
                         pos.x+extent_x-1,
                         pos.y+extent_y-1,
@@ -687,12 +707,10 @@ local function do_run_impl(zlevel, grid, ctx)
                                 stats.out_of_bounds.value + 1
                         goto inner_continue
                     end
-                    local direction = db_entry.direction or {
-                        north=extent_y>1,
-                        east=extent_x<extent.width and extent_y == 1,
-                        south=extent_y<extent.height and extent_x == 1,
-                        west=extent_x>1,
-                    }
+                    local direction = db_entry.direction or
+                            (db_entry.action == do_track and
+                             get_track_direction(extent_x, extent_y,
+                                                 extent.width, extent.height))
                     local digctx = init_dig_ctx(ctx, extent_pos, direction)
                     -- can't dig through buildings
                     if digctx.occupancy.building ~= 0 then
