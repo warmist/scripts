@@ -279,7 +279,7 @@ function foreach(table, name, callback)
             callback(idx, value)
             index = index + 1
         end
-    elseif (name == "list" or string.find(name,"%.list")) and table["next"] then
+    elseif table._type and string.find(tostring(table._type), "_list_link") then
         for field, value in utils.listpairs(table) do
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
             local s = string.format("next{%d}->item", index)
@@ -329,6 +329,7 @@ function main()
         qerror(string.format("Selected %s is null. Invalid selection.", path_info))
         return
     end
+    debugf(0, string.format("query(%s, %s, %s, %s)", selection, path_info, args.search, path_info))
     query(selection, path_info, args.search, path_info)
 end
 
@@ -339,7 +340,7 @@ function getSelectionData()
         debugf(0,"table selection")
         selection = utils.df_expr_to_ref(args.table)
         path_info = args.table
-        path_info_pattern = path_info
+        path_info_pattern = escapeSpecialChars(path_info)
     elseif args.json then
         local json = require("json")
         local json_file = string.format("%s/%s", dfhack.getDFPath(), args.json)
@@ -570,7 +571,6 @@ function is_exceeding_maxlength(index)
 end
 
 --Section: table helpers
-
 function isEmpty(t)
     for _,_ in safe_pairs(t) do
         return false
@@ -720,7 +720,6 @@ end
 
 --sometimes used to print fields, always used to print parents of fields
 function printParents(path, field, value)
-    --print("tony!", path, field, path_info_pattern)
     local value_printed = false
     path = string.gsub(path, path_info_pattern, "")
     field = string.gsub(field, path_info_pattern, "")
@@ -729,7 +728,6 @@ function printParents(path, field, value)
     local cur_path = path_info
     local words = {}
     local index = 1
-
     for word in string.gmatch(path, '([^.]+)') do
         words[index] = word
         index = index + 1
@@ -787,6 +785,10 @@ function debugf(level,...)
         end
         print(str)
     end
+end
+
+function escapeSpecialChars(str)
+    return str:gsub('(['..("%^$()[].*+-?"):gsub("(.)", "%%%1")..'])', "%%%1")
 end
 
 main()

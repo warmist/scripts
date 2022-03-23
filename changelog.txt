@@ -18,6 +18,8 @@ that repo.
 ## Removed
 
 ## Fixes
+- `devel/query`: fixed a problem printing parents when the starting path has lua pattern special characters in it
+- `devel/query`: fixed a crash when trying to iterate over linked lists
 - `gui/advfort`: encrust and stud jobs no longer consume reagents without actually improving the target item
 - `setfps`: keep internal ratio of processing FPS to graphics FPS in sync when updating FPS
 
