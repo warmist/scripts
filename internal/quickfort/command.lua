@@ -28,16 +28,11 @@ local command_switch = {
 
 local default_transform_fn = function(pos) return pos end
 
-function init_ctx(command, blueprint_name, cursor, aliases, dry_run,
-                  preserve_engravings)
+-- returns map of values that start the same for all contexts
+local function make_ctx_base()
     return {
-        command=command,
-        blueprint_name=blueprint_name,
-        cursor=cursor,
-        aliases=aliases,
-        dry_run=dry_run,
-        preserve_engravings=preserve_engravings,
-        zmin=30000, zmax=0,
+        zmin=30000,
+        zmax=0,
         transform_fn=default_transform_fn,
         stats={out_of_bounds={label='Tiles outside map boundary', value=0},
                invalid_keys={label='Invalid key sequences', value=0}},
@@ -45,14 +40,47 @@ function init_ctx(command, blueprint_name, cursor, aliases, dry_run,
     }
 end
 
+local function make_ctx(command, blueprint_name, cursor, aliases, dry_run,
+                        preserve_engravings)
+    local ctx = make_ctx_base()
+    local params = {
+        command=command,
+        blueprint_name=blueprint_name,
+        cursor=cursor,
+        aliases=aliases,
+        dry_run=dry_run,
+        preserve_engravings=preserve_engravings,
+    }
+
+    return utils.assign(ctx, params)
+end
+
+-- see make_ctx() above for which params can be specified
+function init_ctx(params)
+    if not params.command or not command_switch[params.command] then
+        error(('invalid command: "%s"'):format(params.command))
+    end
+    if not params.blueprint_name or params.blueprint_name == '' then
+        error('must specify blueprint_name')
+    end
+    if not params.cursor then
+        error('must specify cursor')
+    end
+
+    return make_ctx(
+        params.command,
+        params.blueprint_name,
+        params.cursor,
+        params.aliases or {},
+        params.dry_run,
+        params.preserve_engravings or df.item_quality.Masterful)
+end
+
 function do_command_raw(mode, zlevel, grid, ctx)
     -- this error checking is done here again because this function can be
     -- called directly by the quickfort API
     if not mode or not mode_modules[mode] then
         error(string.format('invalid mode: "%s"', mode))
-    end
-    if not ctx.command or not command_switch[ctx.command] then
-        error(string.format('invalid command: "%s"', ctx.command))
     end
 
     ctx.cursor.z = zlevel
@@ -156,9 +184,14 @@ local function do_one_command(command, cursor, blueprint_name, section_name,
         end
     end
 
-    local aliases = quickfort_list.get_aliases(blueprint_name)
-    local ctx = init_ctx(command, blueprint_name, cursor, aliases, dry_run,
-                         preserve_engravings)
+    local ctx = init_ctx{
+        command=command,
+        blueprint_name=blueprint_name,
+        cursor=cursor,
+        aliases=quickfort_list.get_aliases(blueprint_name),
+        dry_run=dry_run,
+        preserve_engravings=preserve_engravings}
+
     do_command_section(ctx, section_name, modifiers)
     finish_command(ctx, section_name, quiet)
     if command == 'run' then
@@ -247,4 +280,13 @@ function do_command(args)
                             preserve_engravings, modifiers)
             end
         end)
+end
+
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        make_ctx_base=make_ctx_base,
+        init_ctx=init_ctx,
+        do_command_raw=do_command_raw,
+        do_command=do_command,
+    }
 end
