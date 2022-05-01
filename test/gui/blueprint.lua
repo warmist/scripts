@@ -754,8 +754,8 @@ function test.start_pos_overlay()
     send_keys('LEAVESCREEN', 'LEAVESCREEN') -- cancel selection and leave UI
 end
 
-function test.start_pos_out_of_bounds()
-    local mock_print, mock_run = mock.func(), function() error() end
+function test.start_pos_out_of_selected_area()
+    local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
     mock.patch({
             {b, 'print', mock_print},
             {blueprint, 'run', mock_run},
@@ -767,9 +767,10 @@ function test.start_pos_out_of_bounds()
             -- select start pos and set the blueprint range somewhere else
             send_keys('SELECT', 'SELECT', 'CURSOR_RIGHT', 'SELECT',
                       'CURSOR_DOWN', 'SELECT')
-            expect.eq(0, mock_print.call_count)
-            send_keys('SELECT') -- dismiss the error messagebox
-            send_keys('LEAVESCREEN', 'LEAVESCREEN') -- cancel and leave UI
+            expect.eq(1, mock_print.call_count)
+            expect.str_find('%-%-playback%-start=1,2',
+                            mock_print.call_args[1][1])
+            send_keys('SELECT') -- dismiss the success messagebox
             delay_until(view:callback('isDismissed'))
         end)
 end
