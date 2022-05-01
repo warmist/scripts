@@ -364,7 +364,8 @@ args.commands = argparse.stringList(action)
 
 local action_fn = action_switch[args.commands[1]]
 
-if action_fn ~= print_short_help and not dfhack.isMapLoaded() then
+if (action == 'run' or action == 'orders' or action == 'undo') and
+        not dfhack.isMapLoaded() then
     qerror('quickfort needs a fortress map to be loaded.')
 end
 
