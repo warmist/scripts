@@ -14,6 +14,14 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+# 0.47.05-r5
+
+## New Scripts
 - `devel/eventful-client`: useful for testing eventful events
 
 ## Fixes
