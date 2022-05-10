@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 - `gui/petitions`: shows list of fort's petitions
+- `modtools/fire-rate`: allows users to adjust the rate of fire for ranged attacks
 
 ## Fixes
 
