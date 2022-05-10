@@ -22,6 +22,9 @@ that repo.
 
 ## Misc Improvements
 
+## Removed
+- `devel/unforbidall`: please use `unforbid` instead. You can silence the output with ``unforbid all --quiet``
+
 # 0.47.05-r5
 
 ## New Scripts
