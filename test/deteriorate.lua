@@ -235,7 +235,7 @@ end
 function test.wear_food_now()
     dfhack.run_script('deteriorate', 'now', '-tfood')
     expect.eq(1, mock_print.call_count)
-    expect.str_find('Immediately deteriorating', mock_print.call_args[1][1])
+    expect.str_find('Deteriorated', mock_print.call_args[1][1])
     expect.true_(mock_food_valid_not_worn.flags.garbage_collect)
     expect.true_(mock_food_valid_newly_worn.flags.garbage_collect)
     expect.true_(mock_food_valid_worn.flags.garbage_collect)
