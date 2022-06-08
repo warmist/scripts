@@ -4,7 +4,7 @@
 pop-control
 ===========
 Controls the various population caps as well as use of max-wave and hermit persistently per fortress
-Intended to be placed within `onMapLoad.init` as `pop-control on-load`
+Intended to be placed within ``onMapLoad.init`` as ``pop-control on-load``
 Available arguments:
 
 - ``on-load`` automatically checks for settings for this site and prompts them to be entered if not present
