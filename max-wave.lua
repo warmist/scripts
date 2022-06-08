@@ -1,4 +1,5 @@
 --Dynamically limit the next immigration wave
+--By Loci, modified by Fleeting Frames
 --[[=begin
 
 max-wave.lua
