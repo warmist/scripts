@@ -1,8 +1,16 @@
--- pop-control
--- by Tachytaenius
 -- Script to control the various population caps as well as use of max-wave and hermit persistently per fortress
--- Put "pop-control on-load" in your onMapLoad.init. This will prompt settings on embark and use them every time you reload the fortress save
--- If you ever want to change the settings for a fortress run "pop-control reenter-settings"
+-- by Tachytaenius
+--[====[
+pop-control
+===========
+Controls the various population caps as well as use of max-wave and hermit persistently per fortress
+Intended to be placed within `onMapLoad.init` as `pop-control on-load`
+Available arguments:
+
+- ``on-load`` automatically checks for settings for this site and prompts them to be entered if not present
+
+- ``reenter-settings`` revise settings for this site
+]====]
 
 local script = require("gui.script")
 local persistTable = require("persist-table")
