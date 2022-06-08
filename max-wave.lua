@@ -2,8 +2,8 @@
 --By Loci, modified by Fleeting Frames
 --[====[
 
-max-wave.lua
-============
+max-wave
+========
 Set the population cap to the lesser of current_pop + wave_size or max_pop.
 Use with the `repeat` command to set a rolling immigration limit.
 
