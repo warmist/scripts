@@ -1,6 +1,6 @@
 --Dynamically limit the next immigration wave
 --By Loci, modified by Fleeting Frames
---[[=begin
+--[====[
 
 max-wave.lua
 ============
@@ -17,7 +17,7 @@ The first example is abstract and only sets the population cap once;
 the second will update the population cap monthly, allowing a
 maximum of 10 immigrants per wave, up to a total population of 200.
 
-=end]]
+]====]
 
 local args = {...}
 
