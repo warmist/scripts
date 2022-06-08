@@ -10,7 +10,7 @@ Use with the `repeat` command to set a rolling immigration limit.
 Usage examples::
 
     max-wave wave_size (max_pop)
-   
+
     repeat -time 1 -timeUnits months -command [ max-wave 10 200 ]
 
 The first example is abstract and only sets the population cap once;
@@ -32,9 +32,9 @@ end
 
 --One would think the game would track this value somewhere...
 for k,v in ipairs(df.global.world.units.active) do
-  if dfhack.units.isCitizen(v) or 
-  (dfhack.units.isOwnCiv(v) and 
-   dfhack.units.isAlive(v) and 
+  if dfhack.units.isCitizen(v) or
+  (dfhack.units.isOwnCiv(v) and
+   dfhack.units.isAlive(v) and
    df.global.world.raws.creatures.all[v.race].caste[v.caste].flags.CAN_LEARN and
    not (dfhack.units.isMerchant(v) or dfhack.units.isForest(v) or v.flags1.diplomat or v.flags2.visitor)
    )
@@ -44,7 +44,7 @@ for k,v in ipairs(df.global.world.units.active) do
  end
 
 local new_limit = current_pop + wave_size
- 
+
 if max_pop and new_limit > max_pop then new_limit = max_pop end
 
 df.global.d_init.population_cap = new_limit
