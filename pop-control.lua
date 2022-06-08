@@ -1,8 +1,8 @@
 -- pop-control
 -- by Tachytaenius
 -- Script to control the various population caps as well as use of max-wave and hermit persistently per fortress
--- Put "pop-control onLoad" in your onMapLoad.init. This will prompt settings on embark and use them every time you reload the fortress save
--- If you ever want to change the settings for a fortress run "pop-control reenterSettings"
+-- Put "pop-control on-load" in your onMapLoad.init. This will prompt settings on embark and use them every time you reload the fortress save
+-- If you ever want to change the settings for a fortress run "pop-control reenter-settings"
 
 local script = require("gui.script")
 local persistTable = require("persist-table")
@@ -32,35 +32,34 @@ local function popControl(forceEnterSettings)
 			siteInfo = persistTable.GlobalTable.fortPopInfo[siteId]
 			if script.showYesNoPrompt("Hermit", "Hermit mode?") then
 				siteInfo.hermit = "true"
-				return
 			else
 				siteInfo.hermit = "false"
+				local _ -- ignore
+				-- migrant cap
+				local migrantCapInput
+				while not tonumber(migrantCapInput) do
+					_, migrantCapInput = script.showInputPrompt("Migrant cap", "Maximum migrants per wave?")
+				end
+				siteInfo.migrantCap = migrantCapInput
+				-- pop cap
+				local popCapInput
+				while not tonumber(popCapInput) or popCapInput == "" do
+					_, popCapInput = script.showInputPrompt("Population cap", "Maximum population? Settings population cap: " .. originalPopCap .. "\n(assuming wasn't changed before first call of this script)")
+				end
+				siteInfo.popCap = tostring(tonumber(popCapInput) or originalPopCap)
+				-- strict pop cap
+				local strictPopCapInput
+				while not tonumber(strictPopCapInput) or strictPopCapInput == "" do
+					_, strictPopCapInput = script.showInputPrompt("Strict population cap", "Strict maximum population? Settings strict population cap " .. originalStrictPopCap .. "\n(assuming wasn't changed before first call of this script)")
+				end
+				siteInfo.strictPopCap = tostring(tonumber(strictPopCapInput) or originalStrictPopCap)
+				-- visitor cap
+				local visitorCapInput
+				while not tonumber(visitorCapInput) or visitorCapInput == "" do
+					_, visitorCapInput = script.showInputPrompt("Visitors", "Vistitor cap? Settings visitor cap " .. originalVisitorCap .. "\n(assuming wasn't changed before first call of this script)")
+				end
+				siteInfo.visitorCap = tostring(tonumber(visitorCap) or originalVisitorCap)
 			end
-			local _ -- ignore
-			-- migrant cap
-			local migrantCapInput
-			while not tonumber(migrantCapInput) do
-				_, migrantCapInput = script.showInputPrompt("Migrant cap", "Maximum migrants per wave?")
-			end
-			siteInfo.migrantCap = migrantCapInput
-			-- pop cap
-			local popCapInput
-			while not tonumber(popCapInput) or popCapInput == "" do
-				_, popCapInput = script.showInputPrompt("Population cap", "Maximum population? Settings population cap: " .. originalPopCap .. "\n(assuming wasn't changed before first call of this script)")
-			end
-			siteInfo.popCap = tostring(tonumber(popCapInput) or originalPopCap)
-			-- strict pop cap
-			local strictPopCapInput
-			while not tonumber(strictPopCapInput) or strictPopCapInput == "" do
-				_, strictPopCapInput = script.showInputPrompt("Strict population cap", "Strict maximum population? Settings strict population cap " .. originalStrictPopCap .. "\n(assuming wasn't changed before first call of this script)")
-			end
-			siteInfo.strictPopCap = tostring(tonumber(strictPopCapInput) or originalStrictPopCap)
-			-- visitor cap
-			local visitorCapInput
-			while not tonumber(visitorCapInput) or visitorCapInput == "" do
-				_, visitorCapInput = script.showInputPrompt("Visitors", "Vistitor cap? Settings visitor cap " .. originalVisitorCap .. "\n(assuming wasn't changed before first call of this script)")
-			end
-			siteInfo.visitorCap = tostring(tonumber(visitorCap) or originalVisitorCap)
 		end
 		-- use settings
 		if siteInfo.hermit == "true" then
@@ -76,12 +75,12 @@ local function popControl(forceEnterSettings)
 end
 
 local function help()
-    print("syntax: pop-control [reenterSettings|onLoad]")
+    print("syntax: pop-control [reenter-settings|on-load]")
 end
 
 local action_switch = {
-	reenterSettings = function() popControl(true) end,
-	onLoad = function() popControl(false) end
+	["reenter-settings"] = function() popControl(true) end,
+	["on-load"] = function() popControl(false) end
 }
 setmetatable(action_switch, {__index = function() return help end})
 
