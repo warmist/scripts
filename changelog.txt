@@ -15,6 +15,8 @@ that repo.
 
 ## New Scripts
 
+- `max-wave`: dynamically limit the next immigration wave, can be set to repeat
+- `pop-control`: persistent per-fortress population cap management, also persistently handles use of `hermit` and `max-wave`
 - `assign-minecarts`: assign minecarts to hauling routes that don't have one
 - `deteriorate`: combines, replaces, and extends previous `deteriorateclothes`, `deterioratecorpses`, and `deterioratefood` scripts.
 - `gui/petitions`: shows list of fort's petitions
