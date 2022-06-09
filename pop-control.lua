@@ -31,13 +31,13 @@ local function popControl(forceEnterSettings)
             return
         end
     end
-    
+
     if not persistTable.GlobalTable.fortPopInfo then
         persistTable.GlobalTable.fortPopInfo = {}
     end
-    
+
     local siteId = df.global.ui.site_id
-    
+
     script.start(function()
         local siteInfo = persistTable.GlobalTable.fortPopInfo[siteId]
         if not siteInfo or forceEnterSettings then
