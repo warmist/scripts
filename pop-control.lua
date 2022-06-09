@@ -20,17 +20,24 @@ originalPopCap = originalPopCap or df.global.d_init.population_cap
 originalStrictPopCap = originalStrictPopCap or df.global.d_init.strict_population_cap
 originalVisitorCap = originalVisitorCap or df.global.d_init.visitor_cap
 
-if df.global.gamemode ~= 0 then
-    return -- not fort mode!
-end
-
-if not persistTable.GlobalTable.fortPopInfo then
-    persistTable.GlobalTable.fortPopInfo = {}
-end
-
-local siteId = df.global.ui.site_id
-
 local function popControl(forceEnterSettings)
+    if df.global.gamemode ~= 0 then
+        if forceEnterSettings then
+            -- did reenter-settings, show an error
+            qerror("Not in fort mode")
+            return
+        else
+            -- silent automatic behaviour
+            return
+        end
+    end
+    
+    if not persistTable.GlobalTable.fortPopInfo then
+        persistTable.GlobalTable.fortPopInfo = {}
+    end
+    
+    local siteId = df.global.ui.site_id
+    
     script.start(function()
         local siteInfo = persistTable.GlobalTable.fortPopInfo[siteId]
         if not siteInfo or forceEnterSettings then
