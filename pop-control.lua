@@ -21,7 +21,7 @@ originalStrictPopCap = originalStrictPopCap or df.global.d_init.strict_populatio
 originalVisitorCap = originalVisitorCap or df.global.d_init.visitor_cap
 
 local function popControl(forceEnterSettings)
-    if df.global.gamemode ~= 0 then
+    if df.global.gamemode ~= df.game_mode.DWARF then
         if forceEnterSettings then
             -- did reenter-settings, show an error
             qerror("Not in fort mode")
