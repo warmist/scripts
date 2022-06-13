@@ -12,6 +12,12 @@ Usage:
 
 ]====]
 
+--[[
+Possible future improvements:
+* add option on Vegetables/fruit/leaves tab to show all processable plants and growths, not just cookable or brewable ones
+* add column settings sub-window for selecting which columns are visible
+--]]
+
 gui = require 'gui'
 utils = require 'utils'
 gps = df.global.gps
@@ -29,16 +35,14 @@ local COLUMNS = {
         emptyValueLeftPadding = 1,
         activeOnPages = { 'VegetablesFruitLeaves' }
     },
-    --[[
-    -- Hide this column because the only plant with BAG_ITEM reaction is Quarry Bush, which is neither cookable nor brewable so it never appears in the Kitchen screen
     {
         label = "ToBag",
         maxValueLength = 5,  -- actually 6 but rarely appears
         minValueLeftPadding = 0,
         emptyValueLeftPadding = 0,
-        activeOnPages = { 'VegetablesFruitLeaves' }
+        activeOnPages = { 'VegetablesFruitLeaves' },
+        hidden = true  -- This column is hidden because the only plant with BAG_ITEM reaction is Quarry Bush, which is neither cookable nor brewable so it never appears in the Kitchen screen
     },
-    --]]
     {
         label = "Thread",
         maxValueLength = 6,
@@ -92,8 +96,7 @@ function COLUMNS_BY_LABEL.Extract.getColumnValue(item_type, material, plant_raw)
     return false
 end
 
---[[
--- Hide this column because the only plant with BAG_ITEM reaction is Quarry Bush, which is neither cookable nor brewable so it never appears in the Kitchen screen
+-- This column is hidden because the only plant with BAG_ITEM reaction is Quarry Bush, which is neither cookable nor brewable so it never appears in the Kitchen screen
 function COLUMNS_BY_LABEL.ToBag.getColumnValue(item_type, material, plant_raw)
     if (item_type == df.item_type.PLANT) then
         local reaction_product = material.reaction_product
@@ -120,7 +123,6 @@ function COLUMNS_BY_LABEL.ToBag.getColumnValue(item_type, material, plant_raw)
     end
     return false
 end
---]]
 
 function COLUMNS_BY_LABEL.Thread.getColumnValue(item_type, material, plant_raw)
     if (item_type == df.item_type.PLANT and plant_raw.flags.THREAD) then
@@ -255,7 +257,7 @@ function kitchen_overlay:onRender()
 
         local visibleColumns = {}
         for _, column in ipairs(COLUMNS) do
-            if (column.activeOnPages[pageName]) then
+            if (not column.hidden) and column.activeOnPages[pageName] then
                 table.insert(visibleColumns, column)
             end
         end
