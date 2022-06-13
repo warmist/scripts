@@ -371,14 +371,12 @@ function kitchen_overlay:onInput(keys)
     end
 end
 
-focus_stack = focus_stack or {'', ''}
-
 dfhack.onStateChange['gui/kitchen-info'] = function(eventCode)
     if (eventCode == SC_VIEWSCREEN_CHANGED) then
-        table.insert(focus_stack, dfhack.gui.getCurFocus())
-        table.remove(focus_stack, 1)
+        local curFocus  = dfhack.gui.getCurFocus()
+        local curScreen = dfhack.gui.getCurViewscreen()
 
-        if enabled and focus_stack[2] == 'kitchenpref' and focus_stack[1] ~= 'dfhack/lua/kitchen_overlay' then
+        if enabled and curFocus == 'kitchenpref' and (not dfhack.screen.isDismissed(curScreen)) then
             kitchen_overlay():show()
         end
     end
