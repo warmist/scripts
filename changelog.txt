@@ -17,6 +17,7 @@ that repo.
 
 - `assign-minecarts`: assign minecarts to hauling routes that don't have one
 - `deteriorate`: combines, replaces, and extends previous `deteriorateclothes`, `deterioratecorpses`, and `deterioratefood` scripts.
+- `gui/kitchen-info`: adds more info to the Kitchen screen
 - `gui/petitions`: shows list of fort's petitions
 - `gui/quantum`: interactive tool for creating quantum stockpiles
 - `gui/quickfort`: interactive previews and transformations of quickfort blueprints
