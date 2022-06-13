@@ -335,19 +335,17 @@ function kitchen_overlay:onRender()
     end
 
     -- Cursor
-    if (numItems >= 1) then
-        local cursorY = kitchen.cursor - firstVisibleIndex
+    local cursorY = kitchen.cursor - firstVisibleIndex
 
-        if (cursorY < numDisplayedItems) then
-            local cursor_p = gui.Painter.new_xy(0, 6 + cursorY, gps.dimx - 1, 6 + cursorY)
+    if (numDisplayedItems >= 1 and cursorY < numDisplayedItems) then
+        local cursor_p = gui.Painter.new_xy(0, 6 + cursorY, gps.dimx - 1, 6 + cursorY)
 
-            cursor_p:pen(COLOR_LIGHTGREEN)
-            --cursor_p:seek(1, 0):char('>')
-            cursor_p:seek(permissionsStart, 0):char('[')
-            cursor_p:seek(permissionsEnd, 0):char(']')
-            if show_processing then
-                cursor_p:seek(gps.dimx - 2, 0):char('<')
-            end
+        cursor_p:pen(COLOR_LIGHTGREEN)
+        --cursor_p:seek(1, 0):char('>')
+        cursor_p:seek(permissionsStart, 0):char('[')
+        cursor_p:seek(permissionsEnd, 0):char(']')
+        if show_processing then
+            cursor_p:seek(gps.dimx - 2, 0):char('<')
         end
     end
 
