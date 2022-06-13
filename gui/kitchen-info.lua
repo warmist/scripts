@@ -3,22 +3,20 @@
 --[====[
 
 gui/kitchen-info
-===================
+================
 Adds more info to the Kitchen screen.
 
-Usage::
-
+Usage:
     gui/kitchen-info enable|disable|help
     enable|disable gui/kitchen-info
 
 ]====]
 
 gui = require 'gui'
-dialogs = require 'gui.dialogs'
+utils = require 'utils'
 gps = df.global.gps
-world = df.global.world
 
-local kitchen_overlay = defclass(kitchen_overlay, gui.Screen)
+kitchen_overlay = defclass(kitchen_overlay, gui.Screen)
 kitchen_overlay.focus_path = 'kitchen_overlay'
 
 local show_processing = true
@@ -74,17 +72,9 @@ local COLUMNS = {
 
 local COLUMNS_BY_LABEL = {}
 
-local function ArrayToSet (array)
-    local set = {}
-    for _, value in ipairs (array) do
-        set[value] = true
-    end
-    return set
-end
-
 for _, column in ipairs(COLUMNS) do
-    column.activeOnPages = ArrayToSet(column.activeOnPages)
-    column.minLength = math.max(column.label:len(), column.minValueLeftPadding + column.maxValueLength)
+    column.activeOnPages = utils.invert(column.activeOnPages)
+    column.minLength = math.max(#column.label, column.minValueLeftPadding + column.maxValueLength)
 
     COLUMNS_BY_LABEL[column.label] = column
 end
@@ -178,7 +168,7 @@ function COLUMNS_BY_LABEL.EatRaw.getColumnValue(item_type, material, plant_raw)
 end
 
 local function findStringInLine(x1, x2, y, str)
-    local length = str:len()
+    local length = #str
     local firstByte = str:byte(1)
     local xEnd = x2 - (length - 1)
     for x = x1, xEnd do
@@ -198,7 +188,7 @@ local function findStringInLine(x1, x2, y, str)
     return -1, -1
 end
 
-local function drawNumber(x, kitchen, firstVisibleIndex, numDisplayedItems)
+local function drawNumberColumn(x, kitchen, firstVisibleIndex, numDisplayedItems)
     dfhack.screen.paintString({ fg = COLOR_WHITE }, x, 4, "Number")
 
     local p = gui.Painter.new_xy(x, 6, x + 10 - 1, 6 + numDisplayedItems - 1)
@@ -213,7 +203,7 @@ local function drawNumber(x, kitchen, firstVisibleIndex, numDisplayedItems)
     end
 end
 
-local function drawPermissions(x, kitchen, firstVisibleIndex, numDisplayedItems)
+local function drawPermissionsColumn(x, kitchen, firstVisibleIndex, numDisplayedItems)
     dfhack.screen.paintString({ fg = COLOR_WHITE }, x, 4, "Permissions")
 
     local p = gui.Painter.new_xy(x, 6, x + string.len("Permissions") - 1, 6 + numDisplayedItems - 1)
@@ -278,7 +268,7 @@ function kitchen_overlay:onRender()
 
             for i, column in ipairs(visibleColumns) do
                 if (prevColumn) then
-                    currentOffset = currentOffset + math.max(prevColumn.label:len(), prevColumn.minValueLeftPadding + prevColumn.maxValueLength - column.minValueLeftPadding) + 2
+                    currentOffset = currentOffset + math.max(#prevColumn.label, prevColumn.minValueLeftPadding + prevColumn.maxValueLength - column.minValueLeftPadding) + 2
                 end
 
                 columnOffset[i] = currentOffset
@@ -300,10 +290,10 @@ function kitchen_overlay:onRender()
                     numberStart = permissionsStart - 9
 
                     dfhack.screen.fillRect(gui.CLEAR_PEN, numberStart, 4, origNumberStart + 10 - 1, 6 + numDisplayedItems - 1)
-                    drawNumber(numberStart, kitchen, firstVisibleIndex, numDisplayedItems)
+                    drawNumberColumn(numberStart, kitchen, firstVisibleIndex, numDisplayedItems)
                 end
 
-                drawPermissions(permissionsStart, kitchen, firstVisibleIndex, numDisplayedItems)
+                drawPermissionsColumn(permissionsStart, kitchen, firstVisibleIndex, numDisplayedItems)
             end
 
             -- Column labels
@@ -373,9 +363,9 @@ function kitchen_overlay:onInput(keys)
         show_processing = not show_processing
     end
 
-    local parent = self._native.parent
-    gui.simulateInput(parent, keys)
+    self:sendInputToParent(keys)
 
+    local parent = self._native.parent
     if dfhack.screen.isDismissed(parent) then
         self:dismiss()
     end
@@ -407,8 +397,5 @@ if args[1] == 'enable' then
 elseif args[1] == 'disable' then
     enabled = false
 else
-    print([[Usage:
-    gui/kitchen-info enable|disable|help
-    enable|disable gui/kitchen-info
-    ]])
+    print(dfhack.script_help() .. '\n')
 end
