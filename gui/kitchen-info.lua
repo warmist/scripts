@@ -23,7 +23,9 @@ utils = require 'utils'
 gps = df.global.gps
 
 kitchen_overlay = defclass(kitchen_overlay, gui.Screen)
-kitchen_overlay.focus_path = 'kitchen_overlay'
+kitchen_overlay.ATTRS {
+    focus_path = 'kitchen_overlay'
+}
 
 local show_processing = true
 
