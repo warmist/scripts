@@ -371,12 +371,12 @@ function kitchen_overlay:onInput(keys)
     end
 end
 
-dfhack.onStateChange['gui/kitchen-info'] = function(eventCode)
+local stateChangeHandler = function(eventCode)
     if (eventCode == SC_VIEWSCREEN_CHANGED) then
         local curFocus  = dfhack.gui.getCurFocus()
         local curScreen = dfhack.gui.getCurViewscreen()
 
-        if enabled and curFocus == 'kitchenpref' and (not dfhack.screen.isDismissed(curScreen)) then
+        if curFocus == 'kitchenpref' and (not dfhack.screen.isDismissed(curScreen)) then
             kitchen_overlay():show()
         end
     end
@@ -389,11 +389,14 @@ end
 
 if args[1] == 'enable' then
     enabled = true
+    dfhack.onStateChange['gui/kitchen-info'] = stateChangeHandler
+
     if dfhack.gui.getCurFocus() == 'kitchenpref' then
         kitchen_overlay():show()
     end
 elseif args[1] == 'disable' then
-    enabled = false
+    enabled = false  -- dismissed in next onRender()
+    dfhack.onStateChange['gui/kitchen-info'] = nil
 else
     print(dfhack.script_help() .. '\n')
 end
