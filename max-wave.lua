@@ -4,7 +4,7 @@
 
 max-wave
 ========
-Set the population cap to the lesser of current_pop + wave_size or max_pop.
+Limit the number of migrants that can arrive in the next wave.
 Use with the `repeat` command to set a rolling immigration limit.
 
 Usage examples::
