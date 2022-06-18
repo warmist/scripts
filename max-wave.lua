@@ -16,8 +16,8 @@ Examples::
     max-wave 5
     repeat -time 1 -timeUnits months -command [ max-wave 10 200 ]
 
-The first example is abstract and only sets the population cap once;
-the second will update the population cap monthly, allowing a
+The first example ensures the next migration wave has 5 or fewer
+dwarves. The second example ensures all future seasons have a
 maximum of 10 immigrants per wave, up to a total population of 200.
 
 ]====]
