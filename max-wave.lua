@@ -7,10 +7,13 @@ max-wave
 Limit the number of migrants that can arrive in the next wave.
 Use with the `repeat` command to set a rolling immigration limit.
 
-Usage examples::
+Syntax::
 
-    max-wave wave_size (max_pop)
+    max-wave <wave_size> [max_pop]
 
+Examples::
+
+    max-wave 5
     repeat -time 1 -timeUnits months -command [ max-wave 10 200 ]
 
 The first example is abstract and only sets the population cap once;
