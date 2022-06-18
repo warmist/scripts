@@ -171,12 +171,39 @@ function COLUMNS_BY_LABEL.EatRaw.getColumnValue(item_type, material, plant_raw)
     return false
 end
 
+-- In TrueType mode the string can be found as a series of TrueType tiles of the same length as the expected string
+-- Column labels "Ingredient Type", "Number" and "Permissions" all have different lengths, which allows this method to find distinct positions of them
+local function findTrueTypeSeriesInLine(x1, x2, y, length)
+    local seriesStartX = x1
+    local seriesLength = 1  -- assumes first tile is TrueType
+    for x = x1 + 1, x2 do
+        if (dfhack.screen.readTile(x, y) == nil) then  -- series started or continues
+            if (seriesLength == 0) then  -- series started
+                seriesStartX = x
+            end
+            seriesLength = seriesLength + 1
+        elseif (seriesLength == length) then  -- series of expected length ended
+            break
+        else  -- series of other length ended, reset counter for next series
+            seriesLength = 0
+        end
+    end
+    if (seriesLength == length) then  -- recheck the length of the series at the end, in case the loop ended normally, not because of break
+        return seriesStartX, seriesStartX + length - 1
+    end
+    return -1, -1
+end
+
 local function findStringInLine(x1, x2, y, str)
     local length = #str
     local firstByte = str:byte(1)
     local xEnd = x2 - (length - 1)
     for x = x1, xEnd do
-        if (dfhack.screen.readTile(x, y).ch == firstByte) then
+        local tile = dfhack.screen.readTile(x, y)
+
+        if (tile == nil) then  -- TrueType text detected
+            return findTrueTypeSeriesInLine(x, x2, y, length)
+        elseif (tile.ch == firstByte) then
             local matches = true
             for i = 2, length do
                 if (dfhack.screen.readTile(x + i - 1, y).ch ~= str:byte(i)) then
