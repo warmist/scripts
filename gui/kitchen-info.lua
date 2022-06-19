@@ -206,7 +206,9 @@ local function findStringInLine(x1, x2, y, str)
         elseif (tile.ch == firstByte) then
             local matches = true
             for i = 2, length do
-                if (dfhack.screen.readTile(x + i - 1, y).ch ~= str:byte(i)) then
+                tile = dfhack.screen.readTile(x + i - 1, y)
+
+                if (not tile) or (tile.ch ~= str:byte(i)) then
                     matches = false
                     break
                 end
