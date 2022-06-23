@@ -221,6 +221,14 @@ local function findStringInLine(x1, x2, y, str)
     return -1, -1
 end
 
+local function pluginCompatibility_search_isInputActive()
+    return false  -- FIXME: Implement when API is available
+end
+
+local function pluginCompatibility_tweak_kitchen_prefs_color_isEnabled()
+    return false  -- FIXME: Implement when API is available
+end
+
 local function drawNumberColumn(x, kitchen, firstVisibleIndex, numDisplayedItems)
     dfhack.screen.paintString({ fg = COLOR_WHITE }, x, 4, "Number")
 
@@ -243,12 +251,14 @@ local function drawPermissionsColumn(x, kitchen, firstVisibleIndex, numDisplayed
     local possible  = kitchen.possible[kitchen.page]
     local forbidden = kitchen.forbidden[kitchen.page]
 
+    local unforbiddenColor = pluginCompatibility_tweak_kitchen_prefs_color_isEnabled() and COLOR_LIGHTGREEN or COLOR_LIGHTBLUE
+
     for i = 0, numDisplayedItems - 1 do
         local index = firstVisibleIndex + i
 
         p:seek(1, i)
         if (possible[index].Cook) then
-            local color = forbidden[index].Cook and COLOR_LIGHTRED or COLOR_LIGHTBLUE
+            local color = forbidden[index].Cook and COLOR_LIGHTRED or unforbiddenColor
             p:pen(color):string("Cook")
         else
             p:pen(COLOR_DARKGREY):string("----")
@@ -256,7 +266,8 @@ local function drawPermissionsColumn(x, kitchen, firstVisibleIndex, numDisplayed
 
         p:seek(6, i)
         if (possible[index].Brew) then
-            p:pen(forbidden[index].Brew and COLOR_LIGHTRED or COLOR_LIGHTBLUE):string("Brew")
+            local color = forbidden[index].Brew and COLOR_LIGHTRED or unforbiddenColor
+            p:pen(color):string("Brew")
         else
             p:pen(COLOR_DARKGREY):string("----")
         end
@@ -390,8 +401,10 @@ function kitchen_overlay:onRender()
 end
 
 function kitchen_overlay:onInput(keys)
-    if keys.CUSTOM_P then
-        show_processing = not show_processing
+    if not pluginCompatibility_search_isInputActive() then
+        if keys.CUSTOM_P then
+            show_processing = not show_processing
+        end
     end
 
     self:sendInputToParent(keys)
