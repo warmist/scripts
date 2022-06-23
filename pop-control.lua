@@ -9,7 +9,9 @@ Available arguments:
 
 - ``on-load`` automatically checks for settings for this site and prompts them to be entered if not present
 
-- ``reenter-settings`` revise settings for this site
+- ``reenter-settings`` lets you revise settings for this site
+
+- ``view-settings`` shows you the current settings for this site
 ]====]
 
 local script = require("gui.script")
@@ -89,13 +91,32 @@ local function popControl(forceEnterSettings)
     end)
 end
 
+local function viewSettings()
+    local siteId = df.global.ui.site_id
+    if not persistTable.GlobalTable.fortPopInfo or not persistTable.GlobalTable.fortPopInfo[siteId] then
+        print("Could not find site information")
+        return
+    end
+    local siteInfo = persistTable.GlobalTable.fortPopInfo[siteId]
+    if siteInfo.hermit == "true" then
+       print("Hermit: true")
+       return
+    end
+    print("Hermit: false")
+    print("Migrant cap: " .. siteInfo.migrantCap)
+    print("Population cap: " .. siteInfo.popCap)
+    print("Strict population cap: " .. siteInfo.strictPopCap)
+    print("Visitor cap: " .. siteInfo.visitorCap)
+end
+
 local function help()
-    print("syntax: pop-control [reenter-settings|on-load]")
+    print("syntax: pop-control [on-load|reenter-settings|view-settings]")
 end
 
 local action_switch = {
+    ["on-load"] = function() popControl(false) end,
     ["reenter-settings"] = function() popControl(true) end,
-    ["on-load"] = function() popControl(false) end
+    ["view-settings"] = function() viewSettings() end
 }
 setmetatable(action_switch, {__index = function() return help end})
 
