@@ -17,7 +17,6 @@ that repo.
 
 - `max-wave`: dynamically limit the next immigration wave, can be set to repeat
 - `pop-control`: persistent per fortress population cap, `hermit`, and `max-wave` management
-- `assign-minecarts`: assign minecarts to hauling routes that don't have one
 
 ## Fixes
 
