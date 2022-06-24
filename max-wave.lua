@@ -4,7 +4,10 @@
 
 max-wave
 ========
-Limit the number of migrants that can arrive in the next wave by overriding the population cap value in data/init/d_init.txt (not safe with gui/settings-manager)
+Limit the number of migrants that can arrive in the next wave by
+overriding the population cap value in data/init/d_init.txt.
+Not safe with gui/settings-manager as it will commit temporary
+population cap changes permanently to file.
 Use with the `repeat` command to set a rolling immigration limit.
 
 Syntax::
@@ -29,6 +32,7 @@ local max_pop = tonumber(args[2])
 local current_pop = 0
 
 if not wave_size then
+  print(dfhack.script_help())
   qerror('max-wave: wave_size required')
 end
 

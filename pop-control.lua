@@ -3,15 +3,18 @@
 --[====[
 pop-control
 ===========
-Controls the various population caps as well as use of max-wave and hermit persistently per fortress
-Intended to be placed within ``onMapLoad.init`` as ``pop-control on-load``
+Controls hermit and the various population caps per-fortress.
+Not safe with gui/settings-manager as it will commit temporary
+population cap changes permanently to file.
+Intended to be placed within ``onMapLoad.init`` as ``pop-control on-load``.
 Available arguments:
 
-- ``on-load`` automatically checks for settings for this site and prompts them to be entered if not present
+- ``on-load`` automatically checks for settings for this site and
+  prompts them to be entered if not present.
 
-- ``reenter-settings`` lets you revise settings for this site
+- ``reenter-settings`` lets you revise settings for this site.
 
-- ``view-settings`` shows you the current settings for this site
+- ``view-settings`` shows you the current settings for this site.
 ]====]
 
 local script = require("gui.script")
