@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 
+- `gui/workorder-details`: adjusts work orders' input item, material, traits
 - `warn-stealers`: warn when creatures that may steal your food, drinks, or items become visible
 
 ## Fixes
