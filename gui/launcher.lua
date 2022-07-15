@@ -63,12 +63,33 @@ end
 -- AutocompletePanel
 --
 AutocompletePanel = defclass(AutocompletePanel, widgets.Panel)
+AutocompletePanel.ATTRS{
+    on_tab=DEFAULT_NIL,
+    on_tab2=DEFAULT_NIL,
+}
 
 function AutocompletePanel:init()
     self:addviews{
+        widgets.Label{
+            frame={l=0, t=0},
+            text='Autocomplete'
+        },
+        widgets.HotkeyLabel{
+            frame={l=1, t=1},
+            key='CHANGETAB',
+            key_sep='/',
+            label='',
+            on_activate=self.on_tab},
+        widgets.HotkeyLabel{
+            frame={l=5, t=1},
+            key='SEC_CHANGETAB',
+            key_sep='',
+            label='',
+            on_activate=self.on_tab2},
         widgets.List{
             view_id='autocomplete_list',
-            frame={l=0, t=0}}
+            scroll_keys={},
+            frame={l=0, t=3}},
     }
 end
 
@@ -90,29 +111,26 @@ function AutocompletePanel:postUpdateLayout()
     list.page_top = self.saved_page_top
 end
 
-function AutocompletePanel:advance(delta)
-    local list = self.subviews.autocomplete_list
-    list:moveCursor(delta)
-    local idx, option = list:getSelected()
-    return option and option.text or nil
-end
-
 function AutocompletePanel:set_options(options, initially_selected)
     local list = self.subviews.autocomplete_list
     list:setChoices(options, 1)
     if not initially_selected then
-        -- don't highlight any row, and select the first row on next advance
-        list.selected = 0
+        list.cursor_pen = COLOR_CYAN -- no visible highlight
     end
+    self.first_advance = true
 end
 
-function AutocompletePanel:ensure_selection()
+function AutocompletePanel:advance(delta)
     local list = self.subviews.autocomplete_list
-    if list.selected == 0 then
-        list:setSelected(1)
+    list.cursor_pen = COLOR_LIGHTCYAN -- enable highlight
+    if self.first_advance then
+        if delta > 0 then delta = 0 end
+        self.first_advance = false
     end
+    list:moveCursor(delta)
+    local _, option = list:getSelected()
+    return option and option.text or nil
 end
-
 
 ----------------------------------
 -- EditPanel
@@ -120,8 +138,6 @@ end
 EditPanel = defclass(EditPanel, widgets.Panel)
 EditPanel.ATTRS{
     on_change=DEFAULT_NIL,
-    on_tab=DEFAULT_NIL,
-    on_tab2=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
     on_submit2=DEFAULT_NIL
 }
@@ -132,8 +148,14 @@ function EditPanel:init()
 
     self:addviews{
         widgets.EditField{
+            view_id='editfield',
+            frame={l=1, t=1},
+            on_change=self.on_change,
+            on_submit=self.on_submit,
+            on_submit2=self.on_submit2},
+        widgets.EditField{
             view_id='search',
-            frame={l=1, t=0},
+            frame={l=3, t=3},
             key='CUSTOM_ALT_S',
             label_text='history search: ',
             on_change=self:callback('on_search_text'),
@@ -143,33 +165,6 @@ function EditPanel:init()
             on_submit=function()
                 self.subviews.search.text = ''
                 self.on_submit(self.subviews.editfield.text) end},
-        widgets.EditField{
-            view_id='editfield',
-            frame={l=1, t=1},
-            on_change=self.on_change,
-            on_submit=self.on_submit},
-        widgets.HotkeyLabel{
-            frame={l=1, t=3},
-            key='CHANGETAB',
-            key_sep='/',
-            label='',
-            on_activate=self.on_tab},
-        widgets.HotkeyLabel{
-            frame={l=5, t=3},
-            key='SEC_CHANGETAB',
-            label='Autocomplete',
-            on_activate=self.on_tab2},
-        widgets.HotkeyLabel{
-            frame={l=30, t=3},
-            key='SELECT',
-            key_sep='/',
-            label=''},
-        widgets.HotkeyLabel{
-            frame={l=36, t=3},
-            key='SEC_SELECT',
-            label='Run',
-            on_activate=function()
-                self.on_submit2(self.subviews.editfield.text) end},
     }
 end
 
@@ -317,12 +312,11 @@ function LauncherUI:init()
     self:addviews{
         AutocompletePanel{
             view_id='autocomplete',
-            active=false},
+            on_tab=self:callback('do_autocomplete', 1),
+            on_tab2=self:callback('do_autocomplete', -1)},
         EditPanel{
             view_id='edit',
             on_change=self:callback('on_edit_input'),
-            on_tab=self:callback('next_autocomplete'),
-            on_tab2=self:callback('prev_autocomplete'),
             on_submit=self:callback('run_command', true),
             on_submit2=self:callback('run_command', false)},
         HelpPanel{
@@ -373,15 +367,6 @@ function LauncherUI:do_autocomplete(delta)
     self.subviews.edit:set_text(text, self.input_is_worth_saving)
     self:update_help(text)
     self.input_is_worth_saving = false
-end
-
-function LauncherUI:next_autocomplete()
-    self:do_autocomplete(1)
-end
-
-function LauncherUI:prev_autocomplete()
-    self.subviews.autocomplete:ensure_selection()
-    self:do_autocomplete(-1)
 end
 
 local function launch(initial_help)
