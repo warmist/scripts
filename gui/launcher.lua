@@ -5,9 +5,59 @@ local gui = require('gui')
 local helpdb = require('helpdb')
 local widgets = require('gui.widgets')
 
-AUTOCOMPLETE_PANEL_WIDTH = 20
-EDIT_PANEL_HEIGHT = 4
-EDIT_PANEL_ON_TOP = true
+local AUTOCOMPLETE_PANEL_WIDTH = 20
+local EDIT_PANEL_HEIGHT = 4
+local EDIT_PANEL_ON_TOP = true
+
+local HISTORY_SIZE = 5000
+local HISTORY_ID = 'gui/launcher'
+local HISTORY_FILE = 'dfhack-config/launcher.history'
+local CONSOLE_HISTORY_FILE = 'dfhack.history'
+
+-- trims the history down to its maximum size, if needed
+local function trim_history(hist, hist_set)
+    if #hist <= HISTORY_SIZE then return end
+    -- we can only ever go over by one, so no need to loop
+    -- This is O(N) in the HISTORY_SIZE. if we need to make this more efficient,
+    -- we can use a ring buffer.
+    local line = table.remove(hist, 1)
+    -- since all lines are guaranteed to be unique, we can just remove the hash
+    -- from the set instead of, say, decrementing a counter
+    hist_set[line] = nil
+end
+
+-- removes duplicate existing history lines and adds the given line to the front
+local function add_history(hist, hist_set, line)
+    if hist_set[line] then
+        for i,v in ipairs(hist) do
+            if v == line then
+                table.remove(hist, i)
+                break
+            end
+        end
+    end
+    table.insert(hist, line)
+    hist_set[line] = true
+    trim_history(hist, hist_set)
+end
+
+local function init_history()
+    local hist, hist_set = {}, {}
+    -- snarf the console history into our active history. it would be better if
+    -- both the launcher and the console were using the same history object so
+    -- the sharing would be "live", but we can address that later.
+    for line in io.lines(CONSOLE_HISTORY_FILE) do
+        add_history(hist, hist_set, line)
+    end
+    for _,line in ipairs(dfhack.getCommandHistory(HISTORY_ID, HISTORY_FILE)) do
+        add_history(hist, hist_set, line)
+    end
+    return hist, hist_set
+end
+
+if not history then
+    history, history_set = init_history()
+end
 
 ----------------------------------
 -- AutocompletePanel
@@ -77,9 +127,22 @@ EditPanel.ATTRS{
 }
 
 function EditPanel:init()
+    self:reset_history_idx()
     self.stack = {}
 
     self:addviews{
+        widgets.EditField{
+            view_id='search',
+            frame={l=1, t=0},
+            key='CUSTOM_ALT_S',
+            label_text='history search: ',
+            on_change=self:callback('on_search_text'),
+            on_unfocus=function()
+                self:reset_history_idx()
+                self.subviews.editfield:setFocus(true) end,
+            on_submit=function()
+                self.subviews.search.text = ''
+                self.on_submit(self.subviews.editfield.text) end},
         widgets.EditField{
             view_id='editfield',
             frame={l=1, t=1},
@@ -110,19 +173,51 @@ function EditPanel:init()
     }
 end
 
--- set the edit field text and save the current text in the stackin case the
+function EditPanel:reset_history_idx()
+    self.history_idx = #history + 1
+end
+
+-- set the edit field text and save the current text in the stack in case the
 -- user wants it back
-function EditPanel:push_text(text)
+function EditPanel:set_text(text, push)
     local editfield = self.subviews.editfield
-    table.insert(self.stack, editfield.text)
+    if push and #editfield.text > 0 then
+        table.insert(self.stack, editfield.text)
+    end
     editfield.text = text
+    self:reset_history_idx()
 end
 
 function EditPanel:pop_text()
     local editfield = self.subviews.editfield
     local text = self.stack[#self.stack]
-    self.stack[#self.stack] = nil
-    editfield.text = text
+    if text then
+        self.stack[#self.stack] = nil
+        editfield.text = text
+    end
+    return text
+end
+
+function EditPanel:move_history(delta)
+    local history_idx = self.history_idx + delta
+    if history_idx < 1 or history_idx > #history then
+        return
+    end
+    self.history_idx = history_idx
+    local text = history[history_idx]
+    self.subviews.editfield.text = text
+    self.on_change(text)
+end
+
+function EditPanel:on_search_text(search_str)
+    for history_idx = math.min(self.history_idx, #history), 1, -1 do
+        if history[history_idx]:find(search_str, 1, true) then
+            self:move_history(history_idx - self.history_idx)
+            return
+        end
+    end
+    -- no matches. restart at top of history on next search
+    self:reset_history_idx()
 end
 
 function EditPanel:computeFrame(parent_rect)
@@ -132,6 +227,27 @@ function EditPanel:computeFrame(parent_rect)
         y1,
         parent_rect.width - (AUTOCOMPLETE_PANEL_WIDTH + 2),
         EDIT_PANEL_HEIGHT)
+end
+
+function EditPanel:onInput(keys)
+    if EditPanel.super.onInput(self, keys) then return true end
+
+    if keys.STANDARDSCROLL_UP then
+        self:move_history(-1)
+        return true
+    elseif keys.STANDARDSCROLL_DOWN then
+        self:move_history(1)
+        return true
+    elseif keys.CUSTOM_ALT_S then
+        -- search to the next match with the current search string
+        -- only reaches here if the search field is already active
+        self.history_idx = math.max(1, self.history_idx - 1)
+        self:on_search_text(self.subviews.search.text)
+        return true
+    elseif keys.A_CARE_MOVE_W then -- Alt-Left
+        self.on_change(self:pop_text())
+        return true
+    end
 end
 
 ----------------------------------
@@ -147,6 +263,12 @@ function HelpPanel:init()
             view_id='help_label',
             frame={l=0, t=0},
             auto_height=false,
+            scroll_keys={
+                A_MOVE_N_DOWN=-1, -- Ctrl-Up
+                A_MOVE_S_DOWN=1,  -- Ctrl-Down
+                STANDARDSCROLL_PAGEUP='-page',
+                STANDARDSCROLL_PAGEDOWN='+page',
+            },
             text_to_wrap='Welcome to DFHack!'}
     }
 end
@@ -186,6 +308,7 @@ LauncherUI.ATTRS{
     frame_title='DFHack Launcher',
     frame_style = gui.GREY_LINE_FRAME,
     focus_path='launcher',
+    parent_focus=DEFAULT_NIL,
 }
 
 function LauncherUI:init()
@@ -238,31 +361,31 @@ function LauncherUI:update_autocomplete(text, firstword)
 end
 
 function LauncherUI:on_edit_input(text)
+    self.input_is_worth_saving = true
     local firstword = get_first_word(text)
     self:update_help(text, firstword)
     self:update_autocomplete(text, firstword)
 end
 
+function LauncherUI:do_autocomplete(delta)
+    local text = self.subviews.autocomplete:advance(delta)
+    if not text then return end
+    self.subviews.edit:set_text(text, self.input_is_worth_saving)
+    self:update_help(text)
+    self.input_is_worth_saving = false
+end
+
 function LauncherUI:next_autocomplete()
-    local text = self.subviews.autocomplete:advance(1)
-    if text then
-        self.subviews.edit:push_text(text)
-        self:update_help(text)
-    end
+    self:do_autocomplete(1)
 end
 
 function LauncherUI:prev_autocomplete()
-    local autocomplete = self.subviews.autocomplete
-    autocomplete:ensure_selection()
-    local text = autocomplete:advance(-1)
-    if text then
-        self.subviews.edit:push_text(text)
-        self:update_help(text)
-    end
+    self.subviews.autocomplete:ensure_selection()
+    self:do_autocomplete(-1)
 end
 
 local function launch(initial_help)
-    view = LauncherUI{}
+    view = LauncherUI{parent_focus=dfhack.gui.getCurFocus(true)}
     view:show()
     view:on_edit_input('')
     if initial_help then
@@ -275,10 +398,20 @@ function LauncherUI:onDismiss()
 end
 
 function LauncherUI:run_command(reappear, text)
+    text = text:trim()
+    if #text == 0 then return end
     self:dismiss()
+    dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
+    add_history(history, history_set, text)
     local output = dfhack.run_command_silent(text)
-    -- if we launched a new screen, don't come back up, even if reappear is true
-    if not reappear or dfhack.gui.getCurFocus(true):startswith('dfhack/') then
+    if not reappear then
+        return
+    end
+    -- if we displayed a new dfhack screen, don't come back up even if reappear
+    -- is true so the user can interact with the new screen
+    local parent_focus = dfhack.gui.getCurFocus(true)
+    if parent_focus:startswith('dfhack/') and
+            parent_focus ~= self.parent_focus then
         return
     end
     -- reappear and show the command output
@@ -330,18 +463,23 @@ function LauncherUI:onRenderFrame(dc, rect)
 end
 
 function LauncherUI:onInput(keys)
-    if keys.LEAVESCREEN then
+    if self:inputToSubviews(keys) then
+        return true
+    elseif keys.LEAVESCREEN then
         self:dismiss()
         return true
+    elseif keys.CUSTOM_CTRL_C then
+        self.subviews.edit:set_text('', self.input_is_worth_saving)
     end
-
-    return self:inputToSubviews(keys)
 end
 
 if dfhack_flags.module then
     return
 end
 
-if not view then
+if view then
+    -- hitting the launcher hotkey while it is open should close the dialog
+    view:dismiss()
+else
     launch()
 end
