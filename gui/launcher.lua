@@ -1,4 +1,4 @@
--- The DFHack in-game launcher
+-- The DFHack in-game command launcher
 --@module=true
 
 local gui = require('gui')
@@ -161,10 +161,12 @@ function EditPanel:init()
             on_change=self:callback('on_search_text'),
             on_unfocus=function()
                 self:reset_history_idx()
+                self.subviews.search.text = ''
                 self.subviews.editfield:setFocus(true) end,
             on_submit=function()
-                self.subviews.search.text = ''
-                self.on_submit(self.subviews.editfield.text) end},
+                self.on_submit(self.subviews.editfield.text) end,
+            on_submit2=function()
+                self.on_submit2(self.subviews.editfield.text) end},
     }
 end
 
@@ -240,7 +242,10 @@ function EditPanel:onInput(keys)
         self:on_search_text(self.subviews.search.text)
         return true
     elseif keys.A_CARE_MOVE_W then -- Alt-Left
-        self.on_change(self:pop_text())
+        local text = self:pop_text()
+        if text then
+            self.on_change(text)
+        end
         return true
     end
 end
@@ -249,6 +254,21 @@ end
 -- HelpPanel
 --
 HelpPanel = defclass(HelpPanel, widgets.Panel)
+
+local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
+
+Type a command to see it's help text here. Hit ENTER
+to run the command, or Shift-ENTER to run the
+command and close this dialog. The dialog also
+closes automatically if you run a command that shows
+a new GUI screen.
+
+Not sure what to do? Run the "help" command to get
+started.
+
+To see help for this command launcher, type
+"launcher" and autocomplete to "gui/launcher" with
+the TAB key.]]
 
 function HelpPanel:init()
     self.cur_entry = ""
@@ -264,7 +284,7 @@ function HelpPanel:init()
                 STANDARDSCROLL_PAGEUP='-page',
                 STANDARDSCROLL_PAGEDOWN='+page',
             },
-            text_to_wrap='Welcome to DFHack!'}
+            text_to_wrap=DEFAULT_HELP_TEXT}
     }
 end
 
@@ -369,12 +389,16 @@ function LauncherUI:do_autocomplete(delta)
     self.input_is_worth_saving = false
 end
 
-local function launch(initial_help)
+local function launch(kwargs)
     view = LauncherUI{parent_focus=dfhack.gui.getCurFocus(true)}
     view:show()
     view:on_edit_input('')
-    if initial_help then
-        view.subviews.help:set_help(initial_help)
+    if kwargs.initial_help then
+        view.subviews.help:set_help(kwargs.initial_help)
+    end
+    if kwargs.command then
+        view.subviews.edit:set_text(kwargs.command)
+        view:on_edit_input(kwargs.command)
     end
 end
 
@@ -389,19 +413,22 @@ function LauncherUI:run_command(reappear, text)
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
     add_history(history, history_set, text)
     local output = dfhack.run_command_silent(text)
-    if not reappear then
-        return
-    end
     -- if we displayed a new dfhack screen, don't come back up even if reappear
-    -- is true so the user can interact with the new screen
+    -- is true. otherwise, the user can't interact with the new screen. if we're
+    -- not reappearing with the output, print the output to the console.
     local parent_focus = dfhack.gui.getCurFocus(true)
-    if parent_focus:startswith('dfhack/') and
-            parent_focus ~= self.parent_focus then
+    if not reappear or (parent_focus:startswith('dfhack/') and
+                        parent_focus ~= self.parent_focus) then
+        if #output > 0 then
+            print('Output from command run from gui/launcher:')
+            print('> '..text)
+            print(output)
+        end
         return
     end
     -- reappear and show the command output
     local initial_help = ('> %s\n\n%s'):format(text, output)
-    launch(initial_help)
+    launch({initial_help=initial_help})
 end
 
 function LauncherUI:getWantedFrameSize()
@@ -466,5 +493,6 @@ if view then
     -- hitting the launcher hotkey while it is open should close the dialog
     view:dismiss()
 else
-    launch()
+    local args = {...}
+    launch({command=table.concat(args, ' ')})
 end
