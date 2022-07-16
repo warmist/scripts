@@ -149,19 +149,19 @@ function EditPanel:init()
     self:addviews{
         widgets.EditField{
             view_id='editfield',
-            frame={l=1, t=1},
+            frame={l=1, t=1, r=1},
             on_change=self.on_change,
             on_submit=self.on_submit,
             on_submit2=self.on_submit2},
         widgets.EditField{
             view_id='search',
-            frame={l=3, t=3},
+            frame={l=3, t=3, r=1},
             key='CUSTOM_ALT_S',
             label_text='history search: ',
             on_change=self:callback('on_search_text'),
             on_unfocus=function()
                 self:reset_history_idx()
-                self.subviews.search.text = ''
+                self.subviews.search:setText('')
                 self.subviews.editfield:setFocus(true) end,
             on_submit=function()
                 self.on_submit(self.subviews.editfield.text) end,
@@ -181,7 +181,7 @@ function EditPanel:set_text(text, push)
     if push and #editfield.text > 0 then
         table.insert(self.stack, editfield.text)
     end
-    editfield.text = text
+    editfield:setText(text)
     self:reset_history_idx()
 end
 
@@ -190,7 +190,7 @@ function EditPanel:pop_text()
     local text = self.stack[#self.stack]
     if text then
         self.stack[#self.stack] = nil
-        editfield.text = text
+        editfield:setText(text)
     end
     return text
 end
@@ -202,7 +202,7 @@ function EditPanel:move_history(delta)
     end
     self.history_idx = history_idx
     local text = history[history_idx]
-    self.subviews.editfield.text = text
+    self.subviews.editfield:setText(text)
     self.on_change(text)
 end
 
@@ -264,7 +264,7 @@ closes automatically if you run a command that shows
 a new GUI screen.
 
 Not sure what to do? Run the "help" command to get
-started.
+started!
 
 To see help for this command launcher, type
 "launcher" and autocomplete to "gui/launcher" with
