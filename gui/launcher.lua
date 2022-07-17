@@ -3,6 +3,8 @@
 
 local gui = require('gui')
 local helpdb = require('helpdb')
+local json = require('json')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local AUTOCOMPLETE_PANEL_WIDTH = 20
@@ -12,6 +14,7 @@ local HISTORY_SIZE = 5000
 local HISTORY_ID = 'gui/launcher'
 local HISTORY_FILE = 'dfhack-config/launcher.history'
 local CONSOLE_HISTORY_FILE = 'dfhack.history'
+local FREQUENCY_FILE = 'dfhack-config/command_counts.json'
 
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
@@ -56,6 +59,24 @@ end
 
 if not history then
     history, history_set = init_history()
+end
+
+local function get_frequency_data()
+    local ok, data = pcall(json.decode_file, FREQUENCY_FILE)
+    return ok and data or {}
+end
+
+local function get_first_word(text)
+    return text:trim():split(' +')[1]
+end
+
+command_counts = command_counts or get_frequency_data()
+
+local function record_command(line)
+    add_history(history, history_set, line)
+    local firstword = get_first_word(line)
+    command_counts[firstword] = (command_counts[firstword] or 0) + 1
+    json.encode_file(command_counts, FREQUENCY_FILE)
 end
 
 ----------------------------------
@@ -310,10 +331,6 @@ function LauncherUI:init()
     }
 end
 
-local function get_first_word(text)
-    return text:trim():split(' +')[1]
-end
-
 function LauncherUI:update_help(text, firstword)
     local firstword = firstword or get_first_word(text)
     if firstword == self.firstword then
@@ -323,19 +340,33 @@ function LauncherUI:update_help(text, firstword)
     self.subviews.help:set_entry(firstword)
 end
 
+local function extract_entry(entries, firstword)
+    for i,v in ipairs(entries) do
+        if v == firstword then
+            table.remove(entries, i)
+            return true
+        end
+    end
+end
+
 function LauncherUI:update_autocomplete(text, firstword)
     local entries = helpdb.search_entries(
         {str=firstword},
         {str={'modtools/', 'devel/'}})
-    local found = false
-    for i,v in ipairs(entries) do
-        if v == firstword then
-            -- if firstword is in the list, move that item to the top
-            table.remove(entries, i)
-            table.insert(entries, 1, v)
-            found = true
-            break
+    -- if firstword is in the list, extract it so we can add it to the top later
+    local found = extract_entry(entries, firstword)
+    -- remember starting position of each entry so we can sort stably
+    local indices = utils.invert(entries)
+    local stable_sort_by_frequency = function(a, b)
+        if (command_counts[a] or 0) > (command_counts[b] or 0) then return true
+        elseif (command_counts[a] or 0) == (command_counts[b] or 0) then
+            return indices[a] < indices[b]
         end
+        return false
+    end
+    table.sort(entries, stable_sort_by_frequency)
+    if found then
+        table.insert(entries, 1, firstword)
     end
     self.subviews.autocomplete:set_options(entries, found)
 end
@@ -377,7 +408,7 @@ function LauncherUI:run_command(reappear, text)
     if #text == 0 then return end
     self:dismiss()
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
-    add_history(history, history_set, text)
+    record_command(text)
     local output = dfhack.run_command_silent(text)
     -- if we displayed a new dfhack screen, don't come back up even if reappear
     -- is true. otherwise, the user can't interact with the new screen. if we're
