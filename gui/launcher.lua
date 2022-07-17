@@ -7,7 +7,6 @@ local widgets = require('gui.widgets')
 
 local AUTOCOMPLETE_PANEL_WIDTH = 20
 local EDIT_PANEL_HEIGHT = 4
-local EDIT_PANEL_ON_TOP = true
 
 local HISTORY_SIZE = 5000
 local HISTORY_ID = 'gui/launcher'
@@ -93,40 +92,22 @@ function AutocompletePanel:init()
     }
 end
 
-function AutocompletePanel:computeFrame(parent_rect)
-    local list = self.subviews.autocomplete_list
-    self.saved_selected = list.selected
-    self.saved_page_top = list.page_top
-    return gui.mkdims_wh(
-        parent_rect.width - AUTOCOMPLETE_PANEL_WIDTH,
-        1,
-        AUTOCOMPLETE_PANEL_WIDTH,
-        parent_rect.height - 2)
-end
-
-function AutocompletePanel:postUpdateLayout()
-    -- ensure the list display stays stable during resize events
-    local list = self.subviews.autocomplete_list
-    list.selected = self.saved_selected
-    list.page_top = self.saved_page_top
-end
-
 function AutocompletePanel:set_options(options, initially_selected)
     local list = self.subviews.autocomplete_list
     list:setChoices(options, 1)
-    if not initially_selected then
-        list.cursor_pen = COLOR_CYAN -- no visible highlight
-    end
+    list.cursor_pen = initially_selected and COLOR_LIGHTCYAN or COLOR_CYAN
     self.first_advance = true
 end
 
 function AutocompletePanel:advance(delta)
     local list = self.subviews.autocomplete_list
-    list.cursor_pen = COLOR_LIGHTCYAN -- enable highlight
     if self.first_advance then
-        if delta > 0 then delta = 0 end
+        if list.cursor_pen == COLOR_CYAN and delta > 0 then
+            delta = 0
+        end
         self.first_advance = false
     end
+    list.cursor_pen = COLOR_LIGHTCYAN -- enable highlight
     list:moveCursor(delta)
     local _, option = list:getSelected()
     return option and option.text or nil
@@ -217,15 +198,6 @@ function EditPanel:on_search_text(search_str)
     self:reset_history_idx()
 end
 
-function EditPanel:computeFrame(parent_rect)
-    local y1 = EDIT_PANEL_ON_TOP and 0 or (parent_rect.height - EDIT_PANEL_HEIGHT)
-    return gui.mkdims_wh(
-        0,
-        y1,
-        parent_rect.width - (AUTOCOMPLETE_PANEL_WIDTH + 2),
-        EDIT_PANEL_HEIGHT)
-end
-
 function EditPanel:onInput(keys)
     if EditPanel.super.onInput(self, keys) then return true end
 
@@ -306,15 +278,6 @@ function HelpPanel:set_entry(entry_name)
     self:set_help(helpdb.get_entry_long_help(entry_name))
 end
 
-function HelpPanel:computeFrame(parent_rect)
-    local y1 = not EDIT_PANEL_ON_TOP and 1 or (EDIT_PANEL_HEIGHT + 2)
-    return gui.mkdims_wh(
-        1,
-        y1,
-        parent_rect.width - (AUTOCOMPLETE_PANEL_WIDTH + 4),
-        parent_rect.height - (EDIT_PANEL_HEIGHT + 2))
-end
-
 ----------------------------------
 -- LauncherUI
 --
@@ -332,15 +295,18 @@ function LauncherUI:init()
     self:addviews{
         AutocompletePanel{
             view_id='autocomplete',
+            frame={t=0, r=0, w=AUTOCOMPLETE_PANEL_WIDTH},
             on_tab=self:callback('do_autocomplete', 1),
             on_tab2=self:callback('do_autocomplete', -1)},
         EditPanel{
             view_id='edit',
+            frame={t=0, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+2, h=EDIT_PANEL_HEIGHT},
             on_change=self:callback('on_edit_input'),
             on_submit=self:callback('run_command', true),
             on_submit2=self:callback('run_command', false)},
         HelpPanel{
-            view_id='help'},
+            view_id='help',
+            frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+2}},
     }
 end
 
@@ -459,8 +425,7 @@ local function paint_horizontal_border(rect)
     local panel_height = EDIT_PANEL_HEIGHT + 1
     local x1, x2 = rect.x1, rect.x2
     local v_border_x = x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
-    local y = EDIT_PANEL_ON_TOP and
-            (rect.y1 + panel_height) or (rect.y2 - panel_height)
+    local y = rect.y1 + panel_height
     dfhack.screen.paintTile(LEFT_SPLIT_PEN, x1, y)
     dfhack.screen.paintTile(RIGHT_SPLIT_PEN, v_border_x, y)
     for x=x1+1,v_border_x-1 do
