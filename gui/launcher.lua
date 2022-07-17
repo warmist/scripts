@@ -84,8 +84,7 @@ end
 --
 AutocompletePanel = defclass(AutocompletePanel, widgets.Panel)
 AutocompletePanel.ATTRS{
-    on_tab=DEFAULT_NIL,
-    on_tab2=DEFAULT_NIL,
+    on_autocomplete=DEFAULT_NIL,
 }
 
 function AutocompletePanel:init()
@@ -99,23 +98,28 @@ function AutocompletePanel:init()
             key='CHANGETAB',
             key_sep='/',
             label='',
-            on_activate=self.on_tab},
+            on_activate=self:callback('advance', 1)},
         widgets.HotkeyLabel{
             frame={l=5, t=1},
             key='SEC_CHANGETAB',
             key_sep='',
             label='',
-            on_activate=self.on_tab2},
+            on_activate=self:callback('advance', -1)},
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
+            on_select=self.on_autocomplete,
             frame={l=0, t=3}},
     }
 end
 
 function AutocompletePanel:set_options(options, initially_selected)
     local list = self.subviews.autocomplete_list
+    -- disable on_select while we reset the options so we don't automatically
+    -- trigger the callback
+    list.on_select = nil
     list:setChoices(options, 1)
+    list.on_select = self.on_autocomplete
     list.cursor_pen = initially_selected and COLOR_LIGHTCYAN or COLOR_CYAN
     self.first_advance = true
 end
@@ -130,8 +134,14 @@ function AutocompletePanel:advance(delta)
     end
     list.cursor_pen = COLOR_LIGHTCYAN -- enable highlight
     list:moveCursor(delta)
-    local _, option = list:getSelected()
-    return option and option.text or nil
+end
+
+function AutocompletePanel:onInput(keys)
+    if keys._MOUSE_L and self.subviews.autocomplete_list:getMousePos() then
+        -- enable highlight
+        self.subviews.autocomplete_list.cursor_pen = COLOR_LIGHTCYAN
+    end
+    return AutocompletePanel.super.onInput(self, keys)
 end
 
 ----------------------------------
@@ -331,8 +341,7 @@ function LauncherUI:init()
         AutocompletePanel{
             view_id='autocomplete',
             frame={t=0, r=0, w=AUTOCOMPLETE_PANEL_WIDTH},
-            on_tab=self:callback('do_autocomplete', 1),
-            on_tab2=self:callback('do_autocomplete', -1)},
+            on_autocomplete=self:callback('on_autocomplete')},
         EditPanel{
             view_id='edit',
             frame={t=0, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+2, h=EDIT_PANEL_HEIGHT},
@@ -392,11 +401,9 @@ function LauncherUI:on_edit_input(text)
     self:update_autocomplete(text, firstword)
 end
 
-function LauncherUI:do_autocomplete(delta)
-    local text = self.subviews.autocomplete:advance(delta)
-    if not text then return end
-    self.subviews.edit:set_text(text, self.input_is_worth_saving)
-    self:update_help(text)
+function LauncherUI:on_autocomplete(_, option)
+    self.subviews.edit:set_text(option.text, self.input_is_worth_saving)
+    self:update_help(option.text)
     self.input_is_worth_saving = false
 end
 
@@ -492,6 +499,7 @@ function LauncherUI:onInput(keys)
         return true
     elseif keys.CUSTOM_CTRL_C then
         self.subviews.edit:set_text('', self.input_is_worth_saving)
+        self:on_edit_input('')
     end
 end
 
