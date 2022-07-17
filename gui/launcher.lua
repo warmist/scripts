@@ -133,7 +133,7 @@ function AutocompletePanel:advance(delta)
         self.first_advance = false
     end
     list.cursor_pen = COLOR_LIGHTCYAN -- enable highlight
-    list:moveCursor(delta)
+    list:moveCursor(delta, true)
 end
 
 function AutocompletePanel:onInput(keys)
@@ -508,7 +508,8 @@ if dfhack_flags.module then
 end
 
 if view then
-    -- hitting the launcher hotkey while it is open should close the dialog
+    -- running the launcher while it is open (e.g. from hitting the launcher
+    -- hotkey a second time) should close the dialog
     view:dismiss()
 else
     local args = {...}
