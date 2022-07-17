@@ -299,6 +299,20 @@ function HelpPanel:set_entry(entry_name)
     self:set_help(helpdb.get_entry_long_help(entry_name))
 end
 
+function HelpPanel:onInput(keys)
+    if HelpPanel.super.onInput(self, keys) then
+        return true
+    elseif keys._MOUSE_L and self:getMousePos() then
+        local label = self.subviews.help_label
+        label:scroll(label.frame_body.height)
+        return true
+    elseif keys._MOUSE_R and self:getMousePos() then
+        local label = self.subviews.help_label
+        label:scroll(-label.frame_body.height)
+        return true
+    end
+end
+
 ----------------------------------
 -- LauncherUI
 --

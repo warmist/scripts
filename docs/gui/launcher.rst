@@ -1,6 +1,6 @@
 gui/launcher
 ============
-Tags: fort, adventure, legends, system
+Tags: system
 :dfhack-keybind:`gui/launcher`
 
 In-game DFHack command launcher with integrated help. It is the primary GUI
@@ -36,9 +36,10 @@ where the dialog does not reappear to show you the command output, the output
 As you type, autocomplete options for DFHack commands appear in the right
 column. If the first word of what you've typed matches a valid command, then the
 autocomplete options will also include commands that have similar functionality
-to the one that you've named. Hit :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab` to cycle
-through the autocomplete options. Hit :kbd:`Alt`:kbd:`Left` if you want to undo
-the autocomplete and go back to the text you had before you hit :kbd:`Tab`.
+to the one that you've named. Click on an autocomplete option to select it or
+cycle through them with :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab`. Hit
+:kbd:`Alt`:kbd:`Left` if you want to undo the autocomplete and go back to the
+text you had before you autocompleted.
 
 **Context-sensitive help**
 
@@ -47,8 +48,9 @@ information in the help area about how to get started.
 
 Once you have typed (or autocompleted) a word that matches a valid command, the
 help area shows the help for that command, including usage instructions. You can
-scroll the help text page by page with :kbd:`PgUp` and :kbd:`PgDn` or line by
-line with :kbd:`Ctrl`:kbd:`Up` and :kbd:`Ctrl`:kbd:`Down`.
+scroll the help text page by page by left/right clicking or with :kbd:`PgUp` and
+:kbd:`PgDn`. You can also scroll line by line with :kbd:`Ctrl`:kbd:`Up` and
+:kbd:`Ctrl`:kbd:`Down`.
 
 **Command history**
 
