@@ -260,7 +260,7 @@ HelpPanel = defclass(HelpPanel, widgets.Panel)
 
 local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
-Type a command to see it's help text here. Hit ENTER
+Type a command to see its help text here. Hit ENTER
 to run the command, or Shift-ENTER to run the
 command and close this dialog. The dialog also
 closes automatically if you run a command that shows
