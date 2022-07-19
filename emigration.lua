@@ -87,7 +87,7 @@ function checkForDeserters(method,civ_id)
     local allUnits = df.global.world.units.active
     for i=#allUnits-1,0,-1 do   -- search list in reverse
         local u = allUnits[i]
-        if canLeave(u) and math.random(100) < desireToStay(u,method,civ_id) then
+        if canLeave(u) and math.random(100) > desireToStay(u,method,civ_id) then
             desert(u,method,civ_id)
         end
     end
