@@ -1,0 +1,4 @@
+no-dfhack-init
+==============
+
+Deprecated.
