@@ -1,4 +1,4 @@
-no-dfhack-init
-==============
+gui/no-dfhack-init
+==================
 
 Deprecated.
