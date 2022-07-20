@@ -431,7 +431,7 @@ end
 
 function QuickfortUI:on_adjust_repetitions(amt)
     repetitions = math.max(1, repetitions + amt)
-    self.subviews.repeat_times.text = tostring(repetitions)
+    self.subviews.repeat_times:setText(tostring(repetitions))
     self.dirty = true
 end
 
@@ -440,7 +440,7 @@ function QuickfortUI:on_repeat_times_submit(val)
     if not repetitions or repetitions < 1 then
         repetitions = 1
     end
-    self.subviews.repeat_times.text = tostring(repetitions)
+    self.subviews.repeat_times:setText(tostring(repetitions))
     self.dirty = true
 end
 

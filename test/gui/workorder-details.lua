@@ -24,7 +24,10 @@ if confirm.isEnabled() then
             if c.enabled then
                 confirmRemove = function()
                     wait()
-                    send_keys('CUSTOM_P', 'MANAGER_REMOVE')
+                    -- only pause and resend key if we're not already paused
+                    if not confirm.get_paused() then
+                        send_keys('CUSTOM_P', 'MANAGER_REMOVE')
+                    end
                 end
             end
             break
@@ -52,6 +55,7 @@ function test.changeOrderDetails()
     wait()
     send_keys('MANAGER_DETAILS')
     expect.true_(df.viewscreen_workquota_detailsst:is_instance(dfhack.gui.getCurViewscreen(true)), "We need to be in the workquota_details screen")
+    expect.eq(ordercount + 1, #df.global.world.manager_orders, "Test order should have been added")
     local job = dfhack.gui.getCurViewscreen(true).order
     local item = job.items[0]
 
@@ -107,6 +111,7 @@ function test.unsetAllItemTraits()
 
     --- create an order
     dfhack.run_command [[workorder "{ \"frequency\" : \"OneTime\", \"job\" : \"CutGems\", \"material\" : \"INORGANIC:SLADE\" }"]]
+    expect.eq(ordercount + 1, #df.global.world.manager_orders, "Test order should have been added")
     wait()
     send_keys('STANDARDSCROLL_UP') -- move cursor to newly created CUT SLADE
     wait()
