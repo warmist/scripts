@@ -26,7 +26,7 @@ jobs:
         sphinx-build -W --keep-going -j3 --color $HOME/dfhack html
     - name: Check for missing docs
       if: success() || failure()
-      run: python $HOME/dfhack/travis/script-docs.py .
+      run: python $HOME/dfhack/ci/script-docs.py .
     - name: Upload docs
       if: success() || failure()
       uses: actions/upload-artifact@master
