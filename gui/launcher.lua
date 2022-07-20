@@ -121,7 +121,7 @@ function AutocompletePanel:set_options(options, initially_selected)
     list:setChoices(options, 1)
     list.on_select = self.on_autocomplete
     list.cursor_pen = initially_selected and COLOR_LIGHTCYAN or COLOR_CYAN
-    self.first_advance = true
+    self.first_advance = not initially_selected
 end
 
 function AutocompletePanel:advance(delta)
@@ -270,8 +270,8 @@ Not sure what to do? Run the "help" command to get
 started!
 
 To see help for this command launcher, type
-"launcher" and autocomplete to "gui/launcher" with
-the TAB key.]]
+"launcher" and hit the TAB key or click on
+"gui/launcher" to autocomplete.]]
 
 function HelpPanel:init()
     self.cur_entry = ""
@@ -372,12 +372,7 @@ local function extract_entry(entries, firstword)
     end
 end
 
-function LauncherUI:update_autocomplete(text, firstword)
-    local entries = helpdb.search_entries(
-        {str=firstword},
-        {str={'modtools/', 'devel/'}})
-    -- if firstword is in the list, extract it so we can add it to the top later
-    local found = extract_entry(entries, firstword)
+local function sort_by_freq(entries)
     -- remember starting position of each entry so we can sort stably
     local indices = utils.invert(entries)
     local stable_sort_by_frequency = function(a, b)
@@ -388,8 +383,50 @@ function LauncherUI:update_autocomplete(text, firstword)
         return false
     end
     table.sort(entries, stable_sort_by_frequency)
+end
+
+-- adds the n most closely affiliated peer entries for the given entry that
+-- aren't already in the entries list. affiliation is determined by how many
+-- tags the entries share.
+local function add_top_related_entries(entries, entry, n)
+    local tags = helpdb.get_entry_tags(entry)
+    local affinities, buckets = {}, {}
+    for i,tag in ipairs(tags) do
+        for _,peer in ipairs(helpdb.get_tag_data(tag)) do
+            affinities[peer] = (affinities[peer] or 0) + 1
+        end
+        buckets[i] = {}
+    end
+    for peer,affinity in pairs(affinities) do
+        table.insert(buckets[affinity], peer)
+    end
+    local entry_set = utils.invert(entries)
+    for i=#buckets,1,-1 do
+        sort_by_freq(buckets[i])
+        for _,peer in ipairs(buckets[i]) do
+            if not entry_set[peer] then
+                entry_set[peer] = true
+                table.insert(entries, peer)
+                n = n - 1
+                if n < 1 then return end
+            end
+        end
+    end
+end
+
+function LauncherUI:update_autocomplete(firstword)
+    local entries = helpdb.search_entries(
+        {str=firstword},
+        {str={'modtools/', 'devel/'}})
+    -- if firstword is in the list, extract it so we can add it to the top later
+    -- even if it's not in the list, add it back anyway if it's a valid db entry
+    -- (e.g. if it's a devel/ script that we masked out) to show that it's a
+    -- valid command
+    local found = extract_entry(entries,firstword) or helpdb.is_entry(firstword)
+    sort_by_freq(entries)
     if found then
         table.insert(entries, 1, firstword)
+        add_top_related_entries(entries, firstword, 20)
     end
     self.subviews.autocomplete:set_options(entries, found)
 end
@@ -398,7 +435,7 @@ function LauncherUI:on_edit_input(text)
     self.input_is_worth_saving = true
     local firstword = get_first_word(text)
     self:update_help(text, firstword)
-    self:update_autocomplete(text, firstword)
+    self:update_autocomplete(firstword)
 end
 
 function LauncherUI:on_autocomplete(_, option)
