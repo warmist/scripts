@@ -14,7 +14,8 @@ local HISTORY_SIZE = 5000
 local HISTORY_ID = 'gui/launcher'
 local HISTORY_FILE = 'dfhack-config/launcher.history'
 local CONSOLE_HISTORY_FILE = 'dfhack.history'
-local FREQUENCY_FILE = 'dfhack-config/command_counts.json'
+local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
+local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
 
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
@@ -61,8 +62,8 @@ if not history then
     history, history_set = init_history()
 end
 
-local function get_frequency_data()
-    local ok, data = pcall(json.decode_file, FREQUENCY_FILE)
+local function get_frequency_data(fname)
+    local ok, data = pcall(json.decode_file, fname)
     return ok and data or {}
 end
 
@@ -70,13 +71,18 @@ local function get_first_word(text)
     return text:trim():split(' +')[1]
 end
 
-command_counts = command_counts or get_frequency_data()
+command_bias = command_bias or get_frequency_data(BASE_FREQUENCY_FILE)
+command_counts = command_counts or get_frequency_data(USER_FREQUENCY_FILE)
+
+local function get_command_count(command)
+    return (command_bias[command] or 0) + (command_counts[command] or 0)
+end
 
 local function record_command(line)
     add_history(history, history_set, line)
     local firstword = get_first_word(line)
     command_counts[firstword] = (command_counts[firstword] or 0) + 1
-    json.encode_file(command_counts, FREQUENCY_FILE)
+    json.encode_file(command_counts, USER_FREQUENCY_FILE)
 end
 
 ----------------------------------
@@ -376,8 +382,9 @@ local function sort_by_freq(entries)
     -- remember starting position of each entry so we can sort stably
     local indices = utils.invert(entries)
     local stable_sort_by_frequency = function(a, b)
-        if (command_counts[a] or 0) > (command_counts[b] or 0) then return true
-        elseif (command_counts[a] or 0) == (command_counts[b] or 0) then
+        local acount, bcount = get_command_count(a), get_command_count(b)
+        if acount > bcount then return true
+        elseif acount == bcount then
             return indices[a] < indices[b]
         end
         return false
