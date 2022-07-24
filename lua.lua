@@ -73,5 +73,5 @@ elseif cmd~=nil then --luacheck: skip
         end
     end
 else
-    dfhack.interpreter("lua","lua.history",env)
+    dfhack.interpreter("lua","dfhack-config/lua.history",env)
 end
