@@ -13,7 +13,8 @@ local EDIT_PANEL_HEIGHT = 4
 local HISTORY_SIZE = 5000
 local HISTORY_ID = 'gui/launcher'
 local HISTORY_FILE = 'dfhack-config/launcher.history'
-local CONSOLE_HISTORY_FILE = 'dfhack.history'
+local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
+local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
 local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
 local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
 
@@ -49,6 +50,9 @@ local function init_history()
     -- snarf the console history into our active history. it would be better if
     -- both the launcher and the console were using the same history object so
     -- the sharing would be "live", but we can address that later.
+    for line in io.lines(CONSOLE_HISTORY_FILE_OLD) do
+        add_history(hist, hist_set, line)
+    end
     for line in io.lines(CONSOLE_HISTORY_FILE) do
         add_history(hist, hist_set, line)
     end
