@@ -5,7 +5,7 @@ Tags: system
 
 In-game DFHack command launcher with integrated help. It is the primary GUI
 interface for running DFHack commands. You can open it from any screen with
-the ``\``` hotkey. If you opened it by mistake, tap ``\``` again to close.
+the \` hotkey. If you opened it by mistake, tap \` again to close.
 
 Usage::
 
