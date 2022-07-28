@@ -173,8 +173,8 @@ EditPanel.ATTRS{
 }
 
 function EditPanel:init()
-    self:reset_history_idx()
     self.stack = {}
+    self:reset_history_idx()
 
     self:addviews{
         widgets.EditField{
@@ -220,31 +220,45 @@ function EditPanel:pop_text()
     local text = self.stack[#self.stack]
     if text then
         self.stack[#self.stack] = nil
+        self:reset_history_idx()
         editfield:setText(text)
+        self.on_change(text)
     end
-    return text
 end
 
 function EditPanel:move_history(delta)
     local history_idx = self.history_idx + delta
-    if history_idx < 1 or history_idx > #history then
+    if history_idx < 1 or history_idx > #history + 1 or delta == 0 then
         return
     end
+    local editfield = self.subviews.editfield
+    if self.history_idx == #history + 1 then
+        -- we're moving off the initial buffer. save it so we can get it back.
+        self.saved_buffer = editfield.text
+    end
     self.history_idx = history_idx
-    local text = history[history_idx]
-    self.subviews.editfield:setText(text)
+    local text
+    if history_idx == #history + 1 then
+        -- we're moving onto the initial buffer. restore it.
+        text = self.saved_buffer
+    else
+        text = history[history_idx]
+    end
+    editfield:setText(text)
     self.on_change(text)
 end
 
-function EditPanel:on_search_text(search_str)
-    for history_idx = math.min(self.history_idx, #history), 1, -1 do
+function EditPanel:on_search_text(search_str, next_match)
+    local start_idx = math.min(self.history_idx - (next_match and 1 or 0),
+                               #history)
+    for history_idx = start_idx, 1, -1 do
         if history[history_idx]:find(search_str, 1, true) then
             self:move_history(history_idx - self.history_idx)
             return
         end
     end
-    -- no matches. restart at top of history on next search
-    self:reset_history_idx()
+    -- no matches. restart at the saved input buffer for the next search.
+    self:move_history(#history + 1 - self.history_idx)
 end
 
 function EditPanel:onInput(keys)
@@ -259,14 +273,10 @@ function EditPanel:onInput(keys)
     elseif keys.CUSTOM_ALT_S then
         -- search to the next match with the current search string
         -- only reaches here if the search field is already active
-        self.history_idx = math.max(1, self.history_idx - 1)
-        self:on_search_text(self.subviews.search.text)
+        self:on_search_text(self.subviews.search.text, true)
         return true
     elseif keys.A_CARE_MOVE_W then -- Alt-Left
-        local text = self:pop_text()
-        if text then
-            self.on_change(text)
-        end
+        self:pop_text()
         return true
     end
 end
