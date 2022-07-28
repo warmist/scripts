@@ -4,13 +4,15 @@ Tags: system
 :dfhack-keybind:`gui/launcher`
 
 In-game DFHack command launcher with integrated help. It is the primary GUI
-interface for running DFHack commands.
+interface for running DFHack commands. You can open it from any screen with
+the ``\``` hotkey. If you opened it by mistake, tap ``\``` again to close.
 
 Usage::
 
     gui/launcher [initial commandline]
 
-Examples:
+Examples
+--------
 
 - ``gui/launcher``
     Opens the launcher dialog with the default help message.
@@ -20,18 +22,19 @@ Examples:
     command will appear in the autocomplete list, and help text for the
     ``prospect`` command will be displayed in the help area.
 
-**Editing and running commands**
+Editing and running commands
+----------------------------
 
 Enter the command you want to run by typing its name. If you want to start over,
 :kbd:`Ctrl`:kbd:`C` will clear the line. When you are happy with the command,
 hit :kbd:`Enter` to run it. Any output from the command will appear in the help
 area. If you want to run the command and close the dialog so you can get back to
 the game, use :kbd:`Shift`:kbd:`Enter` instead. The dialog also closes
-automatically if you run a command that brings up a new GUI screen. In the cases
-where the dialog does not reappear to show you the command output, the output
-(if any) will appear in the DFHack terminal console.
+automatically if you run a command that brings up a new GUI screen. In those
+cases, the command output (if any) will appear in the DFHack terminal console.
 
-**Autocomplete**
+Autocomplete
+------------
 
 As you type, autocomplete options for DFHack commands appear in the right
 column. If the first word of what you've typed matches a valid command, then the
@@ -41,7 +44,8 @@ cycle through them with :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab`. Hit
 :kbd:`Alt`:kbd:`Left` if you want to undo the autocomplete and go back to the
 text you had before you autocompleted.
 
-**Context-sensitive help**
+Context-sensitive help
+----------------------
 
 When you start ``gui/launcher`` without parameters, it shows some useful
 information in the help area about how to get started.
@@ -52,7 +56,8 @@ scroll the help text page by page by left/right clicking or with :kbd:`PgUp` and
 :kbd:`PgDn`. You can also scroll line by line with :kbd:`Ctrl`:kbd:`Up` and
 :kbd:`Ctrl`:kbd:`Down`.
 
-**Command history**
+Command history
+---------------
 
 ``gui/launcher`` keeps a history of commands you have run to let you quickly run
 those commands again. You can scroll through your command history with the
