@@ -24,8 +24,7 @@ that repo.
 - `emigration`: fix emigrant logic so unhappy dwarves leave as designed
 
 ## Misc Improvements
-- `gui/quickfort`: better formatting for generated manager orders report
-- `lua`: the ``lua.history`` file has moved to ``dfhack-config/lua.history``.  If you want to keep your lua interpreter history, please move your history file to the new location.
+- `gui/quickfort`: better formatting for the generated manager orders report
 
 ## Removed
 
