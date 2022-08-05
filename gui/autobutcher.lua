@@ -12,7 +12,7 @@ local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local dlg = require 'gui.dialogs'
 
-local plugin = require 'plugins.zone'
+local plugin = require 'plugins.autobutcher'
 
 WatchList = defclass(WatchList, gui.FramedScreen)
 
@@ -34,7 +34,7 @@ function nextAutowatchState()
 end
 
 function nextAutobutcherState()
-    if(plugin.autobutcher_isEnabled()) then
+    if(plugin.isEnabled()) then
         return 'Stop '
     end
     return 'Start'
@@ -624,11 +624,10 @@ function WatchList:onSetRow()
 end
 
 function WatchList:onToggleAutobutcher()
-    if(plugin.autobutcher_isEnabled()) then
-        plugin.autobutcher_setEnabled(false)
-        plugin.autobutcher_sortWatchList()
+    if(plugin.isEnabled()) then
+        plugin.setEnabled(false)
     else
-        plugin.autobutcher_setEnabled(true)
+        plugin.setEnabled(true)
     end
     self:initListChoices()
     self:updateBottom()
