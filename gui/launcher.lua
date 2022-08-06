@@ -445,10 +445,13 @@ local function add_top_related_entries(entries, entry, n)
     end
 end
 
+dev_mode = dev_mode or false
+local DEV_FILTER = {str={'modtools/', 'devel/'}}
+
 function LauncherUI:update_autocomplete(firstword)
     local entries = helpdb.search_entries(
         {str=firstword, types='command'},
-        {str={'modtools/', 'devel/'}})
+        dev_mode and DEV_FILTER or nil)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a devel/ script that we masked out) to show that it's a
@@ -568,6 +571,9 @@ function LauncherUI:onInput(keys)
     elseif keys.CUSTOM_CTRL_C then
         self.subviews.edit:set_text('', self.input_is_worth_saving)
         self:on_edit_input('')
+    elseif keys.CUSTOM_CTRL_D then
+        dev_mode = not dev_mode
+        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
     end
 end
 

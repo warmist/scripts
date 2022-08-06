@@ -68,3 +68,10 @@ next match for what you've already typed, hit :kbd:`Alt`:kbd:`S` again. You can
 run the matched command immediately with :kbd:`Enter` (or
 :kbd:`Shift`:kbd:`Enter`), or hit :kbd:`Esc` to edit the command before running
 it.
+
+Dev mode
+--------
+
+By default, commands intended for developers and modders are filtered out of the
+autocomplete list. You can toggle this filtering by hitting :kbd:`Ctrl`:kbd:`D`
+at any time.
