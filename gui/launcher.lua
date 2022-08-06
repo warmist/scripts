@@ -427,7 +427,9 @@ local function add_top_related_entries(entries, entry, n)
         buckets[i] = {}
     end
     for peer,affinity in pairs(affinities) do
-        table.insert(buckets[affinity], peer)
+        if helpdb.get_entry_types(peer).command then
+            table.insert(buckets[affinity], peer)
+        end
     end
     local entry_set = utils.invert(entries)
     for i=#buckets,1,-1 do
@@ -445,7 +447,7 @@ end
 
 function LauncherUI:update_autocomplete(firstword)
     local entries = helpdb.search_entries(
-        {str=firstword},
+        {str=firstword, types='command'},
         {str={'modtools/', 'devel/'}})
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
