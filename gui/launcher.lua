@@ -183,9 +183,15 @@ function EditPanel:init()
             on_change=self.on_change,
             on_submit=self.on_submit,
             on_submit2=self.on_submit2},
+        widgets.HotkeyLabel{
+            frame={l=1, t=3, w=10},
+            key='SELECT',
+            label='run',
+            on_activate=function()
+                self.on_submit(self.subviews.editfield.text) end},
         widgets.EditField{
             view_id='search',
-            frame={l=3, t=3, r=1},
+            frame={l=13, t=3, r=1},
             key='CUSTOM_ALT_S',
             label_text='history search: ',
             on_change=self:callback('on_search_text'),
