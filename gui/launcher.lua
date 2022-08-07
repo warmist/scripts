@@ -318,8 +318,8 @@ function HelpPanel:init()
             scroll_keys={
                 A_MOVE_N_DOWN=-1, -- Ctrl-Up
                 A_MOVE_S_DOWN=1,  -- Ctrl-Down
-                STANDARDSCROLL_PAGEUP='-page',
-                STANDARDSCROLL_PAGEDOWN='+page',
+                STANDARDSCROLL_PAGEUP='-halfpage',
+                STANDARDSCROLL_PAGEDOWN='+halfpage',
             },
             text_to_wrap=DEFAULT_HELP_TEXT}
     }
@@ -347,12 +347,10 @@ function HelpPanel:onInput(keys)
     if HelpPanel.super.onInput(self, keys) then
         return true
     elseif keys._MOUSE_L and self:getMousePos() then
-        local label = self.subviews.help_label
-        label:scroll(label.frame_body.height)
+        self.subviews.help_label:scroll('+halfpage')
         return true
     elseif keys._MOUSE_R and self:getMousePos() then
-        local label = self.subviews.help_label
-        label:scroll(-label.frame_body.height)
+        self.subviews.help_label:scroll('-halfpage')
         return true
     end
 end
