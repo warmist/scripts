@@ -27,11 +27,14 @@ Editing and running commands
 
 Enter the command you want to run by typing its name. If you want to start over,
 :kbd:`Ctrl`:kbd:`C` will clear the line. When you are happy with the command,
-hit :kbd:`Enter` to run it. Any output from the command will appear in the help
-area. If you want to run the command and close the dialog so you can get back to
-the game, use :kbd:`Shift`:kbd:`Enter` instead. The dialog also closes
-automatically if you run a command that brings up a new GUI screen. In those
-cases, the command output (if any) will appear in the DFHack terminal console.
+hit :kbd:`Enter` or click on the ``run`` button to run it. Any output from the
+command will appear in the help area. If you want to run the command and close
+the dialog so you can get back to the game, use :kbd:`Shift`:kbd:`Enter` or hold
+down the :kbd:`Shift` key and click on the ``run`` button instead. The dialog
+also closes automatically if you run a command that brings up a new GUI screen.
+In either case, if the launcher window doesn't come back up to show the command
+output, then the command output (if any) will appear in the DFHack terminal
+console.
 
 Autocomplete
 ------------
@@ -51,10 +54,10 @@ When you start ``gui/launcher`` without parameters, it shows some useful
 information in the help area about how to get started.
 
 Once you have typed (or autocompleted) a word that matches a valid command, the
-help area shows the help for that command, including usage instructions. You can
-scroll the help text page by page by left/right clicking or with :kbd:`PgUp` and
-:kbd:`PgDn`. You can also scroll line by line with :kbd:`Ctrl`:kbd:`Up` and
-:kbd:`Ctrl`:kbd:`Down`.
+help area shows the help for that command, including usage instructions and
+examples. You can scroll the help text by half pages by left/right clicking or
+with :kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line with
+:kbd:`Ctrl`:kbd:`Up` and :kbd:`Ctrl`:kbd:`Down`.
 
 Command history
 ---------------

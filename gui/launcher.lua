@@ -188,7 +188,12 @@ function EditPanel:init()
             key='SELECT',
             label='run',
             on_activate=function()
-                self.on_submit(self.subviews.editfield.text) end},
+                if dfhack.internal.getModifiers().shift then
+                    self.on_submit2(self.subviews.editfield.text)
+                else
+                    self.on_submit(self.subviews.editfield.text)
+                end
+                end},
         widgets.EditField{
             view_id='search',
             frame={l=13, t=3, r=1},
