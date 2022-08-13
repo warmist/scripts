@@ -1,6 +1,12 @@
 
 source
 ======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map
+
+
 Create an infinite magma or water source or drain on a tile.
 For more complex commands, try the `liquids` plugin.
 

@@ -1,6 +1,12 @@
 modtools/if-entity
 ==================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 Run a command if the current entity matches a given ID.
 
 To use this script effectively it needs to be called from "raw/onload.init".

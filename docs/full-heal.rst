@@ -1,6 +1,12 @@
 
 full-heal
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Attempts to fully heal the selected unit from anything, optionally
 including death.  Usage:
 

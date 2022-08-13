@@ -1,6 +1,12 @@
 
 startdwarf
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort embark armok
+
+
 Use before embarking (e.g. at the site selection screen or any time before) to
 change the number of dwarves you embark with from the default of 7.
 

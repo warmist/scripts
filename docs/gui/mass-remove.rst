@@ -1,6 +1,12 @@
 
 gui/mass-remove
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity buildings stockpiles
+
+
 Allows removal of buildings/constructions and suspend/unsuspend using
 a box selection.
 

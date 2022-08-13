@@ -1,6 +1,12 @@
 
 superdwarf
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Similar to `fastdwarf`, per-creature.
 
 To make any creature superfast, target it ingame using 'v' and::

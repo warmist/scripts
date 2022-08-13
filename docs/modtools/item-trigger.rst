@@ -1,6 +1,12 @@
 
 modtools/item-trigger
 =====================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 This powerful tool triggers DFHack commands when a unit equips, unequips, or
 attacks another unit with specified item types, specified item materials, or
 specified item contaminants.

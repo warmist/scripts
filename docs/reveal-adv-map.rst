@@ -2,6 +2,12 @@
 reveal-adv-map
 ==============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure armok map
+
+
+
 This script can be used to either reveal or hide all tiles on the
 world map in adventure mode (visible when viewing the quest log
 or fast travelling, for example).

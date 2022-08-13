@@ -1,6 +1,12 @@
 
 modtools/interaction-trigger
 ============================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 This triggers events when a unit uses an interaction on another. It works by
 scanning the announcements for the correct attack verb, so the attack verb
 must be specified in the interaction. It includes an option to suppress this

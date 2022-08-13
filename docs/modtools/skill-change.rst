@@ -1,6 +1,12 @@
 
 modtools/skill-change
 =====================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Sets or modifies a skill of a unit.  Args:
 
 :-skill skillName:  set the skill that we're talking about

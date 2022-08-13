@@ -1,6 +1,12 @@
 
 force
 =====
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 A simpler wrapper around the `modtools/force` script.
 
 Usage:

@@ -1,6 +1,12 @@
 
 stripcaged
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity items
+
+
 For dumping items inside cages. Will mark selected items for dumping, then
 a dwarf may come and actually dump them (or you can use `autodump`).
 

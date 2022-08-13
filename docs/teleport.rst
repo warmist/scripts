@@ -1,6 +1,12 @@
 
 teleport
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Teleports a unit to given coordinates.
 
 .. note::

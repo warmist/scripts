@@ -1,5 +1,11 @@
 tame
 ====
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok animals
+
+
 Tame and train animals.
 
 Usage: ``tame -read`` OR ``tame -set <level>``

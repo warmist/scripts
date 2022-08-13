@@ -2,6 +2,12 @@
 build-now
 =========
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok buildings
+
+
+
 Instantly completes unsuspended building construction jobs. By default, all
 buildings on the map are completed, but the area of effect is configurable.
 

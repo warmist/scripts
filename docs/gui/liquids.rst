@@ -1,6 +1,12 @@
 
 gui/liquids
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map
+
+
 This script is a gui front-end to `liquids` and works similarly,
 allowing you to add or remove water & magma, and create obsidian walls & floors.
 

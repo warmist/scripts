@@ -1,6 +1,12 @@
 
 modtools/reaction-trigger
 =========================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Triggers dfhack commands when custom reactions complete, regardless of whether
 it produced anything, once per completion.  Arguments::
 

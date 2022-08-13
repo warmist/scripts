@@ -1,6 +1,12 @@
 
 gui/guide-path
 ==============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection map
+
+
 Activate in the :guilabel:`Hauling` menu with the cursor over
 a :guilabel:`Guide` order.
 

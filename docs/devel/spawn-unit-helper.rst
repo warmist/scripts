@@ -1,6 +1,12 @@
 
 devel/spawn-unit-helper
 =======================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Setup stuff to allow arena creature spawn after a mode change.
 
 With Arena spawn data initialized:

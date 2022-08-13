@@ -2,6 +2,12 @@
 fix/corrupt-equipment
 =====================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix military
+
+
+
 Fixes some corruption that can occur in equipment lists, as in :bug:`11014`.
 
 Note that there have been several possible types of corruption identified:

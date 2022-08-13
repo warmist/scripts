@@ -1,6 +1,12 @@
 
 dwarf-op
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Dwarf optimization is a script designed to provide a robust solution
 to hacking dwarves to be better at work. The primary use case is as follows:
 

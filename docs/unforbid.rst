@@ -2,6 +2,12 @@
 unforbid
 ========
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity items
+
+
+
 Unforbids all items.
 
 Usage::

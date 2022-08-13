@@ -1,6 +1,12 @@
 
 resurrect-adv
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure armok
+
+
 Brings a dead adventurer back to life, fully healing them
 in the process.
 

@@ -1,6 +1,12 @@
 
 gui/workshop-job
 ================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection jobs
+
+
 Run with a job selected in a workshop in the :kbd:`q` mode.
 
 .. image:: /docs/images/workshop-job.png

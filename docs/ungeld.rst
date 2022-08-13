@@ -1,6 +1,12 @@
 
 ungeld
 ======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok animals
+
+
 A wrapper around `geld` that ungelds the specified animal.
 
 Valid options:

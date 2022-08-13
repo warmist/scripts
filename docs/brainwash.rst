@@ -1,6 +1,12 @@
 
 brainwash
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Modify the personality traits of the selected dwarf to match an idealised
 personality - for example, as stable and reliable as possible to prevent
 tantrums even after months of misery.

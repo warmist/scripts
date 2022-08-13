@@ -1,6 +1,12 @@
 
 fix/item-occupancy
 ==================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix map
+
+
 Diagnoses and fixes issues with nonexistant 'items occupying site', usually
 caused by `autodump` bugs or other hacking mishaps. Checks that:
 

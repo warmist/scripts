@@ -2,6 +2,12 @@
 season-palette
 ==============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort gameplay graphics
+
+
+
 Swap color palettes when the seasons change.
 
 For this script to work you need to add *at least* one color palette file to

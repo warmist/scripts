@@ -1,6 +1,12 @@
 
 geld
 ====
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok animals
+
+
 Geld allows the user to geld and ungeld animals.
 
 Valid options:

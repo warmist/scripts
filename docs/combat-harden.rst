@@ -1,6 +1,12 @@
 
 combat-harden
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok military units
+
+
 Sets the combat-hardened value on a unit, making them care more/less about seeing corpses.
 Requires a value and a target.
 

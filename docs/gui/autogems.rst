@@ -2,6 +2,12 @@
 gui/autogems
 ============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto workorders
+
+
+
 A frontend for the `autogems` plugin that allows configuring the gem types to be cut.
 
 The following controls apply to the gems currently listed:

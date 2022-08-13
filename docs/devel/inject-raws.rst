@@ -1,6 +1,12 @@
 
 devel/inject-raws
 =================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 WARNING: THIS SCRIPT CAN PERMANENLY DAMAGE YOUR SAVE.
 
 This script attempts to inject new raw objects into your

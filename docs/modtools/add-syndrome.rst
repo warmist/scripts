@@ -1,6 +1,12 @@
 
 modtools/add-syndrome
 =====================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 This allows adding and removing syndromes from units.
 
 Arguments::

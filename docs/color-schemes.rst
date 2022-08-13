@@ -1,6 +1,12 @@
 
 color-schemes
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort gameplay graphics
+
+
 A script to manage color schemes.
 
 Current features are :

@@ -1,6 +1,12 @@
 
 unretire-anyone
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure embark armok
+
+
 This script allows the user to play as any living (or undead)
 historical figure (except for deities) in adventure mode.
 

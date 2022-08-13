@@ -1,6 +1,12 @@
 
 rejuvenate
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Decreases the age of the selected dwarf to 20 years. Useful if valuable citizens
 are getting old.
 

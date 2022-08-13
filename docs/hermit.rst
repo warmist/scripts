@@ -2,6 +2,12 @@
 hermit
 ======
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort gameplay
+
+
+
 Blocks all caravans, migrants, diplomats, and forgotten beasts (not wildlife).
 Useful for attempting the `hermit challenge`_.
 

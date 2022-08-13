@@ -1,6 +1,12 @@
 
 masspit
 =======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity animals
+
+
 Designate all creatures in cages on top of a pit/pond activity zone for pitting.
 Works best with an animal stockpile on top of the zone.
 

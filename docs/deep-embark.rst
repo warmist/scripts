@@ -1,6 +1,12 @@
 
 deep-embark
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort embark gameplay
+
+
 Moves the starting units and equipment to
 a specific underground region upon embarking.
 

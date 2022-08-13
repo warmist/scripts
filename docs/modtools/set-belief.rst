@@ -1,6 +1,12 @@
 
 modtools/set-belief
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Changes the beliefs (values) of units.
 Requires a belief, modifier, and a target.
 

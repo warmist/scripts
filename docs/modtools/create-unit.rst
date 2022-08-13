@@ -1,6 +1,12 @@
 
 modtools/create-unit
 ====================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Creates a unit.  Usage::
 
     -race raceName

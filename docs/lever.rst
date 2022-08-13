@@ -1,6 +1,12 @@
 
 lever
 =====
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity inspection armok buildings
+
+
 Allow manipulation of in-game levers from the dfhack console.
 
 Can list levers, including state and links, with::

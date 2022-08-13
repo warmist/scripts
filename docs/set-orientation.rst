@@ -1,6 +1,12 @@
 
 set-orientation
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Edit a unit's orientation.
 Interest levels are 0 for Uninterested, 1 for Romance, 2 for Marry.
 

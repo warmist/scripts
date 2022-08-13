@@ -1,6 +1,12 @@
 
 timestream
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort fps
+
+
 Controls the speed of the calendar and creatures. Fortress mode only. Experimental.
 
 The script is also capable of dynamically speeding up the game based on your current FPS to mitigate the effects of FPS death. See examples below to see how.

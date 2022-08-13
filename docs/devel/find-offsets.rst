@@ -2,6 +2,12 @@
 devel/find-offsets
 ==================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 .. warning::
 
     THIS SCRIPT IS STRICTLY FOR DFHACK DEVELOPERS.

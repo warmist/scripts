@@ -1,6 +1,12 @@
 
 fillneeds
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Use with a unit selected to make them focused and unstressed.
 
 Alternatively, a unit can be specified by passing ``-unit UNIT_ID``

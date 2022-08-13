@@ -1,6 +1,12 @@
 
 extinguish
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok buildings items map units
+
+
 This script allows the user to put out fires affecting
 map tiles, plants, units, items and buildings.
 

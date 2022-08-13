@@ -1,6 +1,12 @@
 
 hfs-pit
 =======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map
+
+
 Creates a pit to the underworld at the cursor, taking three numbers as
 arguments.  Usage:  ``hfs-pit <size> <walls> <stairs>``
 

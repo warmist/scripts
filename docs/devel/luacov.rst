@@ -1,6 +1,12 @@
 devel/luacov
 ============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 Lua script coverage report generator
 
 Usage:

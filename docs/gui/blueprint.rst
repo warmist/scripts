@@ -1,6 +1,12 @@
 
 gui/blueprint
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort design buildings stockpiles map
+
+
 The `blueprint` plugin records the structure of a portion of your fortress in
 a blueprint file that you (or anyone else) can later play back with `quickfort`.
 

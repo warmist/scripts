@@ -1,6 +1,12 @@
 
 linger
 ======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure armok
+
+
 Enables the player to take control of their adventurer's killer.
 Run this script after being presented with "You are deceased."
 

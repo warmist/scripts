@@ -1,6 +1,12 @@
 
 colonies
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map
+
+
 List vermin colonies, place honey bees, or convert all vermin
 to honey bees.  Usage:
 

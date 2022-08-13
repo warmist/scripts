@@ -1,6 +1,12 @@
 
 modtools/transform-unit
 =======================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Transforms a unit into another unit type, possibly permanently.
 Warning: this will crash arena mode if you view the unit on the
 same tick that it transforms.  If you wait until later, it will be fine.

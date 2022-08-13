@@ -1,6 +1,12 @@
 
 gui/workflow
 ============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto jobs
+
+
 Bind to a key (the example config uses Alt-W), and activate with a job selected
 in a workshop in :kbd:`q` mode.
 

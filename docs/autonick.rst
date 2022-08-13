@@ -1,6 +1,11 @@
-
 autonick
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity units
+
+
 Gives dwarves unique nicknames chosen randomly from ``dfhack-config/autonick.txt``.
 
 One nickname per line.

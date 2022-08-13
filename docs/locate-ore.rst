@@ -1,6 +1,12 @@
 
 locate-ore
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity armok map
+
+
 Scan the map for metal ores.
 
 Finds and designate for digging one tile of a specific metal ore.

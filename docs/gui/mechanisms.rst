@@ -1,6 +1,12 @@
 
 gui/mechanisms
 ==============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection buildings
+
+
 Lists mechanisms connected to the building, and their links. Navigating
 the list centers the view on the relevant linked buildings.
 

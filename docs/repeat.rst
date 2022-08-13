@@ -1,6 +1,12 @@
 
 repeat
 ======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 Repeatedly calls a lua script at the specified interval. This can be used from
 init files. Note that any time units other than ``frames`` are unsupported when
 a world is not loaded (see ``dfhack.timeout()``).

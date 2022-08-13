@@ -1,6 +1,12 @@
 
 questport
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure armok
+
+
 Teleports your adventurer to the location of your quest log map cursor.
 
 Use by opening the quest log map and moving the cursor to your target location

@@ -1,6 +1,12 @@
 
 exterminate
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Kills any unit of a given race.
 
 With no argument, lists the available races and count eligible targets.

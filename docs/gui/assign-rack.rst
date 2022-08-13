@@ -1,6 +1,12 @@
 
 gui/assign-rack
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 `This script requires a binpatch <binpatches/needs-patch>`, which has not
 been available since DF 0.34.11
 

@@ -1,6 +1,12 @@
 
 devel/annc-monitor
 ==================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Displays announcements and reports in the console.
 
 :enable|start:      Begins monitoring

@@ -1,6 +1,12 @@
 
 gui/advfort
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure gameplay
+
+
 This script allows performing jobs in adventure mode. For more complete help
 press :kbd:`?` while the script is running. It's most comfortable to use this as a
 keybinding (see below for the default binding). Possible arguments:

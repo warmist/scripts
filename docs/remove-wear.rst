@@ -1,6 +1,12 @@
 
 remove-wear
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok items
+
+
 Sets the wear on items in your fort to zero.  Usage:
 
 :remove-wear all:

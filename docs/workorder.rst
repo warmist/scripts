@@ -1,6 +1,12 @@
 
 workorder
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity workorders
+
+
 ``workorder`` is a script to queue work orders as in ``j-m-q`` menu.
 It can automatically count how many creatures can be milked or sheared.
 
