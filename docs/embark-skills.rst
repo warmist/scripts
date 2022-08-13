@@ -1,6 +1,12 @@
 
 embark-skills
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort embark armok units
+
+
 Adjusts dwarves' skills when embarking.
 
 Note that already-used skill points are not taken into account or reset.

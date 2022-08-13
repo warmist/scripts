@@ -1,6 +1,12 @@
 
 gui/room-list
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection
+
+
 Activate in :kbd:`q` mode, either immediately or after opening the
 assign owner page.
 

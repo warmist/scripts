@@ -1,6 +1,12 @@
 
 devel/sc
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Size Check: scans structures for invalid vectors, misaligned structures,
 and unidentified enum values.
 

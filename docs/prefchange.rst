@@ -1,6 +1,12 @@
 
 prefchange
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Sets preferences for mooding to include a weapon type, equipment type,
 and material.  If you also wish to trigger a mood, see
 `strangemood`.

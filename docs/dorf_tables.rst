@@ -1,6 +1,12 @@
 
 dorf_tables
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Data tables for `dwarf-op`
 
 Arguments:

@@ -1,6 +1,12 @@
 
 list-waves
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection units
+
+
 This script displays information about migration waves of the specified citizen(s).
 
 Examples::

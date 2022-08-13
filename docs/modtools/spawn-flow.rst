@@ -1,6 +1,12 @@
 
 modtools/spawn-flow
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Creates flows at the specified location.
 
 Arguments::

@@ -1,6 +1,12 @@
 
 create-items
 ============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok items
+
+
 Spawn items under the cursor, to get your fortress started.
 
 The first argument gives the item category, the second gives the material,

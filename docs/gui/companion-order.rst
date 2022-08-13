@@ -1,6 +1,12 @@
 
 gui/companion-order
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure interface
+
+
 A script to issue orders for companions. Select companions with lower case chars (green when selected), issue orders with upper
 case. Must be in look or talk mode to issue command on tile (e.g. move/equip/pick-up).
 

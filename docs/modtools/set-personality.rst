@@ -1,6 +1,12 @@
 
 modtools/set-personality
 ========================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Changes the personality of units.
 Requires a trait, modifier, and a target.
 

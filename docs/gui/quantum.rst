@@ -1,6 +1,12 @@
 
 gui/quantum
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity stockpiles
+
+
 This script provides a visual, interactive interface to make setting up quantum
 stockpiles much easier.
 

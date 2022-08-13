@@ -1,6 +1,12 @@
 
 devel/pop-screen
 ================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev interface
+
+
 Forcibly closes the current screen. This is usually equivalent to pressing
 :kbd:`Esc` (``LEAVESCREEN``), but will bypass the screen's input handling. This is
 intended primarily for development, if you have created a screen whose input

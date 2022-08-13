@@ -2,6 +2,12 @@
 fix/retrieve-units
 ==================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix units
+
+
+
 This script forces some units off the map to enter the map, which can fix issues
 such as the following:
 

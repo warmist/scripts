@@ -1,6 +1,12 @@
 
 quickfort
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity design buildings stockpiles map
+
+
 Processes Quickfort-style blueprint files.
 
 Quickfort blueprints record what you want at each map coordinate in a

@@ -1,6 +1,12 @@
 
 modtools/projectile-trigger
 ===========================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 This triggers dfhack commands when projectiles hit their targets.  Usage::
 
     -clear

@@ -1,5 +1,11 @@
 gui/quickfort
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity design buildings stockpiles map
+
+
 Graphical interface for the `quickfort` script. Once you load a blueprint, you
 will see a blinking "shadow" over the tiles that will be modified. You can use
 the cursor to reposition the blueprint or the hotkeys to rotate and repeat the
@@ -39,10 +45,28 @@ transformation options, are saved for the next time you run the script.
 
 Examples:
 
-============================== =================================================
+==============================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity design buildings stockpiles map
+
+ =================================================
 Command                        Effect
-============================== =================================================
+==============================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity design buildings stockpiles map
+
+ =================================================
 gui/quickfort                  opens the quickfort interface with saved settings
 gui/quickfort dreamfort        opens with a custom blueprint filter
 gui/quickfort myblueprint.csv  opens with the specified blueprint pre-loaded
-============================== =================================================
+==============================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity design buildings stockpiles map
+
+ =================================================

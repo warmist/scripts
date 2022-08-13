@@ -1,6 +1,12 @@
 
 gui/rename
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity buildings stockpiles units
+
+
 Backed by `rename`, this script allows entering the desired name
 via a simple dialog in the game ui.
 

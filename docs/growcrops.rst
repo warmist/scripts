@@ -1,6 +1,12 @@
 
 growcrops
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok plants
+
+
 Instantly grow seeds inside farming plots.
 
 With no argument, this command list the various seed types

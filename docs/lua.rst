@@ -1,6 +1,12 @@
 
 lua
 ===
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 There are the following ways to invoke this command:
 
 1. ``lua`` (without any parameters)

@@ -2,6 +2,12 @@
 prioritize
 ==========
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto jobs
+
+
+
 The prioritize script sets the ``do_now`` flag on all of the specified types of
 jobs that are ready to be picked up by a dwarf but not yet assigned to a dwarf.
 This will force them to get assigned and completed as soon as possible.

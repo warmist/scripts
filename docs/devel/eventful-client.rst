@@ -1,6 +1,12 @@
 devel/eventful-client
 =====================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 Usage::
 
     devel/eventful-client help

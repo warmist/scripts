@@ -1,6 +1,12 @@
 
 gui/stockpiles
 ==============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort design stockpiles
+
+
 An in-game interface for `stocksettings`, to
 load and save stockpile settings from the :kbd:`q` menu.
 

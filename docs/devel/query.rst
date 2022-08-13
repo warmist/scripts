@@ -1,6 +1,12 @@
 
 devel/query
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev inspection
+
+
 Query is a script useful for finding and reading values of data structure
 fields. Purposes will likely be exclusive to writing lua script code,
 possibly C++.

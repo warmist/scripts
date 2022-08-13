@@ -1,6 +1,12 @@
 
 markdown
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 Save a copy of a text screen in markdown (useful for Reddit, among other sites).
 See `forum-dwarves` for BBCode export (for e.g. the Bay12 Forums).
 

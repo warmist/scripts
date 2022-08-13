@@ -1,6 +1,12 @@
 
 gui/family-affairs
 ==================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection units
+
+
 A user-friendly interface to view romantic relationships,
 with the ability to add, remove, or otherwise change them at
 your whim - fantastic for depressed dwarves with a dead spouse

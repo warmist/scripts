@@ -1,6 +1,12 @@
 
 gui/gm-editor
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: inspection animals buildings stockpiles items map workorders jobs plants units
+
+
 This editor allows to change and modify almost anything in df. Press :kbd:`?` for
 in-game help. There are multiple ways to open this editor:
 

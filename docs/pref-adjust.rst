@@ -1,6 +1,12 @@
 
 pref-adjust
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 ``pref-adjust all`` removes/changes preferences from all dwarves, and
 ``pref-adjust one`` which works for a single currently selected dwarf.
 For either, the script inserts an 'ideal' set which is easy to satisfy:

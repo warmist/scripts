@@ -1,6 +1,12 @@
 modtools/change-build-menu
 ==========================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 Change the build sidebar menus.
 
 This script provides a flexible and comprehensive system for adding and removing

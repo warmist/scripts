@@ -2,6 +2,12 @@
 caravan
 =======
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix armok
+
+
+
 Adjusts properties of caravans on the map. See also `force` to create caravans.
 
 This script has multiple subcommands. Commands listed with the argument

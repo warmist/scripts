@@ -2,6 +2,12 @@
 deteriorate
 ===========
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto gameplay fps items plants
+
+
+
 Causes the selected item types to rot away. By default, items disappear after a
 few months, but you can choose to slow this down or even make things rot away
 instantly!

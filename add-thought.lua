@@ -17,7 +17,7 @@ function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     if not (tonumber(emotion)) then
         emotion=df.emotion_type[emotion] --luacheck: retype
     end
-    local properThought = tonumber(thought) --as:df.unit_thought_type
+    local properThought = tonumber(thought) or df.unit_thought_type[thought]
     local properSubthought = tonumber(subthought)
     if not properThought or not df.unit_thought_type[properThought] then
         for k,syn in ipairs(df.global.world.raws.syndromes.all) do

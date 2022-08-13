@@ -1,6 +1,12 @@
 
 modtools/set-need
 =================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Sets and edits unit needs.
 
 Valid commands:

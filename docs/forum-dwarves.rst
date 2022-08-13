@@ -1,6 +1,12 @@
 
 forum-dwarves
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 Saves a copy of a text screen, formatted in bbcode for posting to the
 Bay12 Forums.  See `markdown` to export for Reddit etc.
 

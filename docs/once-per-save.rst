@@ -1,6 +1,12 @@
 
 once-per-save
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 Runs commands like `multicmd`, but only unless
 not already ran once in current save. You may actually
 want `on-new-fortress`.

@@ -1,6 +1,12 @@
 
 light-aquifers-only
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort embark armok map
+
+
 This script behaves differently depending on whether it's called pre embark or post
 embark. Pre embark it changes all aquifers in the world to light ones, while post
 embark it only changes the ones at the embark to light ones, leaving the rest of the

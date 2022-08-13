@@ -1,6 +1,12 @@
 
 gui/choose-weapons
 ==================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity military
+
+
 Activate in the :guilabel:`Equip->View/Customize` page of the military screen.
 
 Depending on the cursor location, it rewrites all 'individual choice weapon' entries

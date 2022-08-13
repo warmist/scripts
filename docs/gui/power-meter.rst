@@ -1,6 +1,12 @@
 
 gui/power-meter
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort gameplay buildings
+
+
 Activate an in-game interface for `power-meter` after selecting
 :guilabel:`Pressure Plate` in the build menu.
 

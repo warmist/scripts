@@ -1,6 +1,12 @@
 
 gui/workorder-details
 =====================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection workorders
+
+
 Adjust input items, material, or traits for work orders. Actual
 jobs created for it will inherit the details.
 

@@ -1,6 +1,12 @@
 
 show-unit-syndromes
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection units
+
+
 Show syndromes affecting units and the remaining and maximum duration, along
 with (optionally) substantial detail on the effects.
 

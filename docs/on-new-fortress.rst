@@ -1,6 +1,12 @@
 
 on-new-fortress
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 Runs commands like `multicmd`, but only in a newborn fortress.
 
 Use this in ``onMapLoad.init`` with f.e. `ban-cooking`::

@@ -1,6 +1,12 @@
 
 view-unit-reports
 =================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection military
+
+
 Show combat reports for the current unit.
 
 Current unit is unit near cursor in 'v', selected in 'u' list,

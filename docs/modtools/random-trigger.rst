@@ -1,6 +1,12 @@
 
 modtools/random-trigger
 =======================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Trigger random dfhack commands with specified probabilities.
 Register a few scripts, then tell it to "go" and it will pick one
 based on the probability weights you specified.

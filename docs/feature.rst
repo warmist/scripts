@@ -1,6 +1,12 @@
 
 feature
 =======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map
+
+
 Enables management of map features.
 
 * Discovering a magma feature (magma pool, volcano, magma sea, or curious

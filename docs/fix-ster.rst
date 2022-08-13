@@ -1,6 +1,12 @@
 
 fix-ster
 ========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok animals
+
+
 Utilizes the orientation tag to either fix infertile creatures or inflict
 infertility on creatures that you do not want to breed.  Usage::
 

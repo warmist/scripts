@@ -2,6 +2,12 @@
 uniform-unstick
 ===============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix military
+
+
+
 Prompt units to reevaluate their uniform, by removing/dropping potentially conflicting worn items.
 
 Unlike a "replace clothing" designation, it won't remove additional clothing

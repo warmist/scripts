@@ -1,19 +1,28 @@
 add-recipe
 ==========
-Adds unknown weapon and armor crafting recipes to your civ.
-E.g. some civilizations never learn to craft high boots. This script can
-help with that, and more. Only weapons, armor, and tools are currently supported;
-things such as instruments are not. Available options:
 
-* ``add-recipe all`` adds *all* available weapons and armor, including exotic items
-  like blowguns, two-handed swords, and capes.
+.. dfhack-tool::
+    :summary: Add crafting recipies to a civ.
+    :tags: adventure fort gameplay
 
-* ``add-recipe native`` adds only native (but unknown) crafting recipes. Civilizations
-  pick randomly from a pool of possible recipes, which means not all civs get
-  high boots, for instance. This command gives you all the recipes your
-  civilisation could have gotten.
+Some civilizations never learn to craft high boots. This script can help with
+that. Only weapons, armor, and tools are currently supported; things such as
+instruments are not.
 
-* ``add-recipe single <item token>`` adds a single item by the given
-  item token. For example::
+Usage:
 
-    add-recipe single SHOES:ITEM_SHOES_BOOTS
+``add-recipe native`` adds all native (but unknown) crafting recipes.
+    Civilizations pick randomly from a pool of possible recipes, which means not
+    all civs get high boots, for instance. This command gives you all the
+    recipes your civilization could have gotten.
+``add-recipe all``
+    Adds *all* available weapons and armor, including exotic items like
+    blowguns, two-handed swords, and capes.
+``add-recipe single <item token>``
+    Adds a single item by the given item token.
+
+Example
+-------
+
+``add-recipe single SHOES:ITEM_SHOES_BOOTS``
+    Allow your civ to craft high boots.

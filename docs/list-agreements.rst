@@ -2,6 +2,12 @@
 list-agreements
 ===============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection
+
+
+
 Lists Guildhall and Temple agreements in fortress mode.
 In addition:
 

@@ -1,6 +1,12 @@
 
 gui/siege-engine
 ================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort gameplay buildings
+
+
 Activate an in-game interface for `siege-engine`, after selecting
 a siege engine in :kbd:`q` mode.
 

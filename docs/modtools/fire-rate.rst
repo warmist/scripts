@@ -2,6 +2,12 @@
 modtools/fire-rate
 ==================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
+
 Allows altering the fire rates of ranged weapons. Each are defined on a per-item
 basis. As this is done in an on-world basis, commands for this should be placed
 in an ``onLoad*.init``. This also technically serves as a patch to any of the

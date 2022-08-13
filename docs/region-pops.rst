@@ -1,6 +1,12 @@
 
 region-pops
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection animals
+
+
 Show or modify the populations of animals in the region.
 
 Usage:

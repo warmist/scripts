@@ -1,6 +1,12 @@
 
 catsplosion
 ===========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok animals
+
+
 Makes cats (and other animals) just *multiply*. It is not a good idea to run this
 more than once or twice.
 

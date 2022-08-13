@@ -1,6 +1,12 @@
 
 starvingdead
 ============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto gameplay fps units
+
+
 Somewhere between a "mod" and a "fps booster", with a small impact on
 vanilla gameplay. It mostly helps prevent undead cascades in the caverns,
 where constant combat leads to hundreds of undead roaming the

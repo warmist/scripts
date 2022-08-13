@@ -1,6 +1,12 @@
 
 exportlegends
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: legends inspection
+
+
 Controls legends mode to export data - especially useful to set-and-forget large
 worlds, or when you want a map of every site when there are several hundred.
 

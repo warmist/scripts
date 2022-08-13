@@ -1,6 +1,12 @@
 
 open-legends
 ============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort legends
+
+
 Open a legends screen when in fortress mode. Requires a world loaded in fortress
 or adventure mode. Compatible with `exportlegends`.
 

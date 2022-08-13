@@ -1,6 +1,12 @@
 
 view-item-info
 ==============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev interface
+
+
 A script to extend the item or unit viewscreen with additional information
 including a custom description of each item (when available), and properties
 such as material statistics, weapon attacks, armor effectiveness, and more.

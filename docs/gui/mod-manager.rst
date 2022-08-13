@@ -1,6 +1,12 @@
 
 gui/mod-manager
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 A simple way to install and remove small mods, which are not included
 in DFHack.  Examples are `available here <https://github.com/warmist/df-mini-mods>`_.
 

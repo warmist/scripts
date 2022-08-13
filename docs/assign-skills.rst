@@ -1,16 +1,51 @@
-
 assign-skills
 =============
-A script to change the skills of a unit.
 
-Skills are defined by their token and their rank. Skills tokens can be
-found here: https://dwarffortresswiki.org/index.php/DF2014:Skill_token
+.. dfhack-tool::
+    :summary: Adjust a unit's skills.
+    :tags: fort armok units
 
-Below you can find a list of the first 16 ranks:
+Skills are defined by their token and their rank. Skills tokens can be found
+here: https://dwarffortresswiki.org/index.php/DF2014:Skill_token
 
-====  ============
-Rank  Skill name
-====  ============
+Usage::
+
+    assign-skills [--unit <id>] <options>
+
+Example
+-------
+
+::
+
+    assign-skills --reset --skills [ WOODCUTTING 3 AXE 2 ]
+
+Clears all the unit skills, then adds the Wood cutter skill (competent level)
+and the Axeman skill (adequate level).
+
+Options
+-------
+
+``--unit <id>``
+    The target unit ID. If not present, the currently selected unit will be the
+    target.
+``--skills "[" <skill> <rank> [<skill> <rank> ...] "]"``
+    The list of the skills to modify and their ranks. Rank values range from -1
+    (the skill is not learned) to 20 (legendary + 5). It is actually possible to
+    go beyond 20 (no check is performed), but the effect on the game may not be
+    predictable. There must be a space before and after each square bracket.
+``--reset``
+    Clear all skills. If the script is called with both this option and
+    ``--skills``, first all the unit skills will be cleared and then the listed
+    skills will be added.
+
+Skill ranks
+-----------
+
+Here is the mapping from rank value to description:
+
+====  ================
+Rank  Rank description
+====  ================
 0     Dabbling
 1     Novice
 2     Adequate
@@ -29,35 +64,5 @@ Rank  Skill name
 15+   Legendary
 ====  ============
 
-For more information:
+For more information, please see:
 https://dwarffortresswiki.org/index.php/DF2014:Skill#Skill_level_names
-
-Usage:
-
-``-help``:
-                    print the help page.
-
-``-unit <UNIT_ID>``:
-                    the target unit ID. If not present, the
-                    currently selected unit will be the target.
-
-``-skills [ <SKILL> <RANK> <SKILL> <RANK> <...> ]``:
-                    the list of the skills to modify and their ranks.
-                    Rank values range from -1 (the skill is not learned)
-                    to normally 20 (legendary + 5). It is actually
-                    possible to go beyond 20, no check is performed.
-                    There must be a space before and after each square
-                    bracket.
-
-``-reset``:
-                    clear all skills. If the script is called with
-                    both this option and a list of skills/ranks,
-                    first all the unit skills will be cleared
-                    and then the listed skills will be added.
-
-Example::
-
-    assign-skills -reset -skills [ WOODCUTTING 3 AXE 2 ]
-
-Clears all the unit skills, then adds the Wood cutter skill (competent level)
-and the Axeman skill (adequate level).

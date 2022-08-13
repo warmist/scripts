@@ -1,6 +1,12 @@
 
 gui/load-screen
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dfhack
+
+
 A replacement for the "continue game" screen.
 
 Usage: ``gui/load-screen enable|disable``

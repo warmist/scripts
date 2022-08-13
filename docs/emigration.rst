@@ -1,6 +1,12 @@
 
 emigration
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort auto gameplay units
+
+
 Allows dwarves to emigrate from the fortress when stressed,
 in proportion to how badly stressed they are and adjusted
 for who they would have to leave with - a dwarven merchant

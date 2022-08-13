@@ -2,6 +2,12 @@
 gui/pathable
 ============
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection map
+
+
+
 Highlights each visible map tile to indicate whether it is possible to path to
 from the tile at the cursor - green if possible, red if not, similar to
 `gui/siege-engine`. A few options are available:

@@ -1,62 +1,74 @@
-
 animal-control
 ==============
-Animal control is a script useful for deciding what animals to butcher and geld.
 
-While not as powerful as Dwarf Therapist in managing animals - in so far as
-DT allows you to sort by various stats and flags - this script does provide
-many options for filtering animals. Additionally you can mark animals for
-slaughter or gelding, you can even do so enmasse if you so choose.
+.. dfhack-tool::
+    :summary: Quickly view, butcher, or geld groups of animals.
+    :tags: fort productivity animals
 
-Examples::
+Animal control is useful for browsing through your animals and deciding which
+to butcher or geld.
 
-  animal-control -race DOG
-  animal-control -race DOG -male -notgelded -showstats
-  animal-control -markfor gelding -id 1988
-  animal-control -markfor slaughter -id 1988
-  animal-control -gelded -markedfor slaughter -unmarkfor slaughter
+Usage::
 
-**Selection options:**
+    animal-control [<selection options>] [<command options>]
 
-These options are used to specify what animals you want or do not want to select.
+Examples
+--------
 
-``-all``:                   Selects all units.
-                            Note: cannot be used in conjunction with other
-                            selection options.
+``animal-control --all``
+    View all your animals and whether they are marked for gelding or butchering.
+``animal-control --race DOG --showstats``
+    View extended info on your dogs.
+``animal-control --markfor gelding --id 1988``
+    Mark the specified unit for gelding.
+``animal-control --gelded --markfor slaughter``
+    Mark all gelded animals for slaughter.
+``animal-control --gelded --markedfor slaughter --unmarkfor slaughter``
+    Unmark all gelded animals for slaughter.
 
-``-id <value>``:            Selects the unit with the specified id value provided.
+Selection options
+-----------------
 
-``-race <value>``:          Selects units which match the race value provided.
+These options are used to specify what animals you want to select. If an option
+calls for an ``<action>``, valid actions are ``slaughter`` and ``gelding``.
 
-``-markedfor <action>``:    Selects units which have been marked for the action provided.
-                            Valid actions: ``slaughter``, ``gelding``
+``--all``
+    Selects all units. This is the default if no selection options are
+    specified.
+``--id <value>``
+    Selects the unit with the specified id.
+``--race <value>``
+    Selects units which match the specified race. This can be the string name or
+    the numeric race id. Run ``animal-control --all`` to see which races you
+    have right now.
+``--markedfor <action>``
+    Selects units which have been marked for the given action.
+``--notmarkedfor <action>``
+    Selects units which have not been marked for the given action.
+``--gelded``
+    Selects units which have already been gelded.
+``--notgelded``
+    Selects units which have not been gelded.
+``--male``
+    Selects male units.
+``--female``
+    Selects female units.
 
-``-notmarkedfor <action>``: Selects units which have not been marked for the action provided.
-                            Valid actions: ``slaughter``, ``gelding``
+Command options
+---------------
 
-``-gelded``:                Selects units which have already been gelded.
+If no command option is specified, the default is to just list the matched
+animals with some basic information.
 
-``-notgelded``:             Selects units which have not been gelded.
+``--showstats``
+    Displays physical attributes of the selected animals.
+``--markfor <action>``
+    Marks selected animals for the given action.
+``--unmarkfor <action>``
+    Unmarks selected animals for the given action.
 
-``-male``:                  Selects units which are male.
-
-``-female``:                Selects units which are female.
-
-**Command options:**
-
-- ``-showstats``:           Displays physical attributes of the selected animals.
-
-- ``-markfor <action>``:    Marks selected animals for the action provided.
-                            Valid actions: ``slaughter``, ``gelding``
-
-- ``-unmarkfor <action>``:  Unmarks selected animals for the action provided.
-                            Valid actions: ``slaughter``, ``gelding``
-
-**Other options:**
-
-- ``-help``: Displays this information
-
-**Column abbreviations**
+Column abbreviations
+--------------------
 
 Due to space constraints, the names of some output columns are abbreviated
 as follows:

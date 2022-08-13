@@ -2,6 +2,12 @@
 fix/stuck-merchants
 ===================
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix units
+
+
+
 Dismisses merchants that haven't entered the map yet. This can fix :bug:`9593`.
 This script should probably not be run if any merchants are on the map, so using
 it with `repeat` is not recommended.

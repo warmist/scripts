@@ -1,6 +1,12 @@
 
 spawnunit
 =========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok units
+
+
 Provides a simpler interface to `modtools/create-unit`, for creating units.
 
 Usage:  ``spawnunit [-command] RACE CASTE [NAME] [x y z] [...]``

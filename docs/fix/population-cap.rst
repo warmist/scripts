@@ -1,6 +1,12 @@
 
 fix/population-cap
 ==================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix units
+
+
 Run this after every migrant wave to ensure your population cap is not exceeded.
 
 The reason for population cap problems is that the population value it

@@ -1,6 +1,12 @@
 
 modtools/force
 ==============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 This tool triggers events like megabeasts, caravans, and migrants.
 
 Usage::

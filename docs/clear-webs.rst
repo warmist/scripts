@@ -1,6 +1,12 @@
 
 clear-webs
 ==========
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok map units
+
+
 This script removes all webs that are currently on the map,
 and also frees any creatures who have been caught in one.
 

@@ -1,6 +1,12 @@
 
 reveal-hidden-sites
 ===================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: adventure armok map
+
+
 This script reveals all sites in the world
 that have yet to be discovered by the player
 (camps, lairs, shrines, vaults, etc)

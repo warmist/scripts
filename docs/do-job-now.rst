@@ -2,6 +2,12 @@
 do-job-now
 ==========
 
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort productivity jobs
+
+
+
 The script will try its best to find a job related to the selected entity
 (which can be a job, dwarf, animal, item, building, plant or work order) and then
 mark this job as high priority. There is no visual indicator, please look

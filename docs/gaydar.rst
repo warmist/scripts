@@ -1,6 +1,12 @@
 
 gaydar
 ======
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort inspection animals units
+
+
 Shows the sexual orientation of units, useful for social engineering or checking
 the viability of livestock breeding programs.
 

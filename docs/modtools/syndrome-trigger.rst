@@ -1,6 +1,12 @@
 
 modtools/syndrome-trigger
 =========================
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: dev
+
+
 Triggers dfhack commands when syndromes are applied to units.
 
 Arguments::

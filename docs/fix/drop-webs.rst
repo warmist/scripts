@@ -1,6 +1,12 @@
 
 fix/drop-webs
 =============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort bugfix items
+
+
 Turns floating webs into projectiles, causing them to fall down to a valid
 surface. This addresses :bug:`595`.
 

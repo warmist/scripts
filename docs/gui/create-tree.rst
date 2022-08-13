@@ -1,6 +1,12 @@
 
 gui/create-tree
 ===============
+
+.. dfhack-tool::
+    :summary: todo.
+    :tags: fort armok plants
+
+
 A graphical interface for creating trees.
 
 Place the cursor wherever you want the tree to appear and run the script.
