@@ -423,10 +423,15 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
+-- track whether the user has enabled dev mode
+dev_mode = dev_mode or false
+local DEV_FILTER = {tag={'dev'}}
+
 -- adds the n most closely affiliated peer entries for the given entry that
 -- aren't already in the entries list. affiliation is determined by how many
 -- tags the entries share.
 local function add_top_related_entries(entries, entry, n)
+    local dev_ok = dev_mode or helpdb.entry_has_tag(entry, 'dev')
     local tags = helpdb.get_entry_tags(entry)
     local affinities, buckets = {}, {}
     for i,tag in ipairs(tags) do
@@ -446,16 +451,15 @@ local function add_top_related_entries(entries, entry, n)
         for _,peer in ipairs(buckets[i]) do
             if not entry_set[peer] then
                 entry_set[peer] = true
-                table.insert(entries, peer)
-                n = n - 1
-                if n < 1 then return end
+                if dev_ok or not helpdb.entry_has_tag(peer, 'dev') then
+                    table.insert(entries, peer)
+                    n = n - 1
+                    if n < 1 then return end
+                end
             end
         end
     end
 end
-
-dev_mode = dev_mode or false
-local DEV_FILTER = {str={'modtools/', 'devel/'}}
 
 function LauncherUI:update_autocomplete(firstword)
     local entries = helpdb.search_entries(
@@ -463,8 +467,8 @@ function LauncherUI:update_autocomplete(firstword)
         dev_mode and DEV_FILTER or nil)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
-    -- (e.g. if it's a devel/ script that we masked out) to show that it's a
-    -- valid command
+    -- (e.g. if it's a dev script that we masked out) to show that it's a valid
+    -- command
     local found = extract_entry(entries,firstword) or helpdb.is_entry(firstword)
     sort_by_freq(entries)
     if found then
