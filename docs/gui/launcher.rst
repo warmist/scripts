@@ -1,11 +1,13 @@
 gui/launcher
 ============
-Tags: system
-:dfhack-keybind:`gui/launcher`
 
-In-game DFHack command launcher with integrated help. It is the primary GUI
-interface for running DFHack commands. You can open it from any screen with
-the \` hotkey. If you opened it by mistake, tap \` again to close.
+.. dfhack-tool::
+    :summary: In-game DFHack command launcher with integrated help.
+    :tags: dfhack
+
+This tool is the primary GUI interface for running DFHack commands. You can open
+it from any screen with the \` hotkey. If you opened it by mistake, tap \` again
+to close.
 
 Usage::
 
