@@ -62,7 +62,7 @@ Rank  Rank description
 13    High Master
 14    Grand Master
 15+   Legendary
-====  ============
+====  ================
 
 For more information, please see:
 https://dwarffortresswiki.org/index.php/DF2014:Skill#Skill_level_names
