@@ -431,7 +431,7 @@ local DEV_FILTER = {tag={'dev'}}
 -- aren't already in the entries list. affiliation is determined by how many
 -- tags the entries share.
 local function add_top_related_entries(entries, entry, n)
-    local dev_ok = dev_mode or helpdb.entry_has_tag(entry, 'dev')
+    local dev_ok = dev_mode or helpdb.get_entry_tags(entry).dev
     local tags = helpdb.get_entry_tags(entry)
     local affinities, buckets = {}, {}
     for i,tag in ipairs(tags) do
@@ -451,7 +451,7 @@ local function add_top_related_entries(entries, entry, n)
         for _,peer in ipairs(buckets[i]) do
             if not entry_set[peer] then
                 entry_set[peer] = true
-                if dev_ok or not helpdb.entry_has_tag(peer, 'dev') then
+                if dev_ok or not helpdb.get_entry_tags(peer).dev then
                     table.insert(entries, peer)
                     n = n - 1
                     if n < 1 then return end
