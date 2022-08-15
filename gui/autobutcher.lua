@@ -647,13 +647,13 @@ if not dfhack.isMapLoaded() then
     qerror('Map is not loaded.')
 end
 
-if string.match(dfhack.gui.getCurFocus(), '^dfhack/lua') then
+if string.match(dfhack.gui.getCurFocus(true), '^dfhack/lua') then
     qerror("This script must not be called while other lua gui stuff is running.")
 end
 
 -- maybe this is too strict, there is not really a reason why it can only be called from the status screen
 -- (other than the hotkey might overlap with other scripts)
-if (not string.match(dfhack.gui.getCurFocus(), '^overallstatus') and not string.match(dfhack.gui.getCurFocus(), '^pet/List/Unit')) then
+if (not string.match(dfhack.gui.getCurFocus(true), '^overallstatus') and not string.match(dfhack.gui.getCurFocus(true), '^pet/List/Unit')) then
     qerror("This script must either be called from the overall status screen or the animal list screen.")
 end
 
