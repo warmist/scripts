@@ -1,5 +1,11 @@
 -- The DFHack in-game command launcher
 --@module=true
+--[====[
+gui/launcher
+============
+
+Stub documentation.
+]====]
 
 local gui = require('gui')
 local helpdb = require('helpdb')
