@@ -1,19 +1,28 @@
-
 brainwash
 =========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Set the personality of a dwarf to an ideal.
     :tags: fort armok units
 
+Modify the traits of the selected dwarf to match an idealised personality: as
+stable and reliable as possible to prevent tantrums even after months of misery.
 
-Modify the personality traits of the selected dwarf to match an idealised
-personality - for example, as stable and reliable as possible to prevent
-tantrums even after months of misery.
+Usage::
+    brainwash <type>
 
-Usage:  ``brainwash <type>``, with one of the following types:
+Examples
+--------
 
-:ideal:     reliable, with generally positive personality traits
-:baseline:  reset all personality traits to the average
-:stepford:  amplifies all good qualities to an excessive degree
-:wrecked:   amplifies all bad qualities to an excessive degree
+``brainwash ideal``
+    Sets the dwarf to have an ideal, stable personality
+
+Types
+-----
+
+The type is one of the following:
+
+:ideal:     Reliable, with generally positive personality traits
+:baseline:  Reset all personality traits to the average
+:stepford:  Amplifies all good qualities to an excessive degree
+:wrecked:   Amplifies all bad qualities to an excessive degree

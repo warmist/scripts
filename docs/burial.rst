@@ -1,11 +1,18 @@
-
 burial
 ======
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Configures all unowned coffins to allow burial.
     :tags: fort productivity buildings
 
+Usage::
 
-Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
-of pets.
+    burial [--pets]
+
+if the ``--pets`` option is passed, coffins will also allow burial of pets.
+
+Examples
+--------
+
+``burial --pets``
+    Configures all unowned coffins to allow burial, including pets.

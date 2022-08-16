@@ -1,10 +1,12 @@
-
 binpatch
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Applies or removes binary patches.
     :tags: dev
 
+See `binpatches` for more info.
 
-Implements functions for in-memory binpatches.  See `binpatches`.
+Usage::
+
+    binpatch check|apply|remove <patchname>

@@ -1,11 +1,13 @@
-
 break-dance
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Fixes buggy tavern dances.
     :tags: fort bugfix units
 
+Sometimes when a unit can't find a dance partner, the dance becomes stuck and
+never stops. This tool can get them unstuck.
 
-Breaks up dances, such as broken or otherwise hung dances that occur when a unit
-can't find a partner.
+Usage::
+
+    break-dance

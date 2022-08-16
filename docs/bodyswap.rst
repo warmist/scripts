@@ -1,24 +1,25 @@
-
 bodyswap
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Take direct control of any visible unit.
     :tags: adventure armok units
-
 
 This script allows the player to take direct control of any unit present in
 adventure mode whilst giving up control of their current player character.
 
-To specify the target unit, simply select it in the user interface,
-such as by opening the unit's status screen or viewing its description,
-and enter "bodyswap" in the DFHack console.
+Usage::
 
-Alternatively, the target unit can be specified by its unit id as shown below.
+    bodyswap [--unit <id>]
 
-Arguments::
+If no specific unit id is specified, the target unit is the one selected in the
+user interface, such as by opening the unit's status screen or viewing its
+description.
 
-    -unit id
-        replace "id" with the unit id of your target
-        example:
-            bodyswap -unit 42
+Examples
+--------
+
+``bodyswap``
+    Takes control of the selected unit.
+``bodyswap --unit 42``
+    Takes control of unit with id 42.

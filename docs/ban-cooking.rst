@@ -1,13 +1,24 @@
-
 ban-cooking
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Protect entire categories of ingredients from being cooked.
     :tags: fort productivity items plants
 
+This tool provides a far more convenient way to ban cooking categories of foods
+than the native kitchen interface.
 
-A more convenient way to ban cooking various categories of foods than the
-kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
-``honey``, ``tallow``, ``oil``, ``seeds`` (non-tree plants with seeds),
-``brew``, ``fruit``, ``mill``, ``thread``, and ``milk``.
+Usage::
+    ban-cooking <type>
+
+Valid types are ``booze``, ``brew``, ``fruit``, ``honey``, ``milk``, ``mill``,
+``oil``, ``seeds`` (i.e. non-tree plants with seeds), ``tallow``, and
+``thread``.
+
+Examples::
+
+    on-new-fortress ban-cooking booze; ban-cooking brew; ban-cooking fruit;
+    ban-cooking honey; ban-cooking milk; ban-cooking mill; ban-cooking oil;
+    ban-cooking seeds; ban-cooking tallow; ban-cooking thread
+
+Ban cooking all otherwise useful ingredients once when starting a new fortress.

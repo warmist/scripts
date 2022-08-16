@@ -1,15 +1,12 @@
-
 build-now
 =========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Instantly completes building construction jobs.
     :tags: fort armok buildings
 
-
-
-Instantly completes unsuspended building construction jobs. By default, all
-buildings on the map are completed, but the area of effect is configurable.
+By default, all unsuspended buildings on the map are completed, but the area of
+effect is configurable.
 
 Note that no units will get architecture experience for any buildings that
 require that skill to construct.
@@ -27,17 +24,16 @@ The ``<pos>`` parameters can either be an ``<x>,<y>,<z>`` triple (e.g.
 ``35,12,150``) or the string ``here``, which means the position of the active
 game cursor.
 
-Examples:
+Examples
+--------
 
 ``build-now``
     Completes all unsuspended construction jobs on the map.
-
 ``build-now here``
     Builds the unsuspended, unconstructed building under the cursor.
 
-Options:
+Options
+-------
 
-:``-h``, ``--help``:
-    Show help text.
-:``-q``, ``--quiet``:
+``-q``, ``--quiet``
     Suppress informational output (error messages are still printed).
