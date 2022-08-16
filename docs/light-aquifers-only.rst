@@ -4,7 +4,7 @@ light-aquifers-only
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort embark armok map
+    :tags: embark fort armok map
 
 
 This script behaves differently depending on whether it's called pre embark or post

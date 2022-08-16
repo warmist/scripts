@@ -4,7 +4,7 @@ deteriorate
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort auto gameplay fps items plants
+    :tags: fort auto fps gameplay items plants
 
 
 

@@ -4,7 +4,7 @@ points
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort embark armok
+    :tags: embark fort armok
 
 
 Sets available points at the embark screen to the specified number.  Eg.

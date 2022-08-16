@@ -4,7 +4,7 @@ gui/blueprint
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort design buildings stockpiles map
+    :tags: fort design buildings map stockpiles
 
 
 The `blueprint` plugin records the structure of a portion of your fortress in

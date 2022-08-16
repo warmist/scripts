@@ -4,7 +4,7 @@ startdwarf
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort embark armok
+    :tags: embark fort armok
 
 
 Use before embarking (e.g. at the site selection screen or any time before) to

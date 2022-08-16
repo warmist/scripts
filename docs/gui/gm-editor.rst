@@ -4,7 +4,7 @@ gui/gm-editor
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: inspection animals buildings stockpiles items map workorders jobs plants units
+    :tags: inspection animals buildings items jobs map plants stockpiles units workorders
 
 
 This editor allows to change and modify almost anything in df. Press :kbd:`?` for

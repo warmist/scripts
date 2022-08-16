@@ -3,7 +3,7 @@ gui/quickfort
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort productivity design buildings stockpiles map
+    :tags: fort design productivity buildings map stockpiles
 
 
 Graphical interface for the `quickfort` script. Once you load a blueprint, you

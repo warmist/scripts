@@ -4,7 +4,7 @@ clear-smoke
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort fps armok map
+    :tags: fort armok fps map
 
 
 

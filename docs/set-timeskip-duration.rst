@@ -4,7 +4,7 @@ set-timeskip-duration
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: adventure fort embark armok
+    :tags: adventure embark fort armok
 
 
 Starting a new fortress/adventurer session is preceded by

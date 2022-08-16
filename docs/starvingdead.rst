@@ -4,7 +4,7 @@ starvingdead
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort auto gameplay fps units
+    :tags: fort auto fps gameplay units
 
 
 Somewhere between a "mod" and a "fps booster", with a small impact on

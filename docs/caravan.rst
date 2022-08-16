@@ -4,7 +4,7 @@ caravan
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort bugfix armok
+    :tags: fort armok bugfix
 
 
 

@@ -4,7 +4,7 @@ locate-ore
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort productivity armok map
+    :tags: fort armok productivity map
 
 
 Scan the map for metal ores.

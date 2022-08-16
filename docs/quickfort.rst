@@ -4,7 +4,7 @@ quickfort
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort productivity design buildings stockpiles map
+    :tags: fort design productivity buildings map stockpiles
 
 
 Processes Quickfort-style blueprint files.

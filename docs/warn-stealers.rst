@@ -3,7 +3,7 @@ warn-stealers
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort auto armok units
+    :tags: fort armok auto units
 
 
 Will make a zoomable announcement whenever a creature that can eat food, guzzle drinks, or steal items enters the map and moves into a revealed location.

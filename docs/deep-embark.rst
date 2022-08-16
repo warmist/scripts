@@ -4,7 +4,7 @@ deep-embark
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort embark gameplay
+    :tags: embark fort gameplay
 
 
 Moves the starting units and equipment to
