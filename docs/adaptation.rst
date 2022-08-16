@@ -14,3 +14,9 @@ Usage::
 
 The ``value`` must be between 0 and 800,000 (inclusive), with higher numbers
 representing greater levels of cave adaption.
+
+Examples
+--------
+
+``adaptation set all 0``
+    Clear the cave adaptation levels for all dwarves.

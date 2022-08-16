@@ -2,31 +2,39 @@ autonick
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Give dwarves random unique nicknames.
     :tags: fort productivity units
 
+Names are chosen randomly from the ``dfhack-config/autonick.txt`` config file,
+which you can edit with your own perferred names, if you like.
 
-Gives dwarves unique nicknames chosen randomly from ``dfhack-config/autonick.txt``.
-
-One nickname per line.
-Empty lines, lines beginning with ``#`` and repeat entries are discarded.
-
-Dwarves with manually set nicknames are ignored.
+Dwarves who already have nicknames will keep the nicknames they have, and no
+other dwarf will be assigned that nickname.
 
 If there are fewer available nicknames than dwarves, the remaining
 dwarves will go un-nicknamed.
 
-You may wish to use this script with the "repeat" command, e.g:
-``repeat -name autonick -time 3 -timeUnits months -command [ autonick all ]``
-
-Usage:
+Usage::
 
     autonick all [<options>]
-    autonick help
 
-Options:
+You may wish to use this script with the "repeat" command so that new migrants
+automatically get nicknamed::
 
-:``-h``, ``--help``:
-    Show this text.
-:``-q``, ``--quiet``:
+    repeat -name autonick -time 3 -timeUnits months -command [ autonick all ]
+
+Options
+-------
+
+``-q``, ``--quiet``
     Do not report how many dwarves were given nicknames.
+
+Config file format
+------------------
+
+The ``dfhack-config/autonick.txt`` config file has a simple format:
+
+- One nickname per line
+- Empty lines, lines beginning with ``#``, and repeat entries are discarded
+
+You can add any nicknames you like!

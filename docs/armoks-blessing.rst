@@ -9,14 +9,11 @@ Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
 `brainwash` on all dwarves currently on the map. This is an extreme change,
 which sets every stat and trait to an ideal easy-to-satisfy preference.
 
-Without providing arguments, only attributes, age, and personalities will be
-adjusted. Adding arguments allows for skills or classes to be adjusted to
-legendary (maximum).
-
 Usage:
 
 ``armoks-blessing``
-    Adjust stats and personalities to an ideal for all dwarves.
+    Adjust stats and personalities to an ideal for all dwarves. No skills will
+    be modified.
 ``armoks-blessing all``
     In addition to the stat and personality adjustments, set all skills for all
     dwarves to legendary.
