@@ -1,21 +1,28 @@
-
 colonies
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Manipulate vermin colonies and hives.
     :tags: fort armok map
 
+Usage:
 
-List vermin colonies, place honey bees, or convert all vermin
-to honey bees.  Usage:
+``colonies``
+    List all vermin colonies on the map.
+``colonies place [<type>]``
+    Place a colony under the cursor.
+``colonies convert [<type>]``
+    Convert all existing colonies to the specified type.
 
-:colonies:          List all vermin colonies on the map.
-:colonies place:    Place a honey bee colony under the cursor.
-:colonies convert:  Convert all existing colonies to honey bees.
+The ``place`` and ``convert`` subcommands create or convert to honey bees by
+default.
 
-The ``place`` and ``convert`` subcommands by default create or
-convert to honey bees, as this is the most commonly useful.
-However both accept an optional flag to use a different vermin
-type, for example ``colonies place ANT`` creates an ant colony
-and ``colonies convert TERMITE`` ends your beekeeping industry.
+Examples
+--------
+
+``colonies place``
+    Place a honey bee colony.
+``colonies place ANT``
+    Place an ant hive.
+``colonies convert TERMITE``
+    End your beekeeping industry by converting all colonies to termite mounds.

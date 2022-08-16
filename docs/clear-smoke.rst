@@ -1,12 +1,12 @@
-
 clear-smoke
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Removes all smoke from the map.
     :tags: fort armok fps map
 
+Note that this can leak memory and should be used sparingly.
 
+Usage::
 
-Removes all smoke from the map. Note that this can leak memory and should be
-used sparingly.
+    clear-smoke

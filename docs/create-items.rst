@@ -1,33 +1,39 @@
-
 create-items
 ============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Spawn items under the cursor.
     :tags: fort armok items
 
+This script is handy to create basic resources you need to get your fortress
+started.
 
-Spawn items under the cursor, to get your fortress started.
+Usage::
 
-The first argument gives the item category, the second gives the material,
-and the optional third gives the number of items to create (defaults to 20).
+    create-items <category> list
+    create-items <category> <material> [<quantity>]
 
-Currently supported item categories: ``boulder``, ``bar``, ``plant``, ``log``,
-``web``.
+If a quantity is not specified, it defaults to 20.
 
-Instead of material, using ``list`` makes the script list eligible materials.
+Note that the script does not enforce anything, and will let you create boulders
+of toad blood and stuff like that. However the ``list`` mode will only show
+'normal' materials.
 
-The ``web`` item category will create an uncollected cobweb on the floor.
+Examples
+--------
 
-Note that the script does not enforce anything, and will let you create
-boulders of toad blood and stuff like that.
-However the ``list`` mode will only show 'normal' materials.
-
-Examples::
+::
 
     create-items boulders COAL_BITUMINOUS 12
     create-items plant tail_pig
-    create-items log list
     create-items web CREATURE:SPIDER_CAVE_GIANT:SILK
     create-items bar CREATURE:CAT:SOAP
     create-items bar adamantine
+
+Categories
+----------
+
+The currently supported item categories are: ``boulder``, ``bar``, ``plant``,
+``log``, and ``web``.
+
+The ``web`` item category will create an uncollected cobweb on the floor.
