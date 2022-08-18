@@ -32,7 +32,7 @@ Examples
     Rebalance the distribution of skills and attributes across your units.
 ``dwarf-op --select [ waves 14 ] --applyjobs [ MINER ]``
     Make all migrants in wave 14 competent miners.
-``dwarf-op -select [ jobs Stoneworker ] -applytypes [ fast3 strong5 ]``
+``dwarf-op --select [ jobs Stoneworker ] --applytypes [ fast3 strong5 ]``
     Boost the speed and strength of your masons so they can carry boulders
     to their workshop faster.
 
@@ -71,15 +71,15 @@ instead of ``all``.
 ``unprotected``
     Selects unprotected dwarves.
 ``drunks``
-    Selects any dwarves whose stats were previously zeroed by the ``--clean``
-    command option, or who have their profession set to ``DRUNK``.
+    Selects any dwarves who have the ``DRUNK`` profession, including those who
+    have been zeroed by the ``--clear`` command option.
 ``jobs "[" jobs <jobname> [<jobname> ...] "]"``
     Selects any dwarves with the specified custom professions.
 ``waves "[" waves <num> [<num> ...] "]"``
     Selects dwarves from the specified migration waves. Waves are enumerated
     starting at 0 and increasing by 1 with each wave. The waves go by season and
     year and thus should match what you see in `list-waves` or Dwarf Therapist.
-    It is recommended that you ``-show`` the selected dwarves before modifying
+    It is recommended that you ``--show`` the selected dwarves before modifying
     them.
 
 Options
@@ -105,7 +105,7 @@ Options
     their jobs. Run ``dwarf-op --list attrib_levels`` to see how stats are
     distributed. If ``inclusive`` is specified, then attributes are not cleared,
     but rather will only be changed if the current reroll is better. This
-    command ignores dwarves with unlisted jobs.
+    command ignores dwarves with jobs that are not listed in the ``jobs`` table.
 ``--optimize``
     Performs a job search for unoptimized dwarves. Run
     ``dwarf-op --list job_distribution`` to see how jobs are distributed.
