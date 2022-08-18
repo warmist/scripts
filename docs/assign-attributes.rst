@@ -12,7 +12,10 @@ and tier -4 is the minimum level.
 For more information on attributes, please see:
 https://dwarffortresswiki.org/index.php/DF2014:Attribute
 
-Usage::
+Usage
+-----
+
+::
 
     assign-attributes [--unit <id>] <options>
 

@@ -8,6 +8,9 @@ break-dance
 Sometimes when a unit can't find a dance partner, the dance becomes stuck and
 never stops. This tool can get them unstuck.
 
-Usage::
+Usage
+-----
+
+::
 
     break-dance

@@ -15,7 +15,10 @@ https://dwarffortresswiki.org/index.php/DF2014:Preferences
 Note the last three types of preferences ("like poetic form", "like musical
 form", and "like dance form") are not supported by this script.
 
-Usage::
+Usage
+-----
+
+::
 
     assign-goals [--unit <id>] <options>
 

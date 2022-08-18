@@ -8,7 +8,10 @@ create-items
 This script is handy to create basic resources you need to get your fortress
 started.
 
-Usage::
+Usage
+-----
+
+::
 
     create-items <category> list
     create-items <category> <material> [<quantity>]

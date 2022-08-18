@@ -7,7 +7,10 @@ adaptation
 
 View or set level of cavern adaptation for the selected unit or the whole fort.
 
-Usage::
+Usage
+-----
+
+::
 
     adaptation show him|all
     adaptation set him|all <value>

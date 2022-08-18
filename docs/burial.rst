@@ -5,7 +5,10 @@ burial
     :summary: Configures all unowned coffins to allow burial.
     :tags: fort productivity buildings
 
-Usage::
+Usage
+-----
+
+::
 
     burial [--pets]
 

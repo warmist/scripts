@@ -7,6 +7,9 @@ binpatch
 
 See `binpatches` for more info.
 
-Usage::
+Usage
+-----
+
+::
 
     binpatch check|apply|remove <patchname>

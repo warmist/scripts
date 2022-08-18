@@ -17,7 +17,10 @@ See the "hack/scripts/dwarf_profiles.json" file for examples of the json schema.
 Please make a new file with your own additions, though, since the example file
 will get overwritten when you upgrade DFHack.
 
-Usage::
+Usage
+-----
+
+::
 
     assign-profile [--unit <id>] <options>
 

@@ -8,7 +8,8 @@ catsplosion
 This tool makes cats (or anything else) immediately pregnant. If you value your
 fps, it is a good idea to use this tool sparingly.
 
-Usage:
+Usage
+-----
 
 ``catsplosion [<id> ...]``
     Makes animals with the given identifiers pregnant. Defaults to ``CAT``.

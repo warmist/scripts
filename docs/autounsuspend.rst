@@ -10,6 +10,9 @@ materials, items in the way, or worker dwarves getting scared by wildlife.
 
 Also see `unsuspend` for one-time use.
 
-Usage::
+Usage
+-----
+
+::
 
     autounsuspend start|stop

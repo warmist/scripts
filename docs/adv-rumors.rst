@@ -14,6 +14,9 @@ tool will:
   your companions'
 - Trim repetitive words from the text
 
-Usage::
+Usage
+-----
+
+::
 
     adv-rumors

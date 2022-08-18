@@ -5,7 +5,8 @@ add-thought
     :summary: Adds a thought or emotion to the selected unit.
     :tags: fort armok units
 
-Usage:
+Usage
+-----
 
 ``add-thought --gui [--unit <id>]``
     Allows you to choose the thought/emotion to apply to the selected (or

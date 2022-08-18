@@ -9,7 +9,8 @@ Some civilizations never learn to craft high boots. This script can help with
 that. Only weapons, armor, and tools are currently supported; things such as
 instruments are not.
 
-Usage:
+Usage
+-----
 
 ``add-recipe native`` adds all native (but unknown) crafting recipes.
     Civilizations pick randomly from a pool of possible recipes, which means not

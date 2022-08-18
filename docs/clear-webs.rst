@@ -12,7 +12,10 @@ Note that it does not affect sprayed webs until they settle on the ground.
 
 See also `fix/drop-webs`.
 
-Usage::
+Usage
+-----
+
+::
 
     clear-webs [--unitsOnly|--websOnly]
 

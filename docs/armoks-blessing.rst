@@ -9,7 +9,8 @@ Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
 `brainwash` on all dwarves currently on the map. This is an extreme change,
 which sets every stat and trait to an ideal easy-to-satisfy preference.
 
-Usage:
+Usage
+-----
 
 ``armoks-blessing``
     Adjust stats and personalities to an ideal for all dwarves. No skills will

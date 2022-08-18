@@ -8,7 +8,10 @@ caravan
 This tool can help with caravans that are leaving too quickly, refuse to unload,
 or are just plain unhappy that you are such a poor negotiator.
 
-Usage::
+Usage
+-----
+
+::
 
     caravan <command>
 

@@ -8,7 +8,10 @@ brainwash
 Modify the traits of the selected dwarf to match an idealised personality: as
 stable and reliable as possible to prevent tantrums even after months of misery.
 
-Usage::
+Usage
+-----
+
+::
     brainwash <type>
 
 Examples

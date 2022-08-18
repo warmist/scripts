@@ -8,7 +8,10 @@ bodyswap
 This script allows the player to take direct control of any unit present in
 adventure mode whilst giving up control of their current player character.
 
-Usage::
+Usage
+-----
+
+::
 
     bodyswap [--unit <id>]
 

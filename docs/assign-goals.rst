@@ -13,7 +13,10 @@ https://dwarffortresswiki.org/index.php/DF2014:Personality_trait#Goals
 Bear in mind that nothing will stop you from assigning zero or multiple goals,
 but it's not clear how that will affect the game.
 
-Usage::
+Usage
+-----
+
+::
 
     assign-goals [--unit <id>] <options>
 

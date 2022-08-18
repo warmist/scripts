@@ -8,7 +8,10 @@ assign-skills
 Skills are defined by their token and their rank. Skills tokens can be found
 here: https://dwarffortresswiki.org/index.php/DF2014:Skill_token
 
-Usage::
+Usage
+-----
+
+::
 
     assign-skills [--unit <id>] <options>
 

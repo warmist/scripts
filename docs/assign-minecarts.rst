@@ -11,7 +11,8 @@ use the in-game interface.
 Note that a hauling route must have at least one stop defined before a minecart
 can be assigned to it.
 
-Usage:
+Usage
+-----
 
 ``assign-minecarts list``
     Print information about your hauling routes, including whether they

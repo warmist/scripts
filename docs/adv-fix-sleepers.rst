@@ -10,6 +10,9 @@ talking to them, hitting them, or waiting so long you die of thirst
 (:bug:`6798`). If you come accross one or more bugged sleepers in adventure
 mode, simply run the script and all nearby sleepers will be cured.
 
-Usage::
+Usage
+-----
+
+::
 
     adv-fix-sleepers

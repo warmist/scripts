@@ -9,7 +9,10 @@ Beliefs are defined with the belief token and a number from -3 to 3,
 which describes the different levels of belief strength, as explained here:
 https://dwarffortresswiki.org/index.php/DF2014:Personality_trait#Beliefs
 
-Usage::
+Usage
+-----
+
+::
 
     assign-beliefs [--unit <id>] <options>
 

@@ -12,7 +12,10 @@ etc.). It automatically enables autolabor if it is not already enabled.
 After running this tool, you can make further adjustments to autolabor
 configuration by running autolabor commands directly.
 
-Usage::
+Usage
+-----
+
+::
 
     autolabor-artisans <minimum> <maximum> <talent pool>
 

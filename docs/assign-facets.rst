@@ -9,7 +9,10 @@ Facets are defined with a token and a number from -3 to 3, which describes
 the different levels of facet strength, as explained here:
 https://dwarffortresswiki.org/index.php/DF2014:Personality_trait#Facets
 
-Usage::
+Usage
+-----
+
+::
 
     assign-facets [--unit <id>] <options>
 

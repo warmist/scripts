@@ -7,7 +7,10 @@ combat-harden
 
 This tool can make a unit care more/less about seeing corpses.
 
-Usage::
+Usage
+-----
+
+::
 
     combat-harden [<unit>] [<hardness>]
 

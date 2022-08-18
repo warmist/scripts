@@ -5,7 +5,10 @@ combine-plants
     :summary: Merge stacks of plants in the selected container or stockpile.
     :tags: fort productivity items plants
 
-Usage::
+Usage
+-----
+
+::
 
     combine-plants [<options>]
 

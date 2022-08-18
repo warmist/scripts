@@ -11,7 +11,10 @@ effect is configurable.
 Note that no units will get architecture experience for any buildings that
 require that skill to construct.
 
-Usage::
+Usage
+-----
+
+::
 
     build-now [<pos> [<pos>]] [<options>]
 

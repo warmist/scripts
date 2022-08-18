@@ -7,6 +7,9 @@ clear-smoke
 
 Note that this can leak memory and should be used sparingly.
 
-Usage::
+Usage
+-----
+
+::
 
     clear-smoke

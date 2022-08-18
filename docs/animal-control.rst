@@ -8,7 +8,10 @@ animal-control
 Animal control is useful for browsing through your animals and deciding which
 to butcher or geld.
 
-Usage::
+Usage
+-----
+
+::
 
     animal-control [<selection options>] [<command options>]
 

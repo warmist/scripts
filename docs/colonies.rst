@@ -5,7 +5,8 @@ colonies
     :summary: Manipulate vermin colonies and hives.
     :tags: fort armok map
 
-Usage:
+Usage
+-----
 
 ``colonies``
     List all vermin colonies on the map.

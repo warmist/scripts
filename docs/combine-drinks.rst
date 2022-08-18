@@ -5,7 +5,10 @@ combine-drinks
     :summary: Merge stacks of drinks in the selected stockpile.
     :tags: fort productivity items
 
-Usage::
+Usage
+-----
+
+::
 
     combine-drinks [--max <num>] [--stockpile <id>]
 

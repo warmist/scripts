@@ -8,7 +8,10 @@ ban-cooking
 This tool provides a far more convenient way to ban cooking categories of foods
 than the native kitchen interface.
 
-Usage::
+Usage
+-----
+
+::
     ban-cooking <type>
 
 Valid types are ``booze``, ``brew``, ``fruit``, ``honey``, ``milk``, ``mill``,

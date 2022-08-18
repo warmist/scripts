@@ -14,7 +14,10 @@ other dwarf will be assigned that nickname.
 If there are fewer available nicknames than dwarves, the remaining
 dwarves will go un-nicknamed.
 
-Usage::
+Usage
+-----
+
+::
 
     autonick all [<options>]
 
