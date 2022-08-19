@@ -1,158 +1,194 @@
-
 dwarf-op
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Tune units to perform underrepresented job roles in your fortress.
     :tags: fort armok units
 
+``dwarf-op`` examines the distribution of skills and attributes across the
+dwarves in your fortress and can rewrite the characteristics of a dwarf (or
+group of dwarves) so that they are fit to excel at the jobs that your current
+dwarves don't adequately cover.
 
-Dwarf optimization is a script designed to provide a robust solution
-to hacking dwarves to be better at work. The primary use case is as follows:
+It uses a library of profiles to define job classes, and generates dwarves with
+random variation so each dwarf is unique.
 
- 1) take a dwarf
- 2) delete their ability to do anything, even walk (job skills, phyiscal/mental attributes)
- 3) load the job distribution table from dorf_tables
- 4) update values in said table so the table accurately represents the distribution of your dwarves
- 5) pick an under-represented job from the table
- 6) apply the job to the dwarf, which means:
-
-    - apply professions
-    - provide custom profession name
-    - add job skills
-    - apply dwarf types
-    - etc.
-
-Beyond this use case of optimizing dwarves according to the tables in
-`dorf_tables`, this script makes each step in the process available to use
-separately, if you so choose.
-
-There are two basic steps to using this script: selecting a subset of your dwarves,
-and running commands on those dwarves.
-
+``dwarf-op`` can also be used in a mode more similar to `assign-profile`, where
+you can specify precisely what archtype you want a for given dwarf, and
+``dwarf-op`` can generate a random dwarf that matches that archetype.
 
 Usage::
 
-    dwarf-op -help
-    dwarf-op -select <select-option> -<command> <args>
+    dwarf-op --list <table>
+    dwarf-op --reset|--resetall
+    dwarf-op [--select <criteria>] <commands>
 
-Examples::
+Examples
+--------
 
-  dwarf-op -select [ jobs Trader Miner Leader Rancher ] -applytype adaptable
-  dwarf-op -select all -clear -optimize
-  dwarf-op -select pall -clear -optimize
-  dwarf-op -select optimized -reroll
-  dwarf-op -select named -reroll inclusive -applyprofession RECRUIT
+``dwarf-op --select unoptimized --clear --optimize``
+    Transform newly arrived dwarves into the workers that your fort needs most.
+``dwarf-op --select all --clear --optimize``
+    Rebalance the distribution of skills and attributes across your units.
+``dwarf-op --select [ waves 14 ] --applyjobs [ MINER ]``
+    Make all migrants in wave 14 competent miners.
+``dwarf-op --select [ jobs Stoneworker ] --applytypes [ fast3 strong5 ]``
+    Boost the speed and strength of your masons so they can carry boulders
+    to their workshop faster.
 
-**Select options:**
+Selection criteria
+------------------
 
-.. note::
+Note that dwarves whose name or profession starts with ``.`` or ``,`` are
+considered "protected", and will not be matched by the selection criteria
+options below unless specifically noted.
 
-    Prepend the letter ``p`` to any option to include protected dwarves in your selection
+You can prepend the letter ``p`` to any option to include protected dwarves in
+your selection. For example, to truly select all dwarves, specify ``pall``
+instead of ``all``.
 
+``highlighted``
+    Selects only the in-game highlighted dwarf (from any screen), regardless of
+    protection status. This is the default if no ``--select`` option is
+    specified.
+``all``
+    Selects all dwarves.
+``<name>``
+    Selects any dwarf with <name> anywhere in their name or nickname. This
+    option ignores protection status.
+``named``
+    Selects dwarves with user-given names.
+``unnamed``
+    Selects dwarves without user-given names.
+``employed```
+    Selects dwarves with custom professions. Does not include optimized dwarves.
+``optimized``
+    Selects dwarves that have been previously optimized by ``dwarf-op``.
+``unoptimized``
+    Selects any dwarves that have not been previously optimized by ``dwarf-op``.
+``protected``
+    Selects protected dwarves.
+``unprotected``
+    Selects unprotected dwarves.
+``drunks``
+    Selects any dwarves who have the ``DRUNK`` profession, including those who
+    have been zeroed by the ``--clear`` command option.
+``jobs "[" jobs <jobname> [<jobname> ...] "]"``
+    Selects any dwarves with the specified custom professions.
+``waves "[" waves <num> [<num> ...] "]"``
+    Selects dwarves from the specified migration waves. Waves are enumerated
+    starting at 0 and increasing by 1 with each wave. The waves go by season and
+    year and thus should match what you see in `list-waves` or Dwarf Therapist.
+    It is recommended that you ``--show`` the selected dwarves before modifying
+    them.
 
-:(none):        same as typing '-select highlighted'
-:all:           selects all dwarves.
+Options
+-------
 
-:highlighted:   selects only the in-game highlighted dwarf (from any screen).
-                [Ignores protection status]
+``--reset``
+    Forget which dwarves have been optimized. However, if you reload an existing
+    save, the optimization list will be reloaded.
+``--resetall``
+    Forget which dwarves have been optimized and remove the saved optimization
+    data.
+``--list <table name>``
+    Show the raw data tables that ``dwarf-op`` uses to make decisions. See the
+    `Data tables`_ section below for which tables are available.
+``--select <criteria>``
+    Select a specific subset of dwarves that the specified `Command options`_
+    should act on.
 
-:<name>:        selects any dwarf with <name> in their name or nickname.
-                (sub-string match) [Ignores protection status]
+Command options
+```````````````
 
-:named:         selects dwarves with user-given names.
-:unnamed:       selects dwarves without user-given names.
-:employed:      selects dwarves with custom professions. Excludes optimized dwarves.
+``--show``
+    Lists the selected dwarves. Useful for previewing selected dwarves before
+    modifying them or looking up the migration wave number for a group.
+``--clean <value>``
+    Checks for skills with a rating of ``<value>`` and removes them from the
+    dwarf's skill list.
+``--clear``
+    Zeroes the skills and attributes of selected dwarves. No attributes, no
+    labors. Assigns ``DRUNK`` profession.
+``--reroll [inclusive]``
+    Clears attributes of selected dwarves, then rerolls that dwarf based on
+    their jobs. Run ``dwarf-op --list attrib_levels`` to see how stats are
+    distributed. If ``inclusive`` is specified, then attributes are not cleared,
+    but rather will only be changed if the current reroll is better. This
+    command ignores dwarves with jobs that are not listed in the ``jobs`` table.
+``--optimize``
+    Performs a job search for unoptimized dwarves. Run
+    ``dwarf-op --list job_distribution`` to see how jobs are distributed.
+``--applyjobs "[" <job> [<job> ...] "]"``
+    Applies the listed jobs to the selected dwarves. Run
+    ``dwarf-op --list jobs`` to see available jobs.
+``--applyprofessions "[" <profession> [<profession> ...] "]"``
+    Applies the listed professions to the selected dwarves. Run
+    ``dwarf-op --list professions`` to see available professions.
+``--applytypes "[" <profession> [<profession> ...] "]"``
+    Applies the listed types to the selected dwarves. Run
+    ``dwarf-op --list dwf_types`` to see available types.
+``--renamejob <name>``
+    Renames the selected dwarves' custom professions to the specified name.
 
-:optimized:     selects dwarves based on session data. Dwarves who have been
-                optimized should be listed in this data.
+.. _dorf_tables:
 
-:unoptimized:   selects any dwarves that don't appear in session data.
+Data tables
+-----------
 
-:protected:     selects any dwarves which use protection signals in their name
-                or profession. (i.e. ``.``, ``,``)
+The data tables that ``dwarf-op`` uses are described below. They can be
+inspected with ``dwarf-op --list <table name>``.
 
-:unprotected:   selects any dwarves which don't use protection signals in their
-                name or profession.
+``job_distributions``
+    Defines thresholds for each column of distributions. The columns should add
+    up to the values in the thresholds row for that column.  Every other row
+    references an entry in the ``jobs`` table.
 
-:drunks:        selects any dwarves which are currently zeroed, or were
-                originally drunks as their profession.
+``attrib_levels``
+    Defines stat distributions for both physical and mental attributes.
+    Each level has a probability (p-value, or p) which indicates how likely
+    a level will be used for a particular stat, e.g. strength or spacial
+    awareness. The levels range from incompetent to unbelievable (god-like)
+    and are mostly in line with what the game uses already. ``dwarf-op`` adds
+    one additional level to push the unbelievable even higher, though.
 
-:jobs:          selects any dwarves with the listed jobs. This will only match
-                with custom professions, or optimized dwarves (for optimized
-                dwarves see jobs in `dorf_tables`).
+    In addition to a bell shaped p-value curve for the levels, there is
+    additionally a standard deviation used to generate the value once a
+    level has been selected, this makes the bell curve not so bell shaped in
+    the end. Labours do not follow the same stat system and are more uniformly
+    random, which are compensated for in the description of jobs/professions.
 
-                Usage::
+``jobs``
+    Defines ``dwarf-op``'s nameable jobs. Each job is comprised of required
+    professions, optional professions, probabilities for each optional
+    profession, a 'max' number of optional professions, and a list of types
+    (from the ``types`` table below) to apply to dwarves in the defined job.
 
-                    dwarf-op -select [ jobs job1 job2 etc. ]
+``professions``
+    These are a subset of the professions DF has. All professions listed should
+    match a profession dwarf fortress has built in, however not all the
+    built-ins are defined here.
 
-                Example::
+    Each profession is defined with a set of job skills which match the skills
+    built into Dwarf Fortress. Each skill is given a value which represents the
+    bonus a dwarf will get for this skill. The skills are added in a random
+    order, with the first few receiving the highest values (excluding the bonus
+    just mentioned). Thus the bonuses are to ensure a minimum threshold is
+    passed for certain skills deemed critical to a profession.
 
-                    dwarf-op -select [ jobs Miner Trader ]
+``types``
+    These are a sort of archetype system for applying to dwarves. It primarily
+    includes physical and mental attributes, but can include skills as well.
+    If it has skills listed, each skill will have a minimum and maximum value.
+    The chosen values will be evenly distributed between these two numbers
+    (inclusive).
 
-:waves:         selects dwarves from the specified migration waves. Waves are
-                enumerated starting at 0 and increasing by 1 with each wave. The
-                waves go by season and year and thus should match what you see
-                in `list-waves` or Dwarf Therapist. It is recommended that you
-                ``-show`` the selected dwarves before modifying.
+    Job specifications from the ``jobs`` table add these types to a dwarf to
+    modify their stats. For the sake of randomness and individuality, each type
+    has a probability for being additionally applied to a dwarf just by pure
+    luck. This will bump some status up even higher than the base job calls for.
 
-                Example::
+To see a full list of built-in professions and jobs, you can run these commands::
 
-                    dwarf-op -select [ waves 0 1 3 5 7 13 ]
-
-
-**General commands:**
-
-- ``-reset``: deletes json file containing session data (bug: might not delete
-  session data)
-
-- ``-resetall``: deletes both json files. session data and existing persistent
-  data (bug: might not delete session data)
-
-- ``-show``: displays affected dwarves (id, name, migration wave, primary job).
-  Useful for previewing selected dwarves before modifying them, or looking up
-  the migration wave number for a group of dwarves.
-
-
-**Dwarf commands:**
-
-``clean <value>``:    Cleans selected dwarves.
-                        Checks for skills with a rating of ``<value>`` and
-                        deletes them from the dwarf's skill list
-
-``-clear``:           Zeroes selected dwarves, or zeroes all dwarves if no selection is given.
-                        No attributes, no labours. Assigns ``DRUNK`` profession.
-
-``-reroll [inclusive]``: zeroes selected dwarves, then rerolls that dwarf based on its job.
-
-                        - Ignores dwarves with unlisted jobs.
-                        - optional argument: ``inclusive`` - means your dorf(s) get the best of N rolls.
-                        - See attrib_levels table in `dorf_tables` for ``p`` values describing the
-                          normal distribution of stats (each p value has a sub-distribution, which
-                          makes the bell curve not so bell-shaped). Labours do not follow the same
-                          stat system and are more uniformly random, which are compensated for in
-                          the description of jobs/professions.
-
-``-optimize``:        Performs a job search for unoptimized dwarves.
-                        Each dwarf will be found a job according to the
-                        job_distribution table in `dorf_tables`.
-
-``-applyjobs``:       Applies the listed jobs to the selected dwarves.
-                        - List format: ``[ job1 job2 jobn ]`` (brackets and jobs all separated by spaces)
-                        - See jobs table in `dorf_tables` for available jobs."
-
-``-applyprofessions``: Applies the listed professions to the selected dwarves.
-                        - List format: ``[ prof1 prof2 profn ]`` (brackets and professions all separated by spaces)
-                        - See professions table in `dorf_tables` for available professions.
-
-``-applytypes``:      Applies the listed types to the selected dwarves.
-                        - List format: ``[ type1 type2 typen ]`` (brackets and types all separated by spaces)
-                        - See dwf_types table in `dorf_tables` for available types.
-
-``renamejob <name>``: Renames the selected dwarves' custom profession to whatever is specified
-
-**Other Arguments:**
-
-``-help``: displays this help information.
-
-``-debug``: enables debugging print lines
+    devel/query -table df.profession
+    devel/query -table df.job_skill
