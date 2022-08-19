@@ -21,7 +21,7 @@ Usage
     Put out all fires on the map.
 ``extinguish --location "[" <x> <y> <z> "]"``
     Put out the fire at the specified map coordinates. You can use the
-    `location` tool to find out what the coordinates under the cursor are.
+    `position` tool to find out what the coordinates under the cursor are.
 
 Examples
 --------
