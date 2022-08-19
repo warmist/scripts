@@ -89,8 +89,18 @@ Options
     Forget which dwarves have been optimized. However, if you reload an existing
     save, the optimization list will be reloaded.
 ``--resetall``
-    Forget which dwarves have been optimized and remove the persisted
-    optimization data.
+    Forget which dwarves have been optimized and remove the saved optimization
+    data.
+``--list <table name>``
+    Show the raw data tables that ``dwarf-op`` uses to make decisions. See the
+    `Data tables`_ section below for which tables are available.
+``--select <criteria>``
+    Select a specific subset of dwarves that the specified `Command options`_
+    should act on.
+
+Command options
+```````````````
+
 ``--show``
     Lists the selected dwarves. Useful for previewing selected dwarves before
     modifying them or looking up the migration wave number for a group.
@@ -130,18 +140,17 @@ The data tables that ``dwarf-op`` uses are described below. They can be
 inspected with ``dwarf-op --list <table name>``.
 
 ``job_distributions``
-    Defines thresholds for each column of distributions. The columns must add up
-    to the values in the thresholds row for that column.  Every other row
+    Defines thresholds for each column of distributions. The columns should add
+    up to the values in the thresholds row for that column.  Every other row
     references an entry in the ``jobs`` table.
 
 ``attrib_levels``
     Defines stat distributions for both physical and mental attributes.
     Each level has a probability (p-value, or p) which indicates how likely
-    a level will be used for a particular stat such as strength or spacial
+    a level will be used for a particular stat, e.g. strength or spacial
     awareness. The levels range from incompetent to unbelievable (god-like)
-    and are mostly inline with what the game uses already, but adds one
-    level more than what the game uses to push the unbelievable even higher
-    on average.
+    and are mostly in line with what the game uses already. ``dwarf-op`` adds
+    one additional level to push the unbelievable even higher, though.
 
     In addition to a bell shaped p-value curve for the levels, there is
     additionally a standard deviation used to generate the value once a
@@ -170,13 +179,14 @@ inspected with ``dwarf-op --list <table name>``.
 ``types``
     These are a sort of archetype system for applying to dwarves. It primarily
     includes physical and mental attributes, but can include skills as well.
+    If it has skills listed, each skill will have a minimum and maximum value.
+    The chosen values will be evenly distributed between these two numbers
+    (inclusive).
 
-    Each type has a probability of being applied to a dwarf just by pure luck -
-    this is in addition to types applied by other means. Each type also has a
-    list of attribute(s) each attribute has an ``attrib_level`` entry associated
-    with it. Additionally each type may define a list of job skills, with each
-    skill having a minimum and maximum value. The chosen values will be evenly
-    distributed between these two numbers (inclusive).
+    Job specifications from the ``jobs`` table add these types to a dwarf to
+    modify their stats. For the sake of randomness and individuality, each type
+    has a probability for being additionally applied to a dwarf just by pure
+    luck. This will bump some status up even higher than the base job calls for.
 
 To see a full list of built-in professions and jobs, you can run these commands::
 
