@@ -1,21 +1,33 @@
-
 geld
 ====
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Geld and ungeld animals.
     :tags: fort armok animals
 
+Usage
+-----
 
-Geld allows the user to geld and ungeld animals.
+::
 
-Valid options:
+    geld [--ungeld|--toggle] [--unit <id>]
 
-``-unit <id>``: Gelds the unit with the specified ID.
-                This is optional; if not specified, the selected unit is used instead.
+Examples
+--------
 
-``-ungeld``:    Ungelds the specified unit instead (see also `ungeld`).
+``geld``
+    Gelds the selected animal.
+``geld --toggle``
+    Toggles the gelded status for the selected animal.
+``geld --ungeld --unit 24242``
+    Ungelds the unit with the specified id.
 
-``-toggle``:    Toggles the gelded status of the specified unit.
+Options
+-------
 
-``-help``:      Shows this help information
+``--unit <id>``
+    Selects the unit with the specified ID.
+``--ungeld``
+    Ungelds the specified unit instead of gelding it (see also `ungeld`).
+``--toggle``
+    Toggles the gelded status of the specified unit.

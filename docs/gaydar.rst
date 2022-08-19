@@ -1,26 +1,48 @@
-
 gaydar
 ======
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Shows the sexual orientation of units.
     :tags: fort inspection animals units
 
+``gaydar`` is useful for social engineering or checking the viability of
+livestock breeding programs.
 
-Shows the sexual orientation of units, useful for social engineering or checking
-the viability of livestock breeding programs.
+Usage
+-----
 
-Targets:
+::
 
-:-all:          shows orientation of every creature
-:-citizens:     shows only orientation of citizens in fort mode
-:-named:        shows orientation of all named units on map
-:(no target):   shows orientation of the unit under the cursor
+    gaydar [<target>] [<filter>]
 
-Orientation filters:
+Examples
+--------
 
-:-notStraight:  only creatures who are not strictly straight
-:-gayOnly:      only creatures who are strictly gay
-:-biOnly:       only creatures who can get into romances with both sexes
-:-straightOnly: only creatures who are strictly straight
-:-asexualOnly:  only creatures who are strictly asexual
+``gaydar``
+    Show sexual orientation of the selected unit.
+``gaydar --citizens --asexual``
+    Identify asexual citizens.
+
+Target options
+--------------
+
+``--all``
+    Selects every creature on the map.
+``--citizens``
+    Selectes fort citizens.
+``--named``
+    Selects all named units on the map.
+
+Filter options
+--------------
+
+``--notStraight``
+    Only creatures who are not strictly straight.
+``--gayOnly``
+    Only creatures who are strictly gay.
+``--biOnly``
+    Only creatures who can get into romances with both sexes.
+``--straightOnly``
+    Only creatures who are strictly straight.
+``--asexualOnly``
+    Only creatures who are strictly asexual.
