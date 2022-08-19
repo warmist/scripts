@@ -1,21 +1,29 @@
-
 do-job-now
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Mark the job related to what you're looking at as high priority.
     :tags: fort productivity jobs
 
+The script will try its best to find a job related to the selected entity (which
+can be a job, dwarf, animal, item, building, plant or work order) and then mark
+the job as high priority.
 
+Apart from jobs that are queued from buildings, there is normally no visual
+indicator that the job is now high priority. If you use ``do-job-now`` from the
+keybinding, you have to check the dfhack console for output to see if the
+command succeeded.
 
-The script will try its best to find a job related to the selected entity
-(which can be a job, dwarf, animal, item, building, plant or work order) and then
-mark this job as high priority. There is no visual indicator, please look
-at the dfhack console for output. If a work order is selected, every job
-currently present job from this work order is affected, but not the future ones.
+If a work order is selected, every job currently active from this work order is
+adjusted, but not the future ones.
 
-For best experience add the following to your ``dfhack*.init``::
+Also see the ``do-job-now`` `tweak`, which allows you to adjust job priorities
+from the :kbd:`j`obs screen, and `prioritize`, which can automatically adjust
+priorities based on the type of job.
 
-    keybinding add Alt-N do-job-now
+Usage
+-----
 
-Also see ``do-job-now`` `tweak` and `prioritize`.
+::
+
+    do-job-now

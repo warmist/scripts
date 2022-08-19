@@ -1,10 +1,15 @@
-
 drain-aquifer
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Remove all aquifers on the map.
     :tags: fort armok map
 
+This tool irreversably removes all 'aquifer' tags from the map blocks.
 
-Remove all 'aquifer' tags from the map blocks. Irreversible.
+Usage
+-----
+
+::
+
+    drain-aquifer

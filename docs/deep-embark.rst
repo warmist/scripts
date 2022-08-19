@@ -1,51 +1,53 @@
-
 deep-embark
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Start a fort deep underground.
     :tags: embark fort gameplay
 
+Moves the starting units and equipment to a specified underground region upon
+embarking so you can start your fort from there.
 
-Moves the starting units and equipment to
-a specific underground region upon embarking.
+Run this script while setting up an embark, any time before the embark welcome
+message appears.
 
-This script can be run directly from the console
-at any point whilst setting up an embark.
+Usage
+-----
 
-Alternatively, create a file called "onLoad.init"
-in the DF raw folder (if one does not exist already)
-and enter the script command within it. Doing so will
-cause the script to run automatically and should hence
-be especially useful for modders who want their mod
-to include underground embarks by default.
+``deep-embark --depth <layer> [<options>]``
+    Start monitoring the game for the welcome message. Once the embark welcome
+    message appears, your units and equipment will automatically be moved to the
+    specified layer.
+``deep-embark --clear``
+    Stop monitoring the game for the welcome message, effectively restoring
+    normal embarks on the surface.
 
-Example::
+Example
+-------
 
-    deep-embark -depth CAVERN_2
+``deep-embark --depth CAVERN_2``
+    Embark in the second cavern layer
+``deep-embark --depth UNDERWORLD --blockDemons``
+    Embark in the underworld and disable the usual welcoming party.
 
-Usage::
+Options
+-------
 
-    -depth X
-        (obligatory)
-        replace "X" with one of the following:
-            CAVERN_1
-            CAVERN_2
-            CAVERN_3
-            UNDERWORLD
+``--depth <layer>``
+    Embark at the specified layer. Valid layers are: ``CAVERN_1``, ``CAVERN_2``,
+    ``CAVERN_3``, and ``UNDERWORLD``.
+``--blockDemons``
+    Prevent the demon surge that is normally generated when you breach an
+    underworld spire. Use this with ``--depth UNDERWORLD`` to survive past the
+    first few minutes. Note that "wildlife" demon spawning will be unaffected.
+``--atReclaim``
+    Enable deep embarks when reclaiming sites.
+``--clear``
+    Re-enable normal surface embarks.
 
-    -blockDemons
-        including this arg will prevent demon surges
-        in the context of breached underworld spires
-        (intended mainly for UNDERWORLD embarks)
-        ("wildlife" demon spawning will be unaffected)
+Deep embarks for mods
+---------------------
 
-    -atReclaim
-        if the script is being run from onLoad.init,
-        including this arg will enable deep embarks
-        when reclaiming sites too
-        (there's no need to specify this if running
-        the script directly from the console)
-
-    -clear
-        re-enable normal surface embarks
+If you are creating a mod and you want to enable deep embarks by default, create
+a file called "onLoad.init" in the DF raw folder (if one does not exist already)
+and enter the ``deep-embark`` command within it.

@@ -1,16 +1,13 @@
-
 deteriorate
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Cause corpses, clothes, and/or food to rot away over time.
     :tags: fort auto fps gameplay items plants
 
-
-
-Causes the selected item types to rot away. By default, items disappear after a
-few months, but you can choose to slow this down or even make things rot away
-instantly!
+When enabled, this script will cause the specified item types to slowly rot
+away. By default, items disappear after a few months, but you can choose to slow
+this down or even make things rot away instantly!
 
 Now all those slightly worn wool shoes that dwarves scatter all over the place
 or the toes, teeth, fingers, and limbs from the last undead siege will
@@ -18,28 +15,41 @@ deteriorate at a greatly increased rate, and eventually just crumble into
 nothing. As warm and fuzzy as a dining room full of used socks makes your
 dwarves feel, your FPS does not like it!
 
-To always have deteriorate running in your forts, add a line like this to your
-``onMapLoad.init`` file (use your preferred options, of course)::
+Usage
+-----
 
-    deteriorate start --types=corpses
+``deteriorate start --types <types> [--freq <frequency>] [--quiet]``
+    Starts deteriorating the specified item types while you play.
+``deteriorate stop --types <types>``
+    Stops deteriorating the specified item types.
+``deteriorate status``
+    Shows the item types that are currently being monitored and their
+    deterioration frequencies.
+``deteriorate now --types <types> [--quiet]``
+    Causes all items (of the specified item types) to rot away within a few
+    ticks.
 
-Usage::
+You can have different types of items rotting away at different rates by running
+``deteriorate start`` multiple times with different options.
 
-    deteriorate <command> [<options>]
+Examples
+--------
 
-**<command>** is one of:
+Start deteriorating corpses and body parts::
 
-:start:   Starts deteriorating items while you play.
-:stop:    Stops running.
-:status:  Shows the item types that are currently being monitored and their
-          deterioration frequencies.
-:now:     Causes all items (of the specified item types) to rot away within a
-          few ticks.
+    deteriorate start --types corpses
 
-You can control which item types are being monitored and their rotting rates by
-running the command multiple times with different options.
+Start deteriorating corpses and food and do it at twice the default rate::
 
-**<options>** are:
+    deteriorate start --types corpses,food --freq 0.5,days
+
+Deteriorate corpses quickly but clothes slowly::
+
+    deteriorate start -tcorpses -f0.1
+    deteriorate start -tclothes -f3,months
+
+Options
+-------
 
 ``-f``, ``--freq``, ``--frequency <number>[,<timeunits>]``
     How often to increment the wear counters. ``<timeunits>`` can be one of
@@ -50,29 +60,16 @@ running the command multiple times with different options.
 ``-q``, ``--quiet``
     Silence non-error output.
 ``-t``, ``--types <types>``
-    The item types to affect. This option is required for ``start``, ``stop``,
-    and ``now`` commands. See below for valid types.
+    The comma-separated list of item types to affect. This option is required
+    for ``start``, ``stop``, and ``now`` commands.
 
-**<types>** is any of:
+Types
+-----
 
-:clothes:  All clothing types that have an armor rating of 0, are on the ground,
-           and are already starting to show signs of wear.
+:clothes:  All clothing pieces that have an armor rating of 0 and are lying on
+           the ground.
 :corpses:  All non-dwarf corpses and body parts. This includes potentially
            useful remains such as hair, wool, hooves, bones, and skulls. Use
            them before you lose them!
 :food:     All food and plants, regardles of whether they are in barrels or
            stockpiles. Seeds are left untouched.
-
-You can specify multiple types by separating them with commas, e.g.
-``deteriorate start --types=clothes,food``.
-
-Examples:
-
-* Deteriorate corpses at twice the default rate::
-
-    deteriorate start --types=corpses --freq=0.5,days
-
-* Deteriorate corpses quickly but food slowly::
-
-    deteriorate start -tcorpses -f0.1
-    deteriorate start -tfood -f3,months
