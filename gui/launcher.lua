@@ -470,7 +470,7 @@ end
 function LauncherUI:update_autocomplete(firstword)
     local entries = helpdb.search_entries(
         {str=firstword, types='command'},
-        dev_mode and DEV_FILTER or nil)
+        dev_mode and {} or DEV_FILTER)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a dev script that we masked out) to show that it's a valid
