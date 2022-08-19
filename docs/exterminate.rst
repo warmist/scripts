@@ -1,49 +1,50 @@
-
 exterminate
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Kills things.
     :tags: fort armok units
 
+Kills any unit, or all units of a given race. You can target any unit on a
+revealed tile of the map, including ambushers, but caged/chained creatures are
+ignored.
 
-Kills any unit of a given race.
+Usage
+-----
 
-With no argument, lists the available races and count eligible targets.
+``exterminate``
+    List the available targets.
+``exterminate this|him|her|it [magma|butcher]``
+    Kills the selected unit.
+``exterminate <race>[:<caste>] [magma|butcher]``
+    Kills all available units of the specified race, or all undead units.
+``exterminate undead [magma|butcher]``
+    Kills all available undead units, regardless of race.
 
-With the special argument ``this``, targets only the selected creature.
-Alternatively, ``him``, ``her``, ``it``, ``target``, and ``selected``
-do the same thing.
+If ``magma`` is specified, a column of 7/7 magma is generated on top of the
+targets until they die. Warning: do not try this on magma-safe creatures! Also,
+using this mode on flyers is not recommended unless you like magma rain.
 
-With the special argument ``undead``, targets all undeads on the map,
-regardless of their race.
+Alternately, if ``butcher`` is specified, ``exterminate`` will mark the units
+for butchering but does not kill them. A dwarf will take the creature to a
+butcher's shop and do the deed there. This mode is, of course, useful for pets
+and not for armed enemies.
 
-When specifying a race, a caste can be specified to further restrict the
-targeting. To do that, append and colon and the caste name after the race.
+Examples
+--------
 
-Any non-dead non-caged unit of the specified race gets its ``blood_count``
-set to 0, which means immediate death at the next game tick. For creatures
+``exterminate this``
+    Kill the selected unit.
+``exterminate``
+    List the targets on your map.
+``exterminate BIRD_RAVEN:male``
+    Kill the ravens flying around the map (but only the male ones).
+``exterminate undead magma``
+    Kill all undead on the map by pouring magma on them.
+
+Technical details
+-----------------
+
+This tool kills by setting a unit's ``blood_count`` set to 0, which means
+immediate death at the next game tick. For creatures where this is not enough,
 such as vampires, it also sets animal.vanish_countdown to 2.
-
-An alternate mode is selected by adding a 2nd argument to the command,
-``magma``. In this case, a column of 7/7 magma is generated on top of the
-targets until they die (Warning: do not call on magma-safe creatures. Also,
-using this mode on birds is not recommended.)  The final alternate mode
-is ``butcher``, which marks them for butchering but does not kill.
-
-Will target any unit on a revealed tile of the map, including ambushers,
-but ignore caged/chained creatures.
-
-Ex::
-
-    exterminate gob
-    exterminate gob:male
-    exterminate gob:enemy
-
-To kill a single creature, select the unit with the 'v' cursor and::
-
-    exterminate this
-
-To purify all elves on the map with fire (may have side-effects)::
-
-    exterminate elve magma

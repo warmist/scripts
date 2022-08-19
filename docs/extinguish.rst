@@ -1,22 +1,30 @@
-
 extinguish
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Put out fires.
     :tags: fort armok buildings items map units
 
-
-This script allows the user to put out fires affecting
-map tiles, plants, units, items and buildings.
+With this tool, you can put out fires affecting map tiles, plants, units, items,
+and buildings.
 
 To select a target, place the cursor over it before running the script.
-Alternatively, use one of the arguments below.
 
-Arguments::
+If your FPS is unplayably low because of the generated smoke, see `clear-smoke`.
 
-    -all
-        extinguish everything on the map
+Usage
+-----
 
-    -location [ x y z ]
-        extinguish only at the specified coordinates
+``extinguish``
+    Put out the fire under the cursor.
+``extinguish --all``
+    Put out all fires on the map.
+``extinguish --location "[" <x> <y> <z> "]"``
+    Put out the fire at the specified map coordinates. You can use the
+    `location` tool to find out what the coordinates under the cursor are.
+
+Examples
+--------
+
+``extinguish --location [ 33 41 128 ]``
+    Put out the fire burning on the surface at position x=33, y=41, z=128.
