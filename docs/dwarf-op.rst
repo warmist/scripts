@@ -135,15 +135,19 @@ inspected with ``dwarf-op --list <table name>``.
     references an entry in the ``jobs`` table.
 
 ``attrib_levels``
-    Defines stat distributions, used for both physical and mental attributes.
-    Each level gives a probability of a dwarf randomly being assigned an
-    attribute level, and it provides a mean and standard deviation for the
-    attribute's value.
+    Defines stat distributions for both physical and mental attributes.
+    Each level has a probability (p-value, or p) which indicates how likely
+    a level will be used for a particular stat such as strength or spacial
+    awareness. The levels range from incompetent to unbelievable (god-like)
+    and are mostly inline with what the game uses already, but adds one
+    level more than what the game uses to push the unbelievable even higher
+    on average.
 
-    The ``p`` values describe the normal distribution of stats (each ``p`` value
-    has a sub-distribution, which makes the bell curve not so bell-shaped).
-    Labours do not follow the same stat system and are more uniformly random,
-    which are compensated for in the description of jobs/professions.
+    In addition to a bell shaped p-value curve for the levels, there is
+    additionally a standard deviation used to generate the value once a
+    level has been selected, this makes the bell curve not so bell shaped in
+    the end. Labours do not follow the same stat system and are more uniformly
+    random, which are compensated for in the description of jobs/professions.
 
 ``jobs``
     Defines ``dwarf-op``'s nameable jobs. Each job is comprised of required
@@ -152,7 +156,7 @@ inspected with ``dwarf-op --list <table name>``.
     (from the ``types`` table below) to apply to dwarves in the defined job.
 
 ``professions``
-    These are a subset of the professions DF has. All professions listed will
+    These are a subset of the professions DF has. All professions listed should
     match a profession dwarf fortress has built in, however not all the
     built-ins are defined here.
 
@@ -165,7 +169,7 @@ inspected with ``dwarf-op --list <table name>``.
 
 ``types``
     These are a sort of archetype system for applying to dwarves. It primarily
-    includes physical attributes, but can include skills as well.
+    includes physical and mental attributes, but can include skills as well.
 
     Each type has a probability of being applied to a dwarf just by pure luck -
     this is in addition to types applied by other means. Each type also has a
