@@ -1,18 +1,43 @@
-
 force
 =====
 
 .. dfhack-tool::
-    :summary: todo.
-    :tags: dev
+    :summary: Trigger in-game events.
+    :tags: fort armok gameplay
 
+This tool triggers events like megabeasts, caravans, and migrants. Note that you
+can only trigger one caravan per civ at the same time.
 
-A simpler wrapper around the `modtools/force` script.
+Usage
+-----
 
-Usage:
+::
 
-- ``force event_type``
-- ``force event_type civ_id`` - civ ID required for ``Diplomat`` and ``Caravan``
-  events
+    force <event> [<civ id>]
 
-See `modtools/force` for a complete list of event types.
+The civ id is only used for ``Diplomat`` and ``Caravan`` events, and defaults
+to the player civilization if not specified.
+
+The default civ IDs that you are likely to be interested in are:
+
+- ``MOUNTAIN`` (dwarves)
+- ``PLAINS`` (humans)
+- ``FOREST`` (elves)
+
+But to see IDs for all civilizations in your current game, run this command::
+
+    devel/query --table df.global.world.entities.all --search code --maxdepth 2
+
+Event types
+-----------
+
+The recognized event types are:
+
+- ``Caravan``
+- ``Migrants``
+- ``Diplomat``
+- ``Megabeast``
+- ``WildlifeCurious``
+- ``WildlifeMischievous``
+- ``WildlifeFlier``
+- ``NightCreature``

@@ -1,14 +1,18 @@
-
 fillneeds
 =========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Temporarily satisfy the needs of a unit.
     :tags: fort armok units
-
 
 Use with a unit selected to make them focused and unstressed.
 
-Alternatively, a unit can be specified by passing ``-unit UNIT_ID``
+Usage
+-----
 
-Use ``-all`` to apply to all units on the map.
+``fillneeds``
+    Make the selected unit focused and unstressed.
+``fillneeds --unit <id>``
+    Make the specified unit focused and unstressed.
+``fillneeds --all``
+    Make all units focused and unstressed.

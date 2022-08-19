@@ -1,18 +1,42 @@
-
 fix-ster
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Toggle infertility for units.
     :tags: fort armok animals
 
+Now you can restore fertility to infertile creatures or inflict infertility on
+creatures that you do not want to breed.
 
-Utilizes the orientation tag to either fix infertile creatures or inflict
-infertility on creatures that you do not want to breed.  Usage::
+Usage
+-----
 
-    fix-ster [fert|ster] [all|animals|only:<creature>]
+::
 
-``fert`` or ``ster`` is a required argument; whether to make the target fertile
-or sterile.  Optional arguments specify the target: no argument for the
-selected unit, ``all`` for all units on the map, ``animals`` for all non-dwarf
-creatures, or ``only:<creature>`` to only process matching creatures.
+    fix-ster fert|ster [all|animals|only:<race>]
+
+Specify ``fert`` or ``ster`` to indicate whether you want to make the target
+fertile or sterile, respectively.
+
+If no additional options are given, the command affects only the currently
+selected unit.
+
+Options
+-------
+
+``all``
+    Apply to all units on the map.
+``animals``
+    Apply to all non-dwarf creatures.
+``only:<race>``
+    Apply to creatures of the specified race.
+
+Examples
+--------
+
+``fix-ster fert``
+    Make the selected unit fertile.
+``fix-ster fert all``
+    Ensure all units across the entire fort are fertile.
+``fix-ster ster only:DWARF``
+    Halt dwarven population growth.

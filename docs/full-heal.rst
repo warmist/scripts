@@ -1,30 +1,37 @@
-
 full-heal
 =========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Fully heal the selected unit.
     :tags: fort armok units
 
+This script attempts to heal the selected unit from anything, optionally
+including death.
 
-Attempts to fully heal the selected unit from anything, optionally
-including death.  Usage:
+Usage
+-----
 
-:full-heal:
+``full-heal``
     Completely heal the currently selected unit.
-:full-heal -unit [unitId]:
-    Apply command to the unit with the given ID, instead of selected unit.
-:full-heal -r [-keep_corpse]:
-    Heal the unit, raising from the dead if needed.
-    Add ``-keep_corpse`` to avoid removing their corpse.
-    The unit can be targeted by selecting its corpse on the UI.
-:full-heal -all [-r] [-keep_corpse]:
-    Heal all units on the map.
-:full-heal -all_citizens [-r] [-keep_corpse]:
+``full-heal --unit <unitId>``
+    Completely heal the unit with the given ID.
+``full-heal -r [--keep_corpse]``
+    Heal the unit, raising from the dead if needed. If ``--keep_corpse`` is
+    specified, don't remove their corpse. The unit can be targeted by selecting
+    its corpse in the UI.
+``full-heal --all [-r] [--keep_corpse]``
+    Heal all units on the map, optionally resurrecting them if dead.
+``full-heal --all_citizens [-r] [--keep_corpse]``
     Heal all fortress citizens on the map. Does not include pets.
-:full-heal -all_civ [-r] [-keep_corpse]:
-    Heal all units belonging to your parent civilisation, including pets and visitors.
+``full-heal --all_civ [-r] [--keep_corpse]``
+    Heal all units belonging to your parent civilization, including pets and
+    visitors.
 
-For example, ``full-heal -r -keep_corpse -unit ID_NUM`` will fully heal
-unit ID_NUM.  If this unit was dead, it will be resurrected without deleting
-the corpse - creepy!
+Examples
+--------
+
+``full-heal``
+    Fully heal the selected unit.
+``full-heal -r --keep_corpse --unit 23273``
+    Fully heal unit 23273. If this unit was dead, it will be resurrected without
+    removing the corpse - creepy!

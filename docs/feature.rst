@@ -1,22 +1,29 @@
-
 feature
 =======
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Control discovery flags for map features.
     :tags: fort armok map
 
+This tool allows you to toggle the flags that the game uses to track your
+discoveries of map features. For example, you can make the game think that you
+have discovered magma so that you can build magma workshops and furnaces. You
+can also toggle the cavern layer discovery flags so you can control whether
+trees, shrubs, and grass from the various cavern layers grow within your
+fortress.
 
-Enables management of map features.
+Usage
+-----
 
-* Discovering a magma feature (magma pool, volcano, magma sea, or curious
-  underground structure) permits magma workshops and furnaces to be built.
-* Discovering a cavern layer causes plants (trees, shrubs, and grass) from
-  that cavern to grow within your fortress.
+``feature list``
+    List all map features in your current embark by index.
+``feature magma``
+    Enable magma furnaces (discovers a random magma feature).
+``feature show <index>``
+    Marks the indicated map feature as discovered.
+``feature hide <index>``
+    Marks the selected map feature as undiscovered.
 
-Options:
-
-:list:          Lists all map features in your current embark by index.
-:magma:         Enable magma furnaces (discovers a random magma feature).
-:show X:        Marks the selected map feature as discovered.
-:hide X:        Marks the selected map feature as undiscovered.
+There will usually be multiple features with the ``subterranean_from_layer``
+type. These are the cavern layers, and they are listed in order from closest to
+the surface to closest to the underworld.
