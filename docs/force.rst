@@ -6,7 +6,8 @@ force
     :tags: fort armok gameplay
 
 This tool triggers events like megabeasts, caravans, and migrants. Note that you
-can only trigger one caravan per civ at the same time.
+can only trigger one caravan per civ at the same time, and that DF may choose to
+ignore events that are triggered too frequently.
 
 Usage
 -----
@@ -36,6 +37,7 @@ The recognized event types are:
 - ``Caravan``
 - ``Migrants``
 - ``Diplomat``
+- ``FeatureAttack`` (Underworld incursion)
 - ``Megabeast``
 - ``WildlifeCurious``
 - ``WildlifeMischievous``
