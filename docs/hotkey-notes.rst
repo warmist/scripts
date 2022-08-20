@@ -1,10 +1,16 @@
-
 hotkey-notes
 ============
 
 .. dfhack-tool::
-    :summary: todo.
-    :tags: dfhack
+    :summary: Show info on DF map location hotkeys.
+    :tags: fort inspection
 
+This command lists the key (e.g. :kbd:`F1`), name, and jump position of the
+map location hotkeys you set in the :kbd:`H` menu.
 
-Lists the key, name, and jump position of your hotkeys in the DFHack console.
+Usage
+-----
+
+::
+
+    hotkey-notes

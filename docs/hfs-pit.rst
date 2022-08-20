@@ -1,29 +1,40 @@
-
 hfs-pit
 =======
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Creates a pit straight to the underworld.
     :tags: fort armok map
 
+This script creates a pit to the underworld, starting at the cursor position and
+going down, down down.
 
-Creates a pit to the underworld at the cursor, taking three numbers as
-arguments.  Usage:  ``hfs-pit <size> <walls> <stairs>``
+Usage
+-----
 
-The first argument is size of the (square) pit in all directions.  The second
-is ``1`` to wall off the sides of the pit on all layers except the underworld,
-or anything else to leave them open.  The third parameter is 1 to add stairs.
-Stairs are buggy; they will not reveal the bottom until you dig somewhere,
-but underworld creatures will path in.
+::
 
-Examples::
+    hfs-pit [<size> [<walls> [<stairs>]]]
 
-    hfs-pit 1 0 0
-        A single-tile wide pit with no walls or stairs.
-        This is the default if no numbers are given.
+The first parameter is the "radius" in tiles of the (square) pit, that is, how
+many tiles to open up in each direction around the cursor. The default is ``1``,
+meaning a single column.
 
-    hfs-pit 4 0 1
-        A four-across pit with no stairs but adding walls.
+The second parameter is ``1`` to wall off the sides of the pit on all layers
+except the underworld, or anything else to leave them open.
 
-    hfs-pit 2 1 0
-        A two-across pit with stairs but no walls.
+The third parameter is ``1`` to add stairs in the middle of the pit or anything
+else to just have an open channel.
+
+Note that stairs are buggy; they will not reveal the bottom until you dig
+somewhere, but underworld creatures will path in.
+
+Examples
+--------
+
+``hfs-pit``
+    Create a single-tile wide pit with no walls or stairs.
+``hfs-pit 4 1 0``
+    A seven-across pit (the center tile plus three on each side) with stairs but
+    no containing walls.
+``hfs-pit 2 0 1``
+    A five-across pit with no stairs but with containing walls.
