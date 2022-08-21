@@ -3,6 +3,7 @@
 
 print(dfhack.current_script_name() .. " v1.4")
 utils ={}
+argparse = require('argparse')
 utils = require('utils')
 json = require('json')
 local rng = require('plugins.cxxrandom')
@@ -422,8 +423,12 @@ function ArrayLength(t)
     return count
 end
 
-function TableLength(table) local count = 0 for i,k in pairs(table) do count = count + 1 end return
-count end
+function TableLength(table)
+    local count = 0 for i,k in pairs(table) do
+        count = count + 1
+    end
+    return count
+end
 
 function TableContainsValue(t,value)
     for _,v in pairs(t) do
@@ -1008,32 +1013,46 @@ end
 local includeProtectedDwfs = false
 function CheckWorker(dwf, option)
     if CanWork(dwf) then
+        local name = dfhack.TranslateName(dfhack.units.getVisibleName(dwf))
+        local nickname = dwf.status.current_soul.name.nickname
         --check option data type (string/table)
-            --string:
+            --normal
                 --check if option specifies a pattern which matches the name of this dwf
                 --check if we want highlighted dwf & whether that is this dwf
                 --check if option starts with 'p'
                 --check all the possible options
-            --table:
+            --list:
                 --check if option[1] starts with 'p'
                 --check all possible options
+        local list
         if type(option) == 'string' then
-            local name = dfhack.TranslateName(dfhack.units.getVisibleName(dwf))
-            local nickname = dwf.status.current_soul.name.nickname
+            list = argparse.stringList(option)
+        else
+            error("The select option entered is not a string.")
+        end
+        local N = #list
+
+        -- parse the selection arguments
+        if N == 1 then
+            -- name
             if string.match(name,option) or string.match(nickname,option) then
                 return true
+            -- highlighted
             elseif option == 'highlighted' then
                 if CanWork(dfhack.gui.getSelectedUnit()) then
                     return dwf == dfhack.gui.getSelectedUnit()
                 else
                     error("The selected unit isn't a dwarf, or can't work. This script is not intended for such units.")
                 end
+            -- protected
             elseif GetChar(option,1) == 'p' then
                 includeProtectedDwfs = true
                 if option ~= 'protected' then
+                    -- the p was simply a signal, we need to remove it
                     option = string.sub(option,2)
                 end
             end
+            -- primary selection criteria
             if includeProtectedDwfs or isDwarfUnprotected(dwf) then
                 if option == 'all' then
                     return true
@@ -1055,34 +1074,31 @@ function CheckWorker(dwf, option)
                     return dwf.profession == df.profession['DRUNK'] and dwf.profession2 == df.profession['DRUNK']
                 end
             end
-        elseif type(option) == 'table' then
-            if GetChar(option[1],1) == 'p' then
+        -- argument list for `--select`
+        elseif N > 1 then
+            local select_type = list[1]
+            if GetChar(select_type,1) == 'p' then
                 includeProtectedDwfs = true
-                option[1] = string.sub(option[1],2)
+                select_type = string.sub(select_type,2)
             end
-            --print(includeProtectedDwfs)
-            if option[1] == 'job' or option[1] == 'jobs' then
-                n=0
-                for _,v in pairs(option) do
-                    n=n+1
-                    --print(dwf.custom_profession, v)
-                    if n > 1 and dwf.custom_profession == v then
-                        return true
-                    end
-                end
-            elseif option[1] == 'wave' or option[1] == 'waves' then
-                n=0
-                if includeProtectedDwfs or isDwarfUnprotected(dwf) then
-                    for _,v in pairs(option) do
-                        n=n+1
-                        if n > 1 and TableContainsValue(zwaves[tonumber(v)],dwf) then
+
+            local n=0
+            for _,v in pairs(list) do
+                n=n+1
+                if string.match(name,v) or string.match(nickname,v) then
+                    return true
+                elseif n > 1 and (includeProtectedDwfs or isDwarfUnprotected(dwf)) then
+                    if select_type == 'job' or select_type == 'jobs' then
+                        if dwf.custom_profession == v then
+                            return true
+                        end
+                    elseif select_type == 'wave' or select_type == 'waves' then
+                        if TableContainsValue(zwaves[tonumber(v)],dwf) then
                             return true
                         end
                     end
                 end
             end
-        else
-            error("The select option entered is not a table, or a string. I have no idea what you've done.")
         end
     end
     return false
