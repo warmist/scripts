@@ -53,9 +53,9 @@ instead of ``all``.
     specified.
 ``all``
     Selects all dwarves.
-``<name>``
+``<name>[,<name>,...]``
     Selects any dwarf with <name> anywhere in their name or nickname. This
-    option ignores protection status.
+    option ignores protection status. e.g. ``-select "bob,james,urist"``
 ``named``
     Selects dwarves with user-given names.
 ``unnamed``
@@ -73,14 +73,15 @@ instead of ``all``.
 ``drunks``
     Selects any dwarves who have the ``DRUNK`` profession, including those who
     have been zeroed by the ``--clear`` command option.
-``jobs "[" jobs <jobname> [<jobname> ...] "]"``
+``"jobs,<job>[,<job>,...]"``
     Selects any dwarves with the specified custom professions.
-``waves "[" waves <num> [<num> ...] "]"``
+    e.g. ``--select "jobs,Miner,Admin"``
+``"waves,<num>[,<num>,...]"``
     Selects dwarves from the specified migration waves. Waves are enumerated
     starting at 0 and increasing by 1 with each wave. The waves go by season and
     year and thus should match what you see in `list-waves` or Dwarf Therapist.
     It is recommended that you ``--show`` the selected dwarves before modifying
-    them.
+    them. e.g. ``--select "waves,2,3,5,7,11,13"``
 
 Options
 -------
@@ -119,13 +120,13 @@ Command options
 ``--optimize``
     Performs a job search for unoptimized dwarves. Run
     ``dwarf-op --list job_distribution`` to see how jobs are distributed.
-``--applyjobs "[" <job> [<job> ...] "]"``
+``--applyjobs "<job>[,<job>,...]"``
     Applies the listed jobs to the selected dwarves. Run
     ``dwarf-op --list jobs`` to see available jobs.
-``--applyprofessions "[" <profession> [<profession> ...] "]"``
+``--applyprofessions "<profession>[,<profession>,...]"``
     Applies the listed professions to the selected dwarves. Run
     ``dwarf-op --list professions`` to see available professions.
-``--applytypes "[" <profession> [<profession> ...] "]"``
+``--applytypes "<profession>[,<profession>,...]"``
     Applies the listed types to the selected dwarves. Run
     ``dwarf-op --list dwf_types`` to see available types.
 ``--renamejob <name>``

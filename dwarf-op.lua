@@ -1284,45 +1284,27 @@ if args.select and (args.debug or args.clean or args.clear or args.optimize or a
             end
 
             if args.applyjobs then
-                if type(args.applyjobs) == 'table' then
-                    print("Applying jobs:" .. TableToString(args.applyjobs) .. ", to selected dwarves")
-                    temp = LoopTable_Apply_ToUnits(selection, ApplyJob, args.applyjobs, cloned.jobs)
-                else
-                    print("Applying job:" .. args.applyjobs .. ", to selected dwarves")
-                    if cloned.jobs[args.applyjobs] then
-                        temp = LoopUnits(selection, ApplyJob, nil, args.applyjobs)
-                    else
-                        error("Invalid job: " .. args.applyjobs)
-                    end
+                if type(args.applyjobs) ~= 'table' then
+                    args.applyjobs = argparse.stringList(args.applyjobs)
                 end
+                print("Applying jobs:" .. TableToString(args.applyjobs) .. ", to selected dwarves")
+                temp = LoopTable_Apply_ToUnits(selection, ApplyJob, args.applyjobs, cloned.jobs)
                 affected = affected < temp and temp or affected
             end
             if args.applyprofessions then
-                if type(args.applyprofessions) == 'table' then
-                    print("Applying professions:" .. TableToString(args.applyprofessions) .. ", to selected dwarves")
-                    temp = LoopTable_Apply_ToUnits(selection, ApplyProfession, args.applyprofessions, cloned.professions,1,5)
-                else
-                    print("Applying professions:" .. args.applyprofessions .. ", to selected dwarves")
-                    if cloned.professions[args.applyprofessions] then
-                        temp = LoopUnits(selection, ApplyProfession, nil, args.applyprofessions,1,5)
-                    else
-                        error("Invalid profession: " .. args.applyprofessions)
-                    end
+                if type(args.applyprofessions) ~= 'table' then
+                    args.applyprofessions = argparse.stringList(args.applyprofessions)
                 end
+                print("Applying professions:" .. TableToString(args.applyprofessions) .. ", to selected dwarves")
+                temp = LoopTable_Apply_ToUnits(selection, ApplyProfession, args.applyprofessions, cloned.professions,1,5)
                 affected = affected < temp and temp or affected
             end
             if args.applytypes then
-                if type(args.applytypes) == 'table' then
-                    print("Applying types:" .. TableToString(args.applytypes) .. ", to selected dwarves")
-                    temp = LoopTable_Apply_ToUnits(selection, ApplyType, args.applytypes, cloned.types)
-                else
-                    print("Applying type:" .. args.applytypes .. ", to selected dwarves")
-                    if cloned.types[args.applytypes] then
-                        temp = LoopUnits(selection, ApplyType, nil, args.applytypes)
-                    else
-                        error("Invalid type: " .. args.applytypes)
-                    end
+                if type(args.applytypes) ~= 'table' then
+                    args.applytypes = argparse.stringList(args.applytypes)
                 end
+                print("Applying types:" .. TableToString(args.applytypes) .. ", to selected dwarves")
+                temp = LoopTable_Apply_ToUnits(selection, ApplyType, args.applytypes, cloned.types)
                 affected = affected < temp and temp or affected
             end
             if args.renamejob and type(args.renamejob) == 'string' then
