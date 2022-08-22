@@ -97,7 +97,7 @@ jobs = {
         types={'strong6','strong5','fast3','spaceaware3','soldier','fighter','social','social'}},
     Miner = {
         req={'MINER'}, max={2},
-        BREWER=0.35, STONEWORKER=0.42, ENGRAVER=0.51, FISHER=0.41,
+        BREWER=0.35, STONEWORKER=0.42, ENGRAVER=0.51, FISHERMAN=0.41,
         types={'spaceaware3','strong3','fast3','resilient2','social'}},
     Admin = {
         req={'ADMINISTRATOR'}, max={4},
