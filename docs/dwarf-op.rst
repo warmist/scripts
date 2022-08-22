@@ -17,10 +17,7 @@ random variation so each dwarf is unique.
 you can specify precisely what archtype you want a for given dwarf, and
 ``dwarf-op`` can generate a random dwarf that matches that archetype.
 
-Usage
------
-
-::
+Usage::
 
     dwarf-op --list <table>
     dwarf-op --reset|--resetall
@@ -191,7 +188,9 @@ inspected with ``dwarf-op --list <table name>``.
     has a probability for being additionally applied to a dwarf just by pure
     luck. This will bump some status up even higher than the base job calls for.
 
-To see a full list of built-in professions and jobs, you can run these commands::
+To see a full list of built-in professions, skills, and attributes, you can run these commands::
 
     devel/query --table df.profession
     devel/query --table df.job_skill
+    devel/query --table df.physical_attribute_type
+    devel/query --table df.mental_attribute_type
