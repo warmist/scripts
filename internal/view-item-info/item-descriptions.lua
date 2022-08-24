@@ -1,5 +1,6 @@
 -- Holds custom descriptions for view-item-info
 -- By PeridexisErrant
+--@ module = true
 --[====[
 
 item-descriptions
