@@ -10,6 +10,7 @@ Stub documentation.
 local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
+local script = require('gui.script')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -514,13 +515,12 @@ function LauncherUI:onDismiss()
     view = nil
 end
 
-function LauncherUI:run_command(reappear, text)
-    text = text:trim()
-    if #text == 0 then return end
-    self:dismiss()
-    dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
-    record_command(text)
-    local output = dfhack.run_command_silent(text)
+-- expected to be run under script.start()
+local function safe_run(reappear, command)
+    -- allow our dismissed viewscreen to be removed from the stack. this allows
+    -- hotkey guards and tools that detect the top viewscreen to work reliably.
+    script.sleep(2, 'frames')
+    local output = dfhack.run_command_silent(command)
     -- if we displayed a new dfhack screen, don't come back up even if reappear
     -- is true. otherwise, the user can't interact with the new screen. if we're
     -- not reappearing with the output, print the output to the console.
@@ -529,14 +529,24 @@ function LauncherUI:run_command(reappear, text)
                         parent_focus ~= self.parent_focus) then
         if #output > 0 then
             print('Output from command run from gui/launcher:')
-            print('> '..text)
+            print('> ' .. command)
+            print()
             print(output)
         end
         return
     end
     -- reappear and show the command output
-    local initial_help = ('> %s\n\n%s'):format(text, output)
+    local initial_help = ('> %s\n\n%s'):format(command, output)
     launch({initial_help=initial_help})
+end
+
+function LauncherUI:run_command(reappear, text)
+    text = text:trim()
+    if #text == 0 then return end
+    dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
+    record_command(text)
+    self:dismiss()
+    script.start(safe_run, reappear, text)
 end
 
 function LauncherUI:getWantedFrameSize()
