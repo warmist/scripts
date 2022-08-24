@@ -1,25 +1,35 @@
-
 lever
 =====
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Inspect and pull levers.
     :tags: fort armok inspection productivity buildings
 
+Usage
+-----
 
-Allow manipulation of in-game levers from the dfhack console.
+``lever list``
+    Print out a list of your fort's levers, including their name, activation
+    state, and what they are linked to (if anything).
+``lever pull <id> [<options>]``
+    Queue a job so a dwarf will pull the specified lever. This is the same as
+    :kbd:`q` querying the building and queueing a :kbd:`P` pull job.
 
-Can list levers, including state and links, with::
+If your levers aren't named, you can find out a lever's ID with the `bprobe`
+command.
 
-    lever list
+Examples
+--------
 
-To queue a job so that a dwarf will pull the lever 42, use ``lever pull 42``.
-This is the same as :kbd:`q` querying the building and queue a :kbd:`P` pull request.
+``lever pull 42 --priority``
+    Queue a job to pull lever 42 at high priority.
+``lever pull 42 --now``
+    Skip the job and pull the lever with the hand of Armok!
 
-To queue a job at high priority, add ``--high`` or ``--priority``::
+Options
+-------
 
-    lever pull 42 --high
-
-To magically toggle the lever immediately, add ``--now`` or ``--cheat``::
-
-    lever pull 42 --now
+``--priority``
+    Queue a job at high priority.
+``--now``
+    Magically toggle the lever immediately.

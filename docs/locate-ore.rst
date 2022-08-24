@@ -1,21 +1,32 @@
-
 locate-ore
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Scan the map for metal ores.
     :tags: fort armok productivity map
 
+This tool finds and designates for digging one tile of a specific metal ore. If
+you want to dig **all** tiles of that kind of ore, select that tile with the
+cursor and run `digtype <dig>`.
 
-Scan the map for metal ores.
+Usage
+-----
 
-Finds and designate for digging one tile of a specific metal ore.
-Only works for native metal ores, does not handle reaction stuff (eg STEEL).
+``locate-ore list``
+    List metal ores available on the map.
+``locate-ore <type>``
+    Finds a tile of the specified ore type, zooms the screen so that tile is
+    visible, and designates that tile for digging.
 
-When invoked with the ``list`` argument, lists metal ores available on the map.
+Examples
+--------
 
-Examples::
+::
 
-    locate-ore list
     locate-ore hematite
     locate-ore iron
+    locate-ore silver
+
+Note that looking for a particular metal might find an ore that contains that
+metal along with other metals. For example, locating silver may find
+tetrahedrite, which contains silver and copper.

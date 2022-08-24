@@ -1,39 +1,42 @@
-
 list-waves
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Show migration wave information for your dwarves.
     :tags: fort inspection units
 
+This script displays information about migration waves or identifies which wave
+a particular dwarf came from.
 
-This script displays information about migration waves of the specified citizen(s).
+Usage
+-----
 
-Examples::
+::
 
-  list-waves -all -showarrival -granularity days
-  list-waves -all -showarrival
-  list-waves -unit -granularity days
-  list-waves -unit
-  list-waves -unit -all -showarrival -granularity days
+    list-waves --all [--showarrival] [--granularity <value>]
+    list-waves --unit [--granularity <value>]
 
-**Selection options:**
+Examples
+--------
 
-These options are used to specify what wave information to display
+``list-waves --all``
+    Show how many dwarves came in each migration wave.
+``list-waves --all --showarrival``
+    Show how many dwarves came in each migration wave and when that migration
+    wave arrived.
+``list-waves --unit``
+    Show which migration wave the selected dwarf arrived with.
 
-``-unit``:
-    Displays the highlighted unit's arrival wave information
+Options
+-------
 
-``-all``:
-    Displays all citizens' arrival wave information
-
-**Other options:**
-
-``-granularity <value>``:
-    Specifies the granularity of wave enumeration: ``years``, ``seasons``, ``months``, ``days``
-    If omitted, the default granularity is ``seasons``, the same as Dwarf Therapist
-
-``-showarrival``:
-    Shows the arrival information for the selected unit.
-    If ``-all`` is specified the info displayed will be relative to the
-    granularity used. Note: this option is always used when ``-unit`` is used.
+``--unit``
+    Displays the highlighted unit's arrival wave information.
+``--all``
+    Displays information about each arrival wave.
+``--granularity <value>``
+    Specifies the granularity of wave enumeration: ``years``, ``seasons``,
+    ``months``, or ``days``. If omitted, the default granularity is ``seasons``,
+    the same as Dwarf Therapist.
+``--showarrival``:
+    Shows the arrival date for each wave.
