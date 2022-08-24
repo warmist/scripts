@@ -1034,11 +1034,8 @@ function CheckWorker(dwf, option)
 
         -- parse the selection arguments
         if N == 1 then
-            -- name
-            if string.match(name,option) or string.match(nickname,option) then
-                return true
             -- highlighted
-            elseif option == 'highlighted' then
+            if option == 'highlighted' then
                 if CanWork(dfhack.gui.getSelectedUnit()) then
                     return dwf == dfhack.gui.getSelectedUnit()
                 else
@@ -1077,7 +1074,7 @@ function CheckWorker(dwf, option)
         -- argument list for `--select`
         elseif N > 1 then
             local select_type = list[1]
-            if GetChar(select_type,1) == 'p' then
+            if GetChar(select_type,1) == 'p' or select_type == 'name' or select_type == 'names' then
                 includeProtectedDwfs = true
                 select_type = string.sub(select_type,2)
             end
@@ -1085,10 +1082,12 @@ function CheckWorker(dwf, option)
             local n=0
             for _,v in pairs(list) do
                 n=n+1
-                if string.match(name,v) or string.match(nickname,v) then
-                    return true
-                elseif n > 1 and (includeProtectedDwfs or isDwarfUnprotected(dwf)) then
-                    if select_type == 'job' or select_type == 'jobs' then
+                if n > 1 and (includeProtectedDwfs or isDwarfUnprotected(dwf)) then
+                    if select_type == 'name' or select_type == 'names' then
+                        if string.match(name,v) or string.match(nickname,v) then
+                            return true
+                        end
+                    elseif select_type == 'job' or select_type == 'jobs' then
                         if dwf.custom_profession == v then
                             return true
                         end

@@ -30,9 +30,12 @@ Examples
     Transform newly arrived dwarves into the workers that your fort needs most.
 ``dwarf-op --select all --clear --optimize``
     Rebalance the distribution of skills and attributes across your units.
-``dwarf-op --select [ waves 14 ] --applyjobs [ MINER ]``
-    Make all migrants in wave 14 competent miners.
-``dwarf-op --select [ jobs Stoneworker ] --applytypes [ fast3 strong5 ]``
+``dwarf-op --select names,Einstein --applytypes genius3,intuitive3,creative2,spaceaware3``
+    Make dwarves with Einstein in their name into geniuses capable of surpassing
+    the real Einstein.
+``dwarf-op --select waves,2,3,5,7,11,13 --applyjobs MINER``
+    Make all migrants in waves 2, 3, 5, 7, 11, and 13 very good miners.
+``dwarf-op --select jobs,Stoneworker --applytypes fast3,strong5``
     Boost the speed and strength of your masons so they can carry boulders
     to their workshop faster.
 
@@ -53,9 +56,6 @@ instead of ``all``.
     specified.
 ``all``
     Selects all dwarves.
-``<name>[,<name>,...]``
-    Selects any dwarf with <name> anywhere in their name or nickname. This
-    option ignores protection status. e.g. ``-select "bob,james,urist"``
 ``named``
     Selects dwarves with user-given names.
 ``unnamed``
@@ -73,15 +73,17 @@ instead of ``all``.
 ``drunks``
     Selects any dwarves who have the ``DRUNK`` profession, including those who
     have been zeroed by the ``--clear`` command option.
-``"jobs,<job>[,<job>,...]"``
+``names,<name>[,<name>...]``
+    Selects any dwarf with <name> anywhere in their name or nickname. This
+    option ignores protection status.
+``"jobs,<job>[,<job>...]"``
     Selects any dwarves with the specified custom professions.
-    e.g. ``--select "jobs,Miner,Admin"``
-``"waves,<num>[,<num>,...]"``
+``"waves,<num>[,<num>...]"``
     Selects dwarves from the specified migration waves. Waves are enumerated
-    starting at 0 and increasing by 1 with each wave. The waves go by season and
-    year and thus should match what you see in `list-waves` or Dwarf Therapist.
-    It is recommended that you ``--show`` the selected dwarves before modifying
-    them. e.g. ``--select "waves,2,3,5,7,11,13"``
+    starting at 0 and increasing by 1 with each wave. The waves go by season
+    and year and thus should match what you see in `list-waves` or Dwarf
+    Therapist. It is recommended that you ``--show`` the selected dwarves
+    before modifying them.
 
 Options
 -------
@@ -120,13 +122,13 @@ Command options
 ``--optimize``
     Performs a job search for unoptimized dwarves. Run
     ``dwarf-op --list job_distribution`` to see how jobs are distributed.
-``--applyjobs "<job>[,<job>,...]"``
+``--applyjobs <job>[,<job>...]``
     Applies the listed jobs to the selected dwarves. Run
     ``dwarf-op --list jobs`` to see available jobs.
-``--applyprofessions "<profession>[,<profession>,...]"``
+``--applyprofessions <profession>[,<profession>...]``
     Applies the listed professions to the selected dwarves. Run
     ``dwarf-op --list professions`` to see available professions.
-``--applytypes "<profession>[,<profession>,...]"``
+``--applytypes <profession>[,<profession>...]``
     Applies the listed types to the selected dwarves. Run
     ``dwarf-op --list dwf_types`` to see available types.
 ``--renamejob <name>``
