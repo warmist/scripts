@@ -1,13 +1,27 @@
-
 make-legendary
 ==============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Boost skills of the selected dwarf.
     :tags: fort armok units
 
+This tool can make the selected dwarf legendary in one skill, a group of skills,
+or all skills.
 
-Makes the selected dwarf legendary in one skill, a group of skills, or all
-skills.  View groups with ``make-legendary classes``, or all skills with
-``make-legendary list``.  Use ``make-legendary MINING`` when you need something
-dug up, or ``make-legendary all`` when only perfection will do.
+Usage
+-----
+
+``make-legendary list``
+    List the individual skills that you can boost.
+``make-legendary classes``
+    List the skill groups that you can boost.
+``make-legendary <skill>|all``
+    Make the selected dwarf legendary in the specified skill (or all skills)
+
+Examples
+--------
+
+``make-legendary MINING``
+    Make the selected dwarf a legendary miner.
+``make-legendary all``
+    Make the selected dwarf legendary in all skills. Only perfection will do.
