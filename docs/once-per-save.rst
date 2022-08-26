@@ -1,20 +1,26 @@
-
 once-per-save
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Run commands only if they haven't been run before in this world.
     :tags: dfhack
 
+If you are looking for a way to run commands once when you start a new fortress,
+you probably want `on-new-fortress`.
 
-Runs commands like `multicmd`, but only unless
-not already ran once in current save. You may actually
-want `on-new-fortress`.
+This tool is better for commands that you want to run once per world.
 
-Only successfully ran commands are saved.
+You can specify multiple commands to run, separated with :kbd:`;`, similar to
+`multicmd`. However, if the command has been run (successfully) before with
+``once-per-save`` in the context of the current savegame, the commands will not
+actually run.
 
-Parameters:
+Usage
+-----
 
---help            display this help
---rerun commands  ignore saved commands
---reset           deletes saved commands
+``once-per-save [--rerun] <command>[; <command> ...]``
+    Run the specified commands if they haven't been run before. If ``--rerun``
+    is specified, run the commands regardless of whether they have been run
+    before.
+``once-per-save --reset``
+    Forget which commands have been run before.
