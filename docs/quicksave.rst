@@ -1,11 +1,16 @@
-
 quicksave
 =========
 
 .. dfhack-tool::
-    :summary: todo.
-    :tags: dfhack
+    :summary: Immediately save the game.
+    :tags: fort
 
+When called in dwarf mode, this tool makes DF immediately save the game by
+setting a flag normally used for the seasonal auto-save.
 
-If called in dwarf mode, makes DF immediately saves the game by setting a flag
-normally used in seasonal auto-save.
+Usage
+-----
+
+::
+
+    quicksave
