@@ -214,9 +214,9 @@ function do_list_internal(show_library, show_hidden)
 end
 
 function do_list(args)
-    local show_library, show_hidden, filter_mode = false, false, nil
+    local show_library, show_hidden, filter_mode = true, false, nil
     local filter_strings = utils.processArgsGetopt(args, {
-            {'l', 'library', handler=function() show_library = true end},
+            {'u', 'useronly', handler=function() show_library = false end},
             {'h', 'hidden', handler=function() show_hidden = true end},
             {'m', 'mode', hasArg=true,
              handler=function(optarg) filter_mode = optarg end},
@@ -260,7 +260,7 @@ function do_list(args)
                             num_filtered))
     end
     if num_library_blueprints > 0 and not show_library then
-        print(string.format( '  %d library blueprints not shown (use '..
-            '`quickfort list --library` to see them)', num_library_blueprints))
+        print(('  %d library blueprints not shown')
+              :format(num_library_blueprints))
     end
 end

@@ -25,6 +25,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/quickfort`: better formatting for the generated manager orders report
+- `quickfort`: library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library bluerpints.
 
 ## Removed
 
