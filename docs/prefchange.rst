@@ -1,17 +1,35 @@
-
 prefchange
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Set strange mood preferences.
     :tags: fort armok units
 
+This tool sets preferences for strange moods to include a weapon type, equipment
+type, and material. If you also wish to trigger a mood, see `strangemood`.
 
-Sets preferences for mooding to include a weapon type, equipment type,
-and material.  If you also wish to trigger a mood, see
-`strangemood`.
+Usage
+-----
 
-Valid options:
+::
+
+    prefchange <command>
+
+Examples
+--------
+
+Examine the preferences across all dwarves::
+
+    prefchange show
+
+Clear a unit's existing preferences and make them like hammers, mail shirts, and
+steel::
+
+    prefchange c
+    prefchange has
+
+Commands
+--------
 
 :show:  show preferences of all units
 :c:     clear preferences of selected unit
@@ -25,6 +43,3 @@ Valid options:
 :pig:   likes picks, gauntlets, and steel
 :log:   likes long swords, gauntlets, and steel
 :dap:   likes daggers, greaves, and steel
-
-Feel free to adjust the values as you see fit, change the has steel to
-platinum, change the axp axes to great axes, whatnot.

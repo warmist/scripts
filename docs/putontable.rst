@@ -1,13 +1,32 @@
-
 putontable
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Make an item appear on a table.
     :tags: fort armok items
 
+To use this tool, move an item to the ground on the same tile as a built table.
+Then, place the cursor over the table and item and run this command. The item
+will appear on the table, just like in adventure mode shops!
 
-Makes item appear on the table, like in adventure mode shops.
-Arguments:
+Usage
+-----
 
-* ``-a`` or ``--all``: apply to all items at the cursor
+::
+
+    putontable [<options>]
+
+Example
+-------
+
+``putontable``
+    Of the items currently on the ground under the table, put one item on the
+    table.
+``putontable --all``
+    Put all items on the table that are currently on the ground under the table.
+
+Options
+-------
+
+``-a``, ``--all``
+    Put all items at the cursor on the table, not just one.

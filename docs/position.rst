@@ -1,11 +1,17 @@
-
 position
 ========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Report cursor and mouse position, along with other info.
     :tags: fort inspection map
 
+This tool reports the current date, clock time, month, and season. It also
+reports the cursor position (or just the z-level if no cursor), window size, and
+mouse location on the screen.
 
-Reports the current time:  date, clock time, month, and season.  Also reports
-location:  z-level, cursor position, window size, and mouse location.
+Usage
+-----
+
+::
+
+    position
