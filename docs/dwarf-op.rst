@@ -76,7 +76,7 @@ instead of ``all``.
 ``names,<name>[,<name>...]``
     Selects any dwarf with <name> anywhere in their name or nickname. This
     option ignores protection status.
-``"jobs,<job>[,<job>...]"``
+``jobs,<job>[,<job>...]``
     Selects any dwarves with the specified custom professions.
 ``"waves,<num>[,<num>...]"``
     Selects dwarves from the specified migration waves. Waves are enumerated
