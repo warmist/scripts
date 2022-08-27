@@ -1,18 +1,21 @@
-
 reveal-hidden-sites
 ===================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Reveal all sites in the world.
     :tags: adventure armok map
 
+This tool reveals all sites in the world that have yet to be discovered by the
+player (camps, lairs, shrines, vaults, etc), making them visible on the map.
 
-This script reveals all sites in the world
-that have yet to be discovered by the player
-(camps, lairs, shrines, vaults, etc)
-thus making them visible on the map.
+It is usable in both fortress and adventure mode.
 
-Usable in both fortress and adventure mode.
+Please see `reveal-adv-map` if you also want to expose hidden world map tiles in
+adventure mode.
 
-See `reveal-adv-map` if you also want to expose
-hidden world map tiles in adventure mode.
+Usage
+-----
+
+::
+
+    reveal-hidden-sites
