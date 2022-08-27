@@ -78,7 +78,7 @@ instead of ``all``.
     option ignores protection status.
 ``jobs,<job>[,<job>...]``
     Selects any dwarves with the specified custom professions.
-``"waves,<num>[,<num>...]"``
+``waves,<num>[,<num>...]``
     Selects dwarves from the specified migration waves. Waves are enumerated
     starting at 0 and increasing by 1 with each wave. The waves go by season
     and year and thus should match what you see in `list-waves` or Dwarf
