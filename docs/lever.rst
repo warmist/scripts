@@ -15,8 +15,8 @@ Usage
     Queue a job so a dwarf will pull the specified lever. This is the same as
     :kbd:`q` querying the building and queueing a :kbd:`P` pull job.
 
-If your levers aren't named, you can find out a lever's ID with the `bprobe`
-command.
+If your levers aren't named, you can find out a lever's ID with the
+`bprobe <probe>` command.
 
 Examples
 --------
