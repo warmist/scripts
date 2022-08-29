@@ -516,7 +516,7 @@ function LauncherUI:onDismiss()
 end
 
 -- expected to be run under script.start()
-local function safe_run(reappear, command)
+local function safe_run(reappear, command, prev_parent_focus)
     -- allow our dismissed viewscreen to be removed from the stack. this allows
     -- hotkey guards and tools that detect the top viewscreen to work reliably.
     script.sleep(2, 'frames')
@@ -526,7 +526,7 @@ local function safe_run(reappear, command)
     -- not reappearing with the output, print the output to the console.
     local parent_focus = dfhack.gui.getCurFocus(true)
     if not reappear or (parent_focus:startswith('dfhack/') and
-                        parent_focus ~= self.parent_focus) then
+                        parent_focus ~= prev_parent_focus) then
         if #output > 0 then
             print('Output from command run from gui/launcher:')
             print('> ' .. command)
@@ -546,7 +546,7 @@ function LauncherUI:run_command(reappear, text)
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
     record_command(text)
     self:dismiss()
-    script.start(safe_run, reappear, text)
+    script.start(safe_run, reappear, text, self.parent_focus)
 end
 
 function LauncherUI:getWantedFrameSize()
