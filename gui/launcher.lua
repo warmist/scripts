@@ -56,24 +56,37 @@ local function file_exists(fname)
     return dfhack.filesystem.mtime(fname) ~= -1
 end
 
+-- history files are written with the most recent entry on *top*, which the
+-- opposite of what we want. add the file contents to our history in reverse.
+local function add_history_lines(lines, hist, hist_set)
+    for i=#lines,1,-1 do
+        add_history(hist, hist_set, lines[i])
+    end
+end
+
+local function add_history_file(fname, hist, hist_set)
+    if not file_exists(fname) then
+        return
+    end
+    local lines = {}
+    for line in io.lines(fname) do
+        table.insert(lines, line)
+    end
+    add_history_lines(lines, hist, hist_set)
+end
+
 local function init_history()
     local hist, hist_set = {}, {}
     -- snarf the console history into our active history. it would be better if
     -- both the launcher and the console were using the same history object so
     -- the sharing would be "live", but we can address that later.
-    if file_exists(CONSOLE_HISTORY_FILE_OLD) then
-        for line in io.lines(CONSOLE_HISTORY_FILE_OLD) do
-            add_history(hist, hist_set, line)
-        end
-    end
-    if file_exists(CONSOLE_HISTORY_FILE) then
-        for line in io.lines(CONSOLE_HISTORY_FILE) do
-            add_history(hist, hist_set, line)
-        end
-    end
-    for _,line in ipairs(dfhack.getCommandHistory(HISTORY_ID, HISTORY_FILE)) do
-        add_history(hist, hist_set, line)
-    end
+    add_history_file(CONSOLE_HISTORY_FILE_OLD, hist, hist_set)
+    add_history_file(CONSOLE_HISTORY_FILE, hist, hist_set)
+
+    -- read in our own command history
+    add_history_lines(dfhack.getCommandHistory(HISTORY_ID, HISTORY_FILE),
+                      hist, hist_set)
+
     return hist, hist_set
 end
 
@@ -516,7 +529,7 @@ function LauncherUI:onDismiss()
 end
 
 -- expected to be run under script.start()
-local function safe_run(reappear, command)
+local function safe_run(reappear, command, prev_parent_focus)
     -- allow our dismissed viewscreen to be removed from the stack. this allows
     -- hotkey guards and tools that detect the top viewscreen to work reliably.
     script.sleep(2, 'frames')
@@ -526,7 +539,7 @@ local function safe_run(reappear, command)
     -- not reappearing with the output, print the output to the console.
     local parent_focus = dfhack.gui.getCurFocus(true)
     if not reappear or (parent_focus:startswith('dfhack/') and
-                        parent_focus ~= self.parent_focus) then
+                        parent_focus ~= prev_parent_focus) then
         if #output > 0 then
             print('Output from command run from gui/launcher:')
             print('> ' .. command)
@@ -546,7 +559,7 @@ function LauncherUI:run_command(reappear, text)
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, text)
     record_command(text)
     self:dismiss()
-    script.start(safe_run, reappear, text)
+    script.start(safe_run, reappear, text, self.parent_focus)
 end
 
 function LauncherUI:getWantedFrameSize()
