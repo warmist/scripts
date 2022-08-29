@@ -192,8 +192,16 @@ end
 -- implementation, then applies the saved (or given) filter text
 function BlueprintDialog:refresh()
     local choices = {}
-    for _,v in ipairs(
-            quickfort_list.do_list_internal(show_library, show_hidden)) do
+    local ok, results = pcall(quickfort_list.do_list_internal, show_library,
+                              show_hidden)
+    if not ok then
+        dialogs.showMessage('Cannot list blueprints',
+                            tostring(results):wrap(dialog_width),
+                            COLOR_RED)
+        self.dismiss()
+        return
+    end
+    for _,v in ipairs(results) do
         local start_comment = ''
         if v.start_comment then
             start_comment = string.format(' cursor start: %s', v.start_comment)
