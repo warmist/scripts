@@ -137,7 +137,7 @@ end
 
 function BlueprintDialog:onRenderFrame(dc, rect)
     BlueprintDialog.super.onRenderFrame(self, dc, rect)
-    dc:seek(rect.x1+2, rect.y2):string('Right arrow', dc.cur_key_pen):
+    dc:seek(rect.x1+2, rect.y2):string('Ctrl+D', dc.cur_key_pen):
             string(': Show details', COLOR_GREY)
 end
 
@@ -149,7 +149,7 @@ end
 -- ensures each newline-delimited sequence within text is no longer than
 -- width characters long. also ensures that no more than max_lines lines are
 -- returned in the truncated string.
-local more_marker = '...->'
+local more_marker = '...'
 local function truncate(text, width, max_lines)
     local truncated_text = {}
     for line in text:gmatch('[^'..NEWLINE..']*') do
@@ -245,7 +245,7 @@ end
 
 function BlueprintDialog:onInput(keys)
     local _, obj = self.subviews.list:getSelected()
-    if keys.STANDARDSCROLL_RIGHT and obj then
+    if keys.CUSTOM_CTRL_D and obj then
         local details = BlueprintDetails{
                 text=obj.full_text:wrap(self.frame_body.width)}
         details:show()
