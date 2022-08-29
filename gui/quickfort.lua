@@ -190,16 +190,16 @@ end
 
 -- generates a new list of unfiltered choices by calling quickfort's list
 -- implementation, then applies the saved (or given) filter text
+-- returns false on list error
 function BlueprintDialog:refresh()
     local choices = {}
     local ok, results = pcall(quickfort_list.do_list_internal, show_library,
                               show_hidden)
     if not ok then
-        dialogs.showMessage('Cannot list blueprints',
-                            tostring(results):wrap(dialog_width),
-                            COLOR_RED)
-        self.dismiss()
-        return
+        self._dialog = dialogs.showMessage('Cannot list blueprints',
+                tostring(results):wrap(dialog_width), COLOR_RED)
+        self:dismiss()
+        return false
     end
     for _,v in ipairs(results) do
         local start_comment = ''
@@ -240,6 +240,7 @@ function BlueprintDialog:refresh()
     self:updateLayout() -- allows the dialog to resize width to fit the content
     self.subviews.list:setFilter(filter_text)
     restore_selection(self.subviews.list)
+    return true
 end
 
 function BlueprintDialog:onInput(keys)
@@ -522,21 +523,22 @@ function QuickfortUI:show_dialog(initial)
         on_select=function(idx, obj) self:dialog_cb(obj.text) end,
         on_cancel=self:callback('dialog_cancel_cb')
     }
-    file_dialog:refresh()
 
-    -- autoload if this is the first showing of the dialog and a filter was
-    -- specified on the commandline and the filter matches exactly one choice
-    if initial and #self.filter > 0 then
-        local choices = file_dialog.subviews.list:getVisibleChoices()
-        if #choices == 1 then
-            local selection = choices[1].text
-            file_dialog:dismiss()
-            self:dialog_cb(selection)
-            return
+    if file_dialog:refresh() then
+        -- autoload if this is the first showing of the dialog and a filter was
+        -- specified on the commandline and the filter matches exactly one
+        -- choice
+        if initial and #self.filter > 0 then
+            local choices = file_dialog.subviews.list:getVisibleChoices()
+            if #choices == 1 then
+                local selection = choices[1].text
+                file_dialog:dismiss()
+                self:dialog_cb(selection)
+                return
+            end
         end
+        file_dialog:show()
     end
-
-    file_dialog:show()
 
     -- for testing
     self._dialog = file_dialog
