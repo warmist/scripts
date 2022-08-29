@@ -68,6 +68,7 @@ function Editor_Skills:init( args )
             choices=skill_list,
             frame = {t=0, b=1,l=1},
             view_id="skills",
+            ignore_keys={"SECONDSCROLL_UP", "SECONDSCROLL_DOWN"},
         },
         widgets.Label{
             frame = { b=0,l=1},
