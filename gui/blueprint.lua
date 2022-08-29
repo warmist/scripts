@@ -116,8 +116,11 @@ end
 function NamePanel:detect_name_collision()
     -- don't let base names start with a slash - it would get ignored by
     -- the blueprint plugin later anyway
-    local name = utils.normalizePath(self.subviews.name.text):gsub('^/','')
-    self.subviews.name:setText(name)
+    local name_view = self.subviews.name
+    local name = utils.normalizePath(name_view.text):gsub('^/','')
+    if name ~= name_view.text then
+        name_view:setText(name, name_view.cursor-1)
+    end
 
     if name == '' then
         self.has_name_collision = false
