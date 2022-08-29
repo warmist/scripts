@@ -89,8 +89,14 @@ local blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
 local num_library_blueprints = 0
 
 local function scan_blueprints()
-    local paths = dfhack.filesystem.listdir_recursive(
-        quickfort_set.get_setting('blueprints_dir'), nil, false)
+    local bp_dir = quickfort_set.get_setting('blueprints_dir')
+    local paths = dfhack.filesystem.listdir_recursive(bp_dir, nil, false)
+    if not paths then
+        qerror(('Cannot find blueprints directory: "%s". If you have moved' ..
+                ' your blueprints to another directory, please update' ..
+                ' "dfhack-config/quickfort/quickfort.txt" with the new' ..
+                ' location and run "quickfort reset".'):format(bp_dir))
+    end
     blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
     local library_blueprints = {}
     for _, v in ipairs(paths) do
