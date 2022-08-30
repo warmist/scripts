@@ -901,7 +901,7 @@ function AssignJobItems(args)
 
     if settings.gui_item_select and #job.job_items>0 then
         if settings.quick then --TODO not so nice hack. instead of rewriting logic for job item filling i'm using one in gui dialog...
-            local item_editor=advfot_items.jobitemEditor{
+            local item_editor=advfort_items.jobitemEditor{
                 job = job,
                 items = item_suitability,
             }
