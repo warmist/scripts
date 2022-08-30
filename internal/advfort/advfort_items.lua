@@ -2,14 +2,6 @@
 --@ module = true
 
 --Does something with items in adventure mode jobs
---[====[
-
-gui/advfort_items
-=================
-A module to support item handling in `gui/advfort` - not intended to be called
-directly.
-
-]====]
 
 if not dfhack_flags.module then
     qerror('this script cannot be called directly')
