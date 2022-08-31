@@ -223,9 +223,8 @@ function EditPanel:init()
             frame={l=13, t=3, r=1},
             key='CUSTOM_ALT_S',
             label_text='history search: ',
-            on_change=self:callback('on_search_text'),
+            on_change=function(text) self:on_search_text(text) end,
             on_unfocus=function()
-                self:reset_history_idx()
                 self.subviews.search:setText('')
                 self.subviews.editfield:setFocus(true) end,
             on_submit=function()
