@@ -194,7 +194,7 @@ function test.show_hide_details()
     local view = load_ui()
     expect.eq('dfhack/lua/quickfort/dialog', dfhack.gui.getCurFocus(true))
 
-    send_keys('STANDARDSCROLL_RIGHT')
+    send_keys('CUSTOM_CTRL_D')
     expect.eq('dfhack/lua/quickfort/dialog/details',
               dfhack.gui.getCurFocus(true))
     -- render so that code is covered
