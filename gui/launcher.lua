@@ -200,6 +200,10 @@ function EditPanel:init()
         widgets.EditField{
             view_id='editfield',
             frame={l=1, t=1, r=1},
+            -- ignore the backtick from the hotkey. otherwise if it is still
+            -- held down as the launcher appears, it will be read and be added
+            -- to the commandline
+            ignore_keys={'STRING_A096'},
             on_change=self.on_change,
             on_submit=self.on_submit,
             on_submit2=self.on_submit2},
