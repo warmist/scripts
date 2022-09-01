@@ -1,8 +1,8 @@
 -- Test lua viewscreens.
 --[====[
 
-gui/hello-world
-===============
+devel/hello-world
+=================
 A basic example for testing, or to start your own script from.
 
 ]====]
