@@ -50,12 +50,14 @@ The ``<num>`` values passed to any option below must be positive integers (or
     affect timeskips which have already begun.
 ``--ticks <num>``
     Adds the specified number of ticks to the timeskip duration The following
-    conversions may help you calculate this:
+    conversions may help you calculate this::
+
         1 tick = 72 seconds = 1 minute 12 seconds
         50 ticks = 60 minutes = 1 hour
         1200 ticks = 24 hours = 1 day
         8400 ticks = 7 days = 1 week
         33600 ticks = 4 weeks = 1 month
         403200 ticks = 12 months = 1 year
+
 ``--years <num>``, ``--months <num>``, ``--days <num>``, ``--hours <num>``
     Adds the appropriate number ticks to the timeskip duration
