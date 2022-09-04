@@ -5,9 +5,10 @@ view-item-info
     :summary: Extend item and unit descriptions with more information.
     :tags: adventure fort interface
 
-This tool extends the item or unit viewscreen with additional information
-including a custom description of each item (when available), and properties
-such as material statistics, weapon attacks, armor effectiveness, and more.
+This tool extends the item or unit description viewscreen with additional
+information, including a custom description of each item (when available), and
+properties such as material statistics, weapon attacks, armor effectiveness, and
+more.
 
 Usage
 -----
