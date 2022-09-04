@@ -17,7 +17,10 @@ random variation so each dwarf is unique.
 you can specify precisely what archtype you want a for given dwarf, and
 ``dwarf-op`` can generate a random dwarf that matches that archetype.
 
-Usage::
+Usage
+-----
+
+::
 
     dwarf-op --list <table>
     dwarf-op --reset|--resetall
