@@ -1,11 +1,17 @@
-
 troubleshoot-item
 =================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Inspect properties of the selected item.
     :tags: fort inspection items
 
+This tool lets you inspect internal properties of the selected item. This is
+useful for troubleshooting issues such as dwarves refusing to touch certain
+items.
 
-Print various properties of the selected item. Sometimes useful for
-troubleshooting issues such as why dwarves won't pick up a certain item.
+Usage
+-----
+
+::
+
+    troubleshoot-item
