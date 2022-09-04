@@ -1,17 +1,23 @@
-
 ungeld
 ======
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Undo gelding for an animal.
     :tags: fort armok animals
 
+This tool will restore an animal's ability to reproduce after it has been
+gelded. Also see `geld` if you'd like to re-geld the animal.
 
-A wrapper around `geld` that ungelds the specified animal.
+Usage
+-----
 
-Valid options:
+::
 
-``-unit <id>``: Ungelds the unit with the specified ID.
-                This is optional; if not specified, the selected unit is used instead.
+    ungeld [--unit <id>]
 
-``-help``:      Shows this help information
+Options
+-------
+
+``--unit <id>``
+    Ungelds the unit with the specified ID. If this option is not specified, the
+    default is to use the currently selected unit.
