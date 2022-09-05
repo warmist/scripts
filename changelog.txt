@@ -25,6 +25,7 @@ that repo.
 - `gui/gm-unit`: allow ``+`` and ``-`` to adjust skill values as intended instead of letting the filter intercept the characters
 
 ## Misc Improvements
+- `devel/query`: improved usability by informing the user when a query has been truncated
 - `gui/gm-unit`: don't clear the list filter when you adjust a skill value
 - `gui/quickfort`: better formatting for the generated manager orders report
 - `gui/quickfort`: display an error message when the blueprints directory cannot be found

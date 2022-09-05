@@ -274,6 +274,7 @@ function foreach(table, name, callback)
     if getmetatable(table) and table._kind and (table._kind == "enum-type" or table._kind == "bitfield-type") then
         for idx, value in ipairs(table) do
             if is_exceeding_maxlength(index) then
+                print("<query on " .. name .. " truncated after " .. index .. ">")
                 return
             end
             callback(idx, value)
@@ -284,6 +285,7 @@ function foreach(table, name, callback)
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
             local s = string.format("next{%d}->item", index)
             if is_exceeding_maxlength(index) then
+                print("<query on " .. name .. " truncated after " .. index .. ">")
                 return
             end
             callback(s, value)
@@ -292,6 +294,7 @@ function foreach(table, name, callback)
     else
         for field, value in safe_pairs(table) do
             if is_exceeding_maxlength(index) then
+                print("<query on " .. name .. " truncated after " .. index .. ">")
                 return
             end
             callback(field, value)
@@ -431,8 +434,8 @@ function processArguments()
     elseif args.dumb then
         args.maxlength = 10000
     else
-        --257 was chosen with the intent of capturing all enums. Or hopefully most of them.
-        args.maxlength = 257
+        --2048 was chosen as it was the smallest power of 2 that can query the `df` table entirely, and it seems likely it'll be able to query most structures fully
+        args.maxlength = 2048
     end
 
     new_value = toType(args.setvalue)
