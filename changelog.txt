@@ -26,6 +26,7 @@ that repo.
 
 ## Misc Improvements
 - `devel/query`: improved usability by informing the user when a query has been truncated
+- `devel/query`: increased default maxlength value from 257 to 2048
 - `gui/gm-unit`: don't clear the list filter when you adjust a skill value
 - `gui/quickfort`: better formatting for the generated manager orders report
 - `gui/quickfort`: display an error message when the blueprints directory cannot be found
