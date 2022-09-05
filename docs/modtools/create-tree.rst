@@ -9,7 +9,10 @@ modtools/create-tree
 
 Spawns a tree.
 
-Usage::
+Usage
+-----
+
+::
 
     -tree treeName
         specify the tree to be created

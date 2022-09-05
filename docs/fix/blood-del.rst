@@ -1,10 +1,16 @@
-
 fix/blood-del
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Removes unusable liquids from caravan manifests.
     :tags: fort bugfix
 
+This fix ensures future caravans won't bring barrels full of blood, ichor, or
+goo.
 
-Makes it so that future caravans won't bring barrels full of blood, ichor, or goo.
+Usage
+-----
+
+::
+
+    fix/blood-del

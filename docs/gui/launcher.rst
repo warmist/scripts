@@ -9,7 +9,10 @@ This tool is the primary GUI interface for running DFHack commands. You can open
 it from any screen with the \` hotkey. If you opened it by mistake, tap \` again
 to close.
 
-Usage::
+Usage
+-----
+
+::
 
     gui/launcher [initial commandline]
 
@@ -17,7 +20,7 @@ Examples
 --------
 
 - ``gui/launcher``
-    Opens the launcher dialog with the default help message.
+    Opens the launcher dialog with a blank initial commandline.
 - ``gui/launcher prospect --show ores,veins``
     Opens the launcher dialog with the given command visible in the edit area,
     ready for modification or running. Commands related to the ``prospect``

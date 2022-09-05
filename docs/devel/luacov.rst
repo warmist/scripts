@@ -9,7 +9,8 @@ devel/luacov
 
 Lua script coverage report generator
 
-Usage:
+Usage
+-----
 
     luacov [options] [pattern...]
 

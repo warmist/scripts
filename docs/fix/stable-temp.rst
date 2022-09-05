@@ -4,7 +4,7 @@ fix/stable-temp
 
 .. dfhack-tool::
     :summary: todo.
-    :tags: fort bugfix map
+    :tags: fort bugfix fps map
 
 
 Instantly sets the temperature of all free-lying items to be in equilibrium with

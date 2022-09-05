@@ -12,7 +12,10 @@ Finds a primitive variable in DF's data section, relying on the user to change
 its value. This is similar to `devel/find-offsets`, but useful for new variables
 whose locations are unknown (i.e. they could be part of an existing global).
 
-Usage::
+Usage
+-----
+
+::
 
     devel/find-primitive data-type val1 val2 [val3...]
 

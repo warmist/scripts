@@ -8,7 +8,10 @@ modtools/reaction-product-trigger
 
 
 This triggers dfhack commands when reaction products are produced, once per
-product.  Usage::
+product.  Usage
+-----
+
+::
 
     -clear
         unregister all reaction hooks

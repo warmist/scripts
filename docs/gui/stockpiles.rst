@@ -10,7 +10,8 @@ gui/stockpiles
 An in-game interface for `stocksettings`, to
 load and save stockpile settings from the :kbd:`q` menu.
 
-Usage:
+Usage
+-----
 
 :gui/stockpiles -save:         to save the current stockpile
 :gui/stockpiles -load:         to load settings into the current stockpile
