@@ -7,10 +7,7 @@ modtools/create-unit
     :tags: dev
 
 
-Creates a unit.  Usage
------
-
-::
+Creates a unit.  Usage::
 
     -race raceName
         (obligatory)

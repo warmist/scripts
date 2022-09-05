@@ -7,10 +7,7 @@ devel/eventful-client
 
 
 
-Usage
------
-
-::
+Usage::
 
     devel/eventful-client help
     devel/eventful-client add <event type> <frequency>

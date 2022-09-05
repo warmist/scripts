@@ -7,10 +7,7 @@ modtools/projectile-trigger
     :tags: dev
 
 
-This triggers dfhack commands when projectiles hit their targets.  Usage
------
-
-::
+This triggers dfhack commands when projectiles hit their targets.  Usage::
 
     -clear
         unregister all triggers

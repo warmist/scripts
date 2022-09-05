@@ -9,10 +9,7 @@ modtools/force
 
 This tool triggers events like megabeasts, caravans, and migrants.
 
-Usage
------
-
-::
+Usage::
 
     -eventType event
         specify the type of the event to trigger

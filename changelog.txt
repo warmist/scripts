@@ -33,10 +33,6 @@ that repo.
 
 ## Removed
 - `fix/build-location`: The corresponding DF bug (5991) was fixed in DF 0.40.05
-- `fix/diplomats`: DF bug 3295 fixed in 0.40.05
-- `fix/fat-dwarves`: DF bug 5971 fixed in 0.40.05
-- `fix/feeding-timers`: DF bug 2606 is fixed in 0.40.12
-- `fix/merchants`: DF bug that prevents humans from making trade agreements has been fixed
 - `gui/hack-wish`: Replaced by `gui/create-item`
 - `gui/no-dfhack-init`: No longer useful since players don't have to create their own ``dfhack.init`` files anymore
 

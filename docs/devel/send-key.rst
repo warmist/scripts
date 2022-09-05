@@ -11,10 +11,7 @@ Send a key to the current screen or a parent. If you are trying to dismiss
 a screen, `devel/pop-screen` may be more useful, particularly if the screen
 is unresponsive to ``Esc``.
 
-Usage
------
-
-::
+Usage::
 
     devel/send-key KEY_NAME [X]
 

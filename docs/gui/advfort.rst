@@ -1,9 +1,11 @@
+
 gui/advfort
 ===========
 
 .. dfhack-tool::
-    :summary: Perform fort-like jobs in adventure mode.
+    :summary: todo.
     :tags: adventure gameplay
+
 
 This script allows performing jobs in adventure mode. For more complete help
 press :kbd:`?` while the script is running. It's most comfortable to use this as a

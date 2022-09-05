@@ -13,8 +13,7 @@ To use this script effectively it needs to be called from "raw/onload.init".
 Calling this from the main dfhack.init file will do nothing, as no world has
 been loaded yet.
 
-Usage
------
+Usage:
 
 - ``id``:
     Specify the entity ID to match

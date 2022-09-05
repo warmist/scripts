@@ -1,18 +1,12 @@
+
 fix/dead-units
 ==============
 
 .. dfhack-tool::
-    :summary: Remove dead units from the list so migrants can arrive again.
+    :summary: todo.
     :tags: fort bugfix units
 
-If so many units have died at your fort that your dead units list exceeds about
-3000 units, migrant waves can stop coming. This fix removes uninteresting units
-(like slaughtered animals and nameless goblins) from the unit list, allowing
-migrants to start coming again.
 
-Usage
------
-
-::
-
-    fix/dead-units
+Removes uninteresting dead units from the unit list. Doesn't seem to give any
+noticeable performance gain, but migrants normally stop if the unit list grows
+to around 3000 units, and this script reduces it back.

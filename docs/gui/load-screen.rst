@@ -9,8 +9,7 @@ gui/load-screen
 
 A replacement for the "continue game" screen.
 
-Usage
------ ``gui/load-screen enable|disable``
+Usage: ``gui/load-screen enable|disable``
 
 The primary view is a list of saved games, much like the default list provided
 by DF. Several filter options are available:

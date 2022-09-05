@@ -1,34 +1,16 @@
+
 fix/corrupt-equipment
 =====================
 
 .. dfhack-tool::
-    :summary: Fixes some game crashes caused by corrupt military equipment.
+    :summary: todo.
     :tags: fort bugfix military
 
-This fix corrects some kinds of corruption that can occur in equipment lists, as
-in :bug:`11014`. Run this script at least every time a squad comes back from a
-raid.
 
-Usage
------
 
-::
+Fixes some corruption that can occur in equipment lists, as in :bug:`11014`.
 
-    fix/corrupt-equipment
-
-Examples
---------
-
-``fix/corrupt-equipment``
-    Run the fix manually a single time.
-``repeat --time 100 --timeUnits ticks --command [ fix/corrupt-equipment ]``
-    Automatically run the fix in the background every 100 ticks so you don't
-    have to remember to run it manually.
-
-Technical details
------------------
-
-There are several types of corruption that have been identified:
+Note that there have been several possible types of corruption identified:
 
 1. Items that have been deleted without being removed from the equipment lists
 2. Items of the wrong type being stored in the equipment lists
@@ -39,7 +21,15 @@ majority of crashes.
 
 Note that in some cases, multiple issues may be present, and may only be present
 for a short window of time before DF crashes. To address this, running this
-script with `repeat` is recommended.
+script with `repeat` is recommended. For example, to run this script every
+100 ticks::
+
+    repeat -name fix-corrupt-equipment -time 100 -timeUnits ticks -command [ fix/corrupt-equipment ]
+
+To cancel it (which is likely safe if the script has not produced any output
+in some time, and if you have saved first)::
+
+    repeat -cancel fix-corrupt-equipment
 
 Running this script with `repeat` on all saves is not recommended, as it can
 have overhead (sometimes over 0.1 seconds on a large save). In general, running

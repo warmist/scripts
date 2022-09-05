@@ -13,10 +13,7 @@ a blueprint file that you (or anyone else) can later play back with `quickfort`.
 This script provides a visual, interactive interface to make configuring and
 using the blueprint plugin much easier.
 
-Usage
------
-
-::
+Usage::
 
     gui/blueprint [<name> [<phases>]] [<options>]
 
