@@ -1,81 +1,77 @@
-
 workorder
 =========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Create manager workorders.
     :tags: fort productivity workorders
 
+This tool can enqueue work orders as if you were using the ``j-m-q`` interface.
+It also has some convenience functions, such as automatically counting how many
+creatures can be milked or sheared for ``MilkCreature`` or ``ShearCreature``
+jobs. It can also take existing orders into account to ensure that the quantity
+produced by *all* enqueued workorders for a specified job type totals to a
+specified amount.
 
-``workorder`` is a script to queue work orders as in ``j-m-q`` menu.
-It can automatically count how many creatures can be milked or sheared.
+Usage
+-----
 
-The most simple and obvious usage is automating shearing and milking of creatures
-using ``repeat``::
+``workorder -l <filter>``, ``workorder --listtypes <filter>``
+    Print all values for relevant DF types (``job_type``, ``item_type`` etc.)
+    that will be useful for assembling the workorder json. You can pass a filter
+    to only print types that match a pattern.
+``workorder <jobtype> [<amount>]``
+    The job type is the number or name from ``df.job_type`` and the amount is
+    the quantity for the generated workorder. The amount can be omitted for
+    ``MilkCreature`` and ``ShearCreature`` jobs, and ``workorder`` will scan
+    your pets for milkable or shearable creatures and fill the correct number
+    in. Note that this syntax cannot specify the material of the item produced
+    by the job. If you need more specificity, you can describe the job in JSON
+    format (see the next two command forms).
+``workorder <json>``
+    Create a workorder whose properties are specified in the given JSON. See
+    below for examples and the complete format specification.
+``workorder --file <filename>``
+    Loads the json representation of a workorder from the specified file in
+    ``dfhack-config/workorder/``.
 
-  repeat -time 14 -timeUnits days -command [ workorder ShearCreature ] -name autoShearCreature
-  repeat -time 14 -timeUnits days -command [ workorder MilkCreature ] -name autoMilkCreature
+Examples
+--------
 
-It is also possible to define complete work orders using ``json``. It is very similar to
-what ``orders import filename`` does, with a few key differences. ``workorder`` is a planning
-tool aiming to provide scripting support for vanilla manager. As such it will ignore work order
-state like ``amount_left`` or ``is_active`` and can optionally take current orders into account.
-See description of ``<json>``-parameter for more details.
+``workorder MakeCharcoal 100``
+    Enqueue a workorder to make 100 bars of charcoal.
+``workorder MakeTable 10``
+    Enqueue a workorder to make 10 tables of unspecified material. The material
+    will be determined by which workshop ends up picking up the job.
+``repeat --name autoShearCreature --time 14 --timeUnits days --command [ workorder ShearCreature ]``
+    Automatically shear any pets that are ready to be sheared.
+``repeat --name autoMilkCreature --time 14 --timeUnits days --command [ workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":5,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}" ]``
+    Automatically milk any pets that are ready to be milked (but only if there
+    are at least 5 empty buckets available to receive the milk).
+``workorder "{\"job\":\"EncrustWithGems\",\"item_category\":[\"finished_goods\"],\"amount_total\":5}"``
+    Add an order to ``EncrustWithGems`` five ``finished_goods`` using any
+    material (since a material is not specified).
 
-**Examples**:
+JSON string specification
+-------------------------
 
-  * ``workorder ShearCreature 10`` add an order to "Shear Animal" 10 times.
-  * ``workorder ShearCreature`` same, but calculate amount automatically (can be 0).
-  * ``workorder MilkCreature`` same, but "Milk Animal".
+The JSON representation of a workorder must be a valid Lua string literal (note
+usage of :kbd:`\\` in the JSON examples above). You can export existing manager
+orders with the `orders` command and look at the created ``.json`` file in
+``dfhack-config/orders`` to see how a particular order can be represented.
 
-**Advanced examples**:
+Note that, unlike `orders`, ``workorder`` is meant for dynamically creating new
+orders, so even if fields like ``amount_left``, ``is_active`` or
+``is_validated`` are specified in the JSON, they will be ignored in the
+generated orders.
 
- * ``workorder "{\"job\":\"EncrustWithGems\",\"item_category\":[\"finished_goods\"],\"amount_total\":5}"``
-    add an order to ``EncrustWithGems`` ``finished_goods`` using any material (since not specified).
+Also:
 
- * ``workorder "{\"job\":\"MilkCreature\",\"item_conditions\":[{\"condition\":\"AtLeast\",\"value\":2,\"flags\":[\"empty\"],\"item_type\":\"BUCKET\"}]}"``
-    same as ``workorder MilkCreature`` but with an item condition ("at least 2 empty buckets").
+- You only need to fill in ``id`` if it is used for order conditions
+- If ``frequency`` is unspecified, it defaults to ``OneTime``
+- The ``amount_total`` field can be missing (only valid for ``MilkCreature`` or
+  ``ShearCreature`` jobs) or it can be raw Lua code called as
+  ``load(code)(order, orders)`` that must return an integer.
 
-**Usage**:
-
-``workorder [ --<command> | <jobtype> [<amount>] | <json> | --file <file> ]``
-
-:<command>:  one of ``help``, ``listtypes``, ``verbose``, ``very-verbose``
-
---help              this help.
---listtypes filter  print all values for all used DF types (``job_type``, ``item_type`` etc.).
-                    ``<filter>`` is optional and is applied to type name (using ``Lua``'s ``string.find``),
-                    f.e. ``workorder -l "manager"`` is useful.
-
-:<jobtype>:  number or name from ``df.job_type``.
-:<amount>:   optional number; if omitted, the script will try to determine amount automatically
-             for some jobs. Currently supported are ``MilkCreature`` and ``ShearCreature`` jobs.
-:<json>:     json-representation of a workorder. Must be a valid Lua string literal
-             (see advanced examples: note usage of ``\``).
-             Use ``orders export some_file_name`` to get an idea how does the ``json``-structure
-             look like.
-
-             It's important to note this script behaves differently compared to
-             ``orders import some_file_name``: ``workorder`` is meant as a planning
-             tool and as such it **will ignore** some fields like ``amount_left``,
-             ``is_active`` or ``is_validated``.
-
-             This script doesn't need values in all fields:
-              * ``id`` is only used for order conditions;
-              * ``frequency`` is set to ``OneTime`` by default;
-              * ``amount_total`` can be missing, a function name from this script (one of
-                ``calcAmountFor_MilkCreature`` or ``calcAmountFor_ShearCreature``) or ``Lua``
-                code called as ``load(code)(order, orders)``. Missing ``amount_total`` is
-                equivalent to ``calcAmountFor_<order.job>``.
-
-             A custom field ``__reduce_amount`` can be set if existing open orders should
-             be taken into account reducing new order's ``total_amount`` (possibly all the
-             way to ``0``). An empty ``amount_total`` implies ``"__reduce_amount": true``.
-
---file filename    loads the json-representation of a workorder from a file in ``dfhack-config/workorder/``.
-
-**Debugging**:
-
---verbose        toggle script's verbosity.
---very-verbose   toggle script's very verbose mode.
---reset          reset script environment for next execution.
+A custom field ``__reduce_amount`` can be set if existing open orders should be
+taken into account, reducing the new order's ``total_amount`` (possibly all the
+way to ``0``). An empty ``amount_total`` implies ``"__reduce_amount": true``.

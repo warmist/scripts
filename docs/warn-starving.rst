@@ -1,16 +1,38 @@
-
 warn-starving
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Report units that are dangerously hungry, thirsty, or drowsy.
     :tags: fort animals units
 
-
 If any (live) units are starving, very thirsty, or very drowsy, the game will
-be paused and a warning shown and logged to the console. If you only want
-to be warned about sane dwarves, use ``warn-starving sane``.
+pause and you'll get a warning dialog telling you which units are in danger.
+This gives you a chance to rescue them (or take them out of their cages) before
+they die.
 
-Use with the `repeat` command for regular checks.
+Usage
+-----
 
-Use ``warn-starving all`` to display a list of all problematic units.
+::
+
+    warn-starving [all] [sane]
+
+Examples
+--------
+
+``warn-starving all sane``
+    Report on all currently distressed units, excluding insane units that you
+    wouldn't be able save anyway.
+``repeat --time 10 --timeUnits days --command [ warn-starving sane ]``
+    Every 10 days, report any (sane) distressed units that haven't already been
+    reported.
+
+Options
+-------
+
+``all``
+    Report on all distressed units, even if they have already been reported. By
+    default, only newly distressed units that haven't already been reported are
+    listed.
+``sane``
+    Ignore insane units.
