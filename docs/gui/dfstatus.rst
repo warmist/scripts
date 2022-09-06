@@ -1,11 +1,27 @@
-
 gui/dfstatus
 ============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Show a quick overview of critical stock quantities.
     :tags: fort inspection
 
+This tool show a quick overview of stock quantities for:
 
-Show a quick overview of critical stock quantities, including food, drinks, wood, and various bars.
-Sections can be enabled/disabled/configured by editing :file:`dfhack-config/dfstatus.lua`.
+- drinks
+- wood
+- fuel
+- prepared_meals
+- tanned_hides
+- cloth
+- various metal bars
+
+Sections can be enabled/disabled/configured by modifying
+:file:`dfhack-config/dfstatus.lua`. In particular, you can customize the list
+of metals that you want to report on.
+
+Usage
+-----
+
+::
+
+    gui/dfstatus

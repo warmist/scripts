@@ -1,4 +1,3 @@
-
 gui/extended-status
 ===================
 
@@ -6,10 +5,13 @@ gui/extended-status
     :summary: todo.
     :tags: fort inspection interface
 
+Adds an additional page to the ``z`` status screen where you can see information
+about beds, bedrooms, and whether your dwarves have bedrooms of their own.
 
-Adds more subpages to the ``z`` status screen.
+Usage
+-----
 
-Usage::
-
-    gui/extended-status enable|disable|help|subpage_names
-    enable|disable gui/extended-status
+``enable gui/extended-status``
+    Show a hotkey on the status screen to invoke the bedroom_list screen.
+``gui/extended-status bedroom_list``
+    Show the bedroom status screen.
