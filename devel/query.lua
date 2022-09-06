@@ -743,7 +743,9 @@ function printParents(path, field, value)
         elseif string.find(word,"%a+%[%d+%]%[%d+%]") then
             value_printed = true
             cur_path = appendField(cur_path, word)
-            print(makeIndentedField(path, word, value))
+            local f = presentField(path, field, value)
+            local v = presentValue(field, value)
+            print(f .. v .. presentDebugData(f, field, value))
         end
         cur_depth = cur_depth + 1
     end
