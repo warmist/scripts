@@ -1,10 +1,16 @@
-
 gui/gm-unit
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
-    :tags: inspection animals units
+    :summary: Inspect and edit unit attributes.
+    :tags: dfhack armok inspection animals units
 
+This tool provides an editor for unit attributes. Select a unit in-game before
+running this command or pass a target unit ID on the commandline.
 
-An editor for various unit attributes.
+Usage
+-----
+
+::
+
+    gui/gm-unit [unit id]

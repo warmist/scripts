@@ -1,25 +1,37 @@
-
 gui/gm-editor
 =============
 
 .. dfhack-tool::
-    :summary: todo.
-    :tags: inspection animals buildings items jobs map plants stockpiles units workorders
+    :summary: Inspect and edit DF game data.
+    :tags: dfhack armok inspection animals buildings items jobs map plants stockpiles units workorders
 
+This editor allows you to inspect or modify almost anything in DF. Press
+:kbd:`?` for in-game help.
 
-This editor allows to change and modify almost anything in df. Press :kbd:`?` for
-in-game help. There are multiple ways to open this editor:
+Usage
+-----
 
-* Calling ``gui/gm-editor``  from a command or keybinding opens the editor
-  on whatever is selected or viewed (e.g. unit/item description screen)
+``gui/gm-editor``
+    Open the editor on whatever is selected or viewed (e.g. unit/item
+    description screen)
+``gui/gm-editor <lua expression>``
+    Evaluate a lua expression and opens the editor on its results.
+``gui/gm-editor dialog``
+    Show an in-game dialog to input the lua expression to evaluate. Works the
+    same as version above.
+``gui/gm-editor toggle``
+    Hide (if shown) or show (if hidden) the editor at the same position you left
+    it.
 
-* using ``gui/gm-editor <lua command>`` - executes lua command and opens editor on
-  its results (e.g. ``gui/gm-editor "df.global.world.items.all"`` shows all items)
+Examples
+--------
 
-* using ``gui/gm-editor dialog`` - shows an in game dialog to input lua command. Works
-  the same as version above.
+``gui/gm-editor``
+    Opens the editor on the selected unit/item/job/workorder/etc.
+``gui/gm-editor df.global.world.items.all``
+    Opens the editor on the items list.
 
-* using ``gui/gm-editor toggle`` - will hide (if shown) and show (if hidden) editor at
-  the same position you left it
+Screenshot
+----------
 
 .. image:: /docs/images/gm-editor.png
