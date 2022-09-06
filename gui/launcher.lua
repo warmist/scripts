@@ -224,6 +224,12 @@ function EditPanel:init()
             key='CUSTOM_ALT_S',
             label_text='history search: ',
             on_change=function(text) self:on_search_text(text) end,
+            on_focus=function()
+                local text = self.subviews.editfield.text
+                if #text:trim() > 0 then
+                    self.subviews.search:setText(text)
+                    self:on_search_text(text)
+                end end,
             on_unfocus=function()
                 self.subviews.search:setText('')
                 self.subviews.editfield:setFocus(true) end,
@@ -238,26 +244,9 @@ function EditPanel:reset_history_idx()
     self.history_idx = #history + 1
 end
 
--- set the edit field text and save the current text in the stack in case the
--- user wants it back
-function EditPanel:set_text(text, push)
-    local editfield = self.subviews.editfield
-    if push and #editfield.text > 0 then
-        table.insert(self.stack, editfield.text)
-    end
-    editfield:setText(text)
+function EditPanel:set_text(text)
+    self.subviews.editfield:setText(text)
     self:reset_history_idx()
-end
-
-function EditPanel:pop_text()
-    local editfield = self.subviews.editfield
-    local text = self.stack[#self.stack]
-    if text then
-        self.stack[#self.stack] = nil
-        self:reset_history_idx()
-        editfield:setText(text)
-        self.on_change(text)
-    end
 end
 
 function EditPanel:move_history(delta)
@@ -308,9 +297,6 @@ function EditPanel:onInput(keys)
         -- search to the next match with the current search string
         -- only reaches here if the search field is already active
         self:on_search_text(self.subviews.search.text, true)
-        return true
-    elseif keys.A_CARE_MOVE_W then -- Alt-Left
-        self:pop_text()
         return true
     end
 end
@@ -502,16 +488,14 @@ function LauncherUI:update_autocomplete(firstword)
 end
 
 function LauncherUI:on_edit_input(text)
-    self.input_is_worth_saving = true
     local firstword = get_first_word(text)
     self:update_help(text, firstword)
     self:update_autocomplete(firstword)
 end
 
 function LauncherUI:on_autocomplete(_, option)
-    self.subviews.edit:set_text(option.text, self.input_is_worth_saving)
+    self.subviews.edit:set_text(option.text)
     self:update_help(option.text)
-    self.input_is_worth_saving = false
 end
 
 local function launch(kwargs)
@@ -537,18 +521,18 @@ local function safe_run(reappear, command, prev_parent_focus)
     -- hotkey guards and tools that detect the top viewscreen to work reliably.
     script.sleep(2, 'frames')
     local output = dfhack.run_command_silent(command)
+    if #output > 0 then
+        print('Output from command run from gui/launcher:')
+        print('> ' .. command)
+        print()
+        print(output)
+    end
     -- if we displayed a new dfhack screen, don't come back up even if reappear
     -- is true. otherwise, the user can't interact with the new screen. if we're
     -- not reappearing with the output, print the output to the console.
     local parent_focus = dfhack.gui.getCurFocus(true)
     if not reappear or (parent_focus:startswith('dfhack/') and
                         parent_focus ~= prev_parent_focus) then
-        if #output > 0 then
-            print('Output from command run from gui/launcher:')
-            print('> ' .. command)
-            print()
-            print(output)
-        end
         return
     end
     -- reappear and show the command output
@@ -614,8 +598,12 @@ function LauncherUI:onInput(keys)
         self:dismiss()
         return true
     elseif keys.CUSTOM_CTRL_C then
-        self.subviews.edit:set_text('', self.input_is_worth_saving)
-        self:on_edit_input('')
+        if self.focus_group.cur == self.subviews.editfield then
+            self.subviews.edit:set_text('')
+            self:on_edit_input('')
+        else
+            self.focus_group.cur:setText('')
+        end
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
         self:update_autocomplete(get_first_word(self.subviews.editfield.text))
