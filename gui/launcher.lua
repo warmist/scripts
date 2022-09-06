@@ -537,18 +537,18 @@ local function safe_run(reappear, command, prev_parent_focus)
     -- hotkey guards and tools that detect the top viewscreen to work reliably.
     script.sleep(2, 'frames')
     local output = dfhack.run_command_silent(command)
+    if #output > 0 then
+        print('Output from command run from gui/launcher:')
+        print('> ' .. command)
+        print()
+        print(output)
+    end
     -- if we displayed a new dfhack screen, don't come back up even if reappear
     -- is true. otherwise, the user can't interact with the new screen. if we're
     -- not reappearing with the output, print the output to the console.
     local parent_focus = dfhack.gui.getCurFocus(true)
     if not reappear or (parent_focus:startswith('dfhack/') and
                         parent_focus ~= prev_parent_focus) then
-        if #output > 0 then
-            print('Output from command run from gui/launcher:')
-            print('> ' .. command)
-            print()
-            print(output)
-        end
         return
     end
     -- reappear and show the command output
