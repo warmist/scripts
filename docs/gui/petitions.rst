@@ -1,14 +1,15 @@
-
 gui/petitions
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Show information about your fort's petitions.
     :tags: fort inspection
 
+Show your fort's petitions, both pending and fulfilled.
 
-Show fort's petitions, pending and fulfilled.
+Usage
+-----
 
-For best experience add following to your ``dfhack*.init``::
+::
 
-    keybinding add Alt-P@dwarfmode/Default gui/petitions
+    gui/petitions
