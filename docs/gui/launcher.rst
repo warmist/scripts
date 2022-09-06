@@ -47,9 +47,7 @@ As you type, autocomplete options for DFHack commands appear in the right
 column. If the first word of what you've typed matches a valid command, then the
 autocomplete options will also include commands that have similar functionality
 to the one that you've named. Click on an autocomplete option to select it or
-cycle through them with :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab`. Hit
-:kbd:`Alt`:kbd:`Left` if you want to undo the autocomplete and go back to the
-text you had before you autocompleted.
+cycle through them with :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab`.
 
 Context-sensitive help
 ----------------------
