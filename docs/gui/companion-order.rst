@@ -45,4 +45,4 @@ Screenshot
 
 Here is a screenshot of the tool in action:
 
-.. image:: /docs/images/companion-order.png`
+.. image:: /docs/images/companion-order.png
