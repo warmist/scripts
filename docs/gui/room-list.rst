@@ -1,16 +1,22 @@
-
 gui/room-list
 =============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Manage rooms owned by a dwarf.
     :tags: fort inspection
 
+When invoked in :kbd:`q` mode with the cursor over an owned room, this tool
+lists other rooms owned by the same owner, or by the unit selected in the assign
+list, and allows unassigning them from other rooms.
 
-Activate in :kbd:`q` mode, either immediately or after opening the
-assign owner page.
+Usage
+-----
+
+::
+
+    gui/room-list
+
+Screenshot
+----------
 
 .. image:: /docs/images/room-list.png
-
-The script lists other rooms owned by the same owner, or by the unit
-selected in the assign list, and allows unassigning them.
