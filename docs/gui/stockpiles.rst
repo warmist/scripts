@@ -1,21 +1,22 @@
-
 gui/stockpiles
 ==============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Import and export stockpile settings.
     :tags: fort design stockpiles
 
+With a stockpile selected in :kbd:`q` mode, you can use this tool to load
+stockpile settings from a file or save them to a file for later loading, in
+this fort or any other.
 
-An in-game interface for `stocksettings`, to
-load and save stockpile settings from the :kbd:`q` menu.
+Saved stockpile configs are stored in the :file:`stocksettings` subfolder in
+the DF folder.
 
-Usage:
+See `stockpiles` for a commandline interface.
 
-:gui/stockpiles -save:         to save the current stockpile
-:gui/stockpiles -load:         to load settings into the current stockpile
-:gui/stockpiles -dir <path>:   set the default directory to save settings into
-:gui/stockpiles -help:         to see this message
+Usage
+-----
 
-Don't forget to ``enable stockpiles`` and create the ``stocksettings`` directory in
-the DF folder before trying to use the GUI.
+::
+
+    gui/stockpiles
