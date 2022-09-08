@@ -23,7 +23,7 @@ that repo.
 - `gui/workflow`: restore functionality to the add/remove/order hotkeys on the workflow status screen
 - `emigration`: fix emigrant logic so unhappy dwarves leave as designed
 - `gui/gm-unit`: allow ``+`` and ``-`` to adjust skill values as intended instead of letting the filter intercept the characters
-- `dwarf-op`: fixed an error in dwarf-op caused by a typo in the dorf_tables file
+- `dwarf-op`: fixed error when applying the Miner job to dwarves
 
 ## Misc Improvements
 - `gui/gm-unit`: don't clear the list filter when you adjust a skill value
