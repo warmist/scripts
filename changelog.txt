@@ -19,7 +19,7 @@ that repo.
 - `warn-stealers`: warn when creatures that may steal your food, drinks, or items become visible
 
 ## Fixes
-- `devel/query`: updates call to deleted function that was causing an error for tile data
+- `devel/query`: fixed error when --tile is specified
 - `gui/unit-info-viewer`: fix logic for displaying undead creature names
 - `gui/workflow`: restore functionality to the add/remove/order hotkeys on the workflow status screen
 - `emigration`: fix emigrant logic so unhappy dwarves leave as designed
