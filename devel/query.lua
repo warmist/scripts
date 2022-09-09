@@ -270,11 +270,14 @@ function foreach(table, name, callback)
     -- How can the data be iterated?
     -- Is the iteration count for the data too high? (Default: 257)
 
+    function print_truncation_msg(name,index)
+        print("<query on " .. name .. " truncated after " .. index .. ">")
+    end
     local index = 0
     if getmetatable(table) and table._kind and (table._kind == "enum-type" or table._kind == "bitfield-type") then
         for idx, value in ipairs(table) do
             if is_exceeding_maxlength(index) then
-                print("<query on " .. name .. " truncated after " .. index .. ">")
+                print_truncation_msg(name, index)
                 return
             end
             callback(idx, value)
@@ -285,7 +288,7 @@ function foreach(table, name, callback)
             local m = tostring(field):gsub("<.*: ",""):gsub(">.*",""):gsub("%x%x%x%x%x%x","%1 ",1)
             local s = string.format("next{%d}->item", index)
             if is_exceeding_maxlength(index) then
-                print("<query on " .. name .. " truncated after " .. index .. ">")
+                print_truncation_msg(name, index)
                 return
             end
             callback(s, value)
@@ -294,7 +297,7 @@ function foreach(table, name, callback)
     else
         for field, value in safe_pairs(table) do
             if is_exceeding_maxlength(index) then
-                print("<query on " .. name .. " truncated after " .. index .. ">")
+                print_truncation_msg(name, index)
                 return
             end
             callback(field, value)
