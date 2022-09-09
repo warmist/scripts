@@ -1,21 +1,20 @@
-
 gui/workorder-details
 =====================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Adjust input materials and traits for workorders.
     :tags: fort inspection workorders
 
+This tool allows you to adjust item types, materials, and/or traits for items
+used in manager workorders. The jobs created from those workorders will inherit
+the details.
 
-Adjust input items, material, or traits for work orders. Actual
-jobs created for it will inherit the details.
+Invoke while on a work order's detail screen (:kbd:`j-m`, select work order,
+:kbd:`d`).
 
-This is the equivalent of `gui/workshop-job` for work orders,
-with the additional possibility to set input items' traits.
+Usage
+-----
 
-It has to be run from a work order's detail screen
-(:kbd:`j-m`, select work order, :kbd:`d`).
+::
 
-For best experience add the following to your ``dfhack*.init``::
-
-    keybinding add D@workquota_details gui/workorder-details
+    gui/workorder-details

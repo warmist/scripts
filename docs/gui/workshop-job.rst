@@ -1,51 +1,51 @@
-
 gui/workshop-job
 ================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Adjust the input materials used for a job at a workshop.
     :tags: fort inspection jobs
 
-
-Run with a job selected in a workshop in the :kbd:`q` mode.
+This tool allows you to inspect or change the input reagents for the selected
+workshop job (in :kbd:`q` mode).
 
 .. image:: /docs/images/workshop-job.png
 
-The script shows a list of the input reagents of the selected job, and allows changing
-them like the `job` ``item-type`` and `job` ``item-material`` commands.
-
-Specifically, pressing the :kbd:`i` key pops up a dialog that lets you select an item
-type from a list.
+Pressing :kbd:`i` shows a dialog where you can select an item type from a list.
 
 .. image:: /docs/images/workshop-job-item.png
 
-Pressing :kbd:`m`, unless the item type does not allow a material,
-lets you choose a material.
+Pressing :kbd:`m` (unless the item type does not allow a material) lets you
+choose a material.
 
 .. image:: /docs/images/workshop-job-material.png
 
-Since there are a lot more materials than item types, this dialog is more complex
-and uses a hierarchy of sub-menus. List choices that open a sub-menu are marked
-with an arrow on the left.
+Since there are a lot more materials than item types, this dialog is more
+complex and uses a hierarchy of sub-menus. List choices that open a sub-menu are
+marked with an arrow on the left.
 
 .. warning::
 
-  Due to the way input reagent matching works in DF, you must select an item type
-  if you select a material, or the material will be matched incorrectly in some cases.
-  If you press :kbd:`m` without choosing an item type, the script will auto-choose
-  if there is only one valid choice, or pop up an error message box instead of the
-  material selection dialog.
+    Due to the way input reagent matching works in DF, you must select an item
+    type if you select a material or the material may be matched incorrectly. If
+    you press :kbd:`m` without choosing an item type, the script will
+    auto-choose if there is only one valid choice.
 
-Note that both materials and item types presented in the dialogs are filtered
-by the job input flags, and even the selected item type for material selection,
-or material for item type selection. Many jobs would let you select only one
-input item type.
+Note that the choices presented in the dialogs are constrained by the job input
+flags. For example, if you choose a ``plant`` input item type for your ``prepare
+meal`` job, it will only let you select cookable plants since the job reagent
+has the ``cookable`` trait.
 
-For example, if you choose a *plant* input item type for your prepare meal job,
-it will only let you select cookable materials.
+As another example, if you choose a ``barrel`` item for your ``prepare meal``
+job (meaning things stored in barrels, like drink or milk), it will let you
+select any material that barrels can be made out of, since in this case the
+material is matched against the barrel itself. Then, if you select, say,
+``iron``, and then try to change the input item type, it won't let you select
+``plant`` because plants cannot be made of iron -- you have to unset the
+material first.
 
-If you choose a *barrel* item instead (meaning things stored in barrels, like
-drink or milk), it will let you select any material, since in this case the
-material is matched against the barrel itself. Then, if you select, say, iron,
-and then try to change the input item type, now it won't let you select *plant*;
-you have to unset the material first.
+Usage
+-----
+
+::
+
+    gui/workshop-job
