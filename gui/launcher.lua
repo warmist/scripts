@@ -272,6 +272,7 @@ function EditPanel:move_history(delta)
 end
 
 function EditPanel:on_search_text(search_str, next_match)
+    if not search_str or #search_str == 0 then return end
     local start_idx = math.min(self.history_idx - (next_match and 1 or 0),
                                #history)
     for history_idx = start_idx, 1, -1 do
