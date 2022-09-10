@@ -444,11 +444,11 @@ local function add_top_related_entries(entries, entry, n)
     local dev_ok = dev_mode or helpdb.get_entry_tags(entry).dev
     local tags = helpdb.get_entry_tags(entry)
     local affinities, buckets = {}, {}
-    for i,tag in ipairs(tags) do
+    for tag in pairs(tags) do
         for _,peer in ipairs(helpdb.get_tag_data(tag)) do
             affinities[peer] = (affinities[peer] or 0) + 1
         end
-        buckets[i] = {}
+        buckets[#buckets + 1] = {}
     end
     for peer,affinity in pairs(affinities) do
         if helpdb.get_entry_types(peer).command then
