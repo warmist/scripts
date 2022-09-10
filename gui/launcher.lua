@@ -494,8 +494,10 @@ function LauncherUI:on_edit_input(text)
 end
 
 function LauncherUI:on_autocomplete(_, option)
-    self.subviews.edit:set_text(option.text)
-    self:update_help(option.text)
+    if option then
+        self.subviews.edit:set_text(option.text)
+        self:update_help(option.text)
+    end
 end
 
 local function launch(kwargs)
