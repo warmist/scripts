@@ -321,7 +321,7 @@ function HelpPanel:init()
     self:addviews{
         widgets.WrappedLabel{
             view_id='help_label',
-            frame={l=0, t=0},
+            frame={l=1, t=0, b=1},
             auto_height=false,
             scroll_keys={
                 A_MOVE_N_DOWN=-1, -- Ctrl-Up
@@ -351,14 +351,14 @@ function HelpPanel:set_entry(entry_name)
         return
     end
     self:set_help(helpdb.get_entry_long_help(entry_name,
-                                             self.frame_body.width - 1))
+                                             self.frame_body.width - 2))
     self.cur_entry = entry_name
 end
 
 function HelpPanel:postComputeFrame()
     if #self.cur_entry == 0 then return end
     self:set_help(helpdb.get_entry_long_help(self.cur_entry,
-                                             self.frame_body.width - 1),
+                                             self.frame_body.width - 2),
                   true)
 end
 
