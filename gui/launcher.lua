@@ -129,7 +129,7 @@ function AutocompletePanel:init()
     self:addviews{
         widgets.Label{
             frame={l=0, t=0},
-            text='Autocomplete'
+            text='Click or select via'
         },
         widgets.HotkeyLabel{
             frame={l=1, t=1},
@@ -323,7 +323,7 @@ To see help for this command launcher, type
 "gui/launcher" to autocomplete.]]
 
 function HelpPanel:init()
-    self.cur_entry = ""
+    self.cur_entry = ''
 
     self:addviews{
         widgets.WrappedLabel{
@@ -340,11 +340,14 @@ function HelpPanel:init()
     }
 end
 
-function HelpPanel:set_help(help_text)
+function HelpPanel:set_help(help_text, in_layout)
     local label = self.subviews.help_label
     label.text_to_wrap = help_text
-    label:postComputeFrame()
-    label:updateLayout() -- to update the scroll arrows after rewrapping text
+    if not in_layout then
+        self.cur_entry = ''
+        label:postComputeFrame()
+        label:updateLayout() -- update the scroll arrows after rewrapping text
+    end
 end
 
 function HelpPanel:set_entry(entry_name)
@@ -354,8 +357,16 @@ function HelpPanel:set_entry(entry_name)
     if #entry_name == 0 or entry_name == self.cur_entry then
         return
     end
+    self:set_help(helpdb.get_entry_long_help(entry_name,
+                                             self.frame_body.width - 1))
     self.cur_entry = entry_name
-    self:set_help(helpdb.get_entry_long_help(entry_name))
+end
+
+function HelpPanel:postComputeFrame()
+    if #self.cur_entry == 0 then return end
+    self:set_help(helpdb.get_entry_long_help(self.cur_entry,
+                                             self.frame_body.width - 1),
+                  true)
 end
 
 function HelpPanel:onInput(keys)
