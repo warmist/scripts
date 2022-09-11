@@ -129,7 +129,7 @@ function AutocompletePanel:init()
     self:addviews{
         widgets.Label{
             frame={l=0, t=0},
-            text='Autocomplete'
+            text='Click or select via'
         },
         widgets.HotkeyLabel{
             frame={l=1, t=1},
@@ -309,26 +309,19 @@ HelpPanel = defclass(HelpPanel, widgets.Panel)
 
 local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
-Type a command to see its help text here. Hit ENTER
-to run the command, or Shift-ENTER to run the
-command and close this dialog. The dialog also
-closes automatically if you run a command that shows
-a new GUI screen.
+Type a command to see its help text here. Hit ENTER to run the command, or Shift-ENTER to run the command and close this dialog. The dialog also closes automatically if you run a command that shows a new GUI screen.
 
-Not sure what to do? Run the "help" command to get
-started!
+Not sure what to do? Run the "help" command to get started!
 
-To see help for this command launcher, type
-"launcher" and hit the TAB key or click on
-"gui/launcher" to autocomplete.]]
+To see help for this command launcher, type "launcher" and hit the TAB key or click on "gui/launcher" to autocomplete.]]
 
 function HelpPanel:init()
-    self.cur_entry = ""
+    self.cur_entry = ''
 
     self:addviews{
         widgets.WrappedLabel{
             view_id='help_label',
-            frame={l=0, t=0},
+            frame={l=1, t=0, b=1},
             auto_height=false,
             scroll_keys={
                 A_MOVE_N_DOWN=-1, -- Ctrl-Up
@@ -340,11 +333,14 @@ function HelpPanel:init()
     }
 end
 
-function HelpPanel:set_help(help_text)
+function HelpPanel:set_help(help_text, in_layout)
     local label = self.subviews.help_label
     label.text_to_wrap = help_text
-    label:postComputeFrame()
-    label:updateLayout() -- to update the scroll arrows after rewrapping text
+    if not in_layout then
+        self.cur_entry = ''
+        label:postComputeFrame()
+        label:updateLayout() -- update the scroll arrows after rewrapping text
+    end
 end
 
 function HelpPanel:set_entry(entry_name)
@@ -354,8 +350,16 @@ function HelpPanel:set_entry(entry_name)
     if #entry_name == 0 or entry_name == self.cur_entry then
         return
     end
+    self:set_help(helpdb.get_entry_long_help(entry_name,
+                                             self.frame_body.width - 2))
     self.cur_entry = entry_name
-    self:set_help(helpdb.get_entry_long_help(entry_name))
+end
+
+function HelpPanel:postComputeFrame()
+    if #self.cur_entry == 0 then return end
+    self:set_help(helpdb.get_entry_long_help(self.cur_entry,
+                                             self.frame_body.width - 2),
+                  true)
 end
 
 function HelpPanel:onInput(keys)
