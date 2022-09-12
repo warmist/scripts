@@ -3,13 +3,14 @@ devel/query
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Search/print data algorithmically.
     :tags: dev inspection
 
 
-Query is a script useful for finding and reading values of data structure
-fields. Purposes will likely be exclusive to writing lua script code,
-possibly C++.
+Query is a useful script for finding and reading values of data structure
+fields. You can use it to explore data structures, list contents of known
+structures, and you could even integrate it into a script to simply print
+some data out for a player.
 
 This script takes your data selection eg.{table,unit,item,tile,etc.} then
 recursively iterates through it, outputting names and values of what it finds.
@@ -21,12 +22,12 @@ selection and any search pattern specified.
 .. Note::
 
     This is a recursive search function. The data structures are also recursive.
-    So there are a few things that must be considered (in order):
+    So there are a few things that the algorithm must consider while recursing (in order):
 
         - Is the search depth too high? (Default: 7)
         - Is the data capable of being iterated, or does it only have a value?
         - How can the data be iterated?
-        - Is the iteration count for the data too high? (Default: 257)
+        - Is the iteration count for the data too high? (Default: 2048)
         - Does the user want to exclude the data's type?
         - Is the data recursively indexing (eg. A.B.C.A.*)?
         - Does the data match the search pattern?
@@ -45,46 +46,41 @@ selection and any search pattern specified.
 
 Usage examples::
 
-  devel/query -unit -getfield id
-  devel/query -unit -search STRENGTH
-  devel/query -unit -search physical_attrs -maxdepth 2
-  devel/query -tile -search dig
-  devel/query -tile -search "occup.*carv"
-  devel/query -table df -maxdepth 2
-  devel/query -table df -maxdepth 2 -excludekinds s -excludetypes fsu -oneline
-  devel/query -table df.profession -findvalue FISH
-  devel/query -table df.global.ui.main -maxdepth 0
-  devel/query -table df.global.ui.main -maxdepth 0 -oneline
-  devel/query -table df.global.ui.main -maxdepth 0 -1
+  devel/query --unit --getfield id
+  devel/query --unit --search STRENGTH
+  devel/query --unit --search physical_attrs -maxdepth 2
+  devel/query --tile --search dig
+  devel/query --tile --search "occup.*carv"
+  devel/query --table df -maxdepth 2
+  devel/query --table df -maxdepth 2 --excludekinds s --excludetypes fsu --oneline
+  devel/query --table df.profession --findvalue FISH
+  devel/query --table df.global.ui.main --maxdepth 0
+  devel/query --table df.global.ui.main --maxdepth 0 --oneline
+  devel/query --table df.global.ui.main --maxdepth 0 -1
 
 **Selection options:**
 
-``-tile``
-  Selects the highlighted tile's block, and then
-  uses the tile's local position to index the 2D data.
+``--table <identifier>``
+  Selects the specified table.
 
-``-block``
+  .. Note::
+
+    You must use dot notation to denote sub-tables.
+    eg. ``df.global.world``
+
+``--block``
   Selects the highlighted tile's block.
 
-``-unit``
-  Selects the highlighted unit
-
-``-item``
-  Selects the highlighted item.
-
-``-plant``
-  Selects the highlighted plant.
-
-``-building``
+``--building``
   Selects the highlighted building.
 
-``-job``
+``--item``
+  Selects the highlighted item.
+
+``--job``
   Selects the highlighted job.
 
-``-script <script name>``
-  Selects the specified script (which must support being included with ``reqscript()``).
-
-``-json <file>``
+``--json <file>``
   Loads the specified json file as a table to query.
 
   .. Note::
@@ -92,23 +88,25 @@ Usage examples::
     The path starts at the DF root directory.
     eg. -json /hack/scripts/dwarf_profiles.json
 
-``-table <identifier>``
-  Selects the specified table (ie. 'value').
+``--plant``
+  Selects the highlighted plant.
 
-  .. Note::
+``--script <script>``
+  Selects the specified script (which must support being included with ``reqscript()``).
 
-    You must use dot notation to denote sub-tables.
-    eg. ``df.global.world``
+``--tile``
+  Selects the highlighted tile's block, and then
+  uses the tile's local position to index the 2D data.
 
-``-getfield <name>``
-  Gets the specified field from the selection.
-
-  Must use in conjunction with one of the above selection
-  options. Must use dot notation to denote sub-fields.
+``--unit``
+  Selects the highlighted unit
 
 **Query options:**
 
-``-search <pattern>``
+``--getfield <field>``
+  Gets the specified field from the selection.
+
+``--search <pattern>``
   Searches the selection for field names with substrings
   matching the specified value.
 
@@ -117,56 +115,57 @@ Usage examples::
     devel/query -table dfhack -search pattern
     devel/query -table dfhack -search [ pattern1 pattern2 ]
 
-``-findvalue <value>``
+``--findvalue <value>``
   Searches the selection for field values matching the specified value.
 
-``-maxdepth <value>``
+``--maxdepth <value>``
   Limits the field recursion depth (default: 7)
 
-``-maxlength <value>``
-  Limits the table sizes that will be walked (default: 257)
+``--maxlength <value>``
+  Limits the table sizes that will be walked (default: 2048)
 
-``-excludetypes [a|bfnstu0]``
+``--excludetypes [a|bfnstu0]``
   Excludes native Lua data types. Single letters correspond to (in order):
   All types listed here, Boolean, Function, Number, String, Table, Userdata, nil
 
-``-excludekinds [a|bces]``
+``--excludekinds [a|bces]``
   Excludes DF data types. Single letters correspond to (in order):
   All types listed here, Bitfield-type, Class-type, Enum-type, Struct-type
 
-``-dumb``
+``--dumb``
   Disables intelligent checking for recursive data
-  structures (loops) and increases the ``-maxdepth`` to 25 if a
+  structures (loops) and increases the ``--maxdepth`` to 25 if a
   value is not already present
 
 **General options:**
 
-``-showpaths``
+``--showpaths``
   Displays the full path of a field instead of indenting.
 
-``-setvalue <value>``
+``--setvalue <value>``
   Attempts to set the values of any printed fields.
   Supported types: boolean, string, integer
 
-``-oneline``, ``-1``
-  Reduces output to one line, except with ``-debugdata``
+``--oneline``, ``-1``
+  Reduces output to one line, except with ``--debugdata``.
+  Most data is already using one line, but some types have additional information.
 
-``-alignto <value>``
+``--alignto <value>``
   Specifies the alignment column.
 
-``-nopointers``
+``--nopointers``
   Disables printing values which contain memory addresses.
 
-``-disableprint``
+``--disableprint``
   Disables printing. Might be useful if you are debugging
   this script. Or to see if a query will crash (faster) but
   not sure what else you could use it for.
 
-``-debug <value>``
+``--debug <value>``
   Enables debug log lines equal to or less than the value provided.
 
-``-debugdata``
+``--debugdata``
   Enables debugging data. Prints type information under each field.
 
-``-help``
+``--help``
   Prints this help information.
