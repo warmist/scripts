@@ -57,8 +57,8 @@ information in the help area about how to get started.
 
 Once you have typed (or autocompleted) a word that matches a valid command, the
 help area shows the help for that command, including usage instructions and
-examples. You can scroll the help text by half pages by left/right clicking or
-with :kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line with
+examples. You can scroll the help text by clicking on the scrollbar or with
+:kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line with
 :kbd:`Ctrl`:kbd:`Up` and :kbd:`Ctrl`:kbd:`Down`.
 
 Command history
