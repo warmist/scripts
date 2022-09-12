@@ -263,7 +263,6 @@ function petitions:init(args)
         widgets.Label{
             view_id = 'text',
             frame_inset = 0,
-            show_scroll_icons = 'right',
         },
     }
 
