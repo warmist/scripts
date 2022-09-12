@@ -222,7 +222,7 @@ local function findStringInLine(x1, x2, y, str)
 end
 
 local function pluginCompatibility_search_isInputActive()
-    return false  -- FIXME: Implement when API is available
+    return true  -- FIXME: Implement when API is available
 end
 
 local function pluginCompatibility_tweak_kitchen_prefs_color_isEnabled()
