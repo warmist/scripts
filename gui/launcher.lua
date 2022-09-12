@@ -147,7 +147,7 @@ function AutocompletePanel:init()
             view_id='autocomplete_list',
             scroll_keys={},
             on_select=self.on_autocomplete,
-            frame={l=0, t=3}},
+            frame={l=0, r=1, t=3}},
     }
 end
 
