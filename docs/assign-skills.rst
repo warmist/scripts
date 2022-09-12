@@ -31,7 +31,7 @@ Options
 ``--unit <id>``
     The target unit ID. If not present, the currently selected unit will be the
     target.
-``--skills "[" <skill> <rank> [<skill> <rank> ...] "]"``
+``--skills [ <skill> <rank> [<skill> <rank> ...] ]``
     The list of the skills to modify and their ranks. Rank values range from -1
     (the skill is not learned) to 20 (legendary + 5). It is actually possible to
     go beyond 20 (no check is performed), but the effect on the game may not be

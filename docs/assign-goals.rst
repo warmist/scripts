@@ -36,7 +36,7 @@ Options
 ``--unit <id>``
     The target unit ID. If not present, the currently selected unit will be the
     target.
-``--goals "[" <goal> false [<goal> false ...] "]"``
+``--goals [ <goal> false [<goal> false ...] ]``
     The list of goals to add. The valid goal tokens can be found in the
     :wiki:`Personality_trait` (substitute any space with underscores). There
     must be a space before and after each square bracket.

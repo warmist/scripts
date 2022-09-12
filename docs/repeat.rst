@@ -12,7 +12,7 @@ called every once in a while but don't want to have to remember to run yourself.
 Usage
 -----
 
-``repeat [--name <name>] --time <delay> [--timeUnits <units>] --command "[" <command> "]"``
+``repeat [--name <name>] --time <delay> [--timeUnits <units>] --command [ <command> ]``
     Register the given command to be run periodically.
 ``repeat --list``
     Show the currently registered commands and their names.
@@ -46,7 +46,7 @@ Options
     ``frames`` (raw FPS), ``ticks`` (unpaused game frames), or the in-world time
     measurements of ``days``, ``months``, or ``years``. If not specified,
     ``ticks`` is the default.
-``--command "[" ... "]"``
+``--command [ ... ]``
     The ``...`` specifies the command to be run, just as you would write it on
     the commandline. Note that the command must be enclosed in square brackets.
 
