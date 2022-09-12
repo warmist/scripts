@@ -362,18 +362,6 @@ function HelpPanel:postComputeFrame()
                   true)
 end
 
-function HelpPanel:onInput(keys)
-    if HelpPanel.super.onInput(self, keys) then
-        return true
-    elseif keys._MOUSE_L and self:getMousePos() then
-        self.subviews.help_label:scroll('+halfpage')
-        return true
-    elseif keys._MOUSE_R and self:getMousePos() then
-        self.subviews.help_label:scroll('-halfpage')
-        return true
-    end
-end
-
 ----------------------------------
 -- LauncherUI
 --
