@@ -493,19 +493,6 @@ function LauncherUI:on_autocomplete(_, option)
     end
 end
 
-local function launch(kwargs)
-    view = LauncherUI{parent_focus=dfhack.gui.getCurFocus(true)}
-    view:show()
-    view:on_edit_input('')
-    if kwargs.initial_help then
-        view.subviews.help:set_help(kwargs.initial_help)
-    end
-    if kwargs.command then
-        view.subviews.edit:set_text(kwargs.command)
-        view:on_edit_input(kwargs.command)
-    end
-end
-
 function LauncherUI:onDismiss()
     view = nil
 end
@@ -515,10 +502,9 @@ function LauncherUI:run_command(reappear, command)
     if #command == 0 then return end
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, command)
     record_command(command)
-    self:dismiss()
-    -- remove our (dismissed) viewscreen from the stack while we run the
-    -- command. this allows hotkey guards and tools that interact with the top
-    -- viewscreen without checking whether it is active to work reliably.
+    -- remove our viewscreen from the stack while we run the command. this
+    -- allows hotkey guards and tools that interact with the top viewscreen
+    -- without checking whether it is active to work reliably.
     local output = dfhack.screen.hideGuard(self, dfhack.run_command_silent,
                                            command)
     if #output > 0 then
@@ -529,14 +515,17 @@ function LauncherUI:run_command(reappear, command)
     end
     -- if we displayed a new dfhack screen, don't come back up even if reappear
     -- is true so the user can interact with the new screen.
-    local parent_focus = dfhack.gui.getCurFocus(true)
+    local parent_focus = dfhack.gui.getFocusString(self._native.parent)
     if not reappear or (parent_focus:startswith('dfhack/') and
-                        parent_focus ~= prev_parent_focus) then
+                        parent_focus ~= self.parent_focus) then
+        self:dismiss()
         return
     end
     -- reappear and show the command output
-    local initial_help = ('> %s\n\n%s'):format(command, output)
-    launch({initial_help=initial_help})
+    self.parent_focus = parent_focus
+    self.subviews.edit:set_text('')
+    self:on_edit_input('')
+    self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
 end
 
 function LauncherUI:getWantedFrameSize()
@@ -609,6 +598,9 @@ if view then
     -- hotkey a second time) should close the dialog
     view:dismiss()
 else
-    local args = {...}
-    launch({command=table.concat(args, ' ')})
+    view = LauncherUI{parent_focus=dfhack.gui.getCurFocus(true)}
+    view:show()
+    local initial_command = table.concat({...}, ' ')
+    view.subviews.edit:set_text(initial_command)
+    view:on_edit_input(initial_command)
 end
