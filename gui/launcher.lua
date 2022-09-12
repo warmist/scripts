@@ -516,11 +516,10 @@ function LauncherUI:run_command(reappear, command)
         print()
         print(output)
     end
-    -- if we displayed a new dfhack screen, don't come back up even if reappear
+    -- if we displayed a different screen, don't come back up even if reappear
     -- is true so the user can interact with the new screen.
     local parent_focus = dfhack.gui.getFocusString(self._native.parent)
-    if not reappear or (parent_focus:startswith('dfhack/') and
-                        parent_focus ~= self.parent_focus) then
+    if not reappear or parent_focus ~= self.parent_focus then
         self:dismiss()
         return
     end
