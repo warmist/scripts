@@ -16,11 +16,34 @@ that repo.
 ## New Scripts
 - `gui/kitchen-info`: adds more info to the Kitchen screen
 
+- `gui/workorder-details`: adjusts work orders' input item, material, traits
+- `warn-stealers`: warn when creatures that may steal your food, drinks, or items become visible
+
 ## Fixes
+- `devel/query`: fixed error when --tile is specified
+- `gui/unit-info-viewer`: fix logic for displaying undead creature names
+- `gui/workflow`: restore functionality to the add/remove/order hotkeys on the workflow status screen
+- `emigration`: fix emigrant logic so unhappy dwarves leave as designed
+- `gui/gm-unit`: allow ``+`` and ``-`` to adjust skill values as intended instead of letting the filter intercept the characters
 
 ## Misc Improvements
+- `devel/query`: inform the user when a query has been truncated due to ``--maxlength`` being hit.
+- `devel/query`: increased default maxlength value from 257 to 2048
+- `gui/gm-unit`: don't clear the list filter when you adjust a skill value
+- `gui/quickfort`: better formatting for the generated manager orders report
+- `gui/quickfort`: display an error message when the blueprints directory cannot be found
+- `quickfort`: library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library bluerpints.
+- `quickfort`: better error message when the blueprints directory cannot be found
 
 ## Removed
+- `fix/build-location`: The corresponding DF bug (5991) was fixed in DF 0.40.05
+- `fix/diplomats`: DF bug 3295 fixed in 0.40.05
+- `fix/fat-dwarves`: DF bug 5971 fixed in 0.40.05
+- `fix/feeding-timers`: DF bug 2606 is fixed in 0.40.12
+- `fix/merchants`: DF bug that prevents humans from making trade agreements has been fixed
+- `gui/assign-rack`: No longer useful in current DF versions
+- `gui/hack-wish`: Replaced by `gui/create-item`
+- `gui/no-dfhack-init`: No longer useful since players don't have to create their own ``dfhack.init`` files anymore
 
 # 0.47.05-r6
 

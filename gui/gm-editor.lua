@@ -535,7 +535,7 @@ function GmEditorUi:pushTarget(target_to_push)
     end
     new_tbl.item_count=#new_tbl.keys
     table.insert(self.stack,new_tbl)
-    self.subviews.filter_input.text=""
+    self.subviews.filter_input:setText("")
     self:updateTarget()
 end
 function GmEditorUi:popTarget()
@@ -544,7 +544,7 @@ function GmEditorUi:popTarget()
         self:dismiss()
         return
     end
-    self.subviews.filter_input.text=self.stack[#self.stack].filter --restore filter
+    self.subviews.filter_input:setText(self.stack[#self.stack].filter) --restore filter
     self:updateTarget()
 end
 function show_editor(trg)

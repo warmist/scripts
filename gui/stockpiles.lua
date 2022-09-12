@@ -19,10 +19,6 @@ the DF folder before trying to use the GUI.
 ]====]
 local stock = require 'plugins.stockpiles'
 
-function check_enabled()
-    return stock.isEnabled()
-end
-
 function world_guard()
     if not dfhack.isMapLoaded() then
         qerror("World is not loaded")
@@ -57,9 +53,7 @@ function usage()
     print("")
 end
 
-if not check_enabled() then
-    qerror("Stockpiles plugin not enabled. Enable it with: enable stockpiles")
-elseif args.load then
+if args.load then
     if not guard() then return end
     stock.load_settings()
 elseif args.save then
@@ -70,5 +64,7 @@ elseif args.dir then
     if not world_guard() then return end
     stock.set_path(args.dir)
 else
-    usage()
+    if not guard() then return end
+    local sp = dfhack.gui.getSelectedBuilding(true)
+    stock.manage_settings(sp)
 end

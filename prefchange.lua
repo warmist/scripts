@@ -256,7 +256,7 @@ function daggerpants()
     local prefcount = #(unit.status.current_soul.preferences)
     print ("Before, unit "..dfhack.TranslateName(dfhack.units.getVisibleName(unit)).." has "..prefcount.." preferences")
 
-    -- daggers and greaves, skipped the weapons which are too large for most dorfs
+    -- daggers and greaves, skipped the weapons which are too large for most dwarves
     utils.insert_or_update(unit.status.current_soul.preferences, { new = true, type = 4 , item_type = df.item_type.WEAPON , creature_id = df.item_type.WEAPON , color_id = df.item_type.WEAPON , shape_id = df.item_type.WEAPON , plant_id = df.item_type.WEAPON , item_subtype = 16 , mattype = -1 , matindex = -1 , active = true, prefstring_seed = pss_counter }, 'prefstring_seed')
     pss_counter = pss_counter + 1
     utils.insert_or_update(unit.status.current_soul.preferences, { new = true, type = 4 , item_type = df.item_type.PANTS  , creature_id = df.item_type.PANTS  , color_id = df.item_type.PANTS  , shape_id = df.item_type.PANTS  , plant_id = df.item_type.PANTS  , item_subtype = 1 , mattype = -1 , matindex = -1 , active = true, prefstring_seed = pss_counter }, 'prefstring_seed')

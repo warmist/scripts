@@ -194,7 +194,7 @@ function test.show_hide_details()
     local view = load_ui()
     expect.eq('dfhack/lua/quickfort/dialog', dfhack.gui.getCurFocus(true))
 
-    send_keys('STANDARDSCROLL_RIGHT')
+    send_keys('CUSTOM_CTRL_D')
     expect.eq('dfhack/lua/quickfort/dialog/details',
               dfhack.gui.getCurFocus(true))
     -- render so that code is covered
@@ -316,7 +316,7 @@ function test.orders_empty()
     send_keys('CUSTOM_SHIFT_O')
     expect.eq('dfhack/lua/MessageBox', dfhack.gui.getCurFocus(true))
 
-    expect.eq('0 order(s) would be enqueued for bp1.csv.',
+    expect.eq('0 order(s) would be enqueued for\nbp1.csv.',
               view._dialog.subviews.label.text)
 
     send_keys('LEAVESCREEN')
@@ -337,7 +337,7 @@ function test.orders_nonempty()
     mock.patch(quickfort_command, 'do_command_section', populate_orders,
                function() send_keys('CUSTOM_SHIFT_O') end)
 
-    expect.eq('1 order(s) would be enqueued for bp1.csv.\n\n  a: 4',
+    expect.eq('1 order(s) would be enqueued for\nbp1.csv.\n\n  a: 4',
               view._dialog.subviews.label.text)
 
     send_keys('LEAVESCREEN', 'LEAVESCREEN')
@@ -445,4 +445,19 @@ function test.transform_widgets()
 
     send_keys('LEAVESCREEN')
     delay_until(view:callback('isDismissed'))
+end
+
+function test.missing_blueprints_dir()
+    mock.patch(quickfort_list, 'do_list_internal',
+        function() qerror('not found') end,
+        function()
+            local view = load_ui()
+            expect.false_(view._dialog:isActive(),
+                         'file dialog should be dismissed')
+            expect.true_(view._dialog._dialog:isActive(),
+                          'error message should be shown')
+            expect.eq('not found', view._dialog._dialog.subviews.label.text)
+            send_keys('LEAVESCREEN', 'LEAVESCREEN')
+            delay_until(view:callback('isDismissed'))
+        end)
 end

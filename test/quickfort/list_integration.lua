@@ -6,7 +6,7 @@ function test.parse_library_no_errors()
     local mock_print = mock.func()
     mock.patch(quickfort_list, 'print', mock_print,
         function()
-            dfhack.run_script('quickfort', 'list', '--library', '--hidden')
+            dfhack.run_script('quickfort', 'list', '--hidden')
         end)
     expect.lt(1, mock_print.call_count, 'ensure library is detected')
     for i = 1,mock_print.call_count do
@@ -20,7 +20,7 @@ local function test_modes(fname, modes_and_labels)
     local mock_print = mock.func()
     mock.patch(quickfort_list, 'print', mock_print,
         function()
-            dfhack.run_script('quickfort', 'list', fname, '-hl')
+            dfhack.run_script('quickfort', 'list', fname, '-h')
         end)
     -- ensure we only see lines for the modes we expect (the +1 is for the
     -- trailing "<num> blueprints did not match filter" line)

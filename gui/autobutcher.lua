@@ -12,7 +12,7 @@ local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local dlg = require 'gui.dialogs'
 
-local plugin = require 'plugins.zone'
+local plugin = require 'plugins.autobutcher'
 
 WatchList = defclass(WatchList, gui.FramedScreen)
 
@@ -34,7 +34,7 @@ function nextAutowatchState()
 end
 
 function nextAutobutcherState()
-    if(plugin.autobutcher_isEnabled()) then
+    if(plugin.isEnabled()) then
         return 'Stop '
     end
     return 'Start'
@@ -624,11 +624,10 @@ function WatchList:onSetRow()
 end
 
 function WatchList:onToggleAutobutcher()
-    if(plugin.autobutcher_isEnabled()) then
-        plugin.autobutcher_setEnabled(false)
-        plugin.autobutcher_sortWatchList()
+    if(plugin.isEnabled()) then
+        plugin.setEnabled(false)
     else
-        plugin.autobutcher_setEnabled(true)
+        plugin.setEnabled(true)
     end
     self:initListChoices()
     self:updateBottom()
@@ -647,17 +646,6 @@ end
 if not dfhack.isMapLoaded() then
     qerror('Map is not loaded.')
 end
-
-if string.match(dfhack.gui.getCurFocus(), '^dfhack/lua') then
-    qerror("This script must not be called while other lua gui stuff is running.")
-end
-
--- maybe this is too strict, there is not really a reason why it can only be called from the status screen
--- (other than the hotkey might overlap with other scripts)
-if (not string.match(dfhack.gui.getCurFocus(), '^overallstatus') and not string.match(dfhack.gui.getCurFocus(), '^pet/List/Unit')) then
-    qerror("This script must either be called from the overall status screen or the animal list screen.")
-end
-
 
 local screen = WatchList{ }
 screen:show()

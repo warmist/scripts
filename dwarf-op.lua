@@ -7,7 +7,7 @@ utils = require('utils')
 json = require('json')
 local rng = require('plugins.cxxrandom')
 local engineID = rng.MakeNewEngine()
-local dorf_tables = reqscript('dorf_tables')
+local dorf_tables = reqscript('internal/dwarf-op/dorf_tables')
 cloned = {} --assurances I'm sure
 cloned = {
     distributions = utils.clone(dorf_tables.job_distributions, true),
@@ -23,6 +23,8 @@ local validArgs = utils.invert({
     'show',
     'reset',
     'resetall',
+
+    'list',
 
     'select', --highlighted --all --named --unnamed --employed --optimized --unoptimized --protected --unprotected --drunks --jobs
     'clean',
@@ -58,7 +60,7 @@ to hacking dwarves to be better at work. The primary use case is as follows:
     - etc.
 
 Beyond this use case of optimizing dwarves according to the tables in
-`dorf_tables`, this script makes each step in the process available to use
+dorf_tables, this script makes each step in the process available to use
 separately, if you so choose.
 
 There are two basic steps to using this script: selecting a subset of your dwarves,
@@ -114,7 +116,7 @@ Examples::
 
 :jobs:          selects any dwarves with the listed jobs. This will only match
                 with custom professions, or optimized dwarves (for optimized
-                dwarves see jobs in `dorf_tables`).
+                dwarves see jobs in dorf_tables).
 
                 Usage::
 
@@ -161,7 +163,7 @@ Examples::
 
                         - Ignores dwarves with unlisted jobs.
                         - optional argument: ``inclusive`` - means your dorf(s) get the best of N rolls.
-                        - See attrib_levels table in `dorf_tables` for ``p`` values describing the
+                        - See attrib_levels table in dorf_tables for ``p`` values describing the
                           normal distribution of stats (each p value has a sub-distribution, which
                           makes the bell curve not so bell-shaped). Labours do not follow the same
                           stat system and are more uniformly random, which are compensated for in
@@ -169,19 +171,19 @@ Examples::
 
 ``-optimize``:        Performs a job search for unoptimized dwarves.
                         Each dwarf will be found a job according to the
-                        job_distribution table in `dorf_tables`.
+                        job_distribution table in dorf_tables.
 
 ``-applyjobs``:       Applies the listed jobs to the selected dwarves.
                         - List format: ``[ job1 job2 jobn ]`` (brackets and jobs all separated by spaces)
-                        - See jobs table in `dorf_tables` for available jobs."
+                        - See jobs table in dorf_tables for available jobs."
 
 ``-applyprofessions``: Applies the listed professions to the selected dwarves.
                         - List format: ``[ prof1 prof2 profn ]`` (brackets and professions all separated by spaces)
-                        - See professions table in `dorf_tables` for available professions.
+                        - See professions table in dorf_tables for available professions.
 
 ``-applytypes``:      Applies the listed types to the selected dwarves.
                         - List format: ``[ type1 type2 typen ]`` (brackets and types all separated by spaces)
-                        - See dwf_types table in `dorf_tables` for available types.
+                        - See dwf_types table in dorf_tables for available types.
 
 ``renamejob <name>``: Renames the selected dwarves' custom profession to whatever is specified
 
@@ -190,6 +192,11 @@ Examples::
 ``-help``: displays this help information.
 
 ``-debug``: enables debugging print lines
+
+.. _dorf_tables:
+
+Stub header
+-----------
 
 ]====]
 
@@ -1324,6 +1331,25 @@ if args.select and (args.debug or args.clean or args.clear or args.optimize or a
     end
 else
     bRanCommands=false
+end
+
+if args.list then
+    if args.list == "all" then
+        dfhack.run_command("devel/query -1 -alignto 38 -script internal/dwarf-op/dorf_tables -nopointers")
+    elseif args.list == "job_distributions" then
+        dfhack.run_command("devel/query -1 -alignto 21 -script internal/dwarf-op/dorf_tables -getfield job_distributions -nopointers")
+    elseif args.list == "attrib_levels" then
+        dfhack.run_command("devel/query -1 -alignto 21 -script internal/dwarf-op/dorf_tables -getfield attrib_levels -nopointers")
+    elseif args.list == "jobs" then
+        dfhack.run_command("devel/query -1 -alignto 18 -script internal/dwarf-op/dorf_tables -getfield jobs -nopointers")
+    elseif args.list == "professions" then
+        dfhack.run_command("devel/query -1 -alignto 28 -script internal/dwarf-op/dorf_tables -getfield professions -nopointers")
+    elseif args.list == "types" then
+        dfhack.run_command("devel/query -1 -alignto 38 -script internal/dwarf-op/dorf_tables -getfield types -nopointers")
+    else
+        error("Invalid argument provided.")
+    end
+    bRanCommands = true
 end
 
 if args.show then
