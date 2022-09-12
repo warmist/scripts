@@ -14,7 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
-
+- `gui/kitchen-info`: adds more info to the Kitchen screen
 - `gui/workorder-details`: adjusts work orders' input item, material, traits
 - `warn-stealers`: warn when creatures that may steal your food, drinks, or items become visible
 
