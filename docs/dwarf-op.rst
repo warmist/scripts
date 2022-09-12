@@ -76,9 +76,9 @@ instead of ``all``.
 ``drunks``
     Selects any dwarves who have the ``DRUNK`` profession, including those who
     have been zeroed by the ``--clear`` command option.
-``jobs "[" jobs <jobname> [<jobname> ...] "]"``
+``jobs [ jobs <jobname> [<jobname> ...] ]``
     Selects any dwarves with the specified custom professions.
-``waves "[" waves <num> [<num> ...] "]"``
+``waves [ waves <num> [<num> ...] ]``
     Selects dwarves from the specified migration waves. Waves are enumerated
     starting at 0 and increasing by 1 with each wave. The waves go by season and
     year and thus should match what you see in `list-waves` or Dwarf Therapist.
@@ -122,13 +122,13 @@ Command options
 ``--optimize``
     Performs a job search for unoptimized dwarves. Run
     ``dwarf-op --list job_distribution`` to see how jobs are distributed.
-``--applyjobs "[" <job> [<job> ...] "]"``
+``--applyjobs [ <job> [<job> ...] ]``
     Applies the listed jobs to the selected dwarves. Run
     ``dwarf-op --list jobs`` to see available jobs.
-``--applyprofessions "[" <profession> [<profession> ...] "]"``
+``--applyprofessions [ <profession> [<profession> ...] ]``
     Applies the listed professions to the selected dwarves. Run
     ``dwarf-op --list professions`` to see available professions.
-``--applytypes "[" <profession> [<profession> ...] "]"``
+``--applytypes [ <profession> [<profession> ...] ]``
     Applies the listed types to the selected dwarves. Run
     ``dwarf-op --list dwf_types`` to see available types.
 ``--renamejob <name>``

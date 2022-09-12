@@ -41,7 +41,7 @@ Options
 ``--unit <id>``
     The target unit ID. If not present, the currently selected unit will be the
     target.
-``--facets "[" <facet> <level> [<facet> <level> ...] "]"``
+``--facets [ <facet> <level> [<facet> <level> ...] ]``
     The list of the facets to modify and their levels. The valid facet tokens
     can be found in the :wiki:`Personality_trait` (substitute any space with
     underscores). Levels range from -3 to 3. There must be a space before and

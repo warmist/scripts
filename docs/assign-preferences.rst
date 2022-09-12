@@ -72,25 +72,25 @@ brackets can be omitted.
 ``--unit <id>``
     The target unit ID. If not present, the currently selected unit will be the
     target.
-``--likematerial "[" <token> [<token> ...] "]"``
+``--likematerial [ <token> [<token> ...] ]``
     This is usually set to three tokens: a type of stone, a type of metal, and a
     type of gem. It can also be a type of wood, glass, leather, horn, pearl,
     ivory, a decoration material - coral or amber, bone, shell, silk, yarn, or
     cloth. Please include the full tokens, not just a part.
-``--likecreature "[" <token> [<token> ...] "]"``
+``--likecreature [ <token> [<token> ...] ]``
     For this preference, you can just list the species as the token. For
     example, a creature token can be something like ``CREATURE:SPARROW:SKIN``.
     Here, you can just say ``SPARROW``.
-``--likefood "[" <token> [<token> ...] "]"``
+``--likefood [ <token> [<token> ...] ]``
     This usually contains at least a type of alcohol. It can also be a type of
     meat, fish, cheese, edible plant, cookable plant/creature extract, cookable
     mill powder, cookable plant seed, or cookable plant leaf. Please write the
     full tokens.
-``--hatecreature "[" <token> [<token> ...] "]"``
+``--hatecreature [ <token> [<token> ...] ]``
     As in ``--likecreature`` above, you can just list the species in the token.
     The creature should be a type of ``HATEABLE`` vermin which isn't already
     explicitly liked, but no check is performed to enforce this.
-``--likeitem "[" <token> [<token> ...] "]"``
+``--likeitem [ <token> [<token> ...] ]``
     This can be a kind of weapon, a kind of ammo, a piece of armor, a piece of
     clothing (including backpacks or quivers), a type of furniture (doors,
     floodgates, beds, chairs, windows, cages, barrels, tables, coffins, statues,
@@ -106,15 +106,15 @@ brackets can be omitted.
     column "Subtype" of the wiki page (they are in the "/raw/ojects/" folder),
     then specify the items using the full tokens found in those files (see
     examples in this help).
-``--likeplant "[" <token> [<token> ...] "]"``
+``--likeplant [ <token> [<token> ...] ]``
     As in ``--likecreature`` above, you can just list the tree or plant species
     in the token.
-``--likecolor "[" <token> [<token> ...] "]"``
+``--likecolor [ <token> [<token> ...] ]``
     You can find the color tokens here:
     https://dwarffortresswiki.org/index.php/DF2014:Color#Color_tokens
     or inside the "descriptor_color_standard.txt" file (in the "/raw/ojects/"
     folder). You can use the full token or just the color name.
-``--likeshape "[" <token> [<token> ...] "]"``
+``--likeshape [ <token> [<token> ...] ]``
     I couldn't find a list of shape tokens in the wiki, but you can find them
     inside the "descriptor_shape_standard.txt" file (in the "/raw/ojects/"
     folder). You can use the full token or just the shape name.
