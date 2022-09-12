@@ -394,10 +394,10 @@ function kitchen_overlay:onRender()
     end
 
     -- Hotkey
-    local keys_p = gui.Painter.new_xy(1, gps.dimy - 3, gps.dimx - 2, gps.dimy - 2)
-    local keys_x = math.min(gps.dimx - 3 - string.len("p: Hide processing info"), 62)
-    keys_p:key_pen(COLOR_LIGHTRED):pen(COLOR_WHITE)
-    keys_p:seek(keys_x, 1):key('CUSTOM_P'):string(show_processing and ": Hide processing info" or ": Show processing info")
+    --local keys_p = gui.Painter.new_xy(1, gps.dimy - 3, gps.dimx - 2, gps.dimy - 2)
+    --local keys_x = math.min(gps.dimx - 3 - string.len("p: Hide processing info"), 62)
+    --keys_p:key_pen(COLOR_LIGHTRED):pen(COLOR_WHITE)
+    --keys_p:seek(keys_x, 1):key('CUSTOM_P'):string(show_processing and ": Hide processing info" or ": Show processing info")
 end
 
 function kitchen_overlay:onInput(keys)
