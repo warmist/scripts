@@ -10,7 +10,6 @@ Stub documentation.
 local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
-local script = require('gui.script')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
