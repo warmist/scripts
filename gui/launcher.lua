@@ -344,10 +344,12 @@ function HelpPanel:set_help(help_text, in_layout)
 end
 
 function HelpPanel:set_entry(entry_name)
-    if not helpdb.is_entry(entry_name) then
-        entry_name = ""
+    if #entry_name == 0 then
+        self:set_help(DEFAULT_HELP_TEXT)
+        self.cur_entry = ''
+        return
     end
-    if #entry_name == 0 or entry_name == self.cur_entry then
+    if not helpdb.is_entry(entry_name) or entry_name == self.cur_entry then
         return
     end
     self:set_help(helpdb.get_entry_long_help(entry_name,
