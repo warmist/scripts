@@ -14,4 +14,4 @@ Usage
 
 ::
 
-    warn-stealers [enable|disable]
+    enable warn-stealers
