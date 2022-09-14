@@ -14,4 +14,4 @@ Usage
 
 ::
 
-    warn-stealers [start|stop]
+    warn-stealers [enable|disable]
