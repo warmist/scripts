@@ -311,7 +311,7 @@ local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
 Type a command to see its help text here. Hit ENTER to run the command, or Shift-ENTER to run the command and close this dialog. The dialog also closes automatically if you run a command that shows a new GUI screen.
 
-Not sure what to do? Run the "tags" command to see the different catagories of tools DFHack has to offer! Then run "ls <tagname>" (e.g. "ls design") to see the tools in that category.
+Not sure what to do? Run the "tags" command to see the different catagories of tools DFHack has to offer! Then run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
 To see help for this command launcher (including info on mouse controls), type "launcher" and hit the TAB key or click on "gui/launcher" to autocomplete.]]
 
