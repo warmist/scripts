@@ -93,7 +93,7 @@ highlight selection``. If you change the configuration for that item to
 ``Immediate repeat``, then holding :kbd:`Tab` will allow you to scan through
 the autocomplete list more quickly. Be sure to also change the configuration for
 the next item, ``Change tab or highlight selection, secondary``, to also allow
-:kdb:`Shift`:kbd:`Tab` to work the same way.
+:kbd:`Shift`:kbd:`Tab` to work the same way.
 
 Back at the main Key Bindings screen, select ``Save and exit`` to get back to
 the game.
