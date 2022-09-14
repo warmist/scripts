@@ -372,7 +372,6 @@ LauncherUI.ATTRS{
     frame_title='DFHack Launcher',
     frame_style = gui.GREY_LINE_FRAME,
     focus_path='launcher',
-    parent_focus=DEFAULT_NIL,
 }
 
 function LauncherUI:init()
@@ -504,6 +503,8 @@ function LauncherUI:run_command(reappear, command)
     if #command == 0 then return end
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, command)
     record_command(command)
+    -- remember the previous parent screen address so we can detect changes
+    local _,prev_parent_addr = self._native.parent:sizeof()
     -- remove our viewscreen from the stack while we run the command. this
     -- allows hotkey guards and tools that interact with the top viewscreen
     -- without checking whether it is active to work reliably.
@@ -517,13 +518,12 @@ function LauncherUI:run_command(reappear, command)
     end
     -- if we displayed a different screen, don't come back up even if reappear
     -- is true so the user can interact with the new screen.
-    local parent_focus = dfhack.gui.getFocusString(self._native.parent)
-    if not reappear or parent_focus ~= self.parent_focus then
+    local _,parent_addr = self._native.parent:sizeof()
+    if not reappear or parent_addr ~= prev_parent_addr then
         self:dismiss()
         return
     end
     -- reappear and show the command output
-    self.parent_focus = parent_focus
     self.subviews.edit:set_text('')
     self:on_edit_input('')
     self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
@@ -599,7 +599,7 @@ if view then
     -- hotkey a second time) should close the dialog
     view:dismiss()
 else
-    view = LauncherUI{parent_focus=dfhack.gui.getCurFocus(true)}
+    view = LauncherUI{}
     view:show()
     local initial_command = table.concat({...}, ' ')
     view.subviews.edit:set_text(initial_command)
