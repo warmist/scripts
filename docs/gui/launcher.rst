@@ -80,3 +80,20 @@ Dev mode
 By default, commands intended for developers and modders are filtered out of the
 autocomplete list. You can toggle this filtering by hitting :kbd:`Ctrl`:kbd:`D`
 at any time.
+
+Autocomplete tab speed
+----------------------
+
+By default in DF, holding down the :kbd:`Tab` key is the same as just pressing
+it once. This makes scanning quickly through the autocomplete list with the
+keyboard quite slow. To speed things up, you can go to the DF keybinding
+configuration screen (hit :kbd:`Esc` from the main map and select
+``Key Bindings`` from the menu), select ``General``, and then ``Change tab or
+highlight selection``. If you change the configuration for that item to
+``Immediate repeat``, then holding :kbd:`Tab` will allow you to scan through
+the autocomplete list more quickly. Be sure to also change the configuration for
+the next item, ``Change tab or highlight selection, secondary``, to also allow
+:kdb:`Shift`:kbd:`Tab` to work the same way.
+
+Back at the main Key Bindings screen, select ``Save and exit`` to get back to
+the game.
