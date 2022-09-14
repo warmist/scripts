@@ -53,7 +53,7 @@ end
 
 if not utils.invert(new_args)['-location'] then
     local cursor = guidm.getCursorPos() or qerror('This script requires an active cursor.')
-    extend(new_args, {'-location', '[', cursor.x, cursor.y, cursor.z, ']'})
+    extend(new_args, {'-location', '[', tostring(cursor.x), tostring(cursor.y), tostring(cursor.z), ']'})
 end
 
 if show_command then

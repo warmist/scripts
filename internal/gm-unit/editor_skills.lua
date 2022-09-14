@@ -44,14 +44,16 @@ function list_skills(unit, learned_only)
     return ret
 end
 
-
 function Editor_Skills:update_list(no_save_place)
     local skill_list=list_skills(self.target_unit,self.learned_only)
+    local skills = self.subviews.skills
+    local saved_filter = skills:getFilter()
     if no_save_place then
-        self.subviews.skills:setChoices(skill_list)
+        skills:setChoices(skill_list)
     else
-        self.subviews.skills:setChoices(skill_list,self.subviews.skills:getSelected())
+        skills:setChoices(skill_list,skills:getSelected())
     end
+    skills:setFilter(saved_filter)
 end
 
 function Editor_Skills:init( args )
@@ -66,6 +68,7 @@ function Editor_Skills:init( args )
             choices=skill_list,
             frame = {t=0, b=1,l=1},
             view_id="skills",
+            ignore_keys={"SECONDSCROLL_UP", "SECONDSCROLL_DOWN"},
         },
         widgets.Label{
             frame = { b=0,l=1},

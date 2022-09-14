@@ -1,4 +1,5 @@
 -- speeds up the calendar, units, or both
+-- based on https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 
 --[====[
 

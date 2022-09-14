@@ -10,7 +10,7 @@ A script to extend the item or unit viewscreen with additional information
 including a custom description of each item (when available), and properties
 such as material statistics, weapon attacks, armor effectiveness, and more.
 
-The associated script `item-descriptions` supplies custom descriptions
+The associated script item-descriptions supplies custom descriptions
 of items.  Individual descriptions can be added or overridden by a similar
 script :file:`raw/scripts/more-item-descriptions.lua`.  Both work as sparse lists,
 so missing items simply go undescribed if not defined in the fallback.
@@ -18,6 +18,8 @@ so missing items simply go undescribed if not defined in the fallback.
 ]====]
 
 local utils = require 'utils'
+
+local default_descriptions = reqscript('internal/view-item-info/item-descriptions').descriptions
 
 function isInList(list, item, helper)
     if not helper then
@@ -370,15 +372,12 @@ function get_all_uses_strings (item)
 end
 
 function get_custom_item_desc (item)
-    local desc
     local ID = df.item_type[item:getType()]
     if ID and dfhack.items.getSubtypeCount(df.item_type[ID]) ~= -1 then
         local item = item --as:df.item_armorst
         ID = item.subtype.id end
     if not ID then return nil end
-    if dfhack.findScript("item-descriptions") then
-        desc = dfhack.script_environment("item-descriptions").descriptions[ID]
-    end
+    local desc = default_descriptions[ID]
     if dfhack.findScript("more-item-descriptions") then --luacheck: skip
         desc = dfhack.script_environment("more-item-descriptions").descriptions[ID] or desc
     end

@@ -137,7 +137,7 @@ end
 
 function BlueprintDialog:onRenderFrame(dc, rect)
     BlueprintDialog.super.onRenderFrame(self, dc, rect)
-    dc:seek(rect.x1+2, rect.y2):string('Right arrow', dc.cur_key_pen):
+    dc:seek(rect.x1+2, rect.y2):string('Ctrl+D', dc.cur_key_pen):
             string(': Show details', COLOR_GREY)
 end
 
@@ -149,7 +149,7 @@ end
 -- ensures each newline-delimited sequence within text is no longer than
 -- width characters long. also ensures that no more than max_lines lines are
 -- returned in the truncated string.
-local more_marker = '...->'
+local more_marker = '...'
 local function truncate(text, width, max_lines)
     local truncated_text = {}
     for line in text:gmatch('[^'..NEWLINE..']*') do
@@ -190,10 +190,18 @@ end
 
 -- generates a new list of unfiltered choices by calling quickfort's list
 -- implementation, then applies the saved (or given) filter text
+-- returns false on list error
 function BlueprintDialog:refresh()
     local choices = {}
-    for _,v in ipairs(
-            quickfort_list.do_list_internal(show_library, show_hidden)) do
+    local ok, results = pcall(quickfort_list.do_list_internal, show_library,
+                              show_hidden)
+    if not ok then
+        self._dialog = dialogs.showMessage('Cannot list blueprints',
+                tostring(results):wrap(dialog_width), COLOR_RED)
+        self:dismiss()
+        return false
+    end
+    for _,v in ipairs(results) do
         local start_comment = ''
         if v.start_comment then
             start_comment = string.format(' cursor start: %s', v.start_comment)
@@ -232,11 +240,12 @@ function BlueprintDialog:refresh()
     self:updateLayout() -- allows the dialog to resize width to fit the content
     self.subviews.list:setFilter(filter_text)
     restore_selection(self.subviews.list)
+    return true
 end
 
 function BlueprintDialog:onInput(keys)
     local _, obj = self.subviews.list:getSelected()
-    if keys.STANDARDSCROLL_RIGHT and obj then
+    if keys.CUSTOM_CTRL_D and obj then
         local details = BlueprintDetails{
                 text=obj.full_text:wrap(self.frame_body.width)}
         details:show()
@@ -431,7 +440,7 @@ end
 
 function QuickfortUI:on_adjust_repetitions(amt)
     repetitions = math.max(1, repetitions + amt)
-    self.subviews.repeat_times.text = tostring(repetitions)
+    self.subviews.repeat_times:setText(tostring(repetitions))
     self.dirty = true
 end
 
@@ -440,7 +449,7 @@ function QuickfortUI:on_repeat_times_submit(val)
     if not repetitions or repetitions < 1 then
         repetitions = 1
     end
-    self.subviews.repeat_times.text = tostring(repetitions)
+    self.subviews.repeat_times:setText(tostring(repetitions))
     self.dirty = true
 end
 
@@ -514,21 +523,22 @@ function QuickfortUI:show_dialog(initial)
         on_select=function(idx, obj) self:dialog_cb(obj.text) end,
         on_cancel=self:callback('dialog_cancel_cb')
     }
-    file_dialog:refresh()
 
-    -- autoload if this is the first showing of the dialog and a filter was
-    -- specified on the commandline and the filter matches exactly one choice
-    if initial and #self.filter > 0 then
-        local choices = file_dialog.subviews.list:getVisibleChoices()
-        if #choices == 1 then
-            local selection = choices[1].text
-            file_dialog:dismiss()
-            self:dialog_cb(selection)
-            return
+    if file_dialog:refresh() then
+        -- autoload if this is the first showing of the dialog and a filter was
+        -- specified on the commandline and the filter matches exactly one
+        -- choice
+        if initial and #self.filter > 0 then
+            local choices = file_dialog.subviews.list:getVisibleChoices()
+            if #choices == 1 then
+                local selection = choices[1].text
+                file_dialog:dismiss()
+                self:dialog_cb(selection)
+                return
+            end
         end
+        file_dialog:show()
     end
-
-    file_dialog:show()
 
     -- for testing
     self._dialog = file_dialog
@@ -624,9 +634,9 @@ function QuickfortUI:commit()
 end
 
 function QuickfortUI:do_command(command, dry_run, post_fn)
-    print(string.format('executing via gui/quickfort: quickfort %s',
-                        quickfort_parse.format_command(
-                            command, self.blueprint_name, self.section_name)))
+    print(('executing via gui/quickfort: quickfort %s'):format(
+                quickfort_parse.format_command(
+                    command, self.blueprint_name, self.section_name, dry_run)))
     local ctx = self:run_quickfort_command(command, dry_run, false)
     quickfort_command.finish_command(ctx, self.section_name)
     if command == 'run' then
@@ -642,11 +652,10 @@ function QuickfortUI:do_command(command, dry_run, post_fn)
     elseif command == 'orders' then
         local count = 0
         for _,_ in pairs(ctx.order_specs or {}) do count = count + 1 end
-        local messages = {string.format(
-            '%d order(s) %senqueued for %s.', count,
-            dry_run and 'would be ' or '',
-            quickfort_parse.format_command(nil, self.blueprint_name,
-                                           self.section_name))}
+        local messages = {('%d order(s) %senqueued for\n%s.'):format(count,
+                dry_run and 'would be ' or '',
+                quickfort_parse.format_command(nil, self.blueprint_name,
+                                               self.section_name))}
         if count > 0 then
             table.insert(messages, '')
         end

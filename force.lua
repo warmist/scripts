@@ -31,12 +31,12 @@ if not eventType then
     qerror('unknown event type: ' .. args[1])
 end
 
-local newArgs = {'-eventType', eventType}
+local newArgs = {'--eventType', eventType}
 if eventType == 'Caravan' or eventType == 'Diplomat' then
+    table.insert(newArgs, '--civ')
     if not args[2] then
-        qerror('event type ' .. eventType .. ' requires civ ID')
+        table.insert(newArgs, 'player')
     else
-        table.insert(newArgs, '-civ')
         table.insert(newArgs, args[2])
     end
 end

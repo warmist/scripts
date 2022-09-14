@@ -47,6 +47,9 @@ and then try to change the input item type, now it won't let you select *plant*;
 you have to unset the material first.
 
 ]====]
+
+--@ module = true
+
 local utils = require 'utils'
 local gui = require 'gui'
 local guidm = require 'gui.dwarfmode'
@@ -321,6 +324,10 @@ function JobDetails:onInput(keys)
     else
         JobDetails.super.onInput(self, keys)
     end
+end
+
+if dfhack_flags.module then
+    return
 end
 
 if not string.match(dfhack.gui.getCurFocus(), '^dwarfmode/QueryBuilding/Some/Workshop/Job') then
