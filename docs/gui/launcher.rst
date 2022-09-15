@@ -38,7 +38,7 @@ the dialog immediately so you can get back to the game, use
 :kbd:`Shift`:kbd:`Enter` or hold down the :kbd:`Shift` key and click on the
 ``run`` button instead. The dialog also closes automatically if you run a
 command that brings up a new GUI screen. In any case, the command output will
-also be written to the DFHack terminal console.
+also be written to the DFHack terminal console if you need to find it later.
 
 Autocomplete
 ------------
@@ -46,20 +46,22 @@ Autocomplete
 As you type, autocomplete options for DFHack commands appear in the right
 column. If the first word of what you've typed matches a valid command, then the
 autocomplete options will also include commands that have similar functionality
-to the one that you've named. Click on an autocomplete option to select it or
-cycle through them with :kbd:`Tab` or :kbd:`Shift`:kbd:`Tab`.
+to the one that you've named. Click on an autocomplete list option to select it
+or cycle through them with :kbd:`Tab` and :kbd:`Shift`:kbd:`Tab`.
 
 Context-sensitive help
 ----------------------
 
 When you start ``gui/launcher`` without parameters, it shows some useful
-information in the help area about how to get started.
+information in the help area about how to get started with browsing DFHack tools
+by their category `tags`.
 
 Once you have typed (or autocompleted) a word that matches a valid command, the
 help area shows the help for that command, including usage instructions and
-examples. You can scroll the help text by clicking on the scrollbar or with
-:kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line with
-:kbd:`Ctrl`:kbd:`Up` and :kbd:`Ctrl`:kbd:`Down`.
+examples. You can scroll the help text by half-pages by clicking on the
+scrollbar or with :kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line
+with :kbd:`Ctrl`:kbd:`Up` and :kbd:`Ctrl`:kbd:`Down`, or by clicking on the
+scrollbar arrows.
 
 Command history
 ---------------

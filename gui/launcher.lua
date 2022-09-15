@@ -307,6 +307,7 @@ end
 --
 HelpPanel = defclass(HelpPanel, widgets.Panel)
 
+-- this text is intentionally unwrapped so the in-UI wrapping can do the job
 local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
 Type a command to see its help text here. Hit ENTER to run the command, or Shift-ENTER to run the command and close this dialog. The dialog also closes automatically if you run a command that shows a new GUI screen.
