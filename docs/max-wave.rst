@@ -1,5 +1,5 @@
-pop-control
-===========
+max-wave
+========
 
 .. dfhack-tool::
     :summary: Dynamically limit the next immigration wave.
