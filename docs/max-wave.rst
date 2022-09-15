@@ -10,6 +10,10 @@ overriding the population cap value from data/init/d_init.txt.
 Use with the `repeat` command to set a rolling immigration limit.
 Original credit was for Loci.
 
+If you edit the population caps using `gui/settings-manager` after
+running this script, your population caps will be reset and you may
+get more migrants than you expected.
+
 Usage
 -----
 
