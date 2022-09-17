@@ -1,15 +1,19 @@
-
 fix/tile-occupancy
 ==================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Fix tile occupancy flags.
     :tags: fort bugfix map
 
+This tool clears bad occupancy flags at the selected tile. It is useful for
+getting rid of phantom "building present" messages when trying to build
+something in an obviously empty tile.
 
-Clears bad occupancy flags at the selected tile. Useful for getting rid of
-phantom "building present" messages. Currently only supports issues with
-building and unit occupancy. Requires that a tile is selected with the in-game
-cursor (``k``).
+To use, select a tile with the in-game "look" (:kbd:`k` mode) cursor.
 
-Can be used to fix problematic tiles caused by :issue:`1047`.
+Usage
+-----
+
+::
+
+    fix/tile-occupancy

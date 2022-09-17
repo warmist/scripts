@@ -1,15 +1,23 @@
-
 gui/create-tree
 ===============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Create a tree.
     :tags: fort armok plants
 
+This tool provides a graphical interface for creating trees.
 
-A graphical interface for creating trees.
+Place the cursor wherever you want the tree to appear before you run the script.
 
-Place the cursor wherever you want the tree to appear and run the script.
-Then select the desired tree type from the list.
-You will then be asked to input the desired age of the tree in years.
-If omitted, the age will default to 1.
+Then, select the desired tree type from the list, and then the age. If you just
+hit :kbd:`Enter` for the age, it will default to 1 (the youngest age for a
+non-sapling tree).
+
+For full-grown trees, try an age of 100.
+
+Usage
+-----
+
+::
+
+    gui/create-tree

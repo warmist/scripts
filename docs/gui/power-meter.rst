@@ -1,17 +1,24 @@
-
 gui/power-meter
 ===============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Allow presure plates to measure power.
     :tags: fort gameplay buildings
 
+If you run this tool after selecting :guilabel:`Pressure Plate` in the build
+menu, you will build a power meter building instead of a regular pressure plate.
+This means that, once the building is built, you can select it to see a
+readout of how much power is being supplied to gear boxes built in the four
+adjacent N/S/W/E tiles.
 
-Activate an in-game interface for `power-meter` after selecting
-:guilabel:`Pressure Plate` in the build menu.
+Usage
+-----
+
+::
+
+    gui/power-meter
+
+Screenshot
+----------
 
 .. image:: /docs/images/power-meter.png
-
-The script follows the general look and feel of the regular pressure
-plate build configuration page, but configures parameters relevant to
-the modded power meter building.

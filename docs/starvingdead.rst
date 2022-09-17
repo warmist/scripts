@@ -1,19 +1,22 @@
-
 starvingdead
 ============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary:
     :tags: fort auto fps gameplay units
 
+With this tool running, all undead that have been on the map for one month
+gradually decay, losing strength, speed, and toughness. After six months,
+they collapse upon themselves, never to be reanimated.
 
-Somewhere between a "mod" and a "fps booster", with a small impact on
-vanilla gameplay. It mostly helps prevent undead cascades in the caverns,
-where constant combat leads to hundreds of undead roaming the
-caverns and destroying your FPS.
+In any game, this can be a welcome gameplay feature, but it is especially
+useful in preventing undead cascades in the caverns, where constant combat
+can lead to hundreds of undead roaming the caverns and destroying your FPS.
 
-With this script running, all undead that have been on the map for
-one month gradually decay, losing strength, speed, and toughness.
-After six months, they collapse upon themselves, never to be reanimated.
+Usage
+-----
 
-Usage: ``starvingdead (start|stop)``
+::
+
+    starvingdead start
+    starvingdead stop

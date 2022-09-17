@@ -1,16 +1,29 @@
-
 startdwarf
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Increase the number of dwarves you embark with.
     :tags: embark fort armok
 
+You must use this tool before embarking (e.g. at the site selection screen or
+any time before) to change the number of dwarves you embark with from the
+default of 7.
 
-Use before embarking (e.g. at the site selection screen or any time before) to
-change the number of dwarves you embark with from the default of 7.
+Note that the game requires that you embark with no fewer than 7 dwarves, so
+this tool can only increase the starting dwarf count, not decrease it.
 
-- ``startdwarf 10`` would just allow a few more warm bodies to dig in
-- ``startdwarf 500`` would lead to a severe food shortage and FPS issues
+Usage
+-----
 
-The number must be 7 or greater.
+::
+
+    startdwarf <number>
+
+Examples
+--------
+
+``startdwarf 10``
+    Start with a few more warm bodies to help you get started.
+``startdwarf 500``
+    Start with a teeming army of dwarves (leading to immediate food shortage and
+    FPS issues).

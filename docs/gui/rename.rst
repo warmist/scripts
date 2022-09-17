@@ -1,31 +1,29 @@
-
 gui/rename
 ==========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Give buildings and units new names, optionally with special chars.
     :tags: fort productivity buildings stockpiles units
 
+Once you select a target on the game map, this tool allows you rename it. It is
+more powerful than the in-game rename functionality since it allows you to use
+special characters (like diamond symbols), and it also allows you to rename
+enemies and overwrite animal species strings.
 
-Backed by `rename`, this script allows entering the desired name
-via a simple dialog in the game ui.
+This tool supports renaming units, zones, stockpiles, workshops, furnaces,
+traps, and siege engines.
 
-* ``gui/rename [building]`` in :kbd:`q` mode changes the name of a building.
+Usage
+-----
 
-  .. image:: /docs/images/rename-bld.png
+``gui/rename``
+    Renames the selected building, zone, or unit.
+``gui/rename unit-profession``
+    Set the unit profession or the animal species string.
 
-  The selected building must be one of stockpile, workshop, furnace, trap, or siege engine.
-  It is also possible to rename zones from the :kbd:`i` menu.
+Screenshots
+-----------
 
-* ``gui/rename [unit]`` with a unit selected changes the nickname.
+.. image:: /docs/images/rename-bld.png
 
-  Unlike the built-in interface, this works even on enemies and animals.
-
-* ``gui/rename unit-profession`` changes the selected unit's custom profession name.
-
-  .. image:: /docs/images/rename-prof.png
-
-  Likewise, this can be applied to any unit, and when used on animals it overrides
-  their species string.
-
-The ``building`` or ``unit`` options are automatically assumed when in relevant UI state.
+.. image:: /docs/images/rename-prof.png

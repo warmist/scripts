@@ -2,13 +2,33 @@ tame
 ====
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Tame and train animals.
     :tags: fort armok animals
 
+Instantly set the training level of the selected animal or tame them completely.
 
-Tame and train animals.
+Usage
+-----
 
-Usage: ``tame -read`` OR ``tame -set <level>``
+::
+
+    tame --read
+    tame --set <level>
+
+Examples
+--------
+
+``tame --read``
+    Show the training level for the selected animal.
+``tame --set 7``
+    Tame the selected animal.
+``tame --set 8``
+    Make the selected animal revert to a wild state.
+
+Levels
+------
+
+The level numbers have the following definitions:
 
 :0: semi-wild
 :1: trained

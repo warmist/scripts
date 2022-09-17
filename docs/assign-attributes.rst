@@ -44,7 +44,7 @@ Options
 ``--unit <id>``
     The target unit ID. If not present, the currently selected unit will be the
     target.
-``--attributes "[" <attribute> <tier> [<attribute> <tier> ...] "]"``
+``--attributes [ <attribute> <tier> [<attribute> <tier> ...] ]``
     The list of the attributes to modify and their tiers. The valid attribute
     names can be found in the :wiki:`Attribute` (substitute any space with
     underscores). Tiers range from -4 to 4. There must be a space before and

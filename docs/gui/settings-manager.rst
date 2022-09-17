@@ -1,10 +1,19 @@
-
 gui/settings-manager
 ====================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Dynamically adjust global DF settings.
     :tags: dfhack
 
+This tool is an in-game editor for settings defined in
+:file:`data/init/init.txt` and :file:`data/init/d_init.txt`. Changes are written
+back to the init files so they will be loaded the next time you start DF. For
+settings that can be dynamically adjusted, such as the population cap, the
+active value used by the game is updated immediately.
 
-An in-game manager for settings defined in ``init.txt`` and ``d_init.txt``.
+Usage
+-----
+
+::
+
+    gui/settings-manager

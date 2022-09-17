@@ -19,7 +19,7 @@ Usage
     Put out the fire under the cursor.
 ``extinguish --all``
     Put out all fires on the map.
-``extinguish --location "[" <x> <y> <z> "]"``
+``extinguish --location [ <x> <y> <z> ]``
     Put out the fire at the specified map coordinates. You can use the
     `position` tool to find out what the coordinates under the cursor are.
 
