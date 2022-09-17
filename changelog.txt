@@ -24,6 +24,7 @@ that repo.
 - `gui/workflow`: restore functionality to the add/remove/order hotkeys on the workflow status screen
 - `emigration`: fix emigrant logic so unhappy dwarves leave as designed
 - `gui/gm-unit`: allow ``+`` and ``-`` to adjust skill values as intended instead of letting the filter intercept the characters
+- `dwarf-op`: fixed error when applying the Miner job to dwarves
 
 ## Misc Improvements
 - `devel/query`: inform the user when a query has been truncated due to ``--maxlength`` being hit.
@@ -33,6 +34,7 @@ that repo.
 - `gui/quickfort`: display an error message when the blueprints directory cannot be found
 - `quickfort`: library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library bluerpints.
 - `quickfort`: better error message when the blueprints directory cannot be found
+- `dwarf-op`: replaces [ a b c ] option lists with a,b,c option lists
 
 ## Removed
 - `fix/build-location`: The corresponding DF bug (5991) was fixed in DF 0.40.05
