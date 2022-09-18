@@ -481,9 +481,8 @@ function BlueprintUI:onInput(keys)
 
     local pos = nil
     if keys._MOUSE_L then
-        local map_pos = xyz2pos(dfhack.gui.getMousePos())
-        if map_pos.x >= 0 then
-            pos = map_pos
+        pos = dfhack.gui.getMousePos()
+        if pos then
             guidm.setCursorPos(pos)
         end
     elseif keys.SELECT then

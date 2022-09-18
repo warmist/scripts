@@ -624,8 +624,8 @@ function QuickfortUI:onInput(keys)
     end
 
     if keys._MOUSE_L then
-        local pos = xyz2pos(dfhack.gui.getMousePos())
-        if pos.x >= 0 then guidm.setCursorPos(pos) end
+        local pos = dfhack.gui.getMousePos()
+        if pos then guidm.setCursorPos(pos) end
     end
 
     return self:propagateMoveKeys(keys)
