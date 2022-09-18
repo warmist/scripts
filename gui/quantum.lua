@@ -229,13 +229,11 @@ function QuantumUI:onInput(keys)
 
     local pos = nil
     if keys._MOUSE_L then
-        local x, y = dfhack.screen.getMousePos()
-        if gui.is_in_rect(self.df_layout.map, x, y) then
-            pos = xyz2pos(df.global.window_x + x - 1,
-                          df.global.window_y + y - 1,
-                          df.global.window_z)
+        local map_pos = xyz2pos(dfhack.gui.getMousePos())
+        if map_pos.x >= 0 then
+            pos = map_pos
             guidm.setCursorPos(pos)
-        end
+	end
     elseif keys.SELECT then
         pos = guidm.getCursorPos()
     end
