@@ -285,43 +285,18 @@ function test.reset_ui()
 end
 
 -- mouse support for selecting boundary tiles
-local function click_mouse_and_test(screenx, screeny, should_mark, comment)
-    mock.patch(dfhack.screen, 'getMousePos', mock.func(screenx, screeny),
+function test.set_with_mouse()
+    local pos = {x=df.global.window_x,
+                 y=df.global.window_y,
+                 z=df.global.window_z}
+    mock.patch(dfhack.gui, 'getMousePos', mock.func(pos),
         function()
             local view = load_ui()
             view:onInput({_MOUSE_L=true})
-            if not should_mark then
-                expect.nil_(view.mark, comment)
-            else
-                local expected_mark = {x=df.global.window_x+screenx-1,
-                                       y=df.global.window_y+screeny-1,
-                                       z=df.global.window_z}
-                expect.table_eq(expected_mark, view.mark, comment)
-                send_keys('LEAVESCREEN') -- cancel selection
-            end
+            expect.table_eq(pos, view.mark, comment)
+            send_keys('LEAVESCREEN') -- cancel selection
             send_keys('LEAVESCREEN') -- cancel out of UI
         end)
-end
-
-function test.set_with_mouse()
-    click_mouse_and_test(0, 0)
-    click_mouse_and_test(0, 5)
-    click_mouse_and_test(5, 0)
-    click_mouse_and_test(5, -1)
-    click_mouse_and_test(-1, 5)
-
-    click_mouse_and_test(5, 7, true, 'interior tile')
-
-    guidm.enterSidebarMode(df.ui_sidebar_mode.LookAround)
-    local _, screen_height = dfhack.screen.getWindowSize()
-    local map_x2 = dfhack.gui.getDwarfmodeViewDims().map_x2
-    click_mouse_and_test(map_x2, 7, true,
-                         'just to left of border between map and blueprint gui')
-    click_mouse_and_test(map_x2 + 1, 7, false,
-                         'on border between map and blueprint gui')
-    click_mouse_and_test(5, screen_height - 2, true, 'above bottom border')
-    click_mouse_and_test(5, screen_height - 1, false, 'on bottom border')
-    guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
 end
 
 -- live status line showing the dimensions of the currently selected area
