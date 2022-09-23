@@ -27,7 +27,7 @@ set the value of specific fields.
 .. Tip::
 
     Should the need arise, you can stop ``devel/query`` from another shell with
-    `kill-lua`, e.g. by running `dfhack-run kill-lua` from another terminal.
+    `kill-lua`, e.g. by running ``dfhack-run kill-lua`` from another terminal.
 
 Usage
 -----
