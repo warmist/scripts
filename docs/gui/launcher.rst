@@ -7,7 +7,9 @@ gui/launcher
 
 This tool is the primary GUI interface for running DFHack commands. You can open
 it from any screen with the \` hotkey. Tap \` again (or hit :kbd:`Esc`) to
-close.
+close. Users with keyboard layouts that make the \` key difficult (or
+impossible) to press can use the alternate hotkey of
+:kbd:`Ctrl`:kbd:`Shift`:kbd:`D`.
 
 Usage
 -----
