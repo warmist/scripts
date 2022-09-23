@@ -1,5 +1,5 @@
 devel/print-args
-=================
+================
 
 .. dfhack-tool::
     :summary: Echo parameters to the output.
