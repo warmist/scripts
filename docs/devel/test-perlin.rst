@@ -1,10 +1,18 @@
-
 devel/test-perlin
 =================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Generate an image based on perlin noise.
     :tags: dev
 
-
 Generates an image using multiple octaves of perlin noise.
+
+Usage
+-----
+
+::
+
+    devel/test-perlin <fname.pgm> <density> <expr> [-xy <xyscale>] [-z <zscale>]
+
+The inquisitive will have to inspect the code to determine the meaning of the
+parameters.

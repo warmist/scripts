@@ -1,11 +1,16 @@
-
 devel/lsmem
 ===========
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Print memory ranges of the DF process.
     :tags: dev
 
+Useful for checking whether a pointer is valid, whether a certain library/plugin
+is loaded, etc.
 
-Prints memory ranges of the DF process. Useful for checking whether a pointer is
-valid, whether a certain library/plugin is loaded, etc.
+Usage
+-----
+
+::
+
+    devel/lsmem

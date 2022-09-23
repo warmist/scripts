@@ -2,9 +2,8 @@ devel/lua-example
 =================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: An example lua script.
     :tags: dev
 
-
-An example Lua script which reports the number of times it has been called.
-Useful for testing environment persistence.
+This is an example Lua script which just reports the number of times it has been
+called. Useful for testing environment persistence.
