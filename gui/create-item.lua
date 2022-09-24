@@ -249,7 +249,6 @@ utils=require('utils')
 
 validArgs = utils.invert({
  'startup',
- 'all',
  'restrictive',
  'unit',
  'multi'

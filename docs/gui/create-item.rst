@@ -37,6 +37,8 @@ Examples
 Options
 -------
 
+``--multi``
+    Also prompt for the quantity of items to create.
 ``--unit <id>``
     Use the specified unit as the "creator" of the generated item instead of the
     selected unit.
