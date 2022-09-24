@@ -25,6 +25,7 @@ that repo.
 - `emigration`: fix emigrant logic so unhappy dwarves leave as designed
 - `gui/gm-unit`: allow ``+`` and ``-`` to adjust skill values as intended instead of letting the filter intercept the characters
 - `dwarf-op`: fixed error when applying the Miner job to dwarves
+- `view-item-info`: fixed a couple errors when viewing items without materials
 
 ## Misc Improvements
 - `devel/query`: inform the user when a query has been truncated due to ``--maxlength`` being hit.
