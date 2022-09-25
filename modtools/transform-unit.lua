@@ -63,6 +63,7 @@ end
 
 if args.clear then
  normalRace = {}
+ return
 end
 
 if not args.unit then
