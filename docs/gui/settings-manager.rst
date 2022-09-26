@@ -11,6 +11,9 @@ back to the init files so they will be loaded the next time you start DF. For
 settings that can be dynamically adjusted, such as the population cap, the
 active value used by the game is updated immediately.
 
+Editing the population caps will override any modifications made by scripts such
+as `max-wave`.
+
 Usage
 -----
 
