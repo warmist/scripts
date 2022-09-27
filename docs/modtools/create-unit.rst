@@ -1,11 +1,9 @@
-
 modtools/create-unit
 ====================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Create aritrary units.
     :tags: dev
-
 
 Creates a unit.  Usage::
 

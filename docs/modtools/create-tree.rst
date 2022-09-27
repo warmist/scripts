@@ -1,11 +1,9 @@
-
 modtools/create-tree
 ====================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Spawn trees.
     :tags: dev
-
 
 Spawns a tree.
 

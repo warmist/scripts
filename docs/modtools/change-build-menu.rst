@@ -2,10 +2,8 @@ modtools/change-build-menu
 ==========================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Add or remove items from the build sidebar menus.
     :tags: dev
-
-
 
 Change the build sidebar menus.
 
@@ -21,15 +19,11 @@ loaded!
 
 **Usage:**
 
-``modtools/change-build-menu start|enable``:
-
 ``enable modtools/change-build-menu``:
 
     Start the ticker. This needs to be done before any changes will take
     effect. Note that you can make changes before or after starting the
-    ticker, both options should work equally well.
-
-``modtools/change-build-menu stop|disable``:
+    ticker.
 
 ``disable modtools/change-build-menu``:
 
