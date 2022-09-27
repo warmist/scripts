@@ -1,11 +1,9 @@
-
 modtools/moddable-gods
 ======================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Create dieties.
     :tags: dev
-
 
 This is a standardized version of Putnam's moddableGods script. It allows you
 to create gods on the command-line.
