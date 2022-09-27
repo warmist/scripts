@@ -1,11 +1,9 @@
-
 modtools/skill-change
 =====================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Change the skills of a unit.
     :tags: dev
-
 
 Sets or modifies a skill of a unit.  Args:
 
