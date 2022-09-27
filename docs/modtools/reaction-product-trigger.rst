@@ -1,11 +1,9 @@
-
 modtools/reaction-product-trigger
 =================================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Call DFHack commands when reaction products are produced.
     :tags: dev
-
 
 This triggers dfhack commands when reaction products are produced, once per
 product.  Usage::
