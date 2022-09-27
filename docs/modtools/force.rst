@@ -1,11 +1,9 @@
-
 modtools/force
 ==============
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Trigger game events.
     :tags: dev
-
 
 This tool triggers events like megabeasts, caravans, and migrants.
 

@@ -2,10 +2,8 @@ modtools/if-entity
 ==================
 
 .. dfhack-tool::
-    :summary: todo.
+    :summary: Run DFHack commands based on current civ id.
     :tags: dev
-
-
 
 Run a command if the current entity matches a given ID.
 
