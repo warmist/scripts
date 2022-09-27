@@ -34,12 +34,9 @@ Options
     The syndrome to work with.
 ``--resetPolicy <policy>``
     Specify a policy of what to do if the unit already has an
-    instance of the syndrome. Examples:
-        NewInstance
-            default behavior: create a new instance of the syndrome
-        DoNothing
-        ResetDuration
-        AddDuration
+    instance of the syndrome, one of: ``NewInstance``, ``DoNothing``,
+    ``ResetDuration``, or ``AddDuration``. By default, it will create a new
+    instance of the syndrome, even if one already exists for the unit.
 ``--erase``
     Instead of adding an instance of the syndrome, erase one.
 ``--eraseAll``
