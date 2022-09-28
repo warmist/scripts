@@ -1,11 +1,5 @@
 -- The DFHack in-game command launcher
 --@module=true
---[====[
-gui/launcher
-============
-
-Stub documentation.
-]====]
 
 local gui = require('gui')
 local helpdb = require('helpdb')
@@ -322,6 +316,7 @@ function HelpPanel:init()
         widgets.WrappedLabel{
             view_id='help_label',
             frame={l=1, t=0, b=1},
+            frame_inset={r=1},
             auto_height=false,
             scroll_keys={
                 A_MOVE_N_DOWN=-1, -- Ctrl-Up
