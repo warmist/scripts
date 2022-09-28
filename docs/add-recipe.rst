@@ -5,22 +5,21 @@ add-recipe
     :summary: Add crafting recipies to a civ.
     :tags: adventure fort gameplay
 
-Some civilizations never learn to craft high boots. This script can help with
-that. Only weapons, armor, and tools are currently supported; things such as
-instruments are not.
+Civilizations pick randomly from a pool of possible recipes, which means not all
+civs get high boots, for instance. This script can help fix that. Only weapons,
+armor, and tools are currently supported; things such as instruments are not.
 
 Usage
 -----
 
-``add-recipe native`` adds all native (but unknown) crafting recipes.
-    Civilizations pick randomly from a pool of possible recipes, which means not
-    all civs get high boots, for instance. This command gives you all the
-    recipes your civilization could have gotten.
+``add-recipe native``
+    Add all crafting recipes that your civ could have chosen from its pool, but
+    did not.
 ``add-recipe all``
-    Adds *all* available weapons and armor, including exotic items like
+    Add *all* available weapons and armor, including exotic items like
     blowguns, two-handed swords, and capes.
 ``add-recipe single <item token>``
-    Adds a single item by the given item token.
+    Add a single item by the given item token.
 
 Example
 -------

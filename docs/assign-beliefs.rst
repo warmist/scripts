@@ -6,8 +6,8 @@ assign-beliefs
     :tags: fort armok units
 
 Beliefs are defined with the belief token and a number from -3 to 3,
-which describes the different levels of belief strength, as explained here:
-https://dwarffortresswiki.org/index.php/DF2014:Personality_trait#Beliefs
+which describes the different levels of belief strength, as explained on the
+:wiki:`wiki <Personality_trait>`.
 
 Usage
 -----
@@ -15,6 +15,9 @@ Usage
 ::
 
     assign-beliefs [--unit <id>] <options>
+
+Please run ``devel/query --table df.value_type`` to see the list of valid belief
+tokens.
 
 Example
 -------
