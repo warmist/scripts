@@ -18,7 +18,7 @@ your fort.
 
 Note that even with this tool, a migration wave can still overshoot the limit by
 1-2 dwarves because the last migrant might choose to bring their family.
-Likewise, monarchh arrival ignores the population cap.
+Likewise, monarch arrival ignores the population cap.
 
 Usage
 -----

@@ -6,7 +6,7 @@ assign-goals
     :tags: fort armok units
 
 Goals are defined with a goal token and a flag indicating whether the goal has
-been achieved. For now, this flag should alwyas be set to false. For a list of
+been achieved. For now, this flag should always be set to false. For a list of
 possible goals, please run ``devel/query --table df.goal_type`` or see the
 :wiki:`wiki <Personality_trait>`.
 

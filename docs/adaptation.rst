@@ -2,7 +2,7 @@ adaptation
 ==========
 
 .. dfhack-tool::
-    :summary: Adjust a unit's cave adaption level.
+    :summary: Adjust a unit's cave adaptation level.
     :tags: fort armok units
 
 View or set level of cavern adaptation for the selected unit or the whole fort.
@@ -16,7 +16,7 @@ Usage
     adaptation set him|all <value>
 
 The ``value`` must be between 0 and 800,000 (inclusive), with higher numbers
-representing greater levels of cave adaption.
+representing greater levels of cave adaptation.
 
 Examples
 --------

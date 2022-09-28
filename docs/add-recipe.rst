@@ -2,7 +2,7 @@ add-recipe
 ==========
 
 .. dfhack-tool::
-    :summary: Add crafting recipies to a civ.
+    :summary: Add crafting recipes to a civ.
     :tags: adventure fort gameplay
 
 Civilizations pick randomly from a pool of possible recipes, which means not all

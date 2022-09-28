@@ -41,7 +41,7 @@ Options
     the subthought should be the syndrome id. If not specified, defaults to
     ``0`` (which is what you want for most thought types).
 ``--strength <strength>``
-    The strength of the emotion, cooresponding to the strength of the need that
+    The strength of the emotion, corresponding to the strength of the need that
     this emotion might cause or fulfill. Common values for this are ``1``
     (Slight need), ``2`` (Moderate need), ``5`` (Strong need), and ``10``
     (Intense need). If not specified, defaults to ``0``.

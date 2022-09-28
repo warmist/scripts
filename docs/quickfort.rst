@@ -36,7 +36,7 @@ Usage
     are included and blueprints that contain a ``hidden()`` marker in their
     modeline are excluded from the returned list. Specify ``-u`` or ``-h`` to
     exclude library or include hidden blueprints, respectively. The list can
-    additinally be filtered by a specified mode (e.g. ``-m build``) and/or
+    additionally be filtered by a specified mode (e.g. ``-m build``) and/or
     strings to search for in a path, filename, mode, or comment. The id numbers
     in the reported list may not be contiguous if there are hidden or filtered
     blueprints that are not being shown.

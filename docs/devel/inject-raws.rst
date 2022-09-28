@@ -5,7 +5,7 @@ devel/inject-raws
     :summary: Add objects and reactions into an existing world.
     :tags: dev
 
-WARNING: THIS SCRIPT CAN PERMANENLY DAMAGE YOUR SAVE.
+WARNING: THIS SCRIPT CAN PERMANENTLY DAMAGE YOUR SAVE.
 
 This script attempts to inject new raw objects into your world. If the injected
 references do not match the actual edited raws, your save will refuse to load,

@@ -45,7 +45,7 @@ Arguments::
         trigger the command when someone unequips an appropriate item
         see above note regarding 'mode' values
     -material mat
-        trigger the commmand on items with the given material
+        trigger the command on items with the given material
         examples
             INORGANIC:IRON
             CREATURE:DWARF:BRAIN

@@ -5,7 +5,7 @@ devel/watch-minecarts
     :summary: Inspect minecart coordinates and speeds.
     :tags: dev inspection
 
-When running, this tool will log minecart coordinates and speeds to console.
+When running, this tool will log minecart coordinates and speeds to the console.
 
 Usage
 -----

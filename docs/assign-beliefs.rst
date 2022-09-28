@@ -60,8 +60,8 @@ Options
 Belief strengths
 ----------------
 
-The belief strengh corresponds to the text that DF will use to describe a unit's
-beliefs:
+The belief strength corresponds to the text that DF will use to describe a
+unit's beliefs:
 
 ========  =========
 Strength  Effect

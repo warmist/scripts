@@ -29,7 +29,7 @@ Target options
 ``--all``
     Selects every creature on the map.
 ``--citizens``
-    Selectes fort citizens.
+    Selects fort citizens.
 ``--named``
     Selects all named units on the map.
 

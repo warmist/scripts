@@ -28,7 +28,7 @@ Autoloading a game on DF start
 ------------------------------
 
 It is useful to run this script from the commandline when starting Dwarf
-Fortress. For exmaple, on Linux/MacOS you could start Dwarf Fortress with::
+Fortress. For example, on Linux/MacOS you could start Dwarf Fortress with::
 
     ./dfhack +load-save region1
 
