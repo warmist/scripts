@@ -17,7 +17,7 @@ that repo.
 - `gui/kitchen-info`: adds more info to the Kitchen screen
 - `gui/workorder-details`: adjusts work orders' input item, material, traits
 - `warn-stealers`: warn when creatures that may steal your food, drinks, or items become visible
-
+- `gui/launcher`: in-game command launcher with autocomplete, history, and context-sensitive help
 - `max-wave`: dynamically limit the next immigration wave, can be set to repeat
 - `pop-control`: persistent per fortress population cap, `hermit`, and `max-wave` management
 
