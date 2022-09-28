@@ -57,7 +57,7 @@ Options
 Facet strengths
 ---------------
 
-The facet strengh corresponds to the text that DF will use to describe a unit's
+The facet strength corresponds to the text that DF will use to describe a unit's
 facets:
 
 ========  =========

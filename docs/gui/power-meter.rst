@@ -2,7 +2,7 @@ gui/power-meter
 ===============
 
 .. dfhack-tool::
-    :summary: Allow presure plates to measure power.
+    :summary: Allow pressure plates to measure power.
     :tags: fort gameplay buildings
 
 If you run this tool after selecting :guilabel:`Pressure Plate` in the build

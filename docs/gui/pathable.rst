@@ -20,7 +20,7 @@ behavior:
 - :kbd:`d`: Draw: allows temporarily disabling the highlighting entirely. This
     allows you to see the map in its regular shading, if desired.
 - :kbd:`u`: Skip unrevealed: when enabled, unrevealed tiles will not be
-    highlighed at all. (These would otherwise be highlighted in red.)
+    highlighted at all. (These would otherwise be highlighted in red.)
 
 .. note::
     This tool uses a cache used by DF, which currently does *not* account for

@@ -112,7 +112,7 @@ prioritized for you in your fort.
 
 They include:
 
-- Handling rottable items before they rot
+- Handling items that can rot before they rot
 - Medical, hygiene, and hospice tasks
 - Putting items in bins/barrels/pots/minecarts
 - Interactions with animals

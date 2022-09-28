@@ -22,7 +22,7 @@ Examples
 
 ``warn-starving all sane``
     Report on all currently distressed units, excluding insane units that you
-    wouldn't be able save anyway.
+    wouldn't be able to save anyway.
 ``repeat --time 10 --timeUnits days --command [ warn-starving sane ]``
     Every 10 days, report any (sane) distressed units that haven't already been
     reported.

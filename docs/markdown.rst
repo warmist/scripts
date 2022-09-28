@@ -24,7 +24,7 @@ script are:
 #. item/art 'description' screen
 #. individual 'historical item/figure' screens
 #. manual pages
-#. announements screen
+#. announcements screen
 #. combat reports screen
 #. latest news (when meeting with liaison)
 

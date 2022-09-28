@@ -14,7 +14,7 @@ ones.
 .. image:: /docs/images/workflow.png
 
 A constraint is a target range to be compared against either the number of
-individual itemis or the number of item stacks. It also includes an item type
+individual items or the number of item stacks. It also includes an item type
 and, optionally, a material. When the current stock count is below the lower
 bound of the range, the job is resumed; if it is above or equal to the top
 bound, it will be suspended. If there are multiple constraints, being out of the

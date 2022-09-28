@@ -22,5 +22,5 @@ Usage
 Examples:
 
 ``autolabor-artisans 0 2 3``
-    Only allows a maximum of 2 dwarves to have skill-dependent labors enbabled
+    Only allows a maximum of 2 dwarves to have skill-dependent labors enabled
     at once, chosen from the talent pool of the top 3 dwarves for that skill.

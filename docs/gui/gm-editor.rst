@@ -18,7 +18,7 @@ Usage
     Evaluate a lua expression and opens the editor on its results.
 ``gui/gm-editor dialog``
     Show an in-game dialog to input the lua expression to evaluate. Works the
-    same as version above.
+    same as the version above.
 ``gui/gm-editor toggle``
     Hide (if shown) or show (if hidden) the editor at the same position you left
     it.

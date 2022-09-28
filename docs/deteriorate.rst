@@ -71,5 +71,5 @@ Types
 :corpses:  All non-dwarf corpses and body parts. This includes potentially
            useful remains such as hair, wool, hooves, bones, and skulls. Use
            them before you lose them!
-:food:     All food and plants, regardles of whether they are in barrels or
+:food:     All food and plants, regardless of whether they are in barrels or
            stockpiles. Seeds are left untouched.

@@ -2,7 +2,7 @@ modtools/moddable-gods
 ======================
 
 .. dfhack-tool::
-    :summary: Create dieties.
+    :summary: Create deities.
     :tags: dev
 
 This is a standardized version of Putnam's moddableGods script. It allows you

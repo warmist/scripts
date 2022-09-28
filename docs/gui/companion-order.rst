@@ -5,7 +5,7 @@ gui/companion-order
     :summary: Issue orders to companions.
     :tags: adventure interface
 
-This tool allows oyu to issue orders to your adventurer's companions. Select
+This tool allows you to issue orders to your adventurer's companions. Select
 which companions to issue orders to with lower case letters (green when
 selected), then issue orders with upper case letters. You must be in look or
 talk mode to issue commands that refer to a tile location (e.g.
