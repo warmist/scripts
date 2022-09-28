@@ -4,6 +4,28 @@
 local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 
+local DEFAULT_HAUL_LABORS = {'Food', 'Body', 'Animals'}
+local DEFAULT_REACTION_NAMES = {'TAN_A_HIDE'}
+local DEFAULT_JOB_TYPES = {
+    -- take care of rottables before they rot
+    'StoreItemInStockpile', 'CustomReaction', 'PrepareRawFish',
+    -- ensure medical, hygiene, and hospice tasks get done
+    'CleanSelf', 'RecoverWounded', 'ApplyCast', 'BringCrutch', 'CleanPatient',
+    'DiagnosePatient', 'DressWound', 'GiveFood', 'GiveWater', 'ImmobilizeBreak',
+    'PlaceInTraction', 'SetBone', 'Surgery', 'Suture',
+    -- organize items efficiently so new items can be brought to the stockpiles
+    'StoreItemInVehicle', 'StoreItemInBag', 'StoreItemInBarrel',
+    'StoreItemInLocation', 'StoreItemInHospital', 'StoreItemInBin',
+    -- ensure prisoners and animals are tended to quickly
+    'TameAnimal', 'TrainAnimal', 'TrainHuntingAnimal', 'TrainWarAnimal',
+    'PenLargeAnimal', 'PitLargeAnimal', 'SlaughterAnimal',
+    -- when these things come up, get them done ASAP
+    'ManageWorkOrders', 'TradeAtDepot', 'BringItemToDepot', 'DumpItem',
+    'DestroyBuilding', 'RemoveConstruction', 'PullLever', 'FellTree',
+    'FireBallista', 'FireCatapult', 'OperatePump', 'CollectSand', 'MakeArmor',
+    'MakeWeapon',
+}
+
 -- set of job types that we are watching. maps job_type (as a number) to
 -- {num_prioritized=number,
 --  hauler_matchers=map of type to num_prioritized,
@@ -389,12 +411,12 @@ local function print_current_jobs(job_matchers, opts)
     local first = true
     for k,v in pairs(job_counts_by_type) do
         if first then
-            print('Current job counts by type:')
+            print('Current unclaimed jobs:')
             first = false
         end
         print(('%d\t%s'):format(v, k))
     end
-    if first then print('No current jobs.') end
+    if first then print('No current unclaimed jobs.') end
 end
 
 local function print_registry_section(header, t)
@@ -461,6 +483,27 @@ local function parse_commandline(args)
 
     if positionals[1] == 'help' then opts.help = true end
     if opts.help then return opts end
+
+    -- expand defaults, if requested
+    for i,job_type_name in ipairs(positionals) do
+        if not job_type_name:lower():find('^defaults?') then
+            goto continue
+        end
+        table.remove(positionals, i)
+        unit_labors = unit_labors or {}
+        for _,ul in ipairs(DEFAULT_HAUL_LABORS) do
+            table.insert(unit_labors, ul)
+        end
+        reaction_names = reaction_names or {}
+        for _,rn in ipairs(DEFAULT_REACTION_NAMES) do
+            table.insert(reaction_names, rn)
+        end
+        for _,jt in ipairs(DEFAULT_JOB_TYPES) do
+            table.insert(positionals, jt)
+        end
+        break
+        ::continue::
+    end
 
     -- validate any specified hauler types and convert the list to ids
     if unit_labors then
