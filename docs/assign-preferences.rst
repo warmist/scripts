@@ -9,8 +9,7 @@ You will need to know the token of the object you want your dwarf to like.
 You can find them in the wiki, otherwise in the folder "/raw/objects/" under
 the main DF directory you will find all the raws defined in the game.
 
-For more information, please see:
-https://dwarffortresswiki.org/index.php/DF2014:Preferences
+For more information, please see the :wiki:`wiki <Preferences>`.
 
 Note the last three types of preferences ("like poetic form", "like musical
 form", and "like dance form") are not supported by this script.

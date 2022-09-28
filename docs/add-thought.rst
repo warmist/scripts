@@ -2,17 +2,17 @@ add-thought
 ===========
 
 .. dfhack-tool::
-    :summary: Adds a thought or emotion to the selected unit.
+    :summary: Adds a thought to the selected unit.
     :tags: fort armok units
 
 Usage
 -----
 
 ``add-thought --gui [--unit <id>]``
-    Allows you to choose the thought/emotion to apply to the selected (or
-    specified) unit through a series of graphical prompts.
+    Allows you to choose the thought to apply to the selected (or specified)
+    unit through a series of graphical prompts.
 ``add-thought [--unit <id>] [<options>]``
-    Add the specified thought/emotion to the selected (or specified) unit.
+    Add a thought to the selected (or specified) unit.
 
 Examples
 --------
@@ -26,9 +26,9 @@ Options
 -------
 
 ``--emotion <id>``
-    The emotion that the unit associates with the thought. To see a list of
-    possible emotions, run ``:lua @df.emotion_type``. If not specified, defaults
-    to ``-1``, or no emotion.
+    Specifies an emotion for the unit to associate with the given thought. To
+    see a list of possible emotions, run ``:lua @df.emotion_type``. If not
+    specified, defaults to ``-1`` (i.e. no emotion).
 ``--thought <id>``
     The thought. To see a list of possible thoughts, run
     ``:lua @df.unit_thought_type``. If not specified, defaults to ``180``, or
