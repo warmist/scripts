@@ -37,6 +37,7 @@ that repo.
 - `gui/quickfort`: better formatting for the generated manager orders report
 - `gui/quickfort`: you can now click on the map to move the blueprint anchor point to that tile instead of having to use the cursor movement keys
 - `gui/quickfort`: display an error message when the blueprints directory cannot be found
+- `prioritize`: new ``defaults`` keyword to prioritize the list of jobs that the community agrees should generally be prioritized. Run ``prioritize -a defaults`` to try it out in your fort!
 - `quickfort`: library blueprints are now included by default in ``quickfort list`` output. Use the new ``--useronly`` (or just ``-u``) option to filter out library bluerpints.
 - `quickfort`: better error message when the blueprints directory cannot be found
 - `dwarf-op`: replaces [ a b c ] option lists with a,b,c option lists
