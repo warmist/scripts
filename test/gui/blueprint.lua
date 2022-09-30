@@ -110,7 +110,7 @@ local SPACE_ASCII = (' '):byte()
 local function get_screen_word(screen_pos)
     local str = ''
     for x = screen_pos.x,screen_width do
-        local pen = dfhack.screen.readTile(x, screen_pos.y, true)
+        local pen = dfhack.screen.readTile(x, screen_pos.y, false)
         if pen.ch == SPACE_ASCII then break end
         str = str .. string.char(pen.ch)
     end
