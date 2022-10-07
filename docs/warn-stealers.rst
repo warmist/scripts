@@ -5,7 +5,7 @@ warn-stealers
     :summary: Watch for and warn about units that like to steal your stuff.
     :tags: fort armok auto units
 
-This unit will watch for new units entering the map and will make a zoomable
+This script will watch for new units entering the map and will make a zoomable
 announcement whenever a creature that can eat food, guzzle drinks, or steal
 items moves into a revealed location.
 
