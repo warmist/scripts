@@ -110,7 +110,7 @@ BlueprintDialog.ATTRS{
     with_filter=true,
     frame_width=dialog_width,
     row_height=2,
-    frame_inset={t=0,l=1,r=1,b=1},
+    frame_inset={t=0,l=1,r=0,b=1},
     list_frame_inset={t=1},
 }
 
@@ -227,7 +227,7 @@ function BlueprintDialog:refresh()
             full_text = full_text .. '\n\n comment: ' .. v.comment
         end
         local truncated_text =
-                truncate(text, self.frame_body.width, self.row_height)
+                truncate(text, self.frame_body.width - 2, self.row_height)
 
         -- search for the extra syntax shown in the list items in case someone
         -- is typing exactly what they see
@@ -269,8 +269,6 @@ function BlueprintDialog:onInput(keys)
             -- otherwise, save the new selected item
             save_selection(self.subviews.list)
         end
-        -- allow the list box to grow and shrink with the contents
-        self:updateLayout()
     end
 end
 

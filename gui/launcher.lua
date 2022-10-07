@@ -139,8 +139,8 @@ function AutocompletePanel:init()
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
-            on_select=self.on_autocomplete,
-            frame={l=0, r=1, t=3}},
+            on_select=self:callback('on_list_select'),
+            frame={l=0, r=0, t=3, b=1}},
     }
 end
 
@@ -150,7 +150,7 @@ function AutocompletePanel:set_options(options, initially_selected)
     -- trigger the callback
     list.on_select = nil
     list:setChoices(options, 1)
-    list.on_select = self.on_autocomplete
+    list.on_select = self:callback('on_list_select')
     list.cursor_pen = initially_selected and COLOR_LIGHTCYAN or COLOR_CYAN
     self.first_advance = not initially_selected
 end
@@ -167,12 +167,11 @@ function AutocompletePanel:advance(delta)
     list:moveCursor(delta, true)
 end
 
-function AutocompletePanel:onInput(keys)
-    if keys._MOUSE_L and self.subviews.autocomplete_list:getMousePos() then
-        -- enable highlight
-        self.subviews.autocomplete_list.cursor_pen = COLOR_LIGHTCYAN
-    end
-    return AutocompletePanel.super.onInput(self, keys)
+function AutocompletePanel:on_list_select(idx, option)
+    -- enable highlight
+    self.subviews.autocomplete_list.cursor_pen = COLOR_LIGHTCYAN
+    self.first_advance = false
+    if self.on_autocomplete then self.on_autocomplete(idx, option) end
 end
 
 ----------------------------------
@@ -348,14 +347,14 @@ function HelpPanel:set_entry(entry_name)
         return
     end
     self:set_help(helpdb.get_entry_long_help(entry_name,
-                                             self.frame_body.width - 2))
+                                             self.frame_body.width - 3))
     self.cur_entry = entry_name
 end
 
 function HelpPanel:postComputeFrame()
     if #self.cur_entry == 0 then return end
     self:set_help(helpdb.get_entry_long_help(self.cur_entry,
-                                             self.frame_body.width - 2),
+                                             self.frame_body.width - 3),
                   true)
 end
 
@@ -385,7 +384,7 @@ function LauncherUI:init()
             on_submit2=self:callback('run_command', false)},
         HelpPanel{
             view_id='help',
-            frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+2}},
+            frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1}},
     }
 end
 
