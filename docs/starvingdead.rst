@@ -2,7 +2,7 @@ starvingdead
 ============
 
 .. dfhack-tool::
-    :summary:
+    :summary: Prevent infinite accumulation of roaming undead.
     :tags: fort auto fps gameplay units
 
 With this tool running, all undead that have been on the map for one month
