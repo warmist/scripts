@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 - `gui/gm-unit`: fixed behavior of ``+`` and ``-`` again to adjust skill values instead of populating the search field
+- `warn-stealers`: fixed script not working because of an incorrect event name.
 
 ## Misc Improvements
 
