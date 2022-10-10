@@ -73,7 +73,7 @@ function enable()
     if not gamemodeCheck() then
         return
     end
-    eventful.enableEvent(eventful.eventType.NEW_UNIT_ACTIVE, numTicksBetweenChecks)
+    eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, numTicksBetweenChecks)
     eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealerAndHidden
     repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", onTick)
     -- in case any units were missed
