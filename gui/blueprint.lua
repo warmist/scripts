@@ -186,9 +186,16 @@ function PhasesPanel:init()
                         initial_option=self:get_default('zone'),
                         label_width=5}
                     }},
-        widgets.ToggleHotkeyLabel{view_id='query_phase',
-                                  key='CUSTOM_Q', label='query',
-                                  initial_option=self:get_default('query')},
+        widgets.Panel{frame={h=1},
+            subviews={widgets.ToggleHotkeyLabel{view_id='query_phase',
+                        frame={t=0, l=0},
+                        key='CUSTOM_Q', label='query',
+                        initial_option=self:get_default('query')},
+                    widgets.ToggleHotkeyLabel{view_id='rooms_phase',
+                        frame={t=0, l=15},
+                        key='CUSTOM_SHIFT_Q', label='rooms',
+                        initial_option=self:get_default('rooms')}
+                    }},
         widgets.TooltipLabel{
             text_to_wrap='Select blueprint phases to export.',
             show_tooltip=self.show_help_fn,
