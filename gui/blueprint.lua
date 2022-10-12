@@ -1,23 +1,5 @@
 -- A GUI front-end for the blueprint plugin
 --@ module = true
---[====[
-
-gui/blueprint
-=============
-The `blueprint` plugin records the structure of a portion of your fortress in
-a blueprint file that you (or anyone else) can later play back with `quickfort`.
-
-This script provides a visual, interactive interface to make configuring and
-using the blueprint plugin much easier.
-
-Usage::
-
-    gui/blueprint [<name> [<phases>]] [<options>]
-
-All parameters are optional. Anything you specify will override the initial
-values set in the interface. See the `blueprint` documentation for information
-on the possible parameters and options.
-]====]
 
 local blueprint = require('plugins.blueprint')
 local dialogs = require('gui.dialogs')
@@ -344,6 +326,15 @@ function BlueprintUI:init()
                     text_to_wrap='Capture engravings.',
                     show_tooltip=get_show_help}}},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='smooth',
+                    key='CUSTOM_SHIFT_S',
+                    label='smooth',
+                    initial_option=not not self.presets.smooth},
+                widgets.TooltipLabel{
+                    text_to_wrap='Capture smoothed tiles.',
+                    show_tooltip=get_show_help}}},
+        widgets.ResizingPanel{autoarrange_subviews=true, subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='format',
                     key='CUSTOM_F',
@@ -543,6 +534,10 @@ function BlueprintUI:commit(pos)
 
     if self.subviews.engrave:getOptionValue() then
         table.insert(params, '--engrave')
+    end
+
+    if self.subviews.smooth:getOptionValue() then
+        table.insert(params, '--smooth')
     end
 
     local format = self.subviews.format:getOptionValue()
