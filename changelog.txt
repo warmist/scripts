@@ -20,6 +20,7 @@ that repo.
 - `warn-stealers`: fixed script not working because of an incorrect event name.
 
 ## Misc Improvements
+- `gui/blueprint`: support new blueprint phases and options
 
 ## Removed
 
