@@ -611,6 +611,30 @@ function test.preset_engrave()
     send_keys('LEAVESCREEN') -- leave UI
 end
 
+function test.smooth()
+    local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
+    mock.patch({
+            {b, 'print', mock_print},
+            {blueprint, 'run', mock_run},
+        },
+        function()
+            local view = load_ui()
+            send_keys('CUSTOM_SHIFT_S')
+            guidm.setCursorPos({x=1, y=2, z=3})
+            send_keys('SELECT', 'SELECT')
+            expect.str_find('%-%-smooth', mock_print.call_args[1][1])
+            send_keys('SELECT') -- dismiss the success messagebox
+            delay_until(view:callback('isDismissed'))
+        end)
+end
+
+function test.preset_smooth()
+    dfhack.run_script('gui/blueprint', '--smooth')
+    local view = b.view
+    expect.true_(view.subviews.smooth:getOptionValue())
+    send_keys('LEAVESCREEN') -- leave UI
+end
+
 function test.start_pos_comment()
     local view = load_ui()
     guidm.setCursorPos({x=1, y=2, z=3})
