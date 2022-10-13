@@ -539,6 +539,30 @@ function test.phase_nothing_set()
         end)
 end
 
+function test.nometa()
+    local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
+    mock.patch({
+            {b, 'print', mock_print},
+            {blueprint, 'run', mock_run},
+        },
+        function()
+            local view = load_ui()
+            send_keys('CUSTOM_M')
+            guidm.setCursorPos({x=1, y=2, z=3})
+            send_keys('SELECT', 'SELECT')
+            expect.str_find('%-%-nometa', mock_print.call_args[1][1])
+            send_keys('SELECT') -- dismiss the success messagebox
+            delay_until(view:callback('isDismissed'))
+        end)
+end
+
+function test.preset_nometa()
+    dfhack.run_script('gui/blueprint', '--nometa')
+    local view = b.view
+    expect.false_(view.subviews.meta:getOptionValue())
+    send_keys('LEAVESCREEN') -- leave UI
+end
+
 function test.splitby_phase()
     local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
     mock.patch({

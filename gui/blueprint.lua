@@ -360,6 +360,15 @@ function BlueprintUI:init()
             show_help_fn=get_show_help,
             on_layout_change=self:callback('updateLayout')},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='meta',
+                    key='CUSTOM_M',
+                    label='meta',
+                    initial_option=not self.presets.nometa},
+                widgets.TooltipLabel{
+                    text_to_wrap='Combine blueprints that can be replayed together.',
+                    show_tooltip=get_show_help}}},
+        widgets.ResizingPanel{autoarrange_subviews=true, subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='splitby',
                     key='CUSTOM_T',
@@ -563,6 +572,11 @@ function BlueprintUI:commit(pos)
             start_pos_param = start_pos_param .. (',%s'):format(start_comment)
         end
         table.insert(params, start_pos_param)
+    end
+
+    local meta = self.subviews.meta:getOptionValue()
+    if not meta then
+        table.insert(params, ('--nometa'))
     end
 
     local splitby = self.subviews.splitby:getOptionValue()
