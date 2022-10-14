@@ -567,7 +567,7 @@ function test.preset_nometa()
     send_keys('LEAVESCREEN') -- leave UI
 end
 
-function test.splitby_phase()
+function test.splitby_group()
     local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
     mock.patch({
             {b, 'print', mock_print},
@@ -576,6 +576,23 @@ function test.splitby_phase()
         function()
             local view = load_ui()
             send_keys('CUSTOM_T')
+            guidm.setCursorPos({x=1, y=2, z=3})
+            send_keys('SELECT', 'SELECT')
+            expect.str_find('%-%-splitby=group', mock_print.call_args[1][1])
+            send_keys('SELECT') -- dismiss the success messagebox
+            delay_until(view:callback('isDismissed'))
+        end)
+end
+
+function test.splitby_phase()
+    local mock_print, mock_run = mock.func(), mock.func({'blueprints/dig.csv'})
+    mock.patch({
+            {b, 'print', mock_print},
+            {blueprint, 'run', mock_run},
+        },
+        function()
+            local view = load_ui()
+            send_keys('CUSTOM_T', 'CUSTOM_T')
             guidm.setCursorPos({x=1, y=2, z=3})
             send_keys('SELECT', 'SELECT')
             expect.str_find('%-%-splitby=phase', mock_print.call_args[1][1])
