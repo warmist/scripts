@@ -374,7 +374,8 @@ function BlueprintUI:init()
                     key='CUSTOM_T',
                     label='split',
                     options={{label='No', value='none'},
-                            {label='By phase', value='phase'}},
+                             {label='By group', value='group'},
+                             {label='By phase', value='phase'}},
                     initial_option=self.presets.split_strategy},
                 widgets.TooltipLabel{
                     text_to_wrap='Split blueprints into multiple files.',
