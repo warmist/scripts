@@ -42,6 +42,11 @@ the dialog immediately so you can get back to the game, use
 command that brings up a new GUI screen. In any case, the command output will
 also be written to the DFHack terminal console if you need to find it later.
 
+If your keyboard layout makes any key impossible to type (such as :kbd:`[` and
+:kbd:`]` on German QWERTZ keyboards), use :kbd:`Ctrl`:kbd:`Shift`:kbd:`K` to
+bring up the on-screen keyboard. You can "type" the characters you need by
+clicking on the character with the mouse.
+
 Autocomplete
 ------------
 
