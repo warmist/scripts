@@ -1,18 +1,8 @@
--- create-item.lua
 -- A gui-based item creation script.
 -- author Putnam
 -- edited by expwnent
-
 --@module = true
---[====[
 
-gui/create-item
-===============
-A graphical interface for creating items.
-
-See also: `createitem`, `modtools/create-item`, :issue:`735`
-
-]====]
 function getGenderString(gender)
   local sym = df.pronoun_type.attrs[gender].symbol
   if not sym then
@@ -34,7 +24,7 @@ function getCreatureList()
 end
 
 function getRestrictiveMatFilter(itemType)
- if not args.restrictive then return nil end
+ if args.unrestricted then return nil end
  local itemTypes={
    WEAPON=function(mat,parent,typ,idx)
     return (mat.flags.ITEMS_WEAPON or mat.flags.ITEMS_WEAPON_RANGED)
@@ -249,7 +239,7 @@ utils=require('utils')
 
 validArgs = utils.invert({
  'startup',
- 'restrictive',
+ 'unrestricted',
  'unit',
  'multi'
 })

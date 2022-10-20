@@ -17,12 +17,14 @@ that repo.
 
 ## Fixes
 - `gui/gm-unit`: fixed behavior of ``+`` and ``-`` again to adjust skill values instead of populating the search field
-- `warn-stealers`: fixed script not working because of an incorrect event name.
+- `gui/create-item`: restrict materials to those normally allowed by the game by default, introduce new ``--unrestricted`` option for full freedom in choosing materials
+- `warn-stealers`: fixed script not working because of an incorrect event name
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
 
 ## Removed
+- `gui/create-item`: removed ``--restricted`` option. it is now the default behavior
 
 # 0.47.05-r7
 
