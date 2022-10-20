@@ -26,13 +26,13 @@ Usage
 Examples
 --------
 
-``gui/create-item --restrictive --multi``
+``gui/create-item --multi``
     Only provide options for creating items that normally exist in the game.
     Also include the prompt for quantity so you can create more than just one
     item at a time.
-``gui/create-item``
+``gui/create-item --unrestricted``
     Create one item made of anything in the game. For example, you can create
-    a bar of vomit.
+    a bar of vomit, if you please.
 
 Options
 -------
@@ -42,9 +42,9 @@ Options
 ``--unit <id>``
     Use the specified unit as the "creator" of the generated item instead of the
     selected unit.
-``--restrictive``
-    Restrict the material options to only those that are normally appropriate
-    for the selected item type.
+``--unrestricted``
+    Don't restrict the material options to only those that are normally
+    appropriate for the selected item type.
 ``--startup``
     Instead of showing the item creation interface, start monitoring reactions
     for a modded reaction with a code of ``DFHACK_WISH``. When a reaction with
