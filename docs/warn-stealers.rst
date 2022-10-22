@@ -8,7 +8,7 @@ warn-stealers
 This script will watch for new units entering the map and will make a zoomable
 announcement whenever a creature that can eat food, guzzle drinks, or steal
 items moves into a revealed location. It will also re-warn about all revealed
-offending creatures when enabled.
+stealers when enabled.
 
 Usage
 -----
