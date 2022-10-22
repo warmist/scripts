@@ -20,14 +20,11 @@ cache = cache or {}
 
 local races = df.global.world.raws.creatures.all
 
-function addToCacheIfStealerAndHidden(unitId)
+function addToCacheIfStealer(unitId)
     if not gamemodeCheck() then
         return
     end
     local unit = df.unit.find(unitId)
-    if not dfhack.units.isHidden(unit) then
-        return
-    end
     local casteFlags = races[unit.race].caste[unit.caste].flags
     if casteFlags.CURIOUS_BEAST_EATER or casteFlags.CURIOUS_BEAST_GUZZLER or casteFlags.CURIOUS_BEAST_ITEM then
         cache[unit] = true
@@ -74,11 +71,11 @@ function enable()
         return
     end
     eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, numTicksBetweenChecks)
-    eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealerAndHidden
+    eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealer
     repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", onTick)
     -- in case any units were missed
     for _, unit in ipairs(df.global.world.units.active) do
-        addToCacheIfStealerAndHidden(unit.id)
+        addToCacheIfStealer(unit.id)
     end
     print("warn-stealers running")
 end
