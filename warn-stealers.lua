@@ -61,6 +61,8 @@ function onTick()
                 announce(unit)
                 cache[unitId] = nil
             end
+        else
+            cache[unitId] = nil
         end
     end
 end
