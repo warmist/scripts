@@ -18,7 +18,9 @@ that repo.
 ## Fixes
 - `gui/gm-unit`: fixed behavior of ``+`` and ``-`` again to adjust skill values instead of populating the search field
 - `gui/create-item`: restrict materials to those normally allowed by the game by default, introduce new ``--unrestricted`` option for full freedom in choosing materials
-- `warn-stealers`: fixed script not working because of an incorrect event name, storing unit pointers instead of IDs, and it not announcing creatures that spawn in revealed
+- `warn-stealers`: fixed script not working because of an incorrect event name
+- `warn-stealers`: properly announce thieving creatures that spawn already revealed
+- `warn-stealers`: cache unit IDs instead of pointers to avoid potential crashes
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
