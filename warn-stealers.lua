@@ -54,11 +54,13 @@ function onTick()
     end
     for unitId in pairs(cache) do
         local unit = df.unit.find(unitId)
-        if unit.flags1.inactive then
-            cache[unitId] = nil
-        elseif not dfhack.units.isHidden(unit) then
-            announce(unit)
-            cache[unitId] = nil
+        if unit then
+            if unit.flags1.inactive then
+                cache[unitId] = nil
+            elseif not dfhack.units.isHidden(unit) then
+                announce(unit)
+                cache[unitId] = nil
+            end
         end
     end
 end
