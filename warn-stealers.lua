@@ -27,7 +27,7 @@ function addToCacheIfStealer(unitId)
     local unit = df.unit.find(unitId)
     local casteFlags = races[unit.race].caste[unit.caste].flags
     if casteFlags.CURIOUS_BEAST_EATER or casteFlags.CURIOUS_BEAST_GUZZLER or casteFlags.CURIOUS_BEAST_ITEM then
-        cache[unit] = true
+        cache[unitId] = true
     end
 end
 
@@ -52,12 +52,13 @@ function onTick()
     if not gamemodeCheck() then
         return
     end
-    for unit in pairs(cache) do
+    for unitId in pairs(cache) do
+        local unit = df.unit.find(unitId)
         if unit.flags1.inactive then
-            cache[unit] = nil
+            cache[unitId] = nil
         elseif not dfhack.units.isHidden(unit) then
             announce(unit)
-            cache[unit] = nil
+            cache[unitId] = nil
         end
     end
 end
