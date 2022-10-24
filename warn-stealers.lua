@@ -25,6 +25,7 @@ function addToCacheIfStealer(unitId)
         return
     end
     local unit = df.unit.find(unitId)
+    assert(unit, "New active unit detected with id " .. unitId .. " was not found!")
     local casteFlags = races[unit.race].caste[unit.caste].flags
     if casteFlags.CURIOUS_BEAST_EATER or casteFlags.CURIOUS_BEAST_GUZZLER or casteFlags.CURIOUS_BEAST_ITEM then
         cache[unitId] = true
@@ -48,7 +49,7 @@ function announce(unit)
     dfhack.gui.showZoomAnnouncement(-1, unit.pos, "A " .. caste.caste_name[0] .. " has appeared, it may " .. str .. ".", COLOR_RED, true)
 end
 
-function onTick()
+function checkCache()
     if not gamemodeCheck() then
         return
     end
@@ -77,7 +78,7 @@ function enable()
     end
     eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, numTicksBetweenChecks)
     eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealer
-    repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", onTick)
+    repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", checkCache)
     -- in case any units were missed
     for _, unit in ipairs(df.global.world.units.active) do
         addToCacheIfStealer(unit.id)
