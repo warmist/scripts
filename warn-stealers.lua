@@ -20,17 +20,15 @@ cache = cache or {}
 
 local races = df.global.world.raws.creatures.all
 
-function addToCacheIfStealerAndHidden(unitId)
+function addToCacheIfStealer(unitId)
     if not gamemodeCheck() then
         return
     end
     local unit = df.unit.find(unitId)
-    if not dfhack.units.isHidden(unit) then
-        return
-    end
+    assert(unit, "New active unit detected with id " .. unitId .. " was not found!")
     local casteFlags = races[unit.race].caste[unit.caste].flags
     if casteFlags.CURIOUS_BEAST_EATER or casteFlags.CURIOUS_BEAST_GUZZLER or casteFlags.CURIOUS_BEAST_ITEM then
-        cache[unit] = true
+        cache[unitId] = true
     end
 end
 
@@ -51,16 +49,21 @@ function announce(unit)
     dfhack.gui.showZoomAnnouncement(-1, unit.pos, "A " .. caste.caste_name[0] .. " has appeared, it may " .. str .. ".", COLOR_RED, true)
 end
 
-function onTick()
+function checkCache()
     if not gamemodeCheck() then
         return
     end
-    for unit in pairs(cache) do
-        if unit.flags1.inactive then
-            cache[unit] = nil
-        elseif not dfhack.units.isHidden(unit) then
-            announce(unit)
-            cache[unit] = nil
+    for unitId in pairs(cache) do
+        local unit = df.unit.find(unitId)
+        if unit then
+            if unit.flags1.inactive then
+                cache[unitId] = nil
+            elseif not dfhack.units.isHidden(unit) then
+                announce(unit)
+                cache[unitId] = nil
+            end
+        else
+            cache[unitId] = nil
         end
     end
 end
@@ -74,11 +77,11 @@ function enable()
         return
     end
     eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, numTicksBetweenChecks)
-    eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealerAndHidden
-    repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", onTick)
+    eventful.onUnitNewActive[eventfulKey] = addToCacheIfStealer
+    repeatUtil.scheduleEvery(eventfulKey, numTicksBetweenChecks, "ticks", checkCache)
     -- in case any units were missed
     for _, unit in ipairs(df.global.world.units.active) do
-        addToCacheIfStealerAndHidden(unit.id)
+        addToCacheIfStealer(unit.id)
     end
     print("warn-stealers running")
 end
