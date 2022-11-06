@@ -1,7 +1,7 @@
 -- Creates a unit.  Beta; use at own risk.
 
 -- Originally created by warmist
--- Significant contributions over time by Boltgun, Dirst, Expwnent, lethosor, mifki, Putnam and Atomic Chicken.
+-- Significant contributions over time by Boltgun, Dirst, Expwnent, lethosor, mifki, Putnam, Atomic Chicken and Shim-Panze.
 
 --[[
   TODO
@@ -15,182 +15,6 @@
 ]]
 
 --@ module = true
-
-local usage = [====[
-
-modtools/create-unit
-====================
-Creates a unit.  Usage::
-
-    -race raceName
-        (obligatory)
-        Specify the race of the unit to be created.
-        examples:
-            DWARF
-            HUMAN
-
-    -caste casteName
-        Specify the caste of the unit to be created.
-        If omitted, the caste is randomly selected.
-        examples:
-            MALE
-            FEMALE
-            DEFAULT
-
-    -domesticate
-        Tames the unit if it lacks the CAN_LEARN and CAN_SPEAK tokens.
-
-    -civId id
-        Make the created unit a member of the specified civilisation
-        (or none if id = -1).  If id is \\LOCAL, make it a member of the
-        civ associated with the fort; otherwise id must be an integer
-
-    -groupId id
-        Make the created unit a member of the specified group
-        (or none if id = -1).  If id is \\LOCAL, make it a member of the
-        group associated with the fort; otherwise id must be an integer
-
-    -setUnitToFort
-        Sets the groupId and civId to those of the player in Fortress mode.
-        Equivalent to -civId \\LOCAL and -groupId \\LOCAL.
-
-    -name entityRawName
-        Set the unit's name to be a random name appropriate for the
-            given entity. 
-        \\LOCAL can be specified instead to automatically use the fort 
-            group entity in fortress mode only. 
-        If passed empty, will generate a "wild" name (random language, any 
-            words), i.e. the same type of name that animal people historical 
-            figures have.
-        examples:
-            MOUNTAIN
-            EVIL
-
-    -nick nickname
-        This can be included to nickname the unit.
-        Replace "nickname" with the desired name.
-
-    -age howOld
-        This can be included to specify the unit's age.
-        Replace "howOld" with a (non-negative) number.
-        The unit's age is set randomly if this is omitted.
-
-    -equip [ ITEM:MATERIAL:QUANTITY ... ]
-        This can be included to create items and equip them onto
-            the created unit.
-        This is carried out via the same logic used in arena mode,
-            so equipment will always be sized correctly and placed
-            on what the game deems to be appropriate bodyparts.
-            Clothing is also layered in the appropriate order.
-        Note that this currently comes with some limitations,
-            such as an inability to specify item quality
-            and objects not being placed in containers
-            (for example, arrows are not placed in quivers).
-        Item quantity defaults to 1 if omitted.
-        When spaces are included in the item or material name,
-            the entire item description should be enclosed in
-            quotation marks. This can also be done to increase
-            legibility when specifying multiple items.
-        examples:
-            -equip [ RING:CREATURE:DWARF:BONE:3 ]
-                3 dwarf bone rings
-            -equip [ ITEM_WEAPON_PICK:INORGANIC:IRON ]
-                1 iron pick
-            -equip [ "ITEM_SHIELD_BUCKLER:PLANT:OAK:WOOD" "AMULET:AMBER" ]
-                1 oaken buckler and 1 amber amulet
-
-    -skills [ SKILL:LEVEL ... ]
-        This can be included to add skills to the created unit.
-        Specify a skill token followed by a skill level value.
-        Look up "Skill Token" and "Skill" on the DF Wiki for a list
-            of valid tokens and levels respectively.
-        Note that the skill level provided must be a number greater than 0.
-        If the unit possesses a matching natural skill, this is added to it.
-        Quotation marks can be added for legibility as explained above.
-        example:
-            -skill [ SNEAK:1 EXTRACT_STRAND:15 ]
-                novice ambusher, legendary strand extractor
-
-    -profession token
-        This can be included to set the unit's profession.
-        Replace "token" with a Unit Type Token (check the DF Wiki for a list).
-        For skill-based professions, it is recommended to give the unit
-            the appropriate skill set via -skills.
-        This can also be used to make animals trained for war/hunting.
-        Note that this will be overridden if the unit has been given the age
-            of a baby or child, as these have a special "profession" set.
-        Using this for setting baby/child status is not recommended;
-            this should be done via -age instead.
-        examples:
-            STRAND_EXTRACTOR
-            MASTER_SWORDSMAN
-            TRAINED_WAR
-
-    -customProfession name
-        This can be included to give the unit a custom profession name.
-        Enclose the name in quotation marks if it includes spaces.
-        example:
-            -customProfession "Destroyer of Worlds"
-
-    -duration ticks
-        If this is included, the unit will vanish in a puff of smoke
-            once the specified number of ticks has elapsed.
-        Replace "ticks" with an integer greater than 0.
-        Note that the unit's equipment will not vanish.
-
-    -quantity howMany
-        This can be included to create multiple creatures simultaneously.
-        Replace "howMany" with the desired number of creatures.
-        Quantity defaults to 1 if this is omitted.
-
-    -location [ x y z ]
-        (obligatory)
-        Specify the coordinates where you want the unit to appear.
-
-    -locationRange [ x_offset y_offset z_offset ]
-        If included, the unit will be spawned at a random location
-            within the specified range relative to the target -location.
-        z_offset defaults to 0 if omitted.
-        When creating multiple units, the location is randomised each time.
-        example:
-            -locationRange [ 4 3 1 ]
-                attempts to place the unit anywhere within
-                -4 to +4 tiles on the x-axis
-                -3 to +3 tiles on the y-axis
-                -1 to +1 tiles on the z-axis
-                from the specified -location coordinates
-
-    -locationType type
-        May be used with -locationRange
-            to specify what counts as a valid tile for unit spawning.
-        Unit creation will not occur if no valid tiles are available.
-        Replace "type" with one of the following:
-            Walkable
-                units will only be placed on walkable ground tiles
-                this is the default used if -locationType is omitted
-            Open
-                open spaces are also valid spawn points
-                this is intended for flying units
-            Any
-                all tiles, including solid walls, are valid
-                this is only recommended for ghosts not carrying items
-
-    -flagSet [ flag1 flag2 ... ]
-        This can be used to set the specified unit flags to true.
-        Flags may be selected from:
-            df.unit_flags1
-            df.unit_flags2
-            df.unit_flags3
-            df.unit_flags4
-        example:
-            flagSet [ announce_titan ]
-                causes an announcement describing the unit to appear
-                when it is discovered ("[Unit] has come! ...")
-
-    -flagClear [ flag1 flag2 ... ]
-        As above, but sets the specified unit flags to false.
-
-]====]
 
 local utils = require 'utils'
 
@@ -232,9 +56,9 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
         break
       end
     end
-	  if not isValidRawName then
-	    qerror('Invalid entity raw name: ' .. entityRawName)
-	  end
+    if not isValidRawName then
+      qerror('Invalid entity raw name: ' .. entityRawName)
+    end
   end
 
   if civ_id then
@@ -246,9 +70,9 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
     if civ_id ~= -1 and not civ then
       qerror('Civilisation not found: ' .. tostring(civ_id))
     end
-	  if civ and civ.type~=0 then
-	    qerror('Invalid civId (entity is not civilisation): ' .. tostring(civ_id))
-	  end
+    if civ and civ.type~=0 then
+      qerror('Invalid civId (entity is not civilisation): ' .. tostring(civ_id))
+    end
   end
 
   if group_id then
@@ -256,11 +80,11 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
       qerror('Invalid groupId (must be a number): ' .. tostring(group_id))
     end
     group_id = tonumber(group_id)
-	  local group = df.historical_entity.find(group_id)
+    local group = df.historical_entity.find(group_id)
     if group_id ~= -1 and not group then
       qerror('Group not found: ' .. tostring(group_id))
     end
-	  if group and group.type==0 then
+    if group and group.type==0 then
       qerror('Invalid groupId (entity is a civilisation): ' .. tostring(group_id))
     end
   end
@@ -711,7 +535,7 @@ function createFigure(unit,he_civ,he_group)
     he_civ.histfig_ids:insert('#', hf.id)
     he_civ.hist_figures:insert('#', hf)
     hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_civ.id,link_strength=100})
-    
+
     createJoinEvent(he_civ, hf)
   end
 
@@ -719,7 +543,7 @@ function createFigure(unit,he_civ,he_group)
     he_group.histfig_ids:insert('#', hf.id)
     he_group.hist_figures:insert('#', hf)
     hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_group.id,link_strength=100})
-	
+
     createJoinEvent(he_group, hf)
   end
 
@@ -785,9 +609,9 @@ function nameUnit(unit, entityRawName)
         break
       end
     end
-	  if not entity_raw then -- check repeated for module usage
-	    qerror('Invalid entity raw name: ' .. entityRawName)
-	  end
+    if not entity_raw then -- check repeated for module usage
+      qerror('Invalid entity raw name: ' .. entityRawName)
+    end
   end
 
   local allTranslations  = df.global.world.raws.language.translations
@@ -795,28 +619,28 @@ function nameUnit(unit, entityRawName)
   if entity_raw then
     local translationName = entity_raw.translation
     for k,v in ipairs(allTranslations) do
-	    if v.name == translationName then
-	      translationIndex = k
-	      translation = v
-	      break
-	    end
+      if v.name == translationName then
+        translationIndex = k
+        translation = v
+        break
+      end
     end
   end
-  --[[ 	When there's no language matching an entity's [TRANSLATION] as defined in the raws
-		or when the unit doesn't have an entity (empty string argument), the game picks a 
-		random non generated language for each name. ]]
+  --[[  When there's no language matching an entity's [TRANSLATION] as defined in the raws
+        or when the unit doesn't have an entity (empty string argument), the game picks a 
+        random non generated language for each name. ]]
   if not translation then
-	  local validLanguages = {} --{number, df.language_translation}[]
-	  local index = 1
-	  for k,v in ipairs(allTranslations) do
-	    if v.flags == 0 then -- non generated
-		    validLanguages[index] = {k,v}
-		    index = index+1
-	    end
-	  end
-	  local choice = math.random(index-1)
-	  translationIndex = validLanguages[choice][1]
-	  translation 	 = validLanguages[choice][2]
+    local validLanguages = {} --{number, df.language_translation}[]
+    local index = 1
+    for k,v in ipairs(allTranslations) do
+      if v.flags == 0 then -- non generated
+        validLanguages[index] = {k,v}
+        index = index+1
+      end
+    end
+    local choice = math.random(index-1)
+    translationIndex = validLanguages[choice][1]
+    translation = validLanguages[choice][2]
   end
   
   --language_word_table
@@ -829,7 +653,7 @@ function nameUnit(unit, entityRawName)
     TOLERATED = entity_raw.symbols.symbols2.OTHER
   else -- wild units use every word available
     PREFERRED = df.global.world.raws.language.word_table[0][35] -- a guess; this table has every word, and so do the ones at [0][37], [1][35] and [1][37]
-	  TOLERATED = PREFERRED
+    TOLERATED = PREFERRED
   end
   
   function randomWord(language_word_table, compound) 
@@ -840,15 +664,15 @@ function nameUnit(unit, entityRawName)
   local name = unit.name
   --one of the last names is drawn from preferred words and the other from tolerated words. 50-50
   if math.random(0, 1)==1 then 
-	  name.words.FrontCompound, name.parts_of_speech.FrontCompound  =  randomWord(PREFERRED, FrontCompound)
-	  repeat
-      name.words.RearCompound, name.parts_of_speech.RearCompound  =  randomWord(TOLERATED, RearCompound)
-	  until(name.words.FrontCompound~=name.words.RearCompound)
+    name.words.FrontCompound, name.parts_of_speech.FrontCompound = randomWord(PREFERRED, FrontCompound)
+    repeat
+      name.words.RearCompound, name.parts_of_speech.RearCompound = randomWord(TOLERATED, RearCompound)
+    until(name.words.FrontCompound~=name.words.RearCompound)
   else
-	  name.words.RearCompound, name.parts_of_speech.RearCompound  =  randomWord(PREFERRED, RearCompound)
-	  repeat
-	    name.words.FrontCompound, name.parts_of_speech.FrontCompound  =  randomWord(TOLERATED, FrontCompound)
-	  until(name.words.FrontCompound~=name.words.RearCompound)
+    name.words.RearCompound, name.parts_of_speech.RearCompound = randomWord(PREFERRED, RearCompound)
+    repeat
+      name.words.FrontCompound, name.parts_of_speech.FrontCompound = randomWord(TOLERATED, FrontCompound)
+    until(name.words.FrontCompound~=name.words.RearCompound)
   end
   --first name: preferred word converted to string
   local firstNameWord = randomWord(PREFERRED, FirstName)
@@ -1237,7 +1061,7 @@ end
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
-  print(usage)
+  print(dfhack.script_help())
   return
 end
 
