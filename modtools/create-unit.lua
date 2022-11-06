@@ -56,8 +56,12 @@ Creates a unit.  Usage::
 
     -name entityRawName
         Set the unit's name to be a random name appropriate for the
-        given entity. \\LOCAL can be specified instead to automatically
-        use the fort group entity in fortress mode only.
+            given entity. 
+        \\LOCAL can be specified instead to automatically use the fort 
+            group entity in fortress mode only. 
+        If passed empty, will generate a "wild" name (random language, any 
+            words), i.e. the same type of name that animal people historical 
+            figures have.
         examples:
             MOUNTAIN
             EVIL
@@ -219,15 +223,32 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
       qerror('Invalid duration (must be a number greater than 0): ' .. tostring(vanishDelay))
     end
   end
+  
+  if entityRawName and entityRawName~="" then
+    local isValidRawName
+    for k,v in ipairs(df.global.world.raws.entities) do
+      if v.code == entityRawName then
+        isValidRawName = true
+        break
+      end
+    end
+	  if not isValidRawName then
+	    qerror('Invalid entity raw name: ' .. entityRawName)
+	  end
+  end
 
   if civ_id then
     if not tonumber(civ_id) then
       qerror('Invalid civId (must be a number): ' .. tostring(civ_id))
     end
     civ_id = tonumber(civ_id)
-    if civ_id ~= -1 and not df.historical_entity.find(civ_id) then
+	  local civ = df.historical_entity.find(civ_id)
+    if civ_id ~= -1 and not civ then
       qerror('Civilisation not found: ' .. tostring(civ_id))
     end
+	  if civ and civ.type~=0 then
+	    qerror('Invalid civId (entity is not civilisation): ' .. tostring(civ_id))
+	  end
   end
 
   if group_id then
@@ -235,8 +256,12 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
       qerror('Invalid groupId (must be a number): ' .. tostring(group_id))
     end
     group_id = tonumber(group_id)
-    if group_id ~= -1 and not df.historical_entity.find(civ_id) then
+	  local group = df.historical_entity.find(group_id)
+    if group_id ~= -1 and not group then
       qerror('Group not found: ' .. tostring(group_id))
+    end
+	  if group and group.type==0 then
+      qerror('Invalid groupId (entity is a civilisation): ' .. tostring(group_id))
     end
   end
 
@@ -595,22 +620,47 @@ function getRaceCasteIDs(raceStr, casteStr)
 end
 
 local function allocateNewChunk(hist_entity)
-  hist_entity.save_file_id = df.global.unit_chunk_next_id
-  df.global.unit_chunk_next_id = df.global.unit_chunk_next_id+1
-  hist_entity.next_member_idx = 0
-  print("allocating chunk:",hist_entity.save_file_id)
+  if hist_entity then
+    hist_entity.save_file_id = df.global.unit_chunk_next_id
+    df.global.unit_chunk_next_id = df.global.unit_chunk_next_id+1
+    hist_entity.next_member_idx = 0
+    print("allocating chunk:",hist_entity.save_file_id)
+  else
+    local chunkInfo = df.global.world.worldgen
+    chunkInfo.next_unit_chunk_id = df.global.unit_chunk_next_id
+    df.global.unit_chunk_next_id = df.global.unit_chunk_next_id+1
+    chunkInfo.next_unit_chunk_offset = 0
+    print("allocating chunk:",chunkInfo.next_unit_chunk_id)
+  end
 end
 
 local function allocateIds(nemesis_record,hist_entity)
-  if hist_entity.next_member_idx == 100 then
-    allocateNewChunk(hist_entity)
+  if hist_entity then
+    if hist_entity.next_member_idx == 100 then
+      allocateNewChunk(hist_entity)
+    end
+    nemesis_record.save_file_id = hist_entity.save_file_id
+    nemesis_record.member_idx   = hist_entity.next_member_idx
+    hist_entity.next_member_idx = hist_entity.next_member_idx+1
+  else
+    local chunkInfo = df.global.world.worldgen
+    if chunkInfo.next_unit_chunk_offset == 100 then
+      allocateNewChunk(nil)
+    end
+    nemesis_record.save_file_id = chunkInfo.next_unit_chunk_id
+    nemesis_record.member_idx   = chunkInfo.next_unit_chunk_offset
+    chunkInfo.next_unit_chunk_offset = chunkInfo.next_unit_chunk_offset+1
   end
-  nemesis_record.save_file_id = hist_entity.save_file_id
-  nemesis_record.member_idx = hist_entity.next_member_idx
-  hist_entity.next_member_idx = hist_entity.next_member_idx+1
 end
 
-function createFigure(unit,he,he_group)
+local function createJoinEvent(entity, hf)
+  local hf_event_id = df.global.hist_event_next_id
+  df.global.hist_event_next_id = df.global.hist_event_next_id+1
+  df.global.world.history.events:insert("#",{new=df.history_event_add_hf_entity_linkst, year=df.global.cur_year,
+  seconds=df.global.cur_year_tick, id=hf_event_id, civ=entity.id, histfig=hf.id, link_type=0})
+end
+
+function createFigure(unit,he_civ,he_group)
   local hf = df.historical_figure:new()
   hf.id = df.global.hist_figure_next_id
   df.global.hist_figure_next_id = df.global.hist_figure_next_id+1
@@ -639,7 +689,7 @@ function createFigure(unit,he,he_group)
   hf.population_id = unit.population_id
   hf.breed_id = -1
   hf.cultural_identity = unit.cultural_identity
-  hf.family_head_id = -1
+  hf.family_head_id = hf.id
 
   df.global.world.history.figures:insert("#", hf)
 
@@ -657,22 +707,20 @@ function createFigure(unit,he,he_group)
   -- note that innate skills are automaticaly set by DF
   hf.info.skills = {new=true}
 
-  if he then
-    he.histfig_ids:insert('#', hf.id)
-    he.hist_figures:insert('#', hf)
-    hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=unit.civ_id,link_strength=100})
-
-    --add entity event
-    local hf_event_id = df.global.hist_event_next_id
-    df.global.hist_event_next_id = df.global.hist_event_next_id+1
-    df.global.world.history.events:insert("#",{new=df.history_event_add_hf_entity_linkst,year=unit.birth_year,
-    seconds=unit.birth_time,id=hf_event_id,civ=hf.civ_id,histfig=hf.id,link_type=0})
+  if he_civ then
+    he_civ.histfig_ids:insert('#', hf.id)
+    he_civ.hist_figures:insert('#', hf)
+    hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_civ.id,link_strength=100})
+    
+    createJoinEvent(he_civ, hf)
   end
 
-  if he_group and he_group ~= he then
+  if he_group then
     he_group.histfig_ids:insert('#', hf.id)
     he_group.hist_figures:insert('#', hf)
     hf.entity_links:insert("#",{new=df.histfig_entity_link_memberst,entity_id=he_group.id,link_strength=100})
+	
+    createJoinEvent(he_group, hf)
   end
 
   local soul = unit.status.current_soul
@@ -699,83 +747,114 @@ function createNemesis(unit,civ_id,group_id)
   nem.unk10 = -1
   nem.unk11 = -1
   nem.unk12 = -1
+  nem.unk_v47_1 = -1
+  nem.unk_v47_2 = -1
   df.global.world.nemesis.all:insert("#",nem)
   df.global.nemesis_next_id = id+1
   unit.general_refs:insert("#",{new = df.general_ref_is_nemesisst, nemesis_id = id})
 
-  nem.save_file_id = -1
-
-  local he
+  local he_civ
   if civ_id and civ_id ~= -1 then
-    he = df.historical_entity.find(civ_id)
-    he.nemesis_ids:insert("#",id)
-    he.nemesis:insert("#",nem)
-    allocateIds(nem,he)
+    he_civ = df.historical_entity.find(civ_id)
+    he_civ.nemesis_ids:insert("#",id)
+    he_civ.nemesis:insert("#",nem)
+    allocateIds(nem,he_civ)
+  else
+    allocateIds(nem)
   end
   local he_group
   if group_id and group_id ~= -1 then
     he_group = df.historical_entity.find(group_id)
-  end
-  if he_group then
     he_group.nemesis_ids:insert("#",id)
     he_group.nemesis:insert("#",nem)
   end
-  nem.figure = unit.hist_figure_id ~= -1 and df.historical_figure.find(unit.hist_figure_id) or createFigure(unit,he,he_group) -- the histfig check is there just in case this function is called by another script to create nemesis data for a historical figure which somehow lacks it
+
+  nem.figure = unit.hist_figure_id ~= -1 and df.historical_figure.find(unit.hist_figure_id) or createFigure(unit,he_civ,he_group)
   nem.figure.nemesis_id = id
   return nem
 end
 
 function nameUnit(unit, entityRawName)
-  --pick a random appropriate name
+  --pick a random name appropriate for a sapient civilized figure
   --choose three random words in the appropriate things
   local entity_raw
-  if entityRawName then
+  if entityRawName and entityRawName~="" then
     for k,v in ipairs(df.global.world.raws.entities) do
       if v.code == entityRawName then
         entity_raw = v
         break
       end
     end
+	  if not entity_raw then -- check repeated for module usage
+	    qerror('Invalid entity raw name: ' .. entityRawName)
+	  end
   end
 
-  if not entity_raw then
-    qerror('Invalid entity raw name: ' .. entityRawName)
-  end
-
-  local translation = entity_raw.translation
-  local translationIndex
-  for k,v in ipairs(df.global.world.raws.language.translations) do
-    if v.name == translation then
-      translationIndex = k
-      break
+  local allTranslations  = df.global.world.raws.language.translations
+  local translationIndex, translation
+  if entity_raw then
+    local translationName = entity_raw.translation
+    for k,v in ipairs(allTranslations) do
+	    if v.name == translationName then
+	      translationIndex = k
+	      translation = v
+	      break
+	    end
     end
   end
-
-  local language_word_table = entity_raw.symbols.symbols1[0] --educated guess
-  function randomWord()
-    local index = math.random(0, #language_word_table.words[0] - 1)
-    return index
+  --[[ 	When there's no language matching an entity's [TRANSLATION] as defined in the raws
+		or when the unit doesn't have an entity (empty string argument), the game picks a 
+		random non generated language for each name. ]]
+  if not translation then
+	  local validLanguages = {} --{number, df.language_translation}[]
+	  local index = 1
+	  for k,v in ipairs(allTranslations) do
+	    if v.flags == 0 then -- non generated
+		    validLanguages[index] = {k,v}
+		    index = index+1
+	    end
+	  end
+	  local choice = math.random(index-1)
+	  translationIndex = validLanguages[choice][1]
+	  translation 	 = validLanguages[choice][2]
   end
-  local firstName = randomWord()
-  local lastName1 = randomWord()
-  local lastName2 = randomWord()
+  
+  --language_word_table
+  local PREFERRED -- words that the entity likes ([SELECT_SYMBOL])
+  local TOLERATED -- all words except those that the entity dislikes ([CULL_SYMBOL])
+  local FrontCompound, RearCompound, FirstName = 0, 1, 2  --indexes for language_word_table.words/.parts
+  
+  if entity_raw then
+    PREFERRED = entity_raw.symbols.symbols1.OTHER
+    TOLERATED = entity_raw.symbols.symbols2.OTHER
+  else -- wild units use every word available
+    PREFERRED = df.global.world.raws.language.word_table[0][35] -- a guess; this table has every word, and so do the ones at [0][37], [1][35] and [1][37]
+	  TOLERATED = PREFERRED
+  end
+  
+  function randomWord(language_word_table, compound) 
+    local index = math.random(0, #language_word_table.words[compound] - 1)
+    return language_word_table.words[compound][index], language_word_table.parts[compound][index] --number, number
+  end
+  
   local name = unit.name
-  name.words[0] = language_word_table.words[0][lastName1]
-  name.parts_of_speech[0] = language_word_table.parts[0][lastName1]
-  name.words[1] = language_word_table.words[0][lastName2]
-  name.parts_of_speech[1] = language_word_table.parts[0][lastName2]
-  local language = nil
-  for _, lang in pairs(df.global.world.raws.language.translations) do
-    if lang.name == entity_raw.translation then
-      language = lang
-    end
-  end
-  if language then
-    name.first_name = language.words[firstName].value
+  --one of the last names is drawn from preferred words and the other from tolerated words. 50-50
+  if math.random(0, 1)==1 then 
+	  name.words.FrontCompound, name.parts_of_speech.FrontCompound  =  randomWord(PREFERRED, FrontCompound)
+	  repeat
+      name.words.RearCompound, name.parts_of_speech.RearCompound  =  randomWord(TOLERATED, RearCompound)
+	  until(name.words.FrontCompound~=name.words.RearCompound)
   else
-    name.first_name = df.language_word.find(language_word_table.words[0][firstName]).forms[language_word_table.parts[0][firstName]]
+	  name.words.RearCompound, name.parts_of_speech.RearCompound  =  randomWord(PREFERRED, RearCompound)
+	  repeat
+	    name.words.FrontCompound, name.parts_of_speech.FrontCompound  =  randomWord(TOLERATED, FrontCompound)
+	  until(name.words.FrontCompound~=name.words.RearCompound)
   end
+  --first name: preferred word converted to string
+  local firstNameWord = randomWord(PREFERRED, FirstName)
+  name.first_name = translation.words[ firstNameWord ].value
   name.has_name = true
+  name.type = 0
   name.language = translationIndex
   if unit.status.current_soul then
     unit.status.current_soul.name:assign(name)
@@ -994,7 +1073,7 @@ end
 function domesticateUnit(unit)
   -- If a friendly animal, make it domesticated.  From Boltgun & Dirst
   local casteFlags = unit.enemy.caste_flags
-  if not(casteFlags.CAN_SPEAK and casteFlags.CAN_LEARN) then
+  if not(casteFlags.CAN_SPEAK or casteFlags.CAN_LEARN) then
     -- Fix friendly animals (from Boltgun)
     unit.flags2.resident = false
     unit.population_id = -1
@@ -1015,7 +1094,7 @@ function wildUnit(unit)
   -- x = df.global.world.world_data.active_site[0].pos.x
   -- y = df.global.world.world_data.active_site[0].pos.y
   -- region = df.global.map.map_blocks[df.global.map.x_count_block*x+y]
-  if not(casteFlags.CAN_SPEAK and casteFlags.CAN_LEARN) then
+  if not(casteFlags.CAN_SPEAK or casteFlags.CAN_LEARN) then
     if #df.global.world.world_data.active_site > 0 then -- empty in adventure mode
       unit.animal.population.region_x = df.global.world.world_data.active_site[0].pos.x
       unit.animal.population.region_y = df.global.world.world_data.active_site[0].pos.y
@@ -1071,7 +1150,7 @@ function enableUnitLabors(unit, default, skilled)
 end
 
 function setVanishCountdown(unit, ticks)
-  if not tonumber(ticks) or tonumber(ticks) < 1 then
+  if not tonumber(ticks) or tonumber(ticks) < 1 then -- check repeated for module usage
     qerror('Invalid vanish delay: ' .. ticks)
   end
   unit.animal.vanish_countdown = ticks
