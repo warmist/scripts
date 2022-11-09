@@ -448,13 +448,13 @@ local function allocateNewChunk(hist_entity)
     hist_entity.save_file_id = df.global.unit_chunk_next_id
     df.global.unit_chunk_next_id = df.global.unit_chunk_next_id+1
     hist_entity.next_member_idx = 0
-    print("allocating chunk:",hist_entity.save_file_id)
+    print("allocating chunk for entity "..hist_entity.id..":",hist_entity.save_file_id)
   else
     local chunkInfo = df.global.world.worldgen
     chunkInfo.next_unit_chunk_id = df.global.unit_chunk_next_id
     df.global.unit_chunk_next_id = df.global.unit_chunk_next_id+1
     chunkInfo.next_unit_chunk_offset = 0
-    print("allocating chunk:",chunkInfo.next_unit_chunk_id)
+    print("allocating chunk in worldgen:",chunkInfo.next_unit_chunk_id)
   end
 end
 
