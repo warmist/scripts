@@ -24,6 +24,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
+- `modtools/create-unit`: better unit naming, more argument checks, assign nemesis save data for units without civilization
 
 ## Removed
 - `gui/create-item`: removed ``--restricted`` option. it is now the default behavior
