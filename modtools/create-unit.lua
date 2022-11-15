@@ -66,7 +66,7 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
       qerror('Invalid civId (must be a number): ' .. tostring(civ_id))
     end
     civ_id = tonumber(civ_id)
-	  local civ = df.historical_entity.find(civ_id)
+    local civ = df.historical_entity.find(civ_id)
     if civ_id ~= -1 and not civ then
       qerror('Civilisation not found: ' .. tostring(civ_id))
     end
@@ -627,8 +627,8 @@ function nameUnit(unit, entityRawName)
     end
   end
   --[[  When there's no language matching an entity's [TRANSLATION] as defined in the raws
-        or when the unit doesn't have an entity (empty string argument), the game picks a 
-        random non generated language for each name. ]]
+  or when the unit doesn't have an entity (empty string argument), the game picks a
+  random non generated language for each name. ]]
   if not translation then
     local validLanguages = {} --{number, df.language_translation}[]
     local index = 1
@@ -656,14 +656,14 @@ function nameUnit(unit, entityRawName)
     TOLERATED = PREFERRED
   end
   
-  function randomWord(language_word_table, compound) 
+  function randomWord(language_word_table, compound)
     local index = math.random(0, #language_word_table.words[compound] - 1)
     return language_word_table.words[compound][index], language_word_table.parts[compound][index] --number, number
   end
   
   local name = unit.name
   --one of the last names is drawn from preferred words and the other from tolerated words. 50-50
-  if math.random(0, 1)==1 then 
+  if math.random(0, 1)==1 then
     name.words.FrontCompound, name.parts_of_speech.FrontCompound = randomWord(PREFERRED, FrontCompound)
     repeat
       name.words.RearCompound, name.parts_of_speech.RearCompound = randomWord(TOLERATED, RearCompound)
