@@ -42,7 +42,9 @@ Creates a unit.  Usage::
     -name entityRawName
         Set the unit's name to be a random name appropriate for the
         given entity. \\LOCAL can be specified instead to automatically
-        use the fort group entity in fortress mode only.
+        use the fort group entity in fortress mode only. Can be passed
+        empty to generate a wild name (random language, any words), i.e.
+        the type of name that animal people historical figures have.
         examples:
             MOUNTAIN
             EVIL
