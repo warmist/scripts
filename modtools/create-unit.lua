@@ -47,7 +47,7 @@ function createUnit(raceStr, casteStr, pos, locationRange, locationType, age, do
       qerror('Invalid duration (must be a number greater than 0): ' .. tostring(vanishDelay))
     end
   end
-  
+
   if entityRawName and entityRawName~="" then
     local isValidRawName
     for k,v in ipairs(df.global.world.raws.entities) do
@@ -642,12 +642,12 @@ function nameUnit(unit, entityRawName)
     translationIndex = validLanguages[choice][1]
     translation = validLanguages[choice][2]
   end
-  
+
   --language_word_table
   local PREFERRED -- words that the entity likes ([SELECT_SYMBOL])
   local TOLERATED -- all words except those that the entity dislikes ([CULL_SYMBOL])
   local FrontCompound, RearCompound, FirstName = 0, 1, 2  --indexes for language_word_table.words/.parts
-  
+
   if entity_raw then
     PREFERRED = entity_raw.symbols.symbols1.OTHER
     TOLERATED = entity_raw.symbols.symbols2.OTHER
@@ -655,12 +655,12 @@ function nameUnit(unit, entityRawName)
     PREFERRED = df.global.world.raws.language.word_table[0][35] -- a guess; this table has every word, and so do the ones at [0][37], [1][35] and [1][37]
     TOLERATED = PREFERRED
   end
-  
+
   function randomWord(language_word_table, compound)
     local index = math.random(0, #language_word_table.words[compound] - 1)
     return language_word_table.words[compound][index], language_word_table.parts[compound][index] --number, number
   end
-  
+
   local name = unit.name
   --one of the last names is drawn from preferred words and the other from tolerated words. 50-50
   if math.random(0, 1)==1 then
