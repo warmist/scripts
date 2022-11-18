@@ -16,6 +16,8 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `dwarf-op`: now displays the correct help documentation
+- `dwarf-op`: fixed bug in processing names
 - `gui/gm-unit`: fixed behavior of ``+`` and ``-`` again to adjust skill values instead of populating the search field
 - `gui/create-item`: restrict materials to those normally allowed by the game by default, introduce new ``--unrestricted`` option for full freedom in choosing materials
 - `warn-stealers`: fixed script not working because of an incorrect event name
