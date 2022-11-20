@@ -48,6 +48,15 @@ function QuantumUI:init()
             widgets.TooltipLabel{
                 text_to_wrap='Set the dump direction of the quantum stop.',
                 show_tooltip=true}}},
+        widgets.ResizingPanel{autoarrange_subviews=true, subviews={
+            widgets.ToggleHotkeyLabel{
+                view_id='refuse',
+                key='CUSTOM_R',
+                label='Allow refuse and corpses',
+                initial_option=false},
+            widgets.TooltipLabel{
+                text_to_wrap='Note that enabling refuse will cause clothes and armor in this stockpile to wear out quickly.',
+                show_tooltip=true}}},
         widgets.WrappedLabel{
             text_to_wrap=('%d minecart%s available: %s will be %s'):format(
                 cart_count, cart_count == 1 and '' or 's',
@@ -266,8 +275,9 @@ local function order_minecart(pos)
     quickfort_orders.create_orders(quickfort_ctx)
 end
 
-local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir)
-    local stats = quickfort.apply_blueprint{mode='place', data='c', pos=qsp_pos}
+local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir, allow_refuse)
+    local base_qsp = allow_refuse and 'yr' or 'c'
+    local stats = quickfort.apply_blueprint{mode='place', data=base_qsp, pos=qsp_pos}
     if stats.place_designated.value == 0 then
         error(('failed to place quantum stockpile at (%d, %d, %d)')
               :format(qsp_pos.x, qsp_pos.y, qsp_pos.z))
@@ -302,7 +312,8 @@ end
 function QuantumUI:commit(pos, qsp_pos)
     local name = self.subviews.name.text
     local trackstop_dir = self.subviews.dir:getOptionLabel():sub(1,1)
-    create_quantum(pos, qsp_pos, self.feeder_tiles, name, trackstop_dir)
+    local allow_refuse = self.subviews.refuse:getOptionValue()
+    create_quantum(pos, qsp_pos, self.feeder_tiles, name, trackstop_dir, allow_refuse)
 
     local message = nil
     if assign_minecarts.assign_minecart_to_last_route(true) then
