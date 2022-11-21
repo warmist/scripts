@@ -93,7 +93,9 @@ local function get_frequency_data(fname)
 end
 
 local function get_first_word(text)
-    return text:trim():split(' +')[1]
+    local word = text:trim():split(' +')[1]
+    if word:startswith(':') then word = word:sub(2) end
+    return word
 end
 
 command_bias = command_bias or get_frequency_data(BASE_FREQUENCY_FILE)
