@@ -52,10 +52,11 @@ function QuantumUI:init()
             widgets.ToggleHotkeyLabel{
                 view_id='refuse',
                 key='CUSTOM_R',
-                label='Allow refuse and corpses',
+                label='Allow refuse/corpses',
                 initial_option=false},
             widgets.TooltipLabel{
-                text_to_wrap='Note that enabling refuse will cause clothes and armor in this stockpile to wear out quickly.',
+                text_to_wrap='Note that enabling refuse will cause clothes' ..
+                    ' and armor in this stockpile to quickly rot away.',
                 show_tooltip=true}}},
         widgets.WrappedLabel{
             text_to_wrap=('%d minecart%s available: %s will be %s'):format(
@@ -275,9 +276,10 @@ local function order_minecart(pos)
     quickfort_orders.create_orders(quickfort_ctx)
 end
 
-local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir, allow_refuse)
-    local base_qsp = allow_refuse and 'yr' or 'c'
-    local stats = quickfort.apply_blueprint{mode='place', data=base_qsp, pos=qsp_pos}
+local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir,
+                              allow_refuse)
+    local dsg = allow_refuse and 'yr' or 'c'
+    local stats = quickfort.apply_blueprint{mode='place', data=dsg, pos=qsp_pos}
     if stats.place_designated.value == 0 then
         error(('failed to place quantum stockpile at (%d, %d, %d)')
               :format(qsp_pos.x, qsp_pos.y, qsp_pos.z))
