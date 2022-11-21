@@ -219,8 +219,8 @@ local function create_orders(orders)
         end
 
         if it["item_type"] then
-            local tmp = ensure_df_id(df.job_type, it["item_type"])
-            if not tmp or tmp == ensure_df_id(df.job_type, 'NONE') then
+            local tmp = ensure_df_id(df.item_type, it["item_type"])
+            if not tmp or tmp == ensure_df_id(df.item_type, 'NONE') then
                 qerror("Invalid item type for manager order: " .. it["item_type"])
             end
             order.item_type = tmp
