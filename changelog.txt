@@ -27,6 +27,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
+- `gui/launcher`: show help for commands that start with ':' (like ``:lua``)
 - `gui/quantum`: add option to allow corpses and refuse in your quantum stockpile
 - `modtools/create-unit`: better unit naming, more argument checks, assign nemesis save data for units without civilization so they can be properly saved when offloaded
 
