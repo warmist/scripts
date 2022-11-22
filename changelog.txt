@@ -23,10 +23,12 @@ that repo.
 - `warn-stealers`: fixed script not working because of an incorrect event name
 - `warn-stealers`: properly announce thieving creatures that spawn already revealed
 - `warn-stealers`: cache unit IDs instead of pointers to avoid potential crashes
+- `workorder`: fix interpretation of json-specified orders that set the ``item_type`` field
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
 - `gui/launcher`: show help for commands that start with ':' (like ``:lua``)
+- `gui/quantum`: add option to allow corpses and refuse in your quantum stockpile
 - `modtools/create-unit`: better unit naming, more argument checks, assign nemesis save data for units without civilization so they can be properly saved when offloaded
 
 ## Removed

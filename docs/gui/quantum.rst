@@ -27,8 +27,9 @@ stockpiles that will contain heavy items like corpses, furniture, or boulders.
 The UI will walk you through the steps:
 
 1) Select the feeder stockpile by clicking on it or selecting it with the cursor
-   and hitting Enter
-2) Configure the orientation of your quantum stockpile with the onscreen options
+   and hitting Enter.
+2) Configure the orientation of your quantum stockpile and select whether to
+   allow refuse and corpses with the onscreen options.
 3) Select a spot on the map to build the quantum stockpile by clicking on it or
    moving the cursor so the preview "shadow" is in the desired location. Then
    hit :kbd:`Enter`.

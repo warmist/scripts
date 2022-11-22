@@ -1,49 +1,5 @@
 -- interactively creates quantum stockpiles
 --@ module = true
---[====[
-
-gui/quantum
-===========
-This script provides a visual, interactive interface to make setting up quantum
-stockpiles much easier.
-
-Quantum stockpiles simplify fort management by allowing a small stockpile to
-contain an infinite number of items. This reduces the complexity of your storage
-design, lets your dwarves be more efficient, and increases FPS.
-
-Quantum stockpiles work by linking a "feeder" stockpile to a one-tile minecart
-hauling route. As soon as an item from the feeder stockpile is placed in the
-minecart, the minecart is tipped and all items land on an adjacent tile. The
-single-tile stockpile in that adjacent tile that holds all the items is your
-quantum stockpile.
-
-Before you run this script, create and configure your "feeder" stockpile. The
-size of the stockpile determines how many dwarves can be tasked with bringing
-items to this quantum stockpile. Somewhere between 1x3 and 5x5 is usually a good
-size.
-
-The script will walk you through the steps:
-1) Select the feeder stockpile
-2) Configure your quantum stockpile with the onscreen options
-3) Select a spot on the map to build the quantum stockpile
-
-If there are any minecarts available, one will be automatically associated with
-the hauling route. If you don't have a free minecart, ``gui/quantum`` will
-enqueue a manager order to make one for you. Once it is built, run
-``assign-minecarts all`` to assign it to the route, or enter the (h)auling menu
-and assign one manually. The quantum stockpile needs a minecart to function.
-
-Quantum stockpiles work much more efficiently if you add the following line to
-your ``onMapLoad.init`` file::
-
-    prioritize -a StoreItemInVehicle
-
-This prioritizes moving of items from the feeder stockpile to the minecart.
-Otherwise, the feeder stockpile can get full and block the quantum pipeline.
-
-See :wiki:`the wiki <Quantum_stockpile>` for more information on quantum
-stockpiles.
-]====]
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
@@ -91,6 +47,16 @@ function QuantumUI:init()
                          {label='West', value={x=-1}}}},
             widgets.TooltipLabel{
                 text_to_wrap='Set the dump direction of the quantum stop.',
+                show_tooltip=true}}},
+        widgets.ResizingPanel{autoarrange_subviews=true, subviews={
+            widgets.ToggleHotkeyLabel{
+                view_id='refuse',
+                key='CUSTOM_R',
+                label='Allow refuse/corpses',
+                initial_option=false},
+            widgets.TooltipLabel{
+                text_to_wrap='Note that enabling refuse will cause clothes' ..
+                    ' and armor in this stockpile to quickly rot away.',
                 show_tooltip=true}}},
         widgets.WrappedLabel{
             text_to_wrap=('%d minecart%s available: %s will be %s'):format(
@@ -310,8 +276,10 @@ local function order_minecart(pos)
     quickfort_orders.create_orders(quickfort_ctx)
 end
 
-local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir)
-    local stats = quickfort.apply_blueprint{mode='place', data='c', pos=qsp_pos}
+local function create_quantum(pos, qsp_pos, feeder_tiles, name, trackstop_dir,
+                              allow_refuse)
+    local dsg = allow_refuse and 'yr' or 'c'
+    local stats = quickfort.apply_blueprint{mode='place', data=dsg, pos=qsp_pos}
     if stats.place_designated.value == 0 then
         error(('failed to place quantum stockpile at (%d, %d, %d)')
               :format(qsp_pos.x, qsp_pos.y, qsp_pos.z))
@@ -346,7 +314,8 @@ end
 function QuantumUI:commit(pos, qsp_pos)
     local name = self.subviews.name.text
     local trackstop_dir = self.subviews.dir:getOptionLabel():sub(1,1)
-    create_quantum(pos, qsp_pos, self.feeder_tiles, name, trackstop_dir)
+    local allow_refuse = self.subviews.refuse:getOptionValue()
+    create_quantum(pos, qsp_pos, self.feeder_tiles, name, trackstop_dir, allow_refuse)
 
     local message = nil
     if assign_minecarts.assign_minecart_to_last_route(true) then
