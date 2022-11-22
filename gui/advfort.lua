@@ -1734,10 +1734,8 @@ function usetool:fieldInput(keys)
             end
             return code
         end
-        if code~="_STRING" and code~="_MOUSE_L" and code~="_MOUSE_R" then
-            if ALLOWED_KEYS[code] then
-                self:sendInputToParent(code)
-            end
+        if ALLOWED_KEYS[code] then
+            self:sendInputToParent(code)
         end
     end
 

@@ -265,7 +265,7 @@ function load_screen:onIdle()
 end
 
 function load_screen:onInput(keys)
-    if keys._MOUSE_L then
+    if keys._MOUSE_L_DOWN then
         return self:onMouseInput(df.global.gps.mouse_x, df.global.gps.mouse_y)
     end
     if self.search_active then

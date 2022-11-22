@@ -89,7 +89,7 @@ function ctable:onInput(keys)
         else
             dialog.showMessage('Error', err.message, COLOR_LIGHTRED)
         end
-    elseif keys._MOUSE_L then
+    elseif keys._MOUSE_L_DOWN then
         local gx = gps.mouse_x - self.frame_rect.x1 - 2
         local gy = gps.mouse_y - self.frame_rect.y1 - 4
         if gx >= 0 and gx <= 31 and gy >= 0 and gy <= 7 then

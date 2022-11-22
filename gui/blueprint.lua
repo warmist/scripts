@@ -488,7 +488,7 @@ function BlueprintUI:onInput(keys)
     if self:inputToSubviews(keys) then return true end
 
     local pos = nil
-    if keys._MOUSE_L then
+    if keys._MOUSE_L_DOWN then
         pos = dfhack.gui.getMousePos()
         if pos then
             guidm.setCursorPos(pos)
