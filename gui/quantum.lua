@@ -194,7 +194,7 @@ function QuantumUI:onInput(keys)
     self:propagateMoveKeys(keys)
 
     local pos = nil
-    if keys._MOUSE_L then
+    if keys._MOUSE_L_DOWN then
         pos = dfhack.gui.getMousePos()
         if pos then
             guidm.setCursorPos(pos)

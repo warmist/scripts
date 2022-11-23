@@ -296,7 +296,7 @@ function test.set_with_mouse()
     mock.patch(dfhack.gui, 'getMousePos', mock.func(pos),
         function()
             local view = load_ui()
-            view:onInput({_MOUSE_L=true})
+            view:onInput({_MOUSE_L_DOWN=true})
             expect.table_eq(pos, view.mark, comment)
             send_keys('LEAVESCREEN') -- cancel selection
             send_keys('LEAVESCREEN') -- cancel out of UI
