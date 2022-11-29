@@ -18,6 +18,7 @@ end
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
     viewscreens='dwarfmode',
+    overlay_only=true,
     overlay_onupdate_max_freq_seconds=30,
 }
 
