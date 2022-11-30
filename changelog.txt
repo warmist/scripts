@@ -1,7 +1,7 @@
 ===[[[
 This file contains changes specific to the scripts repo. See docs/changelog.txt
 in the dfhack repo for a full description, or
-https://docs.dfhack.org/en/latest/docs/Documentation.html#building-the-changelogs
+https://docs.dfhack.org/en/latest/docs/dev/Documentation.html#building-the-changelogs
 
 NOTE: currently, gen_changelog.py expects a "Future" section to exist at the
 top of this file (even if no changes are listed under it), or you will get a
@@ -14,19 +14,19 @@ that repo.
 # Future
 
 ## New Scripts
+- `gui/overlay`: configuration interface for the DFHack overlays and overlay widgets. includes a click-and-drag interface for repositioning widgets!
 
 ## Fixes
-- `dwarf-op`: now displays the correct help documentation
-- `dwarf-op`: fixed bug in processing names
-- `gui/gm-unit`: fixed behavior of ``+`` and ``-`` again to adjust skill values instead of populating the search field
-- `gui/create-item`: restrict materials to those normally allowed by the game by default, introduce new ``--unrestricted`` option for full freedom in choosing materials
-- `warn-stealers`: fixed script not working because of an incorrect event name
-- `warn-stealers`: properly announce thieving creatures that spawn already revealed
-- `warn-stealers`: cache unit IDs instead of pointers to avoid potential crashes
+- `dwarf-op`: fixed error when matching dwarves by name
+- `gui/gm-unit`: fixed behavior of ``+`` and ``-`` to adjust skill values instead of populating the search field
+- `warn-stealers`: register callback with correct event name so that units entering the map are detected
+- `warn-stealers`: announce thieving creatures that spawn already revealed
+- `warn-stealers`: cache unit IDs instead of unit objects to avoid referencing stale pointers
 - `workorder`: fix interpretation of json-specified orders that set the ``item_type`` field
 
 ## Misc Improvements
 - `gui/blueprint`: support new blueprint phases and options
+- `gui/create-item`: restrict materials to those normally allowed by the game by default, introduce new ``--unrestricted`` option for full freedom in choosing materials
 - `gui/launcher`: show help for commands that start with ':' (like ``:lua``)
 - `gui/quantum`: add option to allow corpses and refuse in your quantum stockpile
 - `modtools/create-unit`: better unit naming, more argument checks, assign nemesis save data for units without civilization so they can be properly saved when offloaded
