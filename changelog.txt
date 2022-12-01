@@ -14,6 +14,16 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 0.47.05-r8
+
+## New Scripts
 - `gui/overlay`: configuration interface for the DFHack overlays and overlay widgets. includes a click-and-drag interface for repositioning widgets!
 
 ## Fixes
