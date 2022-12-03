@@ -11,6 +11,7 @@ local b = reqscript('gui/blueprint')
 local blueprint = require('plugins.blueprint')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 
 function test.fail_if_no_map_loaded()
     local mock_is_map_loaded = mock.func(false)
@@ -311,11 +312,11 @@ function test.render_status_line()
     local status_text_pos = {x=status_label.frame_body.x1,
                              y=status_label.frame_body.y1}
     view:onRender()
-    expect.false_(status_label.visible)
+    expect.false_(utils.getval(status_label.visible))
     guidm.setCursorPos({x=10, y=20, z=30})
     send_keys('SELECT')
     view:onRender()
-    expect.true_(status_label.visible)
+    expect.true_(utils.getval(status_label.visible))
     expect.eq('1x1x1', get_screen_word(status_text_pos))
 
     send_keys('CURSOR_LEFT', 'CURSOR_DOWN', 'CURSOR_DOWN')
@@ -328,7 +329,7 @@ function test.render_status_line()
 
     send_keys('LEAVESCREEN') -- cancel selection
     view:onRender()
-    expect.false_(status_label.visible)
+    expect.false_(utils.getval(status_label.visible))
 
     send_keys('LEAVESCREEN') -- leave UI
 end
