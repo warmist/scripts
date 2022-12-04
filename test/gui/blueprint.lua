@@ -378,7 +378,7 @@ function test.name_no_collision()
             local name_help_text_pos = {x=name_help_label.frame_body.x1+2,
                                         y=name_help_label.frame_body.y1}
             view:onRender()
-            if name_help_label.visible then
+            if utils.getval(name_help_label.visible) then
                 expect.eq('Set', get_screen_word(name_help_text_pos))
             end
             send_keys('LEAVESCREEN') -- cancel ui
@@ -395,7 +395,7 @@ function test.name_no_collision()
             local name_help_text_pos = {x=name_help_label.frame_body.x1+2,
                                         y=name_help_label.frame_body.y1}
             view:onRender()
-            if name_help_label.visible then
+            if utils.getval(name_help_label.visible) then
                 expect.eq('Set', get_screen_word(name_help_text_pos),
                           'dirname does not conflict with similar filename')
             end
@@ -445,7 +445,7 @@ function test.phase_preset()
 
     for _,sv in ipairs(view.subviews.phases_panel.subviews) do
         if sv.label and sv.label ~= 'phases' and sv.label ~= 'toggle all' then
-            expect.true_(sv.visible)
+            expect.true_(utils.getval(sv.visible))
             -- only build should be on; everything else should be off
             expect.eq(sv.label == 'build', sv:getOptionValue())
         end
@@ -457,19 +457,19 @@ function test.phase_toggle_visible()
     local view = load_ui()
     for _,sv in ipairs(view.subviews.phases_panel.subviews) do
         if sv.label and sv.label ~= 'phases' then
-            expect.false_(sv.visible)
+            expect.false_(utils.getval(sv.visible))
         end
     end
     send_keys('CUSTOM_A')
     for _,sv in ipairs(view.subviews.phases_panel.subviews) do
         if sv.label and sv.label ~= 'phases' then
-            expect.true_(sv.visible)
+            expect.true_(utils.getval(sv.visible))
         end
     end
     send_keys('CUSTOM_A')
     for _,sv in ipairs(view.subviews.phases_panel.subviews) do
         if sv.label and sv.label ~= 'phases' then
-            expect.false_(sv.visible)
+            expect.false_(utils.getval(sv.visible))
         end
     end
     send_keys('LEAVESCREEN') -- leave UI
