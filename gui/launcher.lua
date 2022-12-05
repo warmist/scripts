@@ -665,6 +665,23 @@ function LauncherUI:onInput(keys)
     end
 end
 
+local function getAny(scr, thing)
+    if not scr._native or not scr._native.parent then return nil end
+    return dfhack.gui['getAny'..thing](scr._native.parent)
+end
+function LauncherUI:onGetSelectedUnit()
+    return getAny(self, 'Unit')
+end
+function LauncherUI:onGetSelectedItem()
+    return getAny(self, 'Item')
+end
+function LauncherUI:onGetSelectedBuilding()
+    return getAny(self, 'Building')
+end
+function LauncherUI:onGetSelectedPlant()
+    return getAny(self, 'Plant')
+end
+
 if dfhack_flags.module then
     return
 end
