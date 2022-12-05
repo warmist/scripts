@@ -1,6 +1,7 @@
 -- The DFHack in-game command launcher
 --@module=true
 
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
@@ -17,6 +18,8 @@ local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
 local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
 local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
 local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
+
+local TITLE = 'DFHack Launcher'
 
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
@@ -183,6 +186,7 @@ EditPanel.ATTRS{
     on_submit=DEFAULT_NIL,
     on_submit2=DEFAULT_NIL,
     on_toggle_minimal=DEFAULT_NIL,
+    prefix_visible=DEFAULT_NIL,
 }
 
 function EditPanel:init()
@@ -190,6 +194,11 @@ function EditPanel:init()
     self:reset_history_idx()
 
     self:addviews{
+        widgets.Label{
+            view_id='prefix',
+            frame={l=0, t=0},
+            text='[DFHack]#',
+            visible=self.prefix_visible},
         widgets.EditField{
             view_id='editfield',
             frame={l=1, t=1, r=1},
@@ -370,8 +379,7 @@ end
 
 MainPanel = defclass(MainPanel, widgets.Panel)
 MainPanel.ATTRS{
-    frame_title='DFHack Launcher',
-    frame_style=gui.GREY_LINE_FRAME,
+    frame_title=TITLE,
     frame_background=gui.CLEAR_PEN,
     get_minimal=DEFAULT_NIL,
 }
@@ -434,16 +442,26 @@ function LauncherUI:init(args)
     local update_frames = function()
         local new_frame = {l=5, r=5}
         if self.minimal then
+            new_frame.l = 0
+            new_frame.r = 0
             new_frame.t = 0
-            new_frame.h = EDIT_PANEL_HEIGHT + 2
+            new_frame.h = 1
         else
             new_frame.t = 5
             new_frame.b = 5
         end
         main_panel.frame = new_frame
+        main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil
 
-        self.subviews.edit.frame.r = self.minimal and
+        local edit_frame = self.subviews.edit.frame
+        edit_frame.r = self.minimal and
                 0 or AUTOCOMPLETE_PANEL_WIDTH+2
+        edit_frame.h = self.minimal and 1 or EDIT_PANEL_HEIGHT
+
+        local editfield_frame = self.subviews.editfield.frame
+        editfield_frame.t = self.minimal and 0 or 1
+        editfield_frame.l = self.minimal and 10 or 1
+        editfield_frame.r = self.minimal and 11 or 1
     end
 
     main_panel:addviews{
@@ -454,7 +472,7 @@ function LauncherUI:init(args)
             visible=function() return not self.minimal end},
         EditPanel{
             view_id='edit',
-            frame={t=0, l=0, h=EDIT_PANEL_HEIGHT},
+            frame={t=0, l=0},
             on_change=self:callback('on_edit_input'),
             on_submit=self:callback('run_command', true),
             on_submit2=self:callback('run_command', false),
@@ -462,7 +480,8 @@ function LauncherUI:init(args)
                 self.minimal = not self.minimal
                 update_frames()
                 self:updateLayout()
-            end},
+            end,
+            prefix_visible=function() return self.minimal end},
         HelpPanel{
             view_id='help',
             frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1},
@@ -600,6 +619,9 @@ function LauncherUI:run_command(reappear, command)
     local _,parent_addr = self._native.parent:sizeof()
     if not reappear or self.minimal or parent_addr ~= prev_parent_addr then
         self:dismiss()
+        if self.minimal and #output > 0 then
+            dialogs.showMessage(TITLE, output)
+        end
         return
     end
     -- reappear and show the command output
@@ -649,7 +671,7 @@ if view then
 else
     local args = {...}
     local minimal
-    if args[1] == '--minimal' then
+    if args[1] == '--minimal' or args[1] == '-m' then
         table.remove(args, 1)
         minimal = true
     end
