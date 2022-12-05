@@ -1,6 +1,7 @@
 -- The DFHack in-game command launcher
 --@module=true
 
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
@@ -17,6 +18,8 @@ local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
 local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
 local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
 local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
+
+local TITLE = 'DFHack Launcher'
 
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
@@ -130,14 +133,12 @@ function AutocompletePanel:init()
             frame={l=1, t=1},
             key='CHANGETAB',
             key_sep='/',
-            label='',
-            on_activate=self:callback('advance', 1)},
+            label=''},
         widgets.HotkeyLabel{
             frame={l=5, t=1},
             key='SEC_CHANGETAB',
             key_sep='',
-            label='',
-            on_activate=self:callback('advance', -1)},
+            label=''},
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
@@ -183,7 +184,9 @@ EditPanel = defclass(EditPanel, widgets.Panel)
 EditPanel.ATTRS{
     on_change=DEFAULT_NIL,
     on_submit=DEFAULT_NIL,
-    on_submit2=DEFAULT_NIL
+    on_submit2=DEFAULT_NIL,
+    on_toggle_minimal=DEFAULT_NIL,
+    prefix_visible=DEFAULT_NIL,
 }
 
 function EditPanel:init()
@@ -191,6 +194,11 @@ function EditPanel:init()
     self:reset_history_idx()
 
     self:addviews{
+        widgets.Label{
+            view_id='prefix',
+            frame={l=0, t=0},
+            text='[DFHack]#',
+            visible=self.prefix_visible},
         widgets.EditField{
             view_id='editfield',
             frame={l=1, t=1, r=1},
@@ -212,6 +220,11 @@ function EditPanel:init()
                     self.on_submit(self.subviews.editfield.text)
                 end
                 end},
+        widgets.HotkeyLabel{
+            frame={r=0, t=0, w=10},
+            key='CUSTOM_ALT_M',
+            label=string.char(31)..string.char(30),
+            on_activate=self.on_toggle_minimal},
         widgets.EditField{
             view_id='search',
             frame={l=13, t=3, r=1},
@@ -361,33 +374,122 @@ function HelpPanel:postComputeFrame()
 end
 
 ----------------------------------
--- LauncherUI
+-- MainPanel
 --
-LauncherUI = defclass(LauncherUI, gui.FramedScreen)
-LauncherUI.ATTRS{
-    frame_title='DFHack Launcher',
-    frame_style = gui.GREY_LINE_FRAME,
-    focus_path='launcher',
+
+MainPanel = defclass(MainPanel, widgets.Panel)
+MainPanel.ATTRS{
+    frame_title=TITLE,
+    frame_background=gui.CLEAR_PEN,
+    get_minimal=DEFAULT_NIL,
 }
 
-function LauncherUI:init()
+local H_SPLIT_PEN = dfhack.pen.parse{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{ch=202, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{ch=204, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{ch=185, fg=COLOR_GREY, bg=COLOR_BLACK}
+
+-- paint autocomplete panel border
+local function paint_vertical_border(rect)
+    local x = rect.x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
+    local y1, y2 = rect.y1, rect.y2
+    dfhack.screen.paintTile(TOP_SPLIT_PEN, x, y1)
+    dfhack.screen.paintTile(BOTTOM_SPLIT_PEN, x, y2)
+    for y=y1+1,y2-1 do
+        dfhack.screen.paintTile(V_SPLIT_PEN, x, y)
+    end
+end
+
+-- paint border between edit area and help area
+local function paint_horizontal_border(rect)
+    local panel_height = EDIT_PANEL_HEIGHT + 1
+    local x1, x2 = rect.x1, rect.x2
+    local v_border_x = x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
+    local y = rect.y1 + panel_height
+    dfhack.screen.paintTile(LEFT_SPLIT_PEN, x1, y)
+    dfhack.screen.paintTile(RIGHT_SPLIT_PEN, v_border_x, y)
+    for x=x1+1,v_border_x-1 do
+        dfhack.screen.paintTile(H_SPLIT_PEN, x, y)
+    end
+end
+
+function MainPanel:onRenderFrame(dc, rect)
+    MainPanel.super.onRenderFrame(self, dc, rect)
+    if self.get_minimal() then return end
+    paint_vertical_border(rect)
+    paint_horizontal_border(rect)
+end
+
+----------------------------------
+-- LauncherUI
+--
+LauncherUI = defclass(LauncherUI, gui.Screen)
+LauncherUI.ATTRS{
+    focus_path='launcher',
+    minimal=false,
+}
+
+function LauncherUI:init(args)
     self.firstword = ""
 
-    self:addviews{
+    local main_panel = MainPanel{
+        view_id='main',
+        get_minimal=function() return self.minimal end,
+    }
+
+    local update_frames = function()
+        local new_frame = {l=5, r=5}
+        if self.minimal then
+            new_frame.l = 0
+            new_frame.r = 0
+            new_frame.t = 0
+            new_frame.h = 1
+        else
+            new_frame.t = 5
+            new_frame.b = 5
+        end
+        main_panel.frame = new_frame
+        main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil
+
+        local edit_frame = self.subviews.edit.frame
+        edit_frame.r = self.minimal and
+                0 or AUTOCOMPLETE_PANEL_WIDTH+2
+        edit_frame.h = self.minimal and 1 or EDIT_PANEL_HEIGHT
+
+        local editfield_frame = self.subviews.editfield.frame
+        editfield_frame.t = self.minimal and 0 or 1
+        editfield_frame.l = self.minimal and 10 or 1
+        editfield_frame.r = self.minimal and 11 or 1
+    end
+
+    main_panel:addviews{
         AutocompletePanel{
             view_id='autocomplete',
             frame={t=0, r=0, w=AUTOCOMPLETE_PANEL_WIDTH},
-            on_autocomplete=self:callback('on_autocomplete')},
+            on_autocomplete=self:callback('on_autocomplete'),
+            visible=function() return not self.minimal end},
         EditPanel{
             view_id='edit',
-            frame={t=0, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+2, h=EDIT_PANEL_HEIGHT},
+            frame={t=0, l=0},
             on_change=self:callback('on_edit_input'),
             on_submit=self:callback('run_command', true),
-            on_submit2=self:callback('run_command', false)},
+            on_submit2=self:callback('run_command', false),
+            on_toggle_minimal=function()
+                self.minimal = not self.minimal
+                update_frames()
+                self:updateLayout()
+            end,
+            prefix_visible=function() return self.minimal end},
         HelpPanel{
             view_id='help',
-            frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1}},
+            frame={t=EDIT_PANEL_HEIGHT+2, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1},
+            visible=function() return not self.minimal end},
     }
+    self:addviews{main_panel}
+
+    update_frames()
 end
 
 function LauncherUI:update_help(text, firstword)
@@ -515,56 +617,24 @@ function LauncherUI:run_command(reappear, command)
     -- if we displayed a different screen, don't come back up even if reappear
     -- is true so the user can interact with the new screen.
     local _,parent_addr = self._native.parent:sizeof()
-    if not reappear or parent_addr ~= prev_parent_addr then
+    if not reappear or self.minimal or parent_addr ~= prev_parent_addr then
         self:dismiss()
+        if self.minimal and #output > 0 then
+            dialogs.showMessage(TITLE, output)
+        end
         return
     end
     -- reappear and show the command output
     self.subviews.edit:set_text('')
     self:on_edit_input('')
+    if #output == 0 then
+        output = 'Command finished successfully'
+    end
     self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
 end
 
-function LauncherUI:getWantedFrameSize()
-    local width, height = dfhack.screen.getWindowSize()
-    return math.max(76, width-10), math.max(24, height-10)
-end
-
-local H_SPLIT_PEN = dfhack.pen.parse{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{ch=202, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{ch=204, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{ch=185, fg=COLOR_GREY, bg=COLOR_BLACK}
-
--- paint autocomplete panel border
-local function paint_vertical_border(rect)
-    local x = rect.x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
-    local y1, y2 = rect.y1, rect.y2
-    dfhack.screen.paintTile(TOP_SPLIT_PEN, x, y1)
-    dfhack.screen.paintTile(BOTTOM_SPLIT_PEN, x, y2)
-    for y=y1+1,y2-1 do
-        dfhack.screen.paintTile(V_SPLIT_PEN, x, y)
-    end
-end
-
--- paint border between edit area and help area
-local function paint_horizontal_border(rect)
-    local panel_height = EDIT_PANEL_HEIGHT + 1
-    local x1, x2 = rect.x1, rect.x2
-    local v_border_x = x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
-    local y = rect.y1 + panel_height
-    dfhack.screen.paintTile(LEFT_SPLIT_PEN, x1, y)
-    dfhack.screen.paintTile(RIGHT_SPLIT_PEN, v_border_x, y)
-    for x=x1+1,v_border_x-1 do
-        dfhack.screen.paintTile(H_SPLIT_PEN, x, y)
-    end
-end
-
-function LauncherUI:onRenderFrame(dc, rect)
-    LauncherUI.super.onRenderFrame(self, dc, rect)
-    paint_vertical_border(rect)
-    paint_horizontal_border(rect)
+function LauncherUI:onRenderFrame()
+    self:renderParent()
 end
 
 function LauncherUI:onInput(keys)
@@ -583,6 +653,10 @@ function LauncherUI:onInput(keys)
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
         self:update_autocomplete(get_first_word(self.subviews.editfield.text))
+    elseif keys.CHANGETAB then
+        self.subviews.autocomplete:advance(1)
+    elseif keys.SEC_CHANGETAB then
+        self.subviews.autocomplete:advance(-1)
     end
 end
 
@@ -595,9 +669,14 @@ if view then
     -- hotkey a second time) should close the dialog
     view:dismiss()
 else
-    view = LauncherUI{}
-    view:show()
-    local initial_command = table.concat({...}, ' ')
+    local args = {...}
+    local minimal
+    if args[1] == '--minimal' or args[1] == '-m' then
+        table.remove(args, 1)
+        minimal = true
+    end
+    view = LauncherUI{minimal=minimal}:show()
+    local initial_command = table.concat(args, ' ')
     view.subviews.edit:set_text(initial_command)
     view:on_edit_input(initial_command)
 end

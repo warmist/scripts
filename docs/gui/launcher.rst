@@ -17,12 +17,15 @@ Usage
 ::
 
     gui/launcher [initial commandline]
+    gui/launcher -m|--minimal [initial commandline]
 
 Examples
 --------
 
 ``gui/launcher``
     Open the launcher dialog with a blank initial commandline.
+``gui/launcher --minimal``
+    Open the launcher dialog in minimal mode with a blank initial commandline.
 ``gui/launcher prospect --show ores,veins``
     Open the launcher dialog with the edit area pre-populated with the given
     command, ready for modification or running. Tools related to ``prospect``
@@ -35,8 +38,8 @@ Editing and running commands
 Enter the command you want to run by typing its name. If you want to start over,
 :kbd:`Ctrl`:kbd:`C` will clear the line. When you are happy with the command,
 hit :kbd:`Enter` or click on the ``run`` button to run it. Any output from the
-command will appear in the help area. If you want to run the command but close
-the dialog immediately so you can get back to the game, use
+command will appear in the help area after you run it. If you want to run the
+command but close the dialog immediately so you can get back to the game, use
 :kbd:`Shift`:kbd:`Enter` or hold down the :kbd:`Shift` key and click on the
 ``run`` button instead. The dialog also closes automatically if you run a
 command that brings up a new GUI screen. In any case, the command output will
