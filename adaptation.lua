@@ -66,7 +66,7 @@ local function set_adaptation_value(unit)
 end
 
 if args.all then
-    for k,v in ipairs(df.global.world.units.all) do 
+    for k,v in ipairs(df.global.world.units.all) do
         set_adaptation_value(v)
     end
 else
