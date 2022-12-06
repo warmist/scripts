@@ -39,7 +39,7 @@ end
 
 local funcs = {}
 
-funcs["booze"] = function() 
+funcs["booze"] = function()
     for _,p in ipairs(df.global.world.raws.plants.all) do
         for _,m in ipairs(p.material) do
             if m.flags.ALCOHOL and m.flags.EDIBLE_COOKED then
