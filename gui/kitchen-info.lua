@@ -252,6 +252,7 @@ local function drawPermissionsColumn(x, kitchen, firstVisibleIndex, numDisplayed
     local forbidden = kitchen.forbidden[kitchen.page]
 
     local unforbiddenColor = pluginCompatibility_tweak_kitchen_prefs_color_isEnabled() and COLOR_LIGHTGREEN or COLOR_LIGHTBLUE
+
     for i = 0, numDisplayedItems - 1 do
         local index = firstVisibleIndex + i
 
