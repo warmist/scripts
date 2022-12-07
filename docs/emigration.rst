@@ -21,10 +21,4 @@ Usage
 
 ::
 
-    emigration enable|disable
-
-Example
--------
-
-``emigration enable``
-    Start the emigration game mechanic.
+    enable emigration
