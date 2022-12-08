@@ -1,28 +1,7 @@
 -- Original opening comment before lua adaptation
 -- View or set cavern adaptation levels
 -- based on removebadthoughts.rb
-
 -- Rewritten by TBSTeun using OpenAI GPT from adaptation.rb
-
-local help = [====[
-
-adaptation
-==========
-View or set level of cavern adaptation for the selected unit or the whole fort.
-
-Usage::
-
-    adaptation <show|set> <him|all> [value]
-
-The ``value`` must be between 0 and 800,000 (inclusive).
-
-]====]
-
--- Color constants, values mapped to color_value enum in include/ColorText.h
-local COLOR_RESET = -1
-local COLOR_GREEN = 2
-local COLOR_RED = 4
-local COLOR_YELLOW = 14
 
 local function print_color(color, s)
     dfhack.color(color)
@@ -31,49 +10,17 @@ local function print_color(color, s)
 end
 
 local function usage(s)
-    if s ~= nil then
+    if s then
         print(s)
     end
-    print("Usage: adaptation <show|set> <him|all> [value]")
+    print(dfhack.script_help())
 end
-
-local args = {...}
-
-local mode = args[1] or "help"
-local who = args[2]
-local value = args[3]
-
-if mode == "help" then
-    usage()
-elseif mode ~= "show" and mode ~= "set" then
-    usage("Invalid mode '" .. mode .. "': must be either 'show' or 'set'")
-end
-
-if who == nil then
-    usage("Target not specified")
-elseif who ~= "him" and who ~= "all" then
-    usage("Invalid target '" .. who .. "'")
-end
-
-if mode == "set" then
-    if value == nil then
-        usage("Value not specified")
-    elseif not tonumber(value) then
-        usage("Invalid value '" .. value .. "'")
-    end
-
-    if tonumber(value) < 0 or tonumber(value) > 800000 then
-        usage("Value must be between 0 and 800000")
-    end
-    value = tonumber(value)
-
-end
-
-local num_set = 0
 
 local function set_adaptation_value(unit, v)
+    local num_set = 0
+
     if not dfhack.units.isCitizen(unit) or unit.flags2.killed then
-        return
+        return num_set
     end
     local trait_found = false
     for _, t in ipairs(unit.status.misc_traits) do
@@ -109,18 +56,53 @@ local function set_adaptation_value(unit, v)
             print("Unit " .. unit.id .. " (" .. dfhack.TranslateName(dfhack.units.getVisibleName(unit)) .. ") changed from 0 to " .. v)
         end
     end
+
+    return num_set
+end
+
+local args = {...}
+
+local mode = args[1] or "help"
+local who = args[2]
+local value = args[3]
+
+if mode == "help" then
+    usage()
+elseif mode ~= "show" and mode ~= "set" then
+    usage("Invalid mode '" .. mode .. "': must be either 'show' or 'set'")
+end
+
+if not(who) then
+    usage("Target not specified")
+elseif who ~= "him" and who ~= "all" then
+    usage("Invalid target '" .. who .. "'")
+end
+
+if mode == "set" then
+    if not(value) then
+        usage("Value not specified")
+    elseif not tonumber(value) then
+        usage("Invalid value '" .. value .. "'")
+    end
+
+    if tonumber(value) < 0 or tonumber(value) > 800000 then
+        usage("Value must be between 0 and 800000")
+    end
+    value = tonumber(value)
+
 end
 
 if who == "him" then
     local u = dfhack.gui.getSelectedUnit(true)
+    local num_set = 0
     if u then
-        set_adaptation_value(u, value)
+        num_set = set_adaptation_value(u, value)
     else
         print('Please select a dwarf ingame')
     end
 elseif who == "all" then
     for _, uu in ipairs(df.global.world.units.all) do
-        set_adaptation_value(uu, value)
+        num_set = set_adaptation_value(uu, value)
     end
     if num_set > 0 then
         print(num_set .. " units changed")
