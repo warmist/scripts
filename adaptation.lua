@@ -65,7 +65,7 @@ if mode == 'help' then
     usage()
     return
 elseif mode ~= 'show' and mode ~= 'set' then
-    usage(('Invalid mode %s: must be either \'show\' or \'set\''):format(mode))
+    usage(('Invalid mode %s: must be either "show" or "set"'):format(mode))
     return
 end
 
@@ -92,19 +92,16 @@ if mode == 'set' then
     end
 end
 
-local num_set = 0
-
-print("who")
-
 if who == 'him' then
     local u = dfhack.gui.getSelectedUnit(true)
     if u then
-        num_set = set_adaptation_value(u, value)
+        set_adaptation_value(u, value)
     else
         dfhack.printerr('Please select a dwarf ingame')
     end
 elseif who == 'all' then
-    print("all")
+    local num_set = 0
+
     for _, uu in ipairs(df.global.world.units.all) do
         num_set = num_set + set_adaptation_value(uu, value)
     end
