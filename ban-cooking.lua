@@ -1,20 +1,10 @@
 -- convenient way to ban cooking categories of food
 -- based on ban-cooking.rb by Putnam: https://github.com/DFHack/scripts/pull/427/files
 -- Putnams work completed by TBSTeun
---[====[
 
-ban-cooking
-===========
-A more convenient way to ban cooking various categories of foods than the
-kitchen interface.  Usage:  ``ban-cooking <type>``.  Valid types are ``booze``,
-``honey``, ``tallow``, ``oil``, ``seeds`` (non-tree plants with seeds),
-``brew``, ``fruit``, ``mill``, ``thread``, and ``milk``.
+local kitchen = df.global.ui.kitchen
 
-]====]
-
-kitchen = df.global.ui.kitchen
-
-already_banned = {}
+local already_banned = {}
 
 local function already_banned_has_key(key)
     for k, v in pairs(already_banned) do
@@ -24,18 +14,6 @@ local function already_banned_has_key(key)
     end
 
     return false
-end
-
--- Iterate over the elements of the kitchen.item_types list
-for i = 0, #kitchen.item_types - 1 do
-    -- Check if the kitchen.exc_types[i] element is equal to :Cook
-    if kitchen.exc_types[i] == df.kitchen_exc_type.Cook then
-        -- Add a new element to the already_banned dictionary
-        already_banned_key = {kitchen.mat_types[i], kitchen.mat_indices[i], kitchen.item_types[i], kitchen.item_subtypes[i]}
-        if not(already_banned_has_key(already_banned_key)) then
-            already_banned[already_banned_key] = true
-        end
-    end
 end
 
 local function reaction_product_id_contains(reaction_product, str)
@@ -49,7 +27,7 @@ local function reaction_product_id_contains(reaction_product, str)
 end
 
 local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
-    key = mat_type, mat_index, type, subtype
+    local key = mat_type
     -- Skip adding a new entry further below, if the item is already banned.
     if already_banned[key] then
         return
@@ -64,9 +42,21 @@ local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
     already_banned[key] = true
 end
 
+-- Iterate over the elements of the kitchen.item_types list
+for i = 0, #kitchen.item_types - 1 do
+    -- Check if the kitchen.exc_types[i] element is equal to :Cook
+    if kitchen.exc_types[i] == df.kitchen_exc_type.Cook then
+        -- Add a new element to the already_banned dictionary
+        already_banned_key = {kitchen.mat_types[i], kitchen.mat_indices[i], kitchen.item_types[i], kitchen.item_subtypes[i]}
+        if not(already_banned_has_key(already_banned_key)) then
+            already_banned[already_banned_key] = true
+        end
+    end
+end
+
 local funcs = {}
 
-funcs["booze"] = function()
+funcs.booze = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
         for _, m in ipairs(p.material) do
             if m.flags.ALCOHOL and m.flags.EDIBLE_COOKED then
@@ -85,12 +75,12 @@ funcs["booze"] = function()
     end
 end
 
-funcs["honey"] = function()
+funcs.honey = function()
     local mat = dfhack.matinfo.find("CREATURE:HONEY_BEE:HONEY")
     ban_cooking('honey bee honey', mat.type, mat.index, df.item_type.LIQUID_MISC, -1)
 end
 
-funcs["tallow"] = function()
+funcs.tallow = function()
     for _, c in ipairs(df.global.world.raws.creatures.all) do
         for _, m in ipairs(c.material) do
             if m.flags.EDIBLE_COOKED then
@@ -106,7 +96,7 @@ funcs["tallow"] = function()
     end
 end
 
-funcs["milk"] = function()
+funcs.milk = function()
     for _, c in ipairs(df.global.world.raws.creatures.all) do
         for _, m in ipairs(c.material) do
             if m.flags.EDIBLE_COOKED then
@@ -122,7 +112,7 @@ funcs["milk"] = function()
     end
 end
 
-funcs["oil"] = function()
+funcs.oil = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
         for _, m in ipairs(p.material) do
             if m.flags.EDIBLE_COOKED then
@@ -138,74 +128,76 @@ funcs["oil"] = function()
     end
 end
 
-funcs["seeds"] = function()
+funcs.seeds = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
-        if p.material_defs.type.seed ~= -1 and p.material_defs.idx.seed ~= -1 and not p.flags.TREE then
-            ban_cooking(p.name + ' seeds', p.material_defs.type.seed, p.material_defs.idx.seed, df.item_type.SEEDS, -1)
-            for _, m in ipairs(p.material) do
-                if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
-                    local has_drink = false
-                    local has_seed = false
-                    for _, s in ipairs(m.reaction_product.id) do
-                        has_seed = has_seed or s.value == "SEED_MAT"
-                        has_drink = has_drink or s.value == "DRINK_MAT"
-                    end
-                    if has_seed and has_drink then
+        if p.material_defs.type.seed == -1 or p.material_defs.idx.seed == -1 or p.flags.TREE then goto continue end
+        ban_cooking(p.name .. ' seeds', p.material_defs.type.seed, p.material_defs.idx.seed, df.item_type.SEEDS, -1)
+        for _, m in ipairs(p.material) do
+            if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
+                local has_drink = false
+                local has_seed = false
+                for _, s in ipairs(m.reaction_product.id) do
+                    has_seed = has_seed or s.value == "SEED_MAT"
+                    has_drink = has_drink or s.value == "DRINK_MAT"
+                end
+                if has_seed and has_drink then
+                    local matinfo = dfhack.matinfo.find(p.id, m.id)
+                    ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT, -1)
+                end
+            end
+        end
+        for k, g in ipairs(p.growths) do
+            local matinfo = dfhack.matinfo.decode(g)
+            local m = matinfo.material
+            if m.flags.EDIBLE_COOKED then
+                local has_drink = false
+                local has_seed = false
+                for _, s in ipairs(m.reaction_product.id) do
+                    has_seed = has_seed or s.value == "SEED_MAT"
+                    has_drink = has_drink or s.value == "DRINK_MAT"
+                end
+                if has_seed and has_drink then
+                    ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT_GROWTH, k)
+                end
+            end
+        end
+
+        ::continue::
+    end
+end
+
+funcs.brew = function()
+    for _, p in ipairs(df.global.world.raws.plants.all) do
+        if p.material_defs.type.drink == -1 or p.material_defs.idx.drink == -1 then goto continue end
+        for _, m in ipairs(p.material) do
+            if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
+                for _, s in ipairs(m.reaction_product.id) do
+                    if s.value == "DRINK_MAT" then
                         local matinfo = dfhack.matinfo.find(p.id, m.id)
                         ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT, -1)
+                        break
                     end
                 end
             end
-            for k, g in ipairs(p.growths) do
-                local matinfo = dfhack.matinfo.decode(g)
-                local m = matinfo.material
-                if m.flags.EDIBLE_COOKED then
-                    local has_drink = false
-                    local has_seed = false
-                    for _, s in ipairs(m.reaction_product.id) do
-                        has_seed = has_seed or s.value == "SEED_MAT"
-                        has_drink = has_drink or s.value == "DRINK_MAT"
-                    end
-                    if has_seed and has_drink then
+        end
+        for k, g in ipairs(p.growths) do
+            local matinfo = dfhack.matinfo.decode(g)
+            local m = matinfo.material
+            if m.flags.EDIBLE_COOKED then
+                for _, s in ipairs(m.reaction_product.id) do
+                    if s.value == "DRINK_MAT" then
                         ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT_GROWTH, k)
+                        break
                     end
                 end
             end
         end
+
+        ::continue::
     end
 end
 
-funcs["brew"] = function()
-    for _, p in ipairs(df.global.world.raws.plants.all) do
-        if p.material_defs.type.drink ~= -1 and p.material_defs.idx.drink ~= -1 then
-            for _, m in ipairs(p.material) do
-                if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
-                    for _, s in ipairs(m.reaction_product.id) do
-                        if s.value == "DRINK_MAT" then
-                            local matinfo = dfhack.matinfo.find(p.id, m.id)
-                            ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT, -1)
-                            break
-                        end
-                    end
-                end
-            end
-            for k, g in ipairs(p.growths) do
-                local matinfo = dfhack.matinfo.decode(g)
-                local m = matinfo.material
-                if m.flags.EDIBLE_COOKED then
-                    for _, s in ipairs(m.reaction_product.id) do
-                        if s.value == "DRINK_MAT" then
-                            ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT_GROWTH, k)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-funcs["mill"] = function()
+funcs.mill = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
         if p.material_defs.idx.mill ~= -1 then
             for _, m in ipairs(p.material) do
@@ -218,37 +210,38 @@ funcs["mill"] = function()
     end
 end
 
-funcs["thread"] = function()
+funcs.thread = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
-        if p.material_defs.idx.thread ~= -1 then
-            for _, m in ipairs(p.material) do
-                if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
-                    for _, s in ipairs(m.reaction_product.id) do
-                        if s.value == "THREAD" then
-                            local matinfo = dfhack.matinfo.find(p.id, m.id)
-                            ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT, -1)
-                            break
-                        end
-                    end
-                end
-            end
-            for k, g in ipairs(p.growths) do
-                local matinfo = dfhack.matinfo.decode(g)
-                local m = matinfo.material
-                if m.flags.EDIBLE_COOKED then
-                    for _, s in ipairs(m.reaction_product.id) do
-                        if s.value == "THREAD" then
-                            ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT_GROWTH, k)
-                            break
-                        end
+        if p.material_defs.idx.thread == -1 then goto continue end
+        for _, m in ipairs(p.material) do
+            if m.id == "STRUCTURAL" and m.flags.EDIBLE_COOKED then
+                for _, s in ipairs(m.reaction_product.id) do
+                    if s.value == "THREAD" then
+                        local matinfo = dfhack.matinfo.find(p.id, m.id)
+                        ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT, -1)
+                        break
                     end
                 end
             end
         end
+        for k, g in ipairs(p.growths) do
+            local matinfo = dfhack.matinfo.decode(g)
+            local m = matinfo.material
+            if m.flags.EDIBLE_COOKED then
+                for _, s in ipairs(m.reaction_product.id) do
+                    if s.value == "THREAD" then
+                        ban_cooking(p.name .. ' ' .. m.id, matinfo.type, matinfo.index, df.item_type.PLANT_GROWTH, k)
+                        break
+                    end
+                end
+            end
+        end
+
+        ::continue::
     end
 end
 
-funcs["fruit"] = function()
+funcs.fruit = function()
     for _, p in ipairs(df.global.world.raws.plants.all) do
         for k, g in ipairs(p.growths) do
             local matinfo = dfhack.matinfo.decode(g)
@@ -265,9 +258,9 @@ funcs["fruit"] = function()
     end
 end
 
-funcs["show"] = function()
+funcs.show = function()
     -- First put together a dictionary/hash table
-    type_list = {}
+    local type_list = {}
     -- cycle through all plants
     for i, p in ipairs(df.global.world.raws.plants.all) do
         -- The below three if statements initialize the dictionary/hash tables for their respective (cookable) plant/drink/seed
@@ -312,15 +305,15 @@ funcs["show"] = function()
         type_list[key_seed]["subtype"] = -1
 
         for r, g in ipairs(p.growths) do
-            matinfo = dfhack.matinfo.decode(g)
-            m = matinfo.material
+            local matinfo = dfhack.matinfo.decode(g)
+            local m = matinfo.material
 
             if m.flags["EDIBLE_COOKED"] and m.flags["LEAF_MAT"] then
                 for j, s in ipairs(p.material) do
                     if m.id == s.id then
 
                         -- need to create a key to reference values in the types_list dictionary.
-                        key_matinfo_type = matinfo.type .. i
+                        local key_matinfo_type = matinfo.type .. i
 
                         if not(type_list[key_matinfo_type]) then
                             type_list[key_matinfo_type] = {}
@@ -342,10 +335,7 @@ funcs["show"] = function()
     for i, c in ipairs(df.global.world.raws.creatures.all) do
         for j, m in ipairs(c.material) do
             -- need to create a key to reference values in the types_list dictionary.
-            key_matinfo_type = j + matinfo.type .. i
-
-            -- print(key_matinfo_type[1])
-            -- print(key_matinfo_type[2])
+            local key_matinfo_type = j + matinfo.type .. i
 
             if m.reaction_product and m.reaction_product.id and reaction_product_id_contains(m.reaction_product, "CHEESE_MAT") then
                 if not(type_list[key_matinfo_type]) then
@@ -372,43 +362,41 @@ funcs["show"] = function()
         end
     end
 
-    iterator = 0
-
-    output = {}
+    local output = {}
 
     for i, b in pairs(already_banned) do
         -- initialize our output string with the array entry position (largely stays the same for each item on successive runs, except when items are added/removed)
-        output[iterator] = ''
+        local cur = ''
         -- initialize our key for accessing our stored items info
-        key = i[1] .. i[2]
+        local key = i[1] .. i[2]
 
         -- It shouldn't be possible for there to not be a matching key entry by this point, but we'll be kinda safe here
         if type_list[key] then -- TODO: key is stored as reference type, by creating a new key with \|/
             -- equal values the reference is different and thus no result will be found.
             -- Add the item name to the first part of the string
-            output[iterator] = type_list[key]['text'] .. ' |type '
+            cur = type_list[key]['text'] .. ' |type '
 
             if type_list[key]['type'] == df.item_type[i[3]] then
-                output[iterator] = output[iterator] .. 'match: ' .. type_list[key]['type']
+                cur = cur .. 'match: ' .. type_list[key]['type']
             else
                 -- Aw crap.  The item type we EXpected doesn't match up with the ACtual item type.
-                output[iterator] = output[iterator] .. "error: ex;" .. type_list[key]["type"] .. "/ac;" .. df.item_type[i[3]]
+                cur = cur .. "error: ex;" .. type_list[key]["type"] .. "/ac;" .. df.item_type[i[3]]
             end
 
-            output[iterator] = output[iterator] .. "|subtype "
+            cur = cur .. "|subtype "
             if type_list[key]["subtype"] == i[4] then
                 -- item sub type is a match, so we print that it's a match, as well as the item subtype index number (-1 means there is no subtype for this item)
-                output[iterator] = output[iterator] .. "match: " .. type_list[key]["subtype"]
+                cur = cur .. "match: " .. type_list[key]["subtype"]
             else
                 -- Something went wrong, and the EXpected item subtype index value doesn't match the ACtual index value
-                output[iterator] = output[iterator] .. "error: ex;" .. type_list[key]["subtype"] .. "/ac;" .. i[4]
+                cur = cur .. "error: ex;" .. type_list[key]["subtype"] .. "/ac;" .. i[4]
             end
         else
             -- There's no entry for this item in our calculated list of cookable items.  So, it's not a plant, alcohol, tallow, or milk.  It's likely that it's a meat that has been banned.
-            output[iterator] = output[iterator] .. '|"' .. '[' .. i[1] .. ', ' .. i[2] .. ']' .. ' unknown banned material type (meat?) " ' .. '|item type: "' .. tostring(df.item_type[i[3]]) .. '"|item subtype: "' .. tostring(i[4])
+            cur = cur .. '|"' .. '[' .. i[1] .. ', ' .. i[2] .. ']' .. ' unknown banned material type (meat?) " ' .. '|item type: "' .. tostring(df.item_type[i[3]]) .. '"|item subtype: "' .. tostring(i[4])
         end
 
-        iterator = iterator + 1
+        table.insert(output, cur)
     end
 
     table.sort(output, function(a, b) return a < b end)
@@ -419,21 +407,20 @@ funcs["show"] = function()
 end
 
 if ... == "help" then
-    print("ban-cooking booze  - bans cooking of drinks")
-    print("ban-cooking honey  - bans cooking of honey bee honey")
-    print("ban-cooking tallow - bans cooking of tallow")
-    print("ban-cooking milk   - bans cooking of creature liquids that can be turned into cheese")
-    print("ban-cooking oil    - bans cooking of oil")
-    print("ban-cooking seeds  - bans cooking of plants that have farmable seeds and that can be brewed into alcohol (eating raw plants to get seeds is rather slow)")
-    print("ban-cooking brew   - bans cooking of all plants (fruits too) that can be brewed into alcohol")
-    print("ban-cooking fruit  - bans cooking of only fruits that can be brewed into alcohol")
-    print("ban-cooking mill   - bans cooking of plants that can be milled into powder -- should any actually exist")
-    print("ban-cooking thread - bans cooking of plants that can be spun into thread -- should any actually exist")
+    print(dfhack.script_help())
+end
+
+if ... == 'all' then
+    for _, v in pairs(funcs) do
+        if _ ~= 'show' then
+            funcs[_]()
+        end
+    end
 end
 
 local args = {...}
 
-for k, v in ipairs({...}) do
+for _, v in ipairs(args) do
     if funcs[v] then
         funcs[v]()
     end
