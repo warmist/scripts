@@ -592,6 +592,20 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     update_handlers()
 end
 
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        clear_watched_job_matchers=clear_watched_job_matchers,
+        on_new_job=on_new_job,
+        status=status,
+        boost=boost,
+        boost_and_watch=boost_and_watch,
+        remove_watch=remove_watch,
+        print_current_jobs=print_current_jobs,
+        print_registry=print_registry,
+        parse_commandline=parse_commandline,
+    }
+end
+
 if dfhack_flags.module then
     return
 end
@@ -615,17 +629,3 @@ local opts = parse_commandline({...})
 if opts.help then print(dfhack.script_help()) return end
 opts.action(opts.job_matchers, opts)
 persist_state()
-
-if dfhack.internal.IN_TEST then
-    unit_test_hooks = {
-        clear_watched_job_matchers=clear_watched_job_matchers,
-        on_new_job=on_new_job,
-        status=status,
-        boost=boost,
-        boost_and_watch=boost_and_watch,
-        remove_watch=remove_watch,
-        print_current_jobs=print_current_jobs,
-        print_registry=print_registry,
-        parse_commandline=parse_commandline,
-    }
-end
