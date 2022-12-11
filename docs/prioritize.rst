@@ -32,13 +32,16 @@ Usage
 ::
 
     prioritize [<options>] [defaults|<job_type> ...]
+    disable prioritize
 
 Examples
 --------
 
 ``prioritize``
     Print out which job types are being automatically prioritized and how many
-    jobs of each type we have prioritized since we started watching them.
+    jobs of each type we have prioritized since we started watching them. The
+    counts are saved with your game, so they will be accurate even if the game
+    has been saved and reloaded since ``prioritize`` was started.
 ``prioritize -a defaults``
     Prioritize the default set of job types that the community has suggested and
     playtested (see below for details).
@@ -48,6 +51,8 @@ Examples
     Prioritize all current building construction and destruction jobs.
 ``prioritize -a --haul-labor=Food,Body StoreItemInStockpile``
     Prioritize all current and future food and corpse hauling jobs.
+``disable prioritize``
+    Remove all job types from the watch list and clear tracking data.
 
 Options
 -------

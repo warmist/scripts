@@ -1,8 +1,13 @@
 -- Automatically boost the priority of selected job types.
 --@module = true
+--@enable = true
 
 local argparse = require('argparse')
+local json = require('json')
 local eventful = require('plugins.eventful')
+local persist = require('persist-table')
+
+local GLOBAL_KEY = 'prioritize' -- used for state change hooks and persistence
 
 local DEFAULT_HAUL_LABORS = {'Food', 'Body', 'Animals'}
 local DEFAULT_REACTION_NAMES = {'TAN_A_HIDE'}
@@ -37,6 +42,19 @@ function get_watched_job_matchers() return g_watched_job_matchers end
 
 eventful.enableEvent(eventful.eventType.UNLOAD, 1)
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 5)
+
+local function has_elements(collection)
+    for _,_ in pairs(collection) do return true end
+    return false
+end
+
+function isEnabled()
+    return has_elements(get_watched_job_matchers())
+end
+
+local function persist_state()
+    persist.GlobalTable[GLOBAL_KEY] = json.encode(get_watched_job_matchers())
+end
 
 local function make_matcher_map(keys)
     if not keys then return nil end
@@ -89,19 +107,12 @@ local function on_new_job(job)
             local rms = jm.reaction_matchers
             rms[job.reaction_name] = rms[job.reaction_name] + 1
         end
+        persist_state()
     end
-end
-
-local function has_elements(collection)
-    for _,_ in pairs(collection) do return true end
-    return false
 end
 
 local function clear_watched_job_matchers()
     local watched_job_matchers = get_watched_job_matchers()
-    if has_elements(watched_job_matchers) then
-        print('map unloaded: cleared watched job types for prioritize script')
-    end
     for job_type in pairs(watched_job_matchers) do
         watched_job_matchers[job_type] = nil
     end
@@ -572,13 +583,38 @@ local function parse_commandline(args)
     return opts
 end
 
-if not dfhack_flags.module then
-    -- main script
-    local opts = parse_commandline({...})
-    if opts.help then print(dfhack.script_help()) return end
-
-    opts.action(opts.job_matchers, opts)
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+    g_watched_job_matchers = persisted_data or {}
+    update_handlers()
 end
+
+if dfhack_flags.module then
+    return
+end
+
+if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+    dfhack.printerr('prioritize needs a loaded fortress map to work')
+    return
+end
+
+if dfhack_flags.enable then
+    if dfhack_flags.enable_state then
+        print('please use "prioritize -a" to add job types to the watch list')
+    else
+        clear_watched_job_matchers()
+        persist_state()
+    end
+    return
+end
+
+local opts = parse_commandline({...})
+if opts.help then print(dfhack.script_help()) return end
+opts.action(opts.job_matchers, opts)
+persist_state()
 
 if dfhack.internal.IN_TEST then
     unit_test_hooks = {
