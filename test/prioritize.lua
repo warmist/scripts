@@ -1,4 +1,5 @@
 local eventful = require('plugins.eventful')
+local persist = require('persist-table')
 local prioritize = reqscript('prioritize')
 local utils = require('utils')
 local p = prioritize.unit_test_hooks
@@ -17,6 +18,7 @@ local function get_mock_reactions() return mock_reactions end
 local function test_wrapper(test_fn)
     mock.patch({{eventful, 'onUnload', mock_eventful_onUnload},
                 {eventful, 'onJobInitiated', mock_eventful_onJobInitiated},
+                {persist, 'GlobalTable', {}},
                 {prioritize, 'print', mock_print},
                 {prioritize, 'get_watched_job_matchers',
                  get_mock_watched_job_matchers},
