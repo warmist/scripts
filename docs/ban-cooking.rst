@@ -12,16 +12,13 @@ Usage
 -----
 
 ::
-    ban-cooking <type|all|show>
+    ban-cooking <type|all> [<type> ...]
 
 Valid types are ``booze``, ``brew``, ``fruit``, ``honey``, ``milk``, ``mill``,
 ``oil``, ``seeds`` (i.e. non-tree plants with seeds), ``tallow``, and
-``thread``. It is possible to include multiple types in a single ban-cooking
-call: ``ban-cooking oil tallow`` will ban both oil and tallow from cooking.
-
-Using ``ban-cooking all`` will ban all types from being cooked.
-
-Using ``ban-cooking show`` will display all types of food that have been banned.
+``thread``. It is possible to include multiple types or all types in a single ban-cooking
+call: ``ban-cooking oil tallow`` will ban both oil and tallow from cooking. 
+``ban-cooking all`` will ban all types from cooking.
 
 Examples::
 

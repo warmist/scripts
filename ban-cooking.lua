@@ -6,14 +6,8 @@ local kitchen = df.global.ui.kitchen
 
 local already_banned = {}
 
-local function already_banned_has_key(key)
-    for k, v in pairs(already_banned) do
-        if k[1] == key[1] and k[2] == key[2] and k[3] == key[3] and k[4] == key[4] then
-            return true
-        end
-    end
-
-    return false
+local function make_key(mat_type, mat_index, type, subtype)
+    return ('%s:%s:%s:%s'):format(mat_type, mat_index, type, subtype)
 end
 
 local function reaction_product_id_contains(reaction_product, str)
@@ -27,7 +21,7 @@ local function reaction_product_id_contains(reaction_product, str)
 end
 
 local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
-    local key = mat_type
+    local key = make_key(mat_type, mat_index, type, subtype)
     -- Skip adding a new entry further below, if the item is already banned.
     if already_banned[key] then
         return
@@ -39,7 +33,13 @@ local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
     kitchen.item_types:insert('#', type)
     kitchen.item_subtypes:insert('#', subtype)
     kitchen.exc_types:insert('#', df.kitchen_exc_type.Cook)
-    already_banned[key] = true
+
+    already_banned[key] = {}
+    already_banned[key].isBanned = true
+    already_banned[key].mat_type = mat_type
+    already_banned[key].mat_index = mat_index
+    already_banned[key].type = type
+    already_banned[key].subtype = subtype
 end
 
 -- Iterate over the elements of the kitchen.item_types list
@@ -47,9 +47,14 @@ for i = 0, #kitchen.item_types - 1 do
     -- Check if the kitchen.exc_types[i] element is equal to :Cook
     if kitchen.exc_types[i] == df.kitchen_exc_type.Cook then
         -- Add a new element to the already_banned dictionary
-        already_banned_key = {kitchen.mat_types[i], kitchen.mat_indices[i], kitchen.item_types[i], kitchen.item_subtypes[i]}
-        if not(already_banned_has_key(already_banned_key)) then
-            already_banned[already_banned_key] = true
+        already_banned_key = make_key(kitchen.mat_types[i], kitchen.mat_indices[i], kitchen.item_types[i], kitchen.item_subtypes[i])
+        if not already_banned[already_banned_key] then
+            already_banned[already_banned_key] = {}
+            already_banned[already_banned_key].isBanned = true
+            already_banned[already_banned_key].mat_type = kitchen.mat_types[i]
+            already_banned[already_banned_key].mat_index = kitchen.mat_indices[i]
+            already_banned[already_banned_key].type = kitchen.item_types[i]
+            already_banned[already_banned_key].subtype = kitchen.item_subtypes[i]
         end
     end
 end
@@ -261,6 +266,8 @@ end
 funcs.show = function()
     -- First put together a dictionary/hash table
     local type_list = {}
+    local matinfo = nil
+
     -- cycle through all plants
     for i, p in ipairs(df.global.world.raws.plants.all) do
         -- The below three if statements initialize the dictionary/hash tables for their respective (cookable) plant/drink/seed
@@ -305,7 +312,7 @@ funcs.show = function()
         type_list[key_seed]["subtype"] = -1
 
         for r, g in ipairs(p.growths) do
-            local matinfo = dfhack.matinfo.decode(g)
+            matinfo = dfhack.matinfo.decode(g)
             local m = matinfo.material
 
             if m.flags["EDIBLE_COOKED"] and m.flags["LEAF_MAT"] then
@@ -368,32 +375,31 @@ funcs.show = function()
         -- initialize our output string with the array entry position (largely stays the same for each item on successive runs, except when items are added/removed)
         local cur = ''
         -- initialize our key for accessing our stored items info
-        local key = i[1] .. i[2]
+        local key = b.mat_type .. b.mat_index
 
         -- It shouldn't be possible for there to not be a matching key entry by this point, but we'll be kinda safe here
-        if type_list[key] then -- TODO: key is stored as reference type, by creating a new key with \|/
-            -- equal values the reference is different and thus no result will be found.
+        if type_list[key] then
             -- Add the item name to the first part of the string
             cur = type_list[key]['text'] .. ' |type '
 
-            if type_list[key]['type'] == df.item_type[i[3]] then
+            if type_list[key]['type'] == df.item_type[b.type] then
                 cur = cur .. 'match: ' .. type_list[key]['type']
             else
                 -- Aw crap.  The item type we EXpected doesn't match up with the ACtual item type.
-                cur = cur .. "error: ex;" .. type_list[key]["type"] .. "/ac;" .. df.item_type[i[3]]
+                cur = cur .. "error: ex;" .. type_list[key]["type"] .. "/ac;" .. df.item_type[b.type]
             end
 
             cur = cur .. "|subtype "
-            if type_list[key]["subtype"] == i[4] then
+            if type_list[key]["subtype"] == b.subtype then
                 -- item sub type is a match, so we print that it's a match, as well as the item subtype index number (-1 means there is no subtype for this item)
                 cur = cur .. "match: " .. type_list[key]["subtype"]
             else
                 -- Something went wrong, and the EXpected item subtype index value doesn't match the ACtual index value
-                cur = cur .. "error: ex;" .. type_list[key]["subtype"] .. "/ac;" .. i[4]
+                cur = cur .. "error: ex;" .. type_list[key]["subtype"] .. "/ac;" .. b.subtype
             end
         else
             -- There's no entry for this item in our calculated list of cookable items.  So, it's not a plant, alcohol, tallow, or milk.  It's likely that it's a meat that has been banned.
-            cur = cur .. '|"' .. '[' .. i[1] .. ', ' .. i[2] .. ']' .. ' unknown banned material type (meat?) " ' .. '|item type: "' .. tostring(df.item_type[i[3]]) .. '"|item subtype: "' .. tostring(i[4])
+            cur = cur .. '|"' .. '[' .. b.mat_type .. ', ' .. b.mat_index .. ']' .. ' unknown banned material type (meat?) " ' .. '|item type: "' .. tostring(df.item_type[b.type]) .. '"|item subtype: "' .. tostring(b.subtype)
         end
 
         table.insert(output, cur)
