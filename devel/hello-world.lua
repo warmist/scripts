@@ -4,14 +4,16 @@
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-local HOVER_FRAME = copyall(gui.BOUNDARY_FRAME)
-HOVER_FRAME.signature_pen = false
+local HOVER_PEN = dfhack.pen.parse{
+    ch=string.byte(' '),
+    fg=COLOR_LIGHTGREEN,
+    bg=COLOR_LIGHTGREEN}
 
 HelloWorld = defclass(HelloWorld, gui.Screen)
 
 function HelloWorld:init()
     local window = widgets.Window{
-        frame={w=20, h=15},
+        frame={w=20, h=14},
         frame_title='Hello World',
         autoarrange_subviews=true,
         autoarrange_gap=1,
@@ -21,20 +23,21 @@ function HelloWorld:init()
         widgets.Label{frame={l=0, t=0}, text="Hover target:"},
         widgets.Panel{
             view_id='hover',
-            frame={w=5, h=5},
-            frame_style=HOVER_FRAME,
-            on_render=function() 
-                self.subviews.hover:getMousePos()
-                local hover = self.subviews.hover
-                if hover:getMousePos() then
-                    hover.frame_background = dfhack.pen.parse{
-                        ch=string.byte(' '), fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
-                else
-                    hover.frame_background = nil
-                end
-            end},
+            frame={w=10, h=5},
+            frame_style=gui.BOUNDARY_FRAME,
+            on_render=self:callback('hoverReact'),
+        },
     }
     self:addviews{window}
+end
+
+function HelloWorld:hoverReact()
+    local hover = self.subviews.hover
+    if hover:getMousePos() then
+        hover.frame_background = HOVER_PEN
+    else
+        hover.frame_background = nil
+    end
 end
 
 function HelloWorld:onDismiss()
