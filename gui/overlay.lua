@@ -43,78 +43,48 @@ end
 
 DraggablePanel = defclass(DraggablePanel, widgets.Panel)
 DraggablePanel.ATTRS{
-    name=DEFAULT_NIL,
     on_click=DEFAULT_NIL,
+    name=DEFAULT_NIL,
+    draggable=true,
+    drag_anchors={frame=true, body=true},
+    drag_bound='body',
 }
 
-function DraggablePanel:init()
-    self.is_dragging = false -- relative pos of the tile that we're dragging
-end
-
 function DraggablePanel:onInput(keys)
-    if not keys._MOUSE_L_DOWN then return end
-    local rect = self.frame_rect
-    local x,y = self:getMousePos(gui.ViewRect{rect=rect})
-    if not x then return end
-    self.on_click()
-    self.is_dragging = {x=x, y=y}
-    return true
+    if keys._MOUSE_L_DOWN then
+        local rect = self.frame_rect
+        local x,y = self:getMousePos(gui.ViewRect{rect=rect})
+        if x then
+            self.on_click()
+        end
+    end
+    return DraggablePanel.super.onInput(self, keys)
 end
 
-local function make_frame(old_frame, scr, scr_pos)
-    local frame = copyall(old_frame)
-    local ytop = scr_pos.y
-    local xleft = scr_pos.x
-    local ybottom = ytop + old_frame.h
-    local xright = xleft + old_frame.w
-    if ytop <= 0 then
-        frame.t, frame.b = 0, nil
-    elseif ybottom >= scr.height then
-        frame.t, frame.b = nil, 0
+function DraggablePanel:postUpdateLayout()
+    local frame = self.frame
+    local matcher = {t=not not frame.t, b=not not frame.b,
+                     l=not not frame.l, r=not not frame.r}
+    local parent_rect, frame_rect = self.frame_parent_rect, self.frame_rect
+    if frame_rect.y1 <= parent_rect.y1 then
+        frame.t, frame.b = frame_rect.y1-parent_rect.y1, nil
+    elseif frame_rect.y2 >= parent_rect.y2 then
+        frame.t, frame.b = nil, parent_rect.y2-frame_rect.y2
     end
-    if xleft <= 0 then
-        frame.l, frame.r = 0, nil
-    elseif xright >= scr.width then
-        frame.l, frame.r = nil, 0
+    if frame_rect.x1 <= parent_rect.x1 then
+        frame.l, frame.r = frame_rect.x1-parent_rect.x1, nil
+    elseif frame_rect.x2 >= parent_rect.x2 then
+        frame.l, frame.r = nil, parent_rect.x2-frame_rect.x2
     end
-    if frame.t then
-        frame.t = math.max(-1, ytop)
-    elseif frame.b then
-        frame.b = math.max(-1, scr.height - ybottom)
+    self.frame_style = make_highlight_frame_style(self.frame)
+    if not not frame.t ~= matcher.t or not not frame.b ~= matcher.b
+            or not not frame.l ~= matcher.l or not not frame.r ~= matcher.r then
+        -- we've changed edge affinity, recalculate our frame
+        self:updateLayout()
     end
-    if frame.l then
-        frame.l = math.max(-1, xleft)
-    elseif frame.r then
-        frame.r = math.max(-1, scr.width - xright)
-    end
-    return frame
-end
-
-function DraggablePanel:update_position(scr_pos)
-    local frame = make_frame(self.frame, self.frame_parent_rect, scr_pos)
-    if self.frame.l == frame.l and self.frame.r == frame.r
-            and self.frame.t == frame.t and self.frame.b == frame.b then
-        return
-    end
-    self.frame = frame
-    self.frame_style = make_highlight_frame_style(frame)
-    self:updateLayout()
-    local posx = frame.l and tostring(frame.l+2) or tostring(-(frame.r+2))
-    local posy = frame.t and tostring(frame.t+2) or tostring(-(frame.b+2))
-    overlay.overlay_command({'position', self.name, posx, posy}, true)
 end
 
 function DraggablePanel:onRenderFrame(dc, rect)
-    if self.is_dragging then
-        if df.global.enabler.mouse_lbut == 0 then
-            self.is_dragging = false
-        else
-            local screenx, screeny = dfhack.screen.getMousePos()
-            local scr_pos = {x=screenx - self.is_dragging.x,
-                             y=screeny - self.is_dragging.y}
-            self:update_position(scr_pos)
-        end
-    end
     if self:getMousePos(gui.ViewRect{rect=self.frame_rect}) then
         self.frame_background = dfhack.pen.parse{
                 ch=32, fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
@@ -122,18 +92,6 @@ function DraggablePanel:onRenderFrame(dc, rect)
         self.frame_background = nil
     end
     DraggablePanel.super.onRenderFrame(self, dc, rect)
-end
-
--- called when this panel is being repositioned with the cursor keys
-function DraggablePanel:cursor_move(keys)
-    for code in pairs(keys) do
-        local dx, dy = guidm.get_movement_delta(code, 1, 10)
-        if dx then
-            local scr_pos = {x=self.frame_rect.x1+dx, y=self.frame_rect.y1+dy}
-            self:update_position(scr_pos)
-            return true
-        end
-    end
 end
 
 -------------------
@@ -149,8 +107,9 @@ function OverlayConfig:init()
     self.scr_name = overlay.simplify_viewscreen_name(
             getmetatable(dfhack.gui.getCurViewscreen(true)))
 
-    local main_panel = widgets.ResizingPanel{
-        frame={w=DIALOG_WIDTH},
+    local main_panel = widgets.Panel{
+        frame={w=DIALOG_WIDTH, h=LIST_HEIGHT+15},
+        draggable=true,
         frame_style=gui.GREY_LINE_FRAME,
         frame_title='Overlay config',
         frame_background=gui.CLEAR_PEN,
@@ -238,10 +197,22 @@ function OverlayConfig:refresh_list(filter)
         end
         local panel = nil
         if not widget.overlay_only then
-            panel = DraggablePanel{frame=make_highlight_frame(widget.frame),
-                                   frame_style=SHADOW_FRAME,
-                                   name=name,
-                                   on_click=make_on_click_fn(#choices+1)}
+            panel = DraggablePanel{
+                    frame=make_highlight_frame(widget.frame),
+                    frame_style=SHADOW_FRAME,
+                    on_click=make_on_click_fn(#choices+1),
+                    name=name}
+            panel.on_drag_end = function(success)
+                if (success) then
+                    local frame = panel.frame
+                    local posx = frame.l and tostring(frame.l+2)
+                            or tostring(-(frame.r+2))
+                    local posy = frame.t and tostring(frame.t+2)
+                            or tostring(-(frame.b+2))
+                    overlay.overlay_command({'position', name, posx, posy},true)
+                end
+                self.reposition_panel = nil
+            end
         end
         local cfg = state.config[name]
         local tokens = {}
@@ -253,7 +224,7 @@ function OverlayConfig:refresh_list(filter)
         table.insert(tokens, name)
         table.insert(tokens, {text=function()
                 if self.reposition_panel and self.reposition_panel == panel then
-                    return ' (repositioning)'
+                    return ' (repositioning with keyboard)'
                 end
                 return ''
             end})
@@ -275,7 +246,10 @@ function OverlayConfig:highlight_selected(_, obj)
         self.selected_panel.frame_style = SHADOW_FRAME
         self.selected_panel = nil
     end
-    self.reposition_panel = nil
+    if self.reposition_panel then
+        self.reposition_panel:setKeyboardDragEnabled(false)
+        self.reposition_panel = nil
+    end
     if not obj or not obj.panel then return end
     local panel = obj.panel
     panel.frame_style = make_highlight_frame_style(panel.frame)
@@ -290,6 +264,9 @@ end
 
 function OverlayConfig:reposition(_, obj)
     self.reposition_panel = obj.panel
+    if self.reposition_panel then
+        self.reposition_panel:setKeyboardDragEnabled(true)
+    end
 end
 
 function OverlayConfig:reset()
@@ -313,10 +290,7 @@ end
 
 function OverlayConfig:onInput(keys)
     if self.reposition_panel then
-        if keys.LEAVESCREEN or keys.SELECT then
-            self.reposition_panel = nil
-            return true
-        elseif self.reposition_panel:cursor_move(keys) then
+        if self.reposition_panel:onInput(keys) then
             return true
         end
     end
