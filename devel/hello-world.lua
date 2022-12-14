@@ -23,7 +23,8 @@ function HelloWorld:init()
             view_id='hover',
             frame={w=5, h=5},
             frame_style=HOVER_FRAME,
-            on_render=function() self.subviews.hover:getMousePos()
+            on_render=function() 
+                self.subviews.hover:getMousePos()
                 local hover = self.subviews.hover
                 if hover:getMousePos() then
                     hover.frame_background = dfhack.pen.parse{
