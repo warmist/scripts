@@ -28,7 +28,7 @@ function HelloWorld:init()
                 local hover = self.subviews.hover
                 if hover:getMousePos() then
                     hover.frame_background = dfhack.pen.parse{
-                        ch=32, fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
+                        ch=string.byte(' '), fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
                 else
                     hover.frame_background = nil
                 end
