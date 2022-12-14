@@ -110,7 +110,6 @@ function OverlayConfig:init()
     local main_panel = widgets.Panel{
         frame={w=DIALOG_WIDTH, h=LIST_HEIGHT+15},
         draggable=true,
-        resizable=true,
         frame_style=gui.GREY_LINE_FRAME,
         frame_title='Overlay config',
         frame_background=gui.CLEAR_PEN,
