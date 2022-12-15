@@ -1,27 +1,5 @@
--- Interface powered item editor.
+-- Interface powered memory object editor.
 
---[====[
-
-gui/gm-editor
-=============
-This editor allows to change and modify almost anything in df. Press :kbd:`?` for
-in-game help. There are multiple ways to open this editor:
-
-* Calling ``gui/gm-editor``  from a command or keybinding opens the editor
-  on whatever is selected or viewed (e.g. unit/item description screen)
-
-* using ``gui/gm-editor <lua command>`` - executes lua command and opens editor on
-  its results (e.g. ``gui/gm-editor "df.global.world.items.all"`` shows all items)
-
-* using ``gui/gm-editor dialog`` - shows an in game dialog to input lua command. Works
-  the same as version above.
-
-* using ``gui/gm-editor toggle`` - will hide (if shown) and show (if hidden) editor at
-  the same position you left it
-
-.. image:: /docs/images/gm-editor.png
-
-]====]
 --a variable the stores persistant screen
 persist_screen=persist_screen or nil --does nothing, here just to remind everyone
 
@@ -109,11 +87,7 @@ function search_relevance(search, candidate)
 end
 
 
-GmEditorUi = defclass(GmEditorUi, gui.FramedScreen)
-GmEditorUi.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "GameMaster's editor",
-    }
+GmEditorUi = defclass(GmEditorUi, gui.Screen)
 function GmEditorUi:onHelp()
     self.subviews.pages:setSelected(2)
 end
@@ -160,11 +134,19 @@ function GmEditorUi:init(args)
             widgets.EditField{frame={l=1,t=2,h=1},label_text="Search",key=keybindings.start_filter.key,key_sep='(): ',on_change=self:callback('text_input'),view_id="filter_input"}}
         ,view_id='page_main'}
 
-    local pages=widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}
-    self:addviews{
-        pages
+    local window = widgets.Window{
+        view_id='window',
+        frame={w=80, h=50},
+        frame_title="GameMaster's editor",
+        resizable=true,
+        subviews={widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     }
+    self:addviews{window}
     self:pushTarget(args.target)
+end
+function GmEditorUi:onRenderFrame(dc, rect)
+    -- since we're not taking up the entire screen
+    self:renderParent()
 end
 function GmEditorUi:text_input(new_text)
     self:updateTarget(true,true)

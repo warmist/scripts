@@ -20,6 +20,7 @@ that repo.
 ## Misc Improvements
 - `emigration`: now saves its state with your fort
 - `prioritize`: now saves its state with your fort
+- `gui/gm-editor`: converted to a movable, resizable window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 
 ## Removed
