@@ -138,6 +138,7 @@ function GmEditorUi:init(args)
         view_id='window',
         frame={w=80, h=50},
         frame_title="GameMaster's editor",
+        frame_inset=0,
         resizable=true,
         subviews={widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     }
