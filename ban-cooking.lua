@@ -35,7 +35,6 @@ local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
     kitchen.exc_types:insert('#', df.kitchen_exc_type.Cook)
 
     already_banned[key] = {}
-    already_banned[key].isBanned = true
     already_banned[key].mat_type = mat_type
     already_banned[key].mat_index = mat_index
     already_banned[key].type = type
@@ -50,7 +49,6 @@ for i = 0, #kitchen.item_types - 1 do
         already_banned_key = make_key(kitchen.mat_types[i], kitchen.mat_indices[i], kitchen.item_types[i], kitchen.item_subtypes[i])
         if not already_banned[already_banned_key] then
             already_banned[already_banned_key] = {}
-            already_banned[already_banned_key].isBanned = true
             already_banned[already_banned_key].mat_type = kitchen.mat_types[i]
             already_banned[already_banned_key].mat_index = kitchen.mat_indices[i]
             already_banned[already_banned_key].type = kitchen.item_types[i]
@@ -414,6 +412,7 @@ end
 
 if ... == "help" then
     print(dfhack.script_help())
+    return
 end
 
 if ... == 'all' then
