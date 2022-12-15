@@ -41,7 +41,7 @@ jobs:
       with:
         python-version: 3
     - name: Set up Ruby 2.7
-      uses: actions/setup-ruby@v1
+      uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.7
     - name: Install dependencies
@@ -56,10 +56,10 @@ jobs:
         rmdir $HOME/dfhack/scripts
         ln -sv $(pwd) $HOME/dfhack/scripts
     - name: Check whitespace
-      run: python $HOME/dfhack/travis/lint.py
+      run: python $HOME/dfhack/ci/lint.py
     - name: Check Lua syntax
       if: success() || failure()
-      run: python $HOME/dfhack/travis/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
+      run: python $HOME/dfhack/ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
     - name: Check Ruby syntax
       if: success() || failure()
-      run: python $HOME/dfhack/travis/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
+      run: python $HOME/dfhack/ci/script-syntax.py --ext=rb --cmd="ruby -c" --github-actions
