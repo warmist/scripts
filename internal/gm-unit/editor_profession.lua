@@ -5,7 +5,7 @@ local widgets = require 'gui.widgets'
 local base_editor = reqscript("internal/gm-unit/base_editor")
 
 Editor_Prof = defclass(Editor_Prof, base_editor.Editor)
-Editor_Prof.ATTRS = {
+Editor_Prof.ATTRS{
     frame_title = "Profession editor"
 }
 
@@ -38,13 +38,6 @@ function Editor_Prof:init()
             view_id = 'professions',
             on_submit = self:callback('save_profession'),
         },
-        widgets.Label{
-            frame = {b=0,l=1},
-            text = {
-                {key = "LEAVESCREEN", text= ": exit editor ",
-                on_activate = self:callback("dismiss")},
-            }
-        }
     }
 end
 

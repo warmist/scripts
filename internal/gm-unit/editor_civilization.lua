@@ -44,7 +44,7 @@ end
 CivBox = defclass(CivBox,dialog.ListBox)
 CivBox.focus_path = "CivBox"
 
-CivBox.ATTRS={
+CivBox.ATTRS{
     format_name="$NAME ($ENGLISH):$ID",
     format_no_name="<unnamed>:$ID",
     name_other="<other(-1)>",
@@ -129,7 +129,7 @@ function showCivPrompt(title, text, tcolor, on_select, on_cancel, min_width,allo
 end
 
 Editor_Civ=defclass(Editor_Civ, base_editor.Editor)
-Editor_Civ.ATTRS={
+Editor_Civ.ATTRS{
     frame_title = "Civilization editor"
 }
 
@@ -164,13 +164,5 @@ function Editor_Civ:init( args )
             end,nil,nil,true)
         end
         }}},
-    widgets.Label{
-                frame = { b=0,l=1},
-                text ={{text= ": exit editor ",
-                    key  = "LEAVESCREEN",
-                    on_activate= self:callback("dismiss")
-                    },
-                    }
-            },
-        }
+    }
 end

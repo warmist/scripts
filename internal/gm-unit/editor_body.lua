@@ -2,16 +2,20 @@
 --@ module = true
 
 local dialog = require 'gui.dialogs'
+local gui = require 'gui'
 local widgets = require 'gui.widgets'
 local base_editor = reqscript("internal/gm-unit/base_editor")
 
 -- TODO: Trigger recalculation of body sizes after size is edited
 
-Editor_Body_Modifier=defclass(Editor_Body_Modifier, base_editor.Editor)
+Editor_Body_Modifier=defclass(Editor_Body_Modifier, gui.Screen)
+Editor_Body_Modifier.ATTRS{
+    target_unit = DEFAULT_NIL,
+    partChoice = DEFAULT_NIL,
+}
 
 function showModifierScreen(target_unit, partChoice)
   Editor_Body_Modifier{
-    frame_title = "Select a modifier",
     target_unit = target_unit,
     partChoice = partChoice
   }:show()
@@ -142,30 +146,47 @@ function Editor_Body_Modifier:init(args)
   self.target_unit = args.target_unit
   self.partChoice = args.partChoice
 
-  self:addviews{
+  local window = widgets.Window{
+        view_id='window',
+        frame={w=50, h=20},
+        frame_title=self.partChoice.text .. " - Select a modifier",
+        resizable=true,
+    }
+
+  window:addviews{
     widgets.List{
-      frame = {t=0, b=1,l=1},
+      frame = {t=0, b=2,l=1},
       view_id = "modifiers",
       on_submit = self:callback("selected"),
     },
     widgets.Label{
-      frame = {b=0, l=1},
+      frame = {b=1, l=1},
       text = {
         {text = ": back ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
         {text = ": edit modifier ", key = "SELECT"},
         {text = ": raise ", key = "CURSOR_RIGHT", on_activate = self:callback("step", 1)},
+      },
+    },
+    widgets.Label{
+      frame = {b=0, l=1},
+      text = {
         {text = ": reduce ", key = "CURSOR_LEFT", on_activate = self:callback("step", -1)},
         {text = ": randomise selected", key = "CUSTOM_R", on_activate = self:callback("random")},
       },
     }
   }
 
-  self.frame_title = self.partChoice.text .. " - Select a modifier"
+  self:addviews{window}
+
   self:updateChoices()
 end
 
+function Editor_Body_Modifier:onRenderFrame(dc, rect)
+    self:renderParent()
+end
+
 Editor_Body=defclass(Editor_Body, base_editor.Editor)
-Editor_Body.ATTRS={
+Editor_Body.ATTRS{
     frame_title = "Body appearance editor"
 }
 
@@ -242,7 +263,6 @@ function Editor_Body:init(args)
     widgets.Label{
       frame = {b=0, l=1},
       text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
         {text = ": select feature ", key = "SELECT"},
       },
     }
