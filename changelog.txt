@@ -22,6 +22,9 @@ that repo.
 - `prioritize`: now saves its state with your fort
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 
+## Documentation
+- `devel/hello-world` updated to be a better example from which to start new gui scripts
+
 ## Removed
 
 # 0.47.05-r8
