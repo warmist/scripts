@@ -9,7 +9,7 @@ local setneed = dfhack.reqscript("modtools/set-need")
 
 
 Editor_Personality = defclass(Editor_Personality, base_editor.Editor)
-Editor_Personality.ATTRS = {
+Editor_Personality.ATTRS{
     frame_title = "Personality editor"
 }
 
@@ -64,9 +64,8 @@ function Editor_Personality:editTrait(index, choice)
   )
 end
 
-function Editor_Personality:close()
+function Editor_Personality:onClose()
   setneed.rebuildNeeds(self.target_unit)
-  self:dismiss()
 end
 
 function Editor_Personality:init(args)
@@ -84,7 +83,6 @@ function Editor_Personality:init(args)
     widgets.Label{
       frame = {b=1, l=1},
       text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("close")},
         {text = ": edit value ", key = "SELECT"},
         {text = ": randomise selected ", key = "CUSTOM_R", on_activate = self:callback("randomiseSelected")},
         {text = ": raise ", key = "CURSOR_RIGHT", on_activate = self:callback("step", 1)},

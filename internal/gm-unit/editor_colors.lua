@@ -6,7 +6,7 @@ local widgets = require 'gui.widgets'
 local base_editor = reqscript("internal/gm-unit/base_editor")
 
 Editor_Colors=defclass(Editor_Colors, base_editor.Editor)
-Editor_Colors.ATTRS={
+Editor_Colors.ATTRS{
     frame_title = "Colors editor"
 }
 
@@ -139,7 +139,6 @@ function Editor_Colors:init(args)
     widgets.Label{
       frame = {b=0, l=1},
       text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
         {text = ": edit feature ", key = "SELECT"},
         {text = ": randomise color", key = "CUSTOM_R", on_activate = self:callback("random")},
       },

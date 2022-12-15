@@ -8,7 +8,7 @@ local setbelief = reqscript("modtools/set-belief")
 local setneed = reqscript("modtools/set-need")
 
 Editor_Beliefs = defclass(Editor_Beliefs, base_editor.Editor)
-Editor_Beliefs.ATTRS = {
+Editor_Beliefs.ATTRS{
   frame_title = "Beliefs editor"
 }
 
@@ -67,9 +67,8 @@ function Editor_Beliefs:edit(index, choice)
   )
 end
 
-function Editor_Beliefs:close()
+function Editor_Beliefs:onClose()
   setneed.rebuildNeeds(self.target_unit)
-  self:dismiss()
 end
 
 function Editor_Beliefs:init(args)
@@ -87,7 +86,6 @@ function Editor_Beliefs:init(args)
     widgets.Label{
       frame = {b=1, l=1},
       text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("close")},
         {text = ": edit value ", key = "SELECT"},
         {text = ": randomise selected ", key = "CUSTOM_R", on_activate = self:callback("randomiseSelected")},
         {text = ": raise ", key = "CURSOR_RIGHT", on_activate = self:callback("step", 1)},

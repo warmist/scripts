@@ -1,15 +1,7 @@
 -- Interface powered, user friendly, unit editor
 
---[====[
-
-gui/gm-unit
-===========
-An editor for various unit attributes.
-
-]====]
-
-local widgets = require 'gui.widgets'
-local base_editor = reqscript("internal/gm-unit/base_editor")
+local gui = require('gui')
+local widgets = require('gui.widgets')
 local args = {...}
 
 rng = rng or dfhack.random.new(nil, 10)
@@ -23,14 +15,11 @@ else
 end
 
 if target == nil then
-    qerror("No unit to edit") --TODO: better error message
+    qerror("Please select a unit to edit in the game UI")
 end
 local editors = {}
 function add_editor(editor_class)
-    local title = editor_class.ATTRS.frame_title
-    table.insert(editors, {text=title, search_key=title:lower(), on_submit=function(unit)
-        editor_class{target_unit=unit}:show()
-    end})
+    table.insert(editors, editor_class)
 end
 
 function weightedRoll(weightedTable)
@@ -101,32 +90,81 @@ local editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
-Editor_Unit = defclass(Editor_Unit, base_editor.Editor)
-Editor_Unit.ATTRS = {
-    frame_title = "GameMaster's unit editor"
+Editor_Unit = defclass(Editor_Unit, gui.Screen)
+Editor_Unit.ATTRS{
+    target_unit = DEFAULT_NIL,
 }
 
-function Editor_Unit:init(args)
-    self:addviews{
-        widgets.FilteredList{
-            frame = {l=1, t=1},
-            choices=editors,
-            on_submit=function (idx,choice)
-                if choice.on_submit then
-                    choice.on_submit(self.target_unit)
-                end
-            end
-        },
-        widgets.Label{
-            frame = { b=0,l=1},
-            text = {{
-                text = ": exit editor",
-                key = "LEAVESCREEN",
-                on_activate = self:callback("dismiss")
-            }},
-        }
-    }
+local MAIN_TITLE = "GameMaster's unit editor"
+
+function make_choices(window)
+    local choices = {}
+    for _,editor in ipairs(editors) do
+        local title = editor.ATTRS.frame_title
+        table.insert(choices, {text=title, search_key=title:lower(),
+                on_submit=function()
+                    window.frame_title = title
+                    window.subviews.pages:setSelected(title)
+                end})
+    end
+    return choices
 end
 
+function Editor_Unit:init()
+    local window = widgets.Window{
+        view_id='window',
+        frame={w=65, h=50},
+        frame_title=MAIN_TITLE,
+        resizable=true,
+    }
 
-Editor_Unit{target_unit=target}:show()
+    local main = widgets.FilteredList{
+            choices=make_choices(window),
+            on_submit=function(_,choice) choice.on_submit() end
+        }
+
+    local pages = {main}
+    for _,editor in ipairs(editors) do
+        table.insert(pages,
+                editor{view_id=editor.ATTRS.frame_title,
+                    target_unit=self.target_unit})
+    end
+
+    window:addviews{
+        widgets.Pages{
+            view_id='pages',
+            frame={t=0, l=0, b=2},
+            subviews=pages,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=0},
+            label='Back',
+            key='LEAVESCREEN',
+            on_activate=self:callback('onBack'),
+        },
+    }
+    self:addviews{window}
+end
+
+function Editor_Unit:onBack()
+    local pages = self.subviews.pages
+    if pages:getSelected() == 1 then
+        self:dismiss()
+    else
+        local page = pages:getSelectedPage()
+        if page.onClose then page:onClose() end
+        self.subviews.window.frame_title = MAIN_TITLE
+        pages:setSelected(1)
+    end
+end
+
+function Editor_Unit:onRenderFrame(dc, rect)
+    -- since we're not taking up the entire screen
+    self:renderParent()
+end
+
+function Editor_Unit:onDismiss()
+    view = nil
+end
+
+view = view or Editor_Unit{target_unit=target}:show()

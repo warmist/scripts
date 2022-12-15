@@ -6,7 +6,7 @@ local widgets = require 'gui.widgets'
 local base_editor = reqscript("internal/gm-unit/base_editor")
 
 Editor_Counters=defclass(Editor_Counters, base_editor.Editor)
-Editor_Counters.ATTRS={
+Editor_Counters.ATTRS{
     frame_title = "Counters editor",
     counters1={
     "think_counter",
@@ -82,10 +82,7 @@ function Editor_Counters:init( args )
         },
         widgets.Label{
             frame = { b=0,l=1},
-            text = {{text= ": exit editor ",
-                key  = "LEAVESCREEN",
-                on_activate= self:callback("dismiss")
-                },
+            text = {
                 {text=": reset counter ",
                 key = "SEC_SELECT",
                 },
