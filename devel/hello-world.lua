@@ -4,7 +4,7 @@
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-local HOVER_PEN = dfhack.pen.parse{
+local HIGHLIGHT_PEN = dfhack.pen.parse{
     ch=string.byte(' '),
     fg=COLOR_LIGHTGREEN,
     bg=COLOR_LIGHTGREEN}
@@ -20,24 +20,24 @@ function HelloWorld:init()
     }
     window:addviews{
         widgets.Label{text={{text='Hello, world!', pen=COLOR_LIGHTGREEN}}},
-        widgets.Label{frame={l=0, t=0}, text="Hover target:"},
+        widgets.HotkeyLabel{
+            frame={l=0, t=0},
+            label='Click me',
+            key='CUSTOM_CTRL_A',
+            on_activate=self:callback('toggleHighlight'),
+        },
         widgets.Panel{
-            view_id='hover',
+            view_id='highlight',
             frame={w=10, h=5},
             frame_style=gui.BOUNDARY_FRAME,
-            on_render=self:callback('hoverReact'),
         },
     }
     self:addviews{window}
 end
 
-function HelloWorld:hoverReact()
-    local hover = self.subviews.hover
-    if hover:getMousePos() then
-        hover.frame_background = HOVER_PEN
-    else
-        hover.frame_background = nil
-    end
+function HelloWorld:toggleHighlight()
+    local panel = self.subviews.highlight
+    panel.frame_background = not panel.frame_background and HIGHLIGHT_PEN or nil
 end
 
 function HelloWorld:onDismiss()
