@@ -11,6 +11,7 @@ Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
 and death info about a unit.
 
 ]====]
+--@ module = true
 local gui = require 'gui'
 local widgets =require 'gui.widgets'
 local utils = require 'utils'
@@ -286,7 +287,7 @@ local TRAINING_LEVELS = {
   '',                        -- wild/untameable
 }
 
-local DEATH_TYPES = {
+DEATH_TYPES = {
  [0] = ' died of old age',        -- OLD_AGE
   ' starved to death',            -- HUNGER
   ' died of dehydration',            -- THIRST
@@ -776,12 +777,17 @@ function UnitInfoViewer:chunk_Dead()
  self:insert_chunk(blurb,pen)
 end
 
+-- do nothing if being used as a module
+if dfhack_flags.module then
+    return
+end
+
 -- only show if UnitInfoViewer isn't the current focus
 if dfhack.gui.getCurFocus() ~= 'dfhack/lua/'..UnitInfoViewer.focus_path then
- local gui_no_unit = false -- show if not found?
- local unit = getUnit_byVS(gui_no_unit) -- silent? or let the gui display
- if unit or gui_no_unit then
-  local kan_viewscreen = UnitInfoViewer{unit = unit}
-  kan_viewscreen:show()
- end
+    local gui_no_unit = false -- show if not found?
+    local unit = getUnit_byVS(gui_no_unit) -- silent? or let the gui display
+    if unit or gui_no_unit then
+        local kan_viewscreen = UnitInfoViewer{unit = unit}
+        kan_viewscreen:show()
+    end
 end
