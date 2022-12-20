@@ -199,4 +199,3 @@ else
         print(("Here is some %s at (%d, %d, %d)"):format(target_vein.inorganic_id, target_pos.x, target_pos.y, target_pos.z))
     end
 end
-
