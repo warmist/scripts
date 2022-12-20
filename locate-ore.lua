@@ -117,8 +117,7 @@ local function findOreVeins(target_ore)
 end
 
 local function designateDig(pos)
-    local block = dfhack.maps.getTileBlock(pos)
-    local designation = block.designation[pos.x%16][pos.y%16]
+    local designation = dfhack.maps.getTileFlags(pos)
     designation.dig = df.tile_dig_designation.Default
 end
 
@@ -182,8 +181,7 @@ else
                 local tile_type = dfhack.maps.getTileType(pos)
                 local tile_mat = tile_attrs[tile_type].material
                 local shape = tile_attrs[tile_type].shape
-                local block = dfhack.maps.getTileBlock(pos)
-                local designation = block.designation[pos.x%16][pos.y%16]
+                local designation = dfhack.maps.getTileFlags(pos)
                 if tile_mat == df.tiletype_material.MINERAL and designation.dig == df.tile_dig_designation.No and shape == df.tiletype_shape.WALL then
                     target_pos = pos
                     goto complete
