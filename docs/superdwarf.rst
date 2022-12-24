@@ -22,5 +22,3 @@ Usage
     Remove superspeed from all creatures.
 ``superdwarf list``
     List creatures with superspeed.
-``superdwarf help``
-    View in-console help

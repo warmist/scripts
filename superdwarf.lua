@@ -1,21 +1,5 @@
 -- makes units very speedy
 --@ module = true
-local help = [====[
-
-superdwarf
-==========
-Similar to `fastdwarf`, per-creature.
-Overrides units timers every game tick to 1, causing extremely fast actions
-
-Usage:
-
-``superdwarf add``: apply superdwarf to selected unit
-``superdwarf del``: remove superdwarf from selected unit
-``superdwarf clear``: clear superdwarf from all affected units
-``superdwarf list``: list all currently affected units
-``superdwarf`` or ``superdwarf help``: view this help
-]====]
-
 local repeatUtil = require('repeat-util')
 local commandArg = ({...})[1]
 
@@ -66,11 +50,6 @@ function ClearSuperdwarfs()
 end
 
 function main(argCommand)
-    if argCommand == 'help' or not argCommand then
-        print(help)
-        return
-    end
-
     if argCommand == 'clear' then
         ClearSuperdwarfs()
         print("Cleared Superdwarfs")
@@ -91,12 +70,16 @@ function main(argCommand)
     if argCommand == 'add' then
         AddSuperdwarf(unit)
         print("Applying superdwarf to [" .. unit.id .. "] " .. dfhack.TranslateName(unit.name))
+        return
     end
 
     if argCommand == 'del' then
         DeleteSuperdwarf(unit)
         print("Removing superdwarf from [" .. unit.id .. "] " .. dfhack.TranslateName(unit.name))
+        return
     end
+
+    print(dfhack.script_help())
 end
 
 if not dfhack_flags.module then
