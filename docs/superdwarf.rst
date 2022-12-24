@@ -8,6 +8,9 @@ superdwarf
 Select a dwarf in-game and run this tool to make them super fast. They will
 complete tasks instantly and never need to rest.
 
+Sets each action timer every tick to 1, effectively giving all actions such
+as work, movement, combat, etc. no cooldown.
+
 Usage
 -----
 
@@ -19,3 +22,5 @@ Usage
     Remove superspeed from all creatures.
 ``superdwarf list``
     List creatures with superspeed.
+``superdwarf help``
+    View in-console help

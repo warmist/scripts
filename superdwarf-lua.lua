@@ -3,57 +3,39 @@
 local help = [====[
 
 superdwarf
-==============
+==========
 Similar to `fastdwarf`, per-creature.
 Overrides units timers every game tick to 1, causing extremely fast actions
 
 Usage:
 
-``superdwarf``: apply superdwarf to specific unit
-``superdwarf -remove``: remove superdwarf from selected unit
-``superdwarf -unit <id>``: apply superdwarf to specific unit ID
-
-Valid Options:
-
-``-unit <id>``: Targets the unit with the specified ID.
-                This is optional; if not specified, the selected unit is used instead.
-                
-``-remove``: Remove superdwarf from a unit rather than applying it
-
-``-list``: List current superdwarfed units
-
-``-clear``: Clear current superdwarf units
-
-``-help``:      Shows this help information
-
-
+``superdwarf add``: apply superdwarf to selected unit
+``superdwarf del``: remove superdwarf from selected unit
+``superdwarf clear``: clear superdwarf from all affected units
+``superdwarf list``: list all currently affected units
+``superdwarf`` or ``superdwarf help``: view this help
 ]====]
 
 local repeatUtil = require('repeat-util')
-local utils = require('utils')
-local validArgs = utils.invert({
-    'del',
-    'clear',
-    'unit',
-    'list',
-    'help',
-})
-local args = utils.processArgs({...}, validArgs)
+local commandArg = ({...})[1]
 
+local superId = "superdwarf"
 
-local id = "superdwarf"
-
-superdwarfIds = {}
+superdwarfIds = superdwarfIds or {}
 
 function AddSuperdwarf(unit)
-    repeatUtil.scheduleEvery(id, 1, 'ticks', function()
+    if superdwarfIds[unit.id] then
+        qerror("Dwarf is already super!")
+    end
+    superdwarfIds[unit.id] = true
+    repeatUtil.scheduleEvery(superId, 1, 'ticks', function()
         if next(superdwarfIds) == nil then
-            repeatUtil.cancel(id)
+            repeatUtil.cancel(superId)
         else
-            for _,v in pairs(superdwarfIds) do
-                local unit = df.unit.find(v)
-                if unit ~= nil and unit.flags1.inactive then
-                    setActionTimers(unit, 1, df.unit_action_type.All)
+            for k,_ in pairs(superdwarfIds) do
+                local unit = df.unit.find(k)
+                if unit ~= nil and not unit.flags1.inactive then
+                    dfhack.units.setGroupActionTimers(unit, 1, df.unit_action_type_group.All)
                 else
                     DeleteSuperdwarf(unit)
                 end
@@ -64,69 +46,59 @@ function AddSuperdwarf(unit)
 end
 
 function DeleteSuperdwarf(unit)
-    local index = 0
-    for k,v in pairs(superdwarfIds) do
-        if v == unit.id then
-            index = k
-            break
-        end
+    if superdwarfIds[unit.id] then
+        superdwarfIds[unit.id] = nil
+    else
+        qerror("Dwarf was not already super")
     end
-    table.remove(superdwarfIds, index)
+    superdwarfIds[unit.id] = nil
 end
 
 function ListSuperdwarfs()
     print("Current Superdwarfs: ")
-    for k,v in pairs(superdwarfIds) do
-        print(df.unit.find(v).name)
+    for k,_ in pairs(superdwarfIds) do
+        print("[" .. k .. "] " .. dfhack.TranslateName(df.unit.find(k).name))
     end
 end
 
 function ClearSuperdwarfs()
-    local count = #superdwarfIds
-    for i=0, count do superdwarfIds[i]=nil end
+    for k,_ in pairs(superdwarfIds) do superdwarfIds[k] = nil end
 end
 
-function main(...)
-    if args.help then 
+function main(argCommand)
+    if argCommand == 'help' or not argCommand then 
         print(help)
         return
     end
 
-    if args.clear then
+    if argCommand == 'clear' then
         ClearSuperdwarfs()
+        print("Cleared Superdwarfs")
         return
     end
 
-    if args.list then
+    if argCommand == 'list' then
         ListSuperdwarfs()
         return
     end
 
-    unit = nil
-
-    if args.unit then
-        local id = tonumber(args.unit)
-        if id then
-            unit = df.unit.find(id)
-        else
-            qerror("Invalid ID Provided")
-        end
-    else
-        unit = dfhack.gui.getSelectedUnit()
-    end
-
+    local unit = dfhack.gui.getSelectedUnit()
     if not unit then
         qerror("Invalid unit selection")
+        return
     end
 
-
-    if args.remove then
-        DeleteSuperdwarf(unit)
-    else
+    if argCommand == 'add' then
         AddSuperdwarf(unit)
+        print("Applying superdwarf to [" .. unit.id .. "] " .. dfhack.TranslateName(unit.name))
+    end
+
+    if argCommand == 'del' then
+        DeleteSuperdwarf(unit)
+        print("Removing superdwarf from [" .. unit.id .. "] " .. dfhack.TranslateName(unit.name))
     end
 end
 
 if not dfhack_flags.module then
-    main(...)
+    main(commandArg)
 end
