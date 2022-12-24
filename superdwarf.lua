@@ -66,7 +66,7 @@ function ClearSuperdwarfs()
 end
 
 function main(argCommand)
-    if argCommand == 'help' or not argCommand then 
+    if argCommand == 'help' or not argCommand then
         print(help)
         return
     end
