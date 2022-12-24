@@ -1,7 +1,6 @@
 -- makes units very speedy
 --@ module = true
 local repeatUtil = require('repeat-util')
-local commandArg = ({...})[1]
 
 local superId = "superdwarf"
 
@@ -49,7 +48,8 @@ function ClearSuperdwarfs()
     for k,_ in pairs(superdwarfIds) do superdwarfIds[k] = nil end
 end
 
-function main(argCommand)
+function main(...)
+    local argCommand = ({...})[1]
     if argCommand == 'clear' then
         ClearSuperdwarfs()
         print("Cleared Superdwarfs")
@@ -61,9 +61,15 @@ function main(argCommand)
         return
     end
 
-    local unit = dfhack.gui.getSelectedUnit()
+    unit = nil
+    local unitArg = ({...})[2]
+    if unitArg then
+        unit = df.unit.find(tonumber(unitArg))
+    else
+        unit = dfhack.gui.getSelectedUnit()
+    end
+
     if not unit then
-        qerror("Invalid unit selection")
         return
     end
 
@@ -83,5 +89,5 @@ function main(argCommand)
 end
 
 if not dfhack_flags.module then
-    main(commandArg)
+    main({...})
 end

@@ -16,8 +16,12 @@ Usage
 
 ``superdwarf add``
     Give superspeed to selected creature.
+``superdwarf add <ID>``
+    Give superspeed to a creature by its unit ID.
 ``superdwarf del``
     Remove superspeed from selected creature.
+``superdwarf del <ID>``
+    Remove superspeed to a creature by its unit ID.
 ``superdwarf clear``
     Remove superspeed from all creatures.
 ``superdwarf list``
