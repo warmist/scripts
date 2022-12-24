@@ -9,11 +9,20 @@ Overrides units timers every game tick to 1, causing extremely fast actions
 
 Usage:
 
+``superdwarf``: apply superdwarf to specific unit
+``superdwarf -remove``: remove superdwarf from selected unit
+``superdwarf -unit <id>``: apply superdwarf to specific unit ID
+
 Valid Options:
 
 ``-unit <id>``: Targets the unit with the specified ID.
                 This is optional; if not specified, the selected unit is used instead.
                 
+``-remove``: Remove superdwarf from a unit rather than applying it
+
+``-list``: List current superdwarfed units
+
+``-clear``: Clear current superdwarf units
 
 ``-help``:      Shows this help information
 
@@ -23,7 +32,6 @@ Valid Options:
 local repeatUtil = require('repeat-util')
 local utils = require('utils')
 local validArgs = utils.invert({
-    'add',
     'del',
     'clear',
     'unit',
@@ -37,7 +45,7 @@ local id = "superdwarf"
 
 superdwarfIds = {}
 
-function MakeSuperdwarf(unit)
+function AddSuperdwarf(unit)
     repeatUtil.scheduleEvery(id, 1, 'ticks', function()
         if next(superdwarfIds) == nil then
             repeatUtil.cancel(id)
@@ -112,12 +120,10 @@ function main(...)
     end
 
 
-    if args.add then
-        AddSuperdwarf(unit)
-    end
-
-    if args.del then
+    if args.remove then
         DeleteSuperdwarf(unit)
+    else
+        AddSuperdwarf(unit)
     end
 end
 
