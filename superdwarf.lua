@@ -61,7 +61,7 @@ function main(...)
         return
     end
 
-    unit = nil
+    local unit = nil
     local unitArg = ({...})[2]
     if unitArg then
         unit = df.unit.find(tonumber(unitArg))
