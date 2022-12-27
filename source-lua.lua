@@ -3,19 +3,19 @@
 
 local repeatUtil = require('repeat-util')
 
-sources = sources or {}
+liquidSources = liquidSources or {}
 
-local sourceId = "liquidSources"
+local sourceId = 'liquidSources'
 
 function AddLiquidSource(position, amount, liquid)
-    table.insert(sources, {
+    table.insert(liquidSources, {
         liquid = liquid,
         amount = amount,
         position = position,
     })
 
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
-        if next(sources) == nil then
+        if next(liquidSources) == nil then
             repeatUtil.cancel(sourceId)
         else
             for _, v in pairs(sourceId) do
@@ -26,20 +26,23 @@ function AddLiquidSource(position, amount, liquid)
 end
 
 function DeleteLiquidSource(pos)
-    for k, v in pairs(sources) do
-        if v.pos == pos then sources[k] = nil end
+    for k, v in pairs(liquidSources) do
+        if v.pos == pos then liquidSources[k] = nil end
         return
     end
 end
 
 function ClearLiquidSources()
-    for k, _ in pairs(sources) do
-        sources[k] = nil
+    for k, _ in pairs(liquidSources) do
+        liquidSources[k] = nil
     end
 end
 
 function ListLiquidSources()
-    -- iterate the table and list the sources
+    print('Current Liquid Sources:')
+    for _,v in pairs(liquidSources) do
+        print('[' .. v.pos.x .. ', ' .. v.pos.y .. ', ' .. v.pos.z .. ']' .. v.liquid .. ' ' .. v.amount)
+    end
 end
 
 function main(...)
@@ -52,14 +55,38 @@ function main(...)
 
     if command == 'clear' then
         ClearLiquidSources()
+        print("Cleared sources")
+        return
     end
 
+    function findLiquidSourceAtPos(pos)
+        for k,v in pairs(liquidSources) do
+            if v.pos == pos then
+                return k
+            end
+        end
+        return -1
+    end
+
+    local targetPos = df.global.cursor
+    local index = findLiquidSourceAtPos(targetPos)
+
     if command == 'delete' then
-        DeleteLiquidSource(df.global.cursor)
+        if index ~= -1 then
+            DeleteLiquidSource(targetPos)
+        else
+            qerror('[' .. targetPos.x .. ', ' .. targetPos.y .. ', ' .. targetPos.z .. '] Does not contain a liquid source')
+        end
+        return
     end
 
     if command == 'add' then
-        AddLiquidSource()
+        local liquidArg = command[1].lowercase
+        if not liquidArg or liquidArg ~= 'magma' or liquidArg ~= 'water' then
+            qerror('Liquid must be either "water" or "magma"')
+        end
+        local amountArg = tonumber(command[2]) or 7
+        AddLiquidSource(targetPos, liquidArg, amountArg)
         return
     end
 
