@@ -131,12 +131,12 @@ function AutocompletePanel:init()
         },
         widgets.HotkeyLabel{
             frame={l=1, t=1},
-            key='CHANGETAB',
+            key='KEYBOARD_CURSOR_RIGHT_FAST',
             key_sep='/',
             label=''},
         widgets.HotkeyLabel{
-            frame={l=5, t=1},
-            key='SEC_CHANGETAB',
+            frame={l=9, t=1},
+            key='KEYBOARD_CURSOR_LEFT_FAST',
             key_sep='',
             label=''},
         widgets.List{
@@ -333,8 +333,8 @@ function HelpPanel:init()
             frame_inset={r=1},
             auto_height=false,
             scroll_keys={
-                A_MOVE_N_DOWN=-1, -- Ctrl-Up
-                A_MOVE_S_DOWN=1,  -- Ctrl-Down
+                KEYBOARD_CURSOR_UP_FAST=-1,  -- Shift-Up
+                KEYBOARD_CURSOR_DOWN_FAST=1, -- Shift-Down
                 STANDARDSCROLL_PAGEUP='-halfpage',
                 STANDARDSCROLL_PAGEDOWN='+halfpage',
             },
@@ -658,9 +658,9 @@ function LauncherUI:onInput(keys)
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
         self:update_autocomplete(get_first_word(self.subviews.editfield.text))
-    elseif keys.CHANGETAB then
+    elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
         self.subviews.autocomplete:advance(1)
-    elseif keys.SEC_CHANGETAB then
+    elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
         self.subviews.autocomplete:advance(-1)
     end
 end
