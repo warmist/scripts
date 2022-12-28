@@ -79,7 +79,7 @@ end
 
 function main(...)
     local command = ({...})[1]
-    
+
     if command == 'list' then
         ListLiquidSources()
         return
