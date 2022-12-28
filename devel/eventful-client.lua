@@ -64,6 +64,7 @@ end
 
 local function make_handler_fn(registry_entry, freq)
     return function(...)
+        registry_entry.count = registry_entry.count + 1
         print(('eventful-client: %s received %s event (freq=%d)')
               :format(os.date("%X"), registry_entry.etype, freq))
         print('  params:', ...)
