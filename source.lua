@@ -105,7 +105,7 @@ function main(...)
 
     if command == 'delete' then
         if targetPos.x < 0 then
-            qerror("Please place the cursor where you would like a source")
+            qerror("Please place the cursor where there is a source to delete")
         end
         if index ~= -1 then
             DeleteLiquidSource(targetPos)
