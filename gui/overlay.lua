@@ -144,7 +144,7 @@ function OverlayConfig:init()
                     scroll_keys={},
                 },
                 widgets.HotkeyLabel{
-                    key='SEC_SELECT',
+                    key='CUSTOM_CTRL_T',
                     key_sep=' or drag the on-screen widget to reposition ',
                     scroll_keys={},
                 },
