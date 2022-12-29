@@ -255,7 +255,14 @@ local function get_map_report(show_empty)
     local report = {}
 
     local pos = cur_mouse_pos
-    if not pos or pos.x < 0 or pos.y < 0 or not pos.z or pos.z < 0 then
+    if not pos or not pos.z then
+        return report
+    end
+
+    if not dfhack.screen.inGraphicsMode() then
+        table.insert(report, 'Please inspect the UI layer')
+        table.insert(report, NEWLINE)
+        table.insert(report, 'when not in graphics mode')
         return report
     end
 
