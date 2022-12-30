@@ -23,6 +23,7 @@ that repo.
 - `gui/gm-editor`: converted to a movable, resizable window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/gm-unit`: converted to a movable, resizable window
+- `devel/inspect-screen`: updated for new rendering semantics and can now also inspect map textures
 
 ## Documentation
 - `devel/hello-world` updated to be a better example from which to start new gui scripts
