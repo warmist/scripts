@@ -39,11 +39,11 @@ Enter the command you want to run by typing its name. If you want to start over,
 :kbd:`Ctrl`:kbd:`C` will clear the line. When you are happy with the command,
 hit :kbd:`Enter` or click on the ``run`` button to run it. Any output from the
 command will appear in the help area after you run it. If you want to run the
-command but close the dialog immediately so you can get back to the game, use
-:kbd:`Shift`:kbd:`Enter` or hold down the :kbd:`Shift` key and click on the
-``run`` button instead. The dialog also closes automatically if you run a
-command that brings up a new GUI screen. In any case, the command output will
-also be written to the DFHack terminal console if you need to find it later.
+command but close the dialog immediately so you can get back to the game, hold
+down the :kbd:`Shift` key and click on the ``run`` button instead. The dialog
+also closes automatically if you run a command that brings up a new GUI screen.
+In any case, the command output will also be written to the DFHack terminal
+console if you need to find it later.
 
 If your keyboard layout makes any key impossible to type (such as :kbd:`[` and
 :kbd:`]` on German QWERTZ keyboards), use :kbd:`Ctrl`:kbd:`Shift`:kbd:`K` to
@@ -68,10 +68,9 @@ by their category `tags`.
 
 Once you have typed (or autocompleted) a word that matches a valid command, the
 help area shows the help for that command, including usage instructions and
-examples. You can scroll the help text by half-pages by clicking on the
-scrollbar or with :kbd:`PgUp` and :kbd:`PgDn`. You can also scroll line by line
-with :kbd:`Shift`:kbd:`Up` and :kbd:`Shift`:kbd:`Down`, or by clicking on the
-scrollbar arrows.
+examples. You can scroll the help text with the mouse or with :kbd:`PgUp` and
+:kbd:`PgDn`. You can also scroll line by line with :kbd:`Shift`:kbd:`Up` and
+:kbd:`Shift`:kbd:`Down`.
 
 Command history
 ---------------
@@ -82,9 +81,8 @@ those commands again. You can scroll through your command history with the
 something specific with the :kbd:`Alt`:kbd:`S` hotkey. When you hit
 :kbd:`Alt`:kbd:`S`, start typing to search your history for a match. To find the
 next match for what you've already typed, hit :kbd:`Alt`:kbd:`S` again. You can
-run the matched command immediately with :kbd:`Enter` (or
-:kbd:`Shift`:kbd:`Enter`), or hit :kbd:`Esc` to edit the command before running
-it.
+run the matched command immediately with :kbd:`Enter`, or hit :kbd:`Esc` to edit
+the command before running it.
 
 Dev mode
 --------
