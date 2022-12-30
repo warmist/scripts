@@ -13,26 +13,32 @@ local LIST_HEIGHT = 14
 local SHADOW_FRAME = copyall(gui.GREY_LINE_FRAME)
 SHADOW_FRAME.signature_pen = false
 
-local HIGHLIGHT_FRAME = copyall(SHADOW_FRAME)
-HIGHLIGHT_FRAME.h_frame_pen = dfhack.pen.parse{ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.v_frame_pen = dfhack.pen.parse{ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.lt_frame_pen = dfhack.pen.parse{ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.lb_frame_pen = dfhack.pen.parse{ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.rt_frame_pen = dfhack.pen.parse{ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.rb_frame_pen = dfhack.pen.parse{ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK}
+local to_pen = dfhack.pen.parse
+
+local HIGHLIGHT_FRAME = {
+    t_frame_pen = to_pen{tile=902, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    l_frame_pen = to_pen{tile=908, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    b_frame_pen = to_pen{tile=916, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    r_frame_pen = to_pen{tile=910, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lt_frame_pen = to_pen{tile=901, ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lb_frame_pen = to_pen{tile=915, ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rt_frame_pen = to_pen{tile=903, ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rb_frame_pen = to_pen{tile=917, ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    signature_pen=false,
+}
 
 local function make_highlight_frame_style(frame)
     local frame_style = copyall(HIGHLIGHT_FRAME)
     local fg, bg = COLOR_GREEN, COLOR_LIGHTGREEN
     if frame.t then
-        frame_style.t_frame_pen = dfhack.pen.parse{ch=205, fg=fg, bg=bg}
+        frame_style.t_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
     elseif frame.b then
-        frame_style.b_frame_pen = dfhack.pen.parse{ch=205, fg=fg, bg=bg}
+        frame_style.b_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
     end
     if frame.l then
-        frame_style.l_frame_pen = dfhack.pen.parse{ch=186, fg=fg, bg=bg}
+        frame_style.l_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
     elseif frame.r then
-        frame_style.r_frame_pen = dfhack.pen.parse{ch=186, fg=fg, bg=bg}
+        frame_style.r_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
     end
     return frame_style
 end
@@ -86,7 +92,7 @@ end
 
 function DraggablePanel:onRenderFrame(dc, rect)
     if self:getMousePos(gui.ViewRect{rect=self.frame_rect}) then
-        self.frame_background = dfhack.pen.parse{
+        self.frame_background = to_pen{
                 ch=32, fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
     else
         self.frame_background = nil
@@ -107,56 +113,53 @@ function OverlayConfig:init()
     self.scr_name = overlay.simplify_viewscreen_name(
             getmetatable(dfhack.gui.getCurViewscreen(true)))
 
-    local main_panel = widgets.Panel{
+    local main_panel = widgets.Window{
         frame={w=DIALOG_WIDTH, h=LIST_HEIGHT+15},
-        draggable=true,
-        frame_style=gui.GREY_LINE_FRAME,
+        resizable=true,
+        resize_min={h=20},
         frame_title='Overlay config',
-        frame_background=gui.CLEAR_PEN,
-        frame_inset=1,
-        autoarrange_subviews=true,
-        autoarrange_gap=1,
     }
     main_panel:addviews{
-        widgets.Label{text={'Current screen: ',
-                            {text=self.scr_name, pen=COLOR_CYAN}}},
+        widgets.Label{
+            frame={t=0, l=0},
+            text={'Current screen: ', {text=self.scr_name, pen=COLOR_CYAN}}},
         widgets.CycleHotkeyLabel{
             view_id='filter',
-            key='CUSTOM_CTRL_A',
+            frame={t=2, l=0},
+            key='CUSTOM_CTRL_O',
             label='Showing:',
-            options={{label='overlays for the current screen',
-                    value='cur'},
-                    {label='all overlays', value='all'}},
+            options={{label='overlays for the current screen', value='cur'},
+                     {label='all overlays', value='all'}},
             on_change=self:callback('refresh_list')},
         widgets.FilteredList{
             view_id='list',
-            frame={h=LIST_HEIGHT},
+            frame={t=4, b=7},
             on_select=self:callback('highlight_selected'),
             on_submit=self:callback('toggle_enabled'),
             on_submit2=self:callback('reposition'),
         },
-        widgets.ResizingPanel{
-            autoarrange_subviews=true,
-            subviews={
-                widgets.HotkeyLabel{
-                    key='SELECT',
-                    key_sep=' or click widget name to enable/disable',
-                    scroll_keys={},
-                },
-                widgets.HotkeyLabel{
-                    key='CUSTOM_CTRL_T',
-                    key_sep=' or drag the on-screen widget to reposition ',
-                    scroll_keys={},
-                },
-                widgets.HotkeyLabel{
-                    key='CUSTOM_CTRL_D',
-                    scroll_keys={},
-                    label='reset selected widget to its default position',
-                    on_activate=self:callback('reset'),
-                },
-            },
+        widgets.HotkeyLabel{
+            frame={b=5, l=0},
+            key='SELECT',
+            key_sep=' or click widget name to enable/disable',
+            scroll_keys={},
+        },
+        widgets.HotkeyLabel{
+            frame={b=4, l=0},
+            key='CUSTOM_CTRL_T',
+            key_sep=' or drag the on-screen widget to reposition ',
+            on_activate=function() self:reposition(self.subviews.list:getSelected()) end,
+            scroll_keys={},
+        },
+        widgets.HotkeyLabel{
+            frame={b=3, l=0},
+            key='CUSTOM_CTRL_D',
+            scroll_keys={},
+            label='reset selected widget to its default position',
+            on_activate=self:callback('reset'),
         },
         widgets.WrappedLabel{
+            frame={b=0, l=0},
             scroll_keys={},
             text_to_wrap='When repositioning a widget, touch an edge of the'..
                 ' screen to anchor the widget to that edge.',
@@ -263,6 +266,7 @@ function OverlayConfig:toggle_enabled(_, obj)
 end
 
 function OverlayConfig:reposition(_, obj)
+    if not obj then return end
     self.reposition_panel = obj.panel
     if self.reposition_panel then
         self.reposition_panel:setKeyboardDragEnabled(true)
