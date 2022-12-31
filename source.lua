@@ -17,11 +17,7 @@ function AddLiquidSource(pos, liquid, amount)
     table.insert(liquidSources, {
         liquid = liquid,
         amount = amount,
-        pos = {
-            x = pos.x,
-            y = pos.y,
-            z = pos.z,
-        },
+        pos = copyall(pos),
     })
 
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
