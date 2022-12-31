@@ -422,11 +422,27 @@ end
 ----------------------------------
 -- LauncherUI
 --
+
 LauncherUI = defclass(LauncherUI, gui.Screen)
 LauncherUI.ATTRS{
     focus_path='launcher',
     minimal=false,
 }
+
+local function get_frame_r()
+    -- scan for anchor elements and do our best to avoid them
+    local gps = df.global.gps
+    local dimy = gps.dimy
+    local maxx = gps.dimx - 1
+    for x = 0,maxx do
+        local index = x * dimy
+        if (gps.top_in_use and gps.screentexpos_top_anchored[index] ~= 0) or
+                gps.screentexpos_anchored[index] ~= 0 then
+            return maxx - x + 1
+        end
+    end
+    return 0
+end
 
 function LauncherUI:init(args)
     self.saved_display_frames = df.global.gps.display_frames;
@@ -437,11 +453,13 @@ function LauncherUI:init(args)
         get_minimal=function() return self.minimal end,
     }
 
+    local frame_r = get_frame_r()
+
     local update_frames = function()
         local new_frame = {}
         if self.minimal then
             new_frame.l = 0
-            new_frame.r = 58
+            new_frame.r = frame_r
             new_frame.t = 0
             new_frame.h = 1
         else
