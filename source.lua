@@ -1,6 +1,4 @@
 --@ module = true
--- wip
-
 local repeatUtil = require('repeat-util')
 
 liquidSources = liquidSources or {}
