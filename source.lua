@@ -132,7 +132,7 @@ function main(args)
         end
         local amountArg = tonumber(args[3]) or 7
         AddLiquidSource(targetPos, liquidArg, amountArg)
-        print("Added " .. liquidArg .. " " .. amountArg .. " at [" .. targetPos.x .. ", " .. targetPos.y .. ", " .. targetPos.z .. "]")
+        print(('Added %s %d at %s'):format(liquidArg, amountArg, formatPos(targetPos)))
         return
     end
 
