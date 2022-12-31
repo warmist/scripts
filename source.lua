@@ -82,7 +82,7 @@ function FindLiquidSourceAtPos(pos)
             return k
         end
     end
-    return -1
+    return nil
 end
 
 function main(args)
@@ -106,7 +106,7 @@ function main(args)
         if targetPos.x < 0 then
             qerror("Please place the cursor where there is a source to delete")
         end
-        if index ~= -1 then
+        if not index then
             DeleteLiquidSource(targetPos)
             print(('Deleted source at %s'):format(formatPos(targetPos)))
         else
