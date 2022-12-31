@@ -128,7 +128,7 @@ function main(args)
             qerror('Liquid must be either "water" or "magma"')
         end
         if not IsFlowPassable(targetPos) then
-            qerror("Tile not flow passable: I'm afriad I can't let you do that, Dave.")
+            qerror("Tile not flow passable: I'm afraid I can't let you do that, Dave.")
         end
         local amountArg = tonumber(args[3]) or 7
         AddLiquidSource(targetPos, liquidArg, amountArg)
