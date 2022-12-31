@@ -5,6 +5,10 @@ liquidSources = liquidSources or {}
 
 local sourceId = 'liquidSources'
 
+local function posEqual(a, b)
+    return a.x == b.x and a.y == b.y and a.z == b.z
+end
+
 function isFlowPassable(pos)
     local tiletype = dfhack.maps.getTileType(pos.x, pos.y, pos.z)
     local titletypeAttrs = df.tiletype.attrs[tiletype]
@@ -29,7 +33,7 @@ function AddLiquidSource(pos, liquid, amount)
             repeatUtil.cancel(sourceId)
         else
             for _, v in pairs(liquidSources) do
-                local block = dfhack.maps.getTileBlock(v.pos.x, v.pos.y, v.pos.z)
+                local block = dfhack.maps.getTileBlock(v.pos)
                 local x = v.pos.x
                 local y = v.pos.y
                 if block and isFlowPassable(v.pos) then
@@ -57,7 +61,7 @@ end
 
 function DeleteLiquidSource(pos)
     for k, v in pairs(liquidSources) do
-        if v.pos == pos then liquidSources[k] = nil end
+        if posEqual(pos, v.pos) then liquidSources[k] = nil end
         return
     end
 end
@@ -75,6 +79,15 @@ function ListLiquidSources()
     end
 end
 
+function FindLiquidSourceAtPos(pos)
+    for k,v in pairs(liquidSources) do
+        if posEqual(v.pos, pos) then
+            return k
+        end
+    end
+    return -1
+end
+
 function main(...)
     local command = ({...})[1]
 
@@ -89,17 +102,8 @@ function main(...)
         return
     end
 
-    function findLiquidSourceAtPos(pos)
-        for k,v in pairs(liquidSources) do
-            if v.pos == pos then
-                return k
-            end
-        end
-        return -1
-    end
-
     local targetPos = df.global.cursor
-    local index = findLiquidSourceAtPos(targetPos)
+    local index = FindLiquidSourceAtPos(targetPos)
 
     if command == 'delete' then
         if targetPos.x < 0 then
