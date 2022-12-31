@@ -8,7 +8,7 @@ local json = require('json')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local AUTOCOMPLETE_PANEL_WIDTH = 20
+local AUTOCOMPLETE_PANEL_WIDTH = 25
 local EDIT_PANEL_HEIGHT = 4
 
 local HISTORY_SIZE = 5000
@@ -129,16 +129,11 @@ function AutocompletePanel:init()
             frame={l=0, t=0},
             text='Click or select via'
         },
-        widgets.HotkeyLabel{
+        widgets.Label{
             frame={l=1, t=1},
-            key='KEYBOARD_CURSOR_RIGHT_FAST',
-            key_sep='/',
-            label=''},
-        widgets.HotkeyLabel{
-            frame={l=9, t=1},
-            key='KEYBOARD_CURSOR_LEFT_FAST',
-            key_sep='',
-            label=''},
+            text={{text='Shift+'..string.char(26), pen=COLOR_LIGHTGREEN},
+                  {text='/'},
+                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}},
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
@@ -377,19 +372,21 @@ end
 -- MainPanel
 --
 
-MainPanel = defclass(MainPanel, widgets.Panel)
+MainPanel = defclass(MainPanel, widgets.Window)
 MainPanel.ATTRS{
     frame_title=TITLE,
-    frame_background=gui.CLEAR_PEN,
+    frame_inset=0,
+    resizable=true,
+    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+45, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
 }
 
-local H_SPLIT_PEN = dfhack.pen.parse{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{ch=202, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{ch=204, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{ch=185, fg=COLOR_GREY, bg=COLOR_BLACK}
+local H_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=916, ch=202, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=908, ch=204, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=910, ch=185, fg=COLOR_GREY, bg=COLOR_BLACK}
 
 -- paint autocomplete panel border
 local function paint_vertical_border(rect)
@@ -425,11 +422,27 @@ end
 ----------------------------------
 -- LauncherUI
 --
+
 LauncherUI = defclass(LauncherUI, gui.Screen)
 LauncherUI.ATTRS{
     focus_path='launcher',
     minimal=false,
 }
+
+local function get_frame_r()
+    -- scan for anchor elements and do our best to avoid them
+    local gps = df.global.gps
+    local dimy = gps.dimy
+    local maxx = gps.dimx - 1
+    for x = 0,maxx do
+        local index = x * dimy
+        if (gps.top_in_use and gps.screentexpos_top_anchored[index] ~= 0) or
+                gps.screentexpos_anchored[index] ~= 0 then
+            return maxx - x + 1
+        end
+    end
+    return 0
+end
 
 function LauncherUI:init(args)
     self.saved_display_frames = df.global.gps.display_frames;
@@ -440,14 +453,18 @@ function LauncherUI:init(args)
         get_minimal=function() return self.minimal end,
     }
 
+    local frame_r = get_frame_r()
+
     local update_frames = function()
-        local new_frame = {l=5, r=5}
+        local new_frame = {}
         if self.minimal then
             new_frame.l = 0
-            new_frame.r = 0
+            new_frame.r = frame_r
             new_frame.t = 0
             new_frame.h = 1
         else
+            new_frame.l = 5
+            new_frame.r = 25
             new_frame.t = 5
             new_frame.b = 5
         end
