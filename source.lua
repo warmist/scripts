@@ -35,7 +35,8 @@ function AddLiquidSource(pos, liquid, amount)
                 if block and IsFlowPassable(v.pos) then
                     local isMagma = v.liquid == 'magma'
 
-                    local flow = block.designation[x%16][y%16].flow_size
+                    local flags = dfhack.maps.getTileFlags(v.pos)
+                    local flow = flags.flow_size
 
                     if flow ~= v.amount then
                         local target = flow + 1
@@ -43,9 +44,9 @@ function AddLiquidSource(pos, liquid, amount)
                             target = flow - 1
                         end
 
-                        block.designation[x%16][y%16].liquid_type = isMagma
-                        block.designation[x%16][y%16].flow_size = target
-                        block.designation[x%16][y%16].flow_forbid = (isMagma or target >= 4)
+                        flags.liquid_type = isMagma
+                        flags.flow_size = target
+                        flags.flow_forbid = (isMagma or target >= 4)
 
                         dfhack.maps.enableBlockUpdates(block, true)
                     end
