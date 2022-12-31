@@ -5,12 +5,8 @@ liquidSources = liquidSources or {}
 
 local sourceId = 'liquidSources'
 
-local function posEqual(a, b)
-    return a.x == b.x and a.y == b.y and a.z == b.z
-end
-
 function isFlowPassable(pos)
-    local tiletype = dfhack.maps.getTileType(pos.x, pos.y, pos.z)
+    local tiletype = dfhack.maps.getTileType(pos)
     local titletypeAttrs = df.tiletype.attrs[tiletype]
     local shape = titletypeAttrs.shape
     local tiletypeShapeAttrs = df.tiletype_shape.attrs[shape]
@@ -61,7 +57,7 @@ end
 
 function DeleteLiquidSource(pos)
     for k, v in pairs(liquidSources) do
-        if posEqual(pos, v.pos) then liquidSources[k] = nil end
+        if same_xyz(pos, v.pos) then liquidSources[k] = nil end
         return
     end
 end
@@ -81,7 +77,7 @@ end
 
 function FindLiquidSourceAtPos(pos)
     for k,v in pairs(liquidSources) do
-        if posEqual(v.pos, pos) then
+        if same_xyz(v.pos, pos) then
             return k
         end
     end
