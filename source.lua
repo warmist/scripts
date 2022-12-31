@@ -75,7 +75,7 @@ end
 function ListLiquidSources()
     print('Current Liquid Sources:')
     for _,v in pairs(liquidSources) do
-        print('[' .. v.pos.x .. ', ' .. v.pos.y .. ', ' .. v.pos.z .. '] ' .. v.liquid .. ' ' .. v.amount)
+        print(('[%d, %d, %d] %s %d'):format(v.pos.x, v.pos.y, v.pos.z, v.liquid, v.amount))
     end
 end
 
