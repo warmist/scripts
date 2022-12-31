@@ -5,7 +5,11 @@ liquidSources = liquidSources or {}
 
 local sourceId = 'liquidSources'
 
-function isFlowPassable(pos)
+local function formatPos(pos)
+    return ('[%d, %d, %d]'):format(pos.x, pos.y, pos.z)
+end
+
+function IsFlowPassable(pos)
     local tiletype = dfhack.maps.getTileType(pos)
     local titletypeAttrs = df.tiletype.attrs[tiletype]
     local shape = titletypeAttrs.shape
@@ -28,7 +32,7 @@ function AddLiquidSource(pos, liquid, amount)
                 local block = dfhack.maps.getTileBlock(v.pos)
                 local x = v.pos.x
                 local y = v.pos.y
-                if block and isFlowPassable(v.pos) then
+                if block and IsFlowPassable(v.pos) then
                     local isMagma = v.liquid == 'magma'
 
                     local flow = block.designation[x%16][y%16].flow_size
@@ -67,7 +71,7 @@ end
 function ListLiquidSources()
     print('Current Liquid Sources:')
     for _,v in pairs(liquidSources) do
-        print(('[%d, %d, %d] %s %d'):format(v.pos.x, v.pos.y, v.pos.z, v.liquid, v.amount))
+        print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
     end
 end
 
@@ -80,8 +84,8 @@ function FindLiquidSourceAtPos(pos)
     return -1
 end
 
-function main(...)
-    local command = ({...})[1]
+function main(args)
+    local command = args[1]
 
     if command == 'list' then
         ListLiquidSources()
@@ -94,7 +98,7 @@ function main(...)
         return
     end
 
-    local targetPos = df.global.cursor
+    local targetPos = copyall(df.global.cursor)
     local index = FindLiquidSourceAtPos(targetPos)
 
     if command == 'delete' then
@@ -103,9 +107,9 @@ function main(...)
         end
         if index ~= -1 then
             DeleteLiquidSource(targetPos)
-            print("Deleted source at [" .. targetPos.x .. ", " .. targetPos.y .. ", " .. targetPos.z .. "]")
+            print(('Deleted source at %s'):format(formatPos(targetPos)))
         else
-            qerror('[' .. targetPos.x .. ', ' .. targetPos.y .. ', ' .. targetPos.z .. '] Does not contain a liquid source')
+            qerror(('%s Does not contain a liquid source'):format(formatPos(targetPos)))
         end
         return
     end
@@ -114,7 +118,7 @@ function main(...)
         if targetPos.x < 0 then
             qerror('Please place the cursor where you would like a source')
         end
-        local liquidArg = ({...})[2]
+        local liquidArg = args[2]
         if not liquidArg then
             qerror('You must specify a liquid to add a source for')
         end
@@ -122,10 +126,10 @@ function main(...)
         if not (liquidArg == 'magma' or liquidArg == 'water') then
             qerror('Liquid must be either "water" or "magma"')
         end
-        if not isFlowPassable(targetPos) then
-            qerror('Tile not flow passable: I\'m afriad I can\'t let you do that, Dave.')
+        if not IsFlowPassable(targetPos) then
+            qerror("Tile not flow passable: I'm afriad I can't let you do that, Dave.")
         end
-        local amountArg = tonumber(({...})[3]) or 7
+        local amountArg = tonumber(args[3]) or 7
         AddLiquidSource(targetPos, liquidArg, amountArg)
         print("Added " .. liquidArg .. " " .. amountArg .. " at [" .. targetPos.x .. ", " .. targetPos.y .. ", " .. targetPos.z .. "]")
         return
@@ -135,5 +139,5 @@ function main(...)
 end
 
 if not dfhack_flags.module then
-    main(...)
+    main({...})
 end
