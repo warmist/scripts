@@ -357,7 +357,7 @@ function HelpPanel:set_entry(entry_name)
         return
     end
     self:set_help(helpdb.get_entry_long_help(entry_name,
-                                             self.frame_body.width - 3))
+                                             self.frame_body.width - 5))
     self.cur_entry = entry_name
 end
 
