@@ -19,6 +19,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `autounsuspend`: now saves its state with your fort
 - `emigration`: now saves its state with your fort
 - `prioritize`: now saves its state with your fort
 - `gui/gm-editor`: converted to a movable, resizable window
