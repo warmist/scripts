@@ -43,7 +43,15 @@ function TileBrowser:init()
             frame={t=3}},
         widgets.Label{
             view_id='report',
-            frame={t=4}},
+            frame={t=4},
+            scroll_keys={
+                STANDARDSCROLL_UP = -1,
+                KEYBOARD_CURSOR_UP = -1,
+                STANDARDSCROLL_DOWN = 1,
+                KEYBOARD_CURSOR_DOWN = 1,
+                STANDARDSCROLL_PAGEUP = '-page',
+                STANDARDSCROLL_PAGEDOWN = '+page',
+            }},
     }
     self:addviews{main_panel}
 
