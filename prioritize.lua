@@ -20,7 +20,7 @@ local DEFAULT_JOB_TYPES = {
     'PlaceInTraction', 'SetBone', 'Surgery', 'Suture',
     -- organize items efficiently so new items can be brought to the stockpiles
     'StoreItemInVehicle', 'StoreItemInBag', 'StoreItemInBarrel',
-    'StoreItemInLocation', 'StoreItemInHospital', 'StoreItemInBin',
+    'StoreItemInLocation', 'StoreItemInBin',
     -- ensure prisoners and animals are tended to quickly
     'TameAnimal', 'TrainAnimal', 'TrainHuntingAnimal', 'TrainWarAnimal',
     'PenLargeAnimal', 'PitLargeAnimal', 'SlaughterAnimal',
@@ -145,7 +145,7 @@ end
 
 local function print_status_line(num_jobs, job_type, annotation)
     annotation = annotation or ''
-    print(('%d\t%s%s'):format(num_jobs, df.job_type[job_type], annotation))
+    print(('%6d %s%s'):format(num_jobs, df.job_type[job_type], annotation))
 end
 
 local function status()
