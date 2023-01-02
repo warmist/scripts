@@ -13,7 +13,6 @@ function TileBrowser:init()
         resizable=true,
         resize_min={h=20},
         frame_title='Tile Browser',
-        on_submit=self:callback('set_start_index'),
     }
     main_panel:addviews{
         widgets.EditField{
@@ -75,8 +74,14 @@ function TileBrowser:set_start_index(idx)
 
     idx = idx - (idx % 20) -- floor to nearest multiple of 20
     self.subviews.start_index:setText(tostring(idx))
+    self.dirty = true
+end
 
-    local end_idx = idx + 999
+function TileBrowser:update_report()
+    if not self.dirty then return end
+
+    local idx = tonumber(self.subviews.start_index.text)
+    local end_idx = math.min(self.max_texpos, idx + 999)
     local prefix_len = #tostring(idx) + 4
 
     local guide = {}
@@ -87,7 +92,6 @@ function TileBrowser:set_start_index(idx)
 
     local report = {}
     for texpos=idx,end_idx do
-        if texpos > self.max_texpos then break end
         if texpos % 20 == 0 then
             table.insert(report, {text=tostring(texpos), width=prefix_len})
         elseif texpos % 10 == 0 then
@@ -100,13 +104,12 @@ function TileBrowser:set_start_index(idx)
     end
 
     self.subviews.report:setText(report)
-    if self.parent_rect then
-        self.subviews.window:updateLayout()
-    end
+    self.subviews.window:updateLayout()
 end
 
 function TileBrowser:onRenderFrame()
     self:renderParent()
+    self:update_report()
 end
 
 function TileBrowser:onInput(keys)
