@@ -4,9 +4,11 @@ local widgets = require('gui.widgets')
 TileBrowser = defclass(TileBrowser, gui.Screen)
 
 function TileBrowser:init()
+    self.max_texpos = #df.global.enabler.textures.raws
+
     local main_panel = widgets.Window{
         view_id='window',
-        frame={w=36, h=58},
+        frame={w=36, h=59},
         drag_anchors={title=true, body=true},
         resizable=true,
         resize_min={h=20},
@@ -43,7 +45,7 @@ function TileBrowser:init()
             frame={t=3}},
         widgets.Label{
             view_id='report',
-            frame={t=4},
+            frame={t=4, b=1},
             scroll_keys={
                 STANDARDSCROLL_UP = -1,
                 KEYBOARD_CURSOR_UP = -1,
@@ -52,6 +54,9 @@ function TileBrowser:init()
                 STANDARDSCROLL_PAGEUP = '-page',
                 STANDARDSCROLL_PAGEDOWN = '+page',
             }},
+        widgets.Label{
+            view_id='footer',
+            frame={b=0}},
     }
     self:addviews{main_panel}
 
@@ -59,27 +64,30 @@ function TileBrowser:init()
 end
 
 function TileBrowser:shift_start_index(amt)
-    local cur_idx = tonumber(self.subviews.start_index.text)
-    local idx = math.max(0, cur_idx + amt)
-    self.subviews.start_index:setText(tostring(idx))
-    self:set_start_index(idx)
+    self:set_start_index(tonumber(self.subviews.start_index.text) + amt)
 end
 
 function TileBrowser:set_start_index(idx)
     idx = tonumber(idx)
     if not idx then return end
 
+    idx = math.max(0, math.min(self.max_texpos - 980, idx))
+
     idx = idx - (idx % 20) -- floor to nearest multiple of 20
+    self.subviews.start_index:setText(tostring(idx))
+
     local end_idx = idx + 999
     local prefix_len = #tostring(idx) + 4
 
-    local header = {}
-    table.insert(header, {text='', width=prefix_len})
-    table.insert(header, '0123456789 0123456789')
-    self.subviews.header:setText(header)
+    local guide = {}
+    table.insert(guide, {text='', width=prefix_len})
+    table.insert(guide, '0123456789 0123456789')
+    self.subviews.header:setText(guide)
+    self.subviews.footer:setText(guide)
 
     local report = {}
     for texpos=idx,end_idx do
+        if texpos > self.max_texpos then break end
         if texpos % 20 == 0 then
             table.insert(report, {text=tostring(texpos), width=prefix_len})
         elseif texpos % 10 == 0 then
