@@ -22,6 +22,7 @@ that repo.
 - `autounsuspend`: now saves its state with your fort
 - `emigration`: now saves its state with your fort
 - `prioritize`: now saves its state with your fort
+- `unsuspend`: overlay now displays different letters for different suspend states so they can be differentiated in graphics mode (P=planning, x=suspended, X=repeatedly suspended)
 - `gui/gm-editor`: converted to a movable, resizable, mouse-enabled window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/gm-unit`: converted to a movable, resizable, mouse-enabled window
