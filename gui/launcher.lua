@@ -364,7 +364,7 @@ end
 function HelpPanel:postComputeFrame()
     if #self.cur_entry == 0 then return end
     self:set_help(helpdb.get_entry_long_help(self.cur_entry,
-                                             self.frame_body.width - 3),
+                                             self.frame_body.width - 5),
                   true)
 end
 
