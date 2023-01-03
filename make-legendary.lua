@@ -127,7 +127,7 @@ if opt then
         BreathOfArmok()
         return
     end
-    if opt=="Normal" or opt=="Medical" or opt=="Personal" or opt=="Social" or opt=="Cultural" or opt=="MilitaryWeapon" or opt=="MilitaryAttack" or opt=="MilitaryDefense" or opt=="MilitaryMisc" then
+    if opt=="Normal" or opt=="Medical" or opt=="Personal" or opt=="Social" or opt=="Cultural" or opt=="MilitaryWeapon" or opt=="MilitaryAttack" or opt=="MilitaryDefense" or opt=="MilitaryMisc" or opt=="MilitaryUnarmed" then
         LegendaryByClass(opt)
         return
     end
