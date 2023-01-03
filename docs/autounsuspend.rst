@@ -15,4 +15,4 @@ Usage
 
 ::
 
-    autounsuspend start|stop
+    enable autounsuspend
