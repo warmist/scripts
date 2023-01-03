@@ -376,8 +376,9 @@ MainPanel = defclass(MainPanel, widgets.Window)
 MainPanel.ATTRS{
     frame_title=TITLE,
     frame_inset=0,
+    drag_anchors={title=true, body=true},
     resizable=true,
-    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+45, h=EDIT_PANEL_HEIGHT+20},
+    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
 }
 
@@ -657,9 +658,9 @@ end
 function LauncherUI:onInput(keys)
     if self:inputToSubviews(keys) then
         return true
-    elseif keys.LEAVESCREEN then
+    end
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
-        return true
     elseif keys.CUSTOM_CTRL_C then
         if self.focus_group.cur == self.subviews.editfield then
             self.subviews.edit:set_text('')
@@ -674,7 +675,10 @@ function LauncherUI:onInput(keys)
         self.subviews.autocomplete:advance(1)
     elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
         self.subviews.autocomplete:advance(-1)
+    elseif not self.subviews.main:getMousePos() and (keys._MOUSE_L or keys._MOUSE_M) then
+        gui.simulateInput(self._native.parent, keys)
     end
+    return true
 end
 
 local function getAny(scr, thing)
