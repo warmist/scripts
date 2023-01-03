@@ -105,8 +105,8 @@ end
 function Pathable:onInput(keys)
     if not self.triggered then return end
 
-    if keys.LEAVESCREEN then
-        self.triggered = false
+    if keys._MOUSE_R_DOWN then
+        self:overlay_trigger()
         return true
     end
 
