@@ -27,11 +27,12 @@ that repo.
 - `gui/gm-editor`: converted to a movable, resizable, mouse-enabled window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/gm-unit`: converted to a movable, resizable, mouse-enabled window
-- `gui/quickcmd`: converted to a movable, resizable, mouse-enabled window, also commands are stored globally now so you don't have to recreate commands for every fort
+- `gui/quickcmd`: converted to a movable, resizable, mouse-enabled window
+- `gui/quickcmd`: commands are now stored globally so you don't have to recreate commands for every fort
 - `devel/inspect-screen`: updated for new rendering semantics and can now also inspect map textures
 
 ## Documentation
-- `devel/hello-world` updated to be a better example from which to start new gui scripts
+- `devel/hello-world`: updated to be a better example from which to start new gui scripts
 
 ## Removed
 
