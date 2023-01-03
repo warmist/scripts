@@ -17,6 +17,7 @@ that repo.
 - `devel/tile-browser`: page through available textures and see their texture ids
 
 ## Fixes
+- `make-legendary`: "MilitaryUnarmed" option now functional
 
 ## Misc Improvements
 - `autounsuspend`: now saves its state with your fort
