@@ -624,7 +624,7 @@ end
 local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, PTR_SIZE)
     or not ms.is_valid_vector(world.units.active, PTR_SIZE)
-    or not ms.is_valid_vector(world.units.bad, PTR_SIZE)
+    or not ms.is_valid_vector(world.units.temp_save, PTR_SIZE)
     or not ms.is_valid_vector(world.history.figures, PTR_SIZE)
     or not ms.is_valid_vector(world.features.map_features, PTR_SIZE)
     then
@@ -632,8 +632,8 @@ local function is_valid_world(world)
         return false
     end
 
-    if #world.units.all == 0 or #world.units.all ~= #world.units.bad then
-        print('Different or zero size of units.all and units.bad:'..#world.units.all..' vs '..#world.units.bad)
+    if #world.units.all == 0 or #world.units.all ~= #world.units.temp_save then
+        print('Different or zero size of units.all and units.temp_save:'..#world.units.all..' vs '..#world.units.temp_save)
         if not utils.prompt_yes_no('Ignore?') then
             return false
         end
