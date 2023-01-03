@@ -1,12 +1,4 @@
 -- A GUI front-end for the autobutcher plugin.
---[====[
-
-gui/autobutcher
-===============
-An in-game interface for `autobutcher`.  This script must be called
-from either the overall status screen or the animal list screen.
-
-]====]
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
@@ -14,14 +6,7 @@ local dlg = require 'gui.dialogs'
 
 local plugin = require 'plugins.autobutcher'
 
-WatchList = defclass(WatchList, gui.FramedScreen)
-
-WatchList.ATTRS {
-    frame_title = 'Autobutcher Watchlist',
-    frame_inset = 0, -- cover full DF window
-    frame_background = COLOR_BLACK,
-    frame_style = gui.BOUNDARY_FRAME,
-}
+WatchList = defclass(WatchList, gui.Screen)
 
 -- width of the race name column in the UI
 local racewidth = 25
@@ -51,9 +36,10 @@ end
 function WatchList:init(args)
     local colwidth = 7
     self:addviews{
-        widgets.Panel{
-            frame = { l = 0, r = 0 },
-            frame_inset = 1,
+        widgets.Window{
+            frame_title = 'Autobutcher Watchlist',
+            frame = { w=84, h=30 },
+            resizable = true,
             subviews = {
                 widgets.Label{
                     frame = { l = 0, t = 0 },
@@ -80,9 +66,8 @@ function WatchList:init(args)
                     view_id = 'list',
                     frame = { t = 3, b = 5 },
                     not_found_label = 'Watchlist is empty.',
-                    edit_pen = COLOR_LIGHTCYAN,
                     text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-                    cursor_pen = { fg = COLOR_WHITE, bg = COLOR_GREEN },
+                    cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
                     --on_select = self:callback('onSelectEntry'),
                 },
                 widgets.Label{
@@ -96,6 +81,10 @@ function WatchList:init(args)
 
     self:initListChoices()
     self:updateBottom()
+end
+
+function WatchList:onRenderFrame()
+    self:renderParent()
 end
 
 -- change the viewmode for stock data displayed in left section of columns
@@ -643,9 +632,12 @@ function WatchList:onToggleAutowatch()
     self:updateBottom()
 end
 
+function WatchList:onDismiss()
+    view = nil
+end
+
 if not dfhack.isMapLoaded() then
     qerror('Map is not loaded.')
 end
 
-local screen = WatchList{ }
-screen:show()
+view = view or WatchList{}:show()
