@@ -445,7 +445,6 @@ local function get_frame_r()
 end
 
 function LauncherUI:init(args)
-    self.saved_display_frames = df.global.gps.display_frames;
     self.firstword = ""
 
     local main_panel = MainPanel{
@@ -480,9 +479,6 @@ function LauncherUI:init(args)
         editfield_frame.t = self.minimal and 0 or 1
         editfield_frame.l = self.minimal and 10 or 1
         editfield_frame.r = self.minimal and 11 or 1
-
-        df.global.gps.display_frames = self.minimal
-                and 0 or self.saved_display_frames
     end
 
     main_panel:addviews{
@@ -615,7 +611,6 @@ end
 
 function LauncherUI:onDismiss()
     view = nil
-    df.global.gps.display_frames = self.saved_display_frames;
 end
 
 function LauncherUI:run_command(reappear, command)
