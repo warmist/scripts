@@ -56,6 +56,7 @@ function QCMDDialog:init(info)
     self.commands = load_commands()
 
     local main_panel = widgets.Window{
+        view_id='main',
         frame_title='Quick Command',
         frame={w=40, h=28},
         resizable=true,
@@ -95,8 +96,12 @@ function QCMDDialog:init(info)
 end
 
 function QCMDDialog:submit(idx, choice)
-    self:dismiss()
-    dfhack.run_command(choice.command)
+    local screen = self.parent_view
+    local parent = screen._native.parent
+    dfhack.screen.hideGuard(screen, function()
+        dfhack.run_command(choice.command)
+    end)
+    screen:dismiss()
 end
 
 function QCMDDialog:updateList()
@@ -120,11 +125,6 @@ function QCMDDialog:updateList()
 end
 
 function QCMDDialog:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-        return true
-    end
-
     -- If the pressed key is a hotkey, perform that command and close.
     for idx,choice in ipairs(self.subviews.list:getChoices()) do
         if keys[choice.hotkey] then
@@ -192,12 +192,21 @@ function QCMDDialog:onEditCommand()
     )
 end
 
-function QCMDDialog:onRenderFrame()
-    self:renderParent()
+QCMDScreen = defclass(QCMDScreen, gui.ZScreen)
+QCMDScreen.ATTRS {
+    focus_path='quickcmd',
+}
+
+function QCMDScreen:init()
+    self:addviews{QCMDDialog{}}
 end
 
-function QCMDDialog:onDismiss()
+function QCMDScreen:isMouseOver()
+    return self.subviews.main:getMouseFramePos()
+end
+
+function QCMDScreen:onDismiss()
     view = nil
 end
 
-view = view or QCMDDialog{}:show()
+view = view or QCMDScreen{}:show()
