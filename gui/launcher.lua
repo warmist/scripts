@@ -18,6 +18,7 @@ local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
 local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
 local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
 local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
+local CONFIG_FILE = 'dfhack-config/launcher.json'
 
 local TITLE = 'DFHack Launcher'
 
@@ -93,9 +94,10 @@ if not history then
     history, history_set = init_history()
 end
 
-local function get_frequency_data(fname)
+local function get_config(fname, default)
+    default = default == nil and {} or default
     local ok, data = pcall(json.decode_file, fname)
-    return ok and data or {}
+    return ok and data or default
 end
 
 local function get_first_word(text)
@@ -104,8 +106,8 @@ local function get_first_word(text)
     return word
 end
 
-command_bias = command_bias or get_frequency_data(BASE_FREQUENCY_FILE)
-command_counts = command_counts or get_frequency_data(USER_FREQUENCY_FILE)
+command_bias = command_bias or get_config(BASE_FREQUENCY_FILE)
+command_counts = command_counts or get_config(USER_FREQUENCY_FILE)
 
 local function get_command_count(command)
     return (command_bias[command] or 0) + (command_counts[command] or 0)
@@ -385,6 +387,11 @@ MainPanel.ATTRS{
     update_autocomplete=DEFAULT_NIL,
 }
 
+function MainPanel:postUpdateLayout()
+    if self.get_minimal() then return end
+    json.encode_file(self.frame, CONFIG_FILE)
+end
+
 local H_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
 local V_SPLIT_PEN = dfhack.pen.parse{tile=910, ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
 local TOP_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
@@ -492,10 +499,7 @@ function LauncherUI:init(args)
             new_frame.t = 0
             new_frame.h = 1
         else
-            new_frame.l = 5
-            new_frame.r = 25
-            new_frame.t = 5
-            new_frame.b = 5
+            new_frame = get_config(CONFIG_FILE, {l=5, r=25, t=5, b=5})
         end
         main_panel.frame = new_frame
         main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil

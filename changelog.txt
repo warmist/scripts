@@ -27,7 +27,7 @@ that repo.
 - `gui/gm-editor`: converted to a movable, resizable, mouse-enabled window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/launcher`: can now be dragged from anywhere on the window body
-- `gui/launcher`: now closes on r-click
+- `gui/launcher`: now remembers its size and position between invocations
 - `gui/gm-unit`: converted to a movable, resizable, mouse-enabled window
 - `gui/cp437-table`: converted to a movable, mouse-enabled window
 - `gui/quickcmd`: converted to a movable, resizable, mouse-enabled window
