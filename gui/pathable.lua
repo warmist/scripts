@@ -5,7 +5,7 @@ local gui = require('gui')
 local plugin = require('plugins.pathable')
 local widgets = require('gui.widgets')
 
-Pathable = defclass(Pathable, gui.Screen)
+Pathable = defclass(Pathable, gui.ZScreen)
 Pathable.ATTRS{
     focus_path='pathable',
 }
@@ -57,10 +57,6 @@ function Pathable:init()
     self:addviews{window}
 end
 
-function Pathable:onRenderFrame()
-    self:renderParent()
-end
-
 function Pathable:onRenderBody()
     local target = self.subviews.lock:getOptionValue() and
             self.saved_target or dfhack.gui.getMousePos()
@@ -86,16 +82,8 @@ function Pathable:onRenderBody()
     end
 end
 
-function Pathable:onInput(keys)
-    if self:inputToSubviews(keys) then
-        return true
-    end
-    if keys._MOUSE_R_DOWN then
-        self:dismiss()
-        return true
-    end
-    gui.simulateInput(self._native.parent, keys)
-    return true
+function Pathable:isMouseOver()
+    return self.subviews.main:getMouseFramePos()
 end
 
 function Pathable:onDismiss()
