@@ -4,18 +4,15 @@ local dialog = require('gui.dialogs')
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-CPDialog = defclass(CPDialog, gui.Screen)
+CPDialog = defclass(CPDialog, widgets.Window)
 CPDialog.ATTRS {
     focus_path='cp437-table',
+    frame_title = 'CP437 table',
+    frame={w=36, h=17},
 }
 
 function CPDialog:init(info)
-    local main_panel = widgets.Window{
-        frame_title = 'CP437 table',
-        frame={w=36, h=17},
-    }
-
-    main_panel:addviews{
+    self:addviews{
         widgets.EditField{
             view_id='edit',
             frame={t=0, l=0},
@@ -33,15 +30,12 @@ function CPDialog:init(info)
         widgets.Label{
             frame={b=0, l=0},
             text={
-                {key='LEAVESCREEN', text=': Cancel',
-                 on_activate=self:callback('dismiss')},
+                {key='LEAVESCREEN', text=': Cancel'},
                 ' ',
                 {key='SELECT', text=': Done'},
             },
         },
     }
-
-    self:addviews{main_panel}
 end
 
 function CPDialog:render_board(dc)
@@ -66,10 +60,14 @@ function CPDialog:submit()
         end
         keys[i] = k
     end
-    for i, k in pairs(keys) do
-        gui.simulateInput(self._native.parent, k)
-    end
-    self:dismiss()
+    local screen = self.parent_view
+    local parent = screen._native.parent
+    dfhack.screen.hideGuard(screen, function()
+        for i, k in pairs(keys) do
+            gui.simulateInput(parent, k)
+        end
+    end)
+    screen:dismiss()
 end
 
 function CPDialog:onInput(keys)
@@ -84,12 +82,21 @@ function CPDialog:onInput(keys)
     return CPDialog.super.onInput(self, keys)
 end
 
-function CPDialog:onRenderFrame()
-    self:renderParent()
+CPScreen = defclass(CPScreen, gui.ZScreen)
+CPScreen.ATTRS {
+    focus_path='cp437-table',
+}
+
+function CPScreen:init()
+    self:addviews{CPDialog{view_id='main'}}
 end
 
-function CPDialog:onDismiss()
+function CPScreen:isMouseOver()
+    return self.subviews.main:getMouseFramePos()
+end
+
+function CPScreen:onDismiss()
     view = nil
 end
 
-view = view or CPDialog{}:show()
+view = view or CPScreen{}:show()
