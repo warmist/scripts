@@ -21,6 +21,9 @@ local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
 
 local TITLE = 'DFHack Launcher'
 
+-- track whether the user has enabled dev mode
+dev_mode = dev_mode or false
+
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
     if #hist <= HISTORY_SIZE then return end
@@ -376,10 +379,10 @@ MainPanel = defclass(MainPanel, widgets.Window)
 MainPanel.ATTRS{
     frame_title=TITLE,
     frame_inset=0,
-    drag_anchors={title=true, body=true},
     resizable=true,
     resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
+    update_autocomplete=DEFAULT_NIL,
 }
 
 local H_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
@@ -420,11 +423,36 @@ function MainPanel:onRenderFrame(dc, rect)
     paint_horizontal_border(rect)
 end
 
+function MainPanel:onInput(keys)
+    if MainPanel.super.onInput(self, keys) then
+        return true
+    elseif keys.CUSTOM_CTRL_C then
+        if self.focus_group.cur == self.subviews.editfield then
+            self.subviews.edit:set_text('')
+            self:on_edit_input('')
+        else
+            self.focus_group.cur:setText('')
+        end
+        return true
+    elseif keys.CUSTOM_CTRL_D then
+        dev_mode = not dev_mode
+        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
+        return true
+    elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
+        self.subviews.autocomplete:advance(1)
+        return true
+    elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
+        self.subviews.autocomplete:advance(-1)
+        return true
+    end
+end
+
+
 ----------------------------------
 -- LauncherUI
 --
 
-LauncherUI = defclass(LauncherUI, gui.Screen)
+LauncherUI = defclass(LauncherUI, gui.ZScreen)
 LauncherUI.ATTRS{
     focus_path='launcher',
     minimal=false,
@@ -451,6 +479,7 @@ function LauncherUI:init(args)
     local main_panel = MainPanel{
         view_id='main',
         get_minimal=function() return self.minimal end,
+        update_autocomplete=self:callback('update_autocomplete'),
     }
 
     local frame_r = get_frame_r()
@@ -542,8 +571,6 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
--- track whether the user has enabled dev mode
-dev_mode = dev_mode or false
 local DEV_FILTER = {tag={'dev'}}
 
 -- adds the n most closely affiliated peer entries for the given entry that
@@ -610,10 +637,6 @@ function LauncherUI:on_autocomplete(_, option)
     end
 end
 
-function LauncherUI:onDismiss()
-    view = nil
-end
-
 function LauncherUI:run_command(reappear, command)
     command = command:trim()
     if #command == 0 then return end
@@ -651,36 +674,6 @@ function LauncherUI:run_command(reappear, command)
     self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
 end
 
-function LauncherUI:onRenderFrame()
-    self:renderParent()
-end
-
-function LauncherUI:onInput(keys)
-    if self:inputToSubviews(keys) then
-        return true
-    end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-        self:dismiss()
-    elseif keys.CUSTOM_CTRL_C then
-        if self.focus_group.cur == self.subviews.editfield then
-            self.subviews.edit:set_text('')
-            self:on_edit_input('')
-        else
-            self.focus_group.cur:setText('')
-        end
-    elseif keys.CUSTOM_CTRL_D then
-        dev_mode = not dev_mode
-        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
-    elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
-        self.subviews.autocomplete:advance(1)
-    elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
-        self.subviews.autocomplete:advance(-1)
-    elseif not self.subviews.main:getMousePos() and (keys._MOUSE_L or keys._MOUSE_M) then
-        gui.simulateInput(self._native.parent, keys)
-    end
-    return true
-end
-
 local function getAny(scr, thing)
     if not scr._native or not scr._native.parent then return nil end
     return dfhack.gui['getAny'..thing](scr._native.parent)
@@ -696,6 +689,14 @@ function LauncherUI:onGetSelectedBuilding()
 end
 function LauncherUI:onGetSelectedPlant()
     return getAny(self, 'Plant')
+end
+
+function LauncherUI:isMouseOver()
+    return self.subviews.main:getMouseFramePos()
+end
+
+function LauncherUI:onDismiss()
+    view = nil
 end
 
 if dfhack_flags.module then
