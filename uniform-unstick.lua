@@ -229,8 +229,8 @@ function do_drop( item_list )
   end
 
   local mode_swap = false
-  if df.global.ui.main.mode == df.ui_sidebar_mode.ViewUnits then
-    df.global.ui.main.mode = df.ui_sidebar_mode.Default
+  if df.global.plotinfo.main.mode == df.ui_sidebar_mode.ViewUnits then
+    df.global.plotinfo.main.mode = df.ui_sidebar_mode.Default
     mode_swap = true
   end
 
@@ -249,7 +249,7 @@ function do_drop( item_list )
   end
 
   if mode_swap then
-    df.global.ui.main.mode = df.ui_sidebar_mode.ViewUnits
+    df.global.plotinfo.main.mode = df.ui_sidebar_mode.ViewUnits
   end
 end
 

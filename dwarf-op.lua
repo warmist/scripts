@@ -73,7 +73,7 @@ FileData: {
 --]]--
 function LoadPersistentData()
     local gamePath = dfhack.getDFPath()
-    local fortName = dfhack.TranslateName(df.world_site.find(df.global.ui.site_id).name)
+    local fortName = dfhack.TranslateName(df.world_site.find(df.global.plotinfo.site_id).name)
     local savePath = dfhack.getSavePath()
     local fileName = fortName .. ".json.dat"
     local file_cur = gamePath .. "/data/save/current/" .. fileName
@@ -94,7 +94,7 @@ end
 
 function SavePersistentData()
     local gamePath = dfhack.getDFPath()
-    local fortName = dfhack.TranslateName(df.world_site.find(df.global.ui.site_id).name)
+    local fortName = dfhack.TranslateName(df.world_site.find(df.global.plotinfo.site_id).name)
     local fileName = fortName .. ".json.dat"
     local cur = json.open(gamePath .. "/data/save/current/" .. fileName)
     local newDwfTable = {}
@@ -110,7 +110,7 @@ end
 
 function ClearPersistentData(all)
     local gamePath = dfhack.getDFPath()
-    local fortName = dfhack.TranslateName(df.world_site.find(df.global.ui.site_id).name)
+    local fortName = dfhack.TranslateName(df.world_site.find(df.global.plotinfo.site_id).name)
     local savePath = dfhack.getSavePath()
     local fileName = fortName .. ".json.dat"
     local file_cur = gamePath .. "/data/save/current/" .. fileName

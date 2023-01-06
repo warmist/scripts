@@ -14,7 +14,7 @@ guidm = require 'gui.dwarfmode'
 widgets = require 'gui.widgets'
 
 function uiMultipleUnits()
-    return #df.global.ui_sidebar_menus.unit_cursor.list > 1
+    return #df.global.game.unit_cursor.list > 1
 end
 
 TeleportSidebar = defclass(TeleportSidebar, guidm.MenuOverlay)

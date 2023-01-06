@@ -130,7 +130,7 @@ end
 
 function createUnitBase(...)
   local old_gametype = df.global.gametype
-  local old_mode = df.global.ui.main.mode
+  local old_mode = df.global.plotinfo.main.mode
   local old_popups = {} --as:df.popup_message[]
   for _, popup in pairs(df.global.world.status.popups) do
     table.insert(old_popups, popup)
@@ -140,7 +140,7 @@ function createUnitBase(...)
   local ok, ret = dfhack.pcall(createUnitInner, ...)
 
   df.global.gametype = old_gametype
-  df.global.ui.main.mode = old_mode
+  df.global.plotinfo.main.mode = old_mode
   for _, popup in pairs(old_popups) do
     df.global.world.status.popups:insert('#', popup)
   end
@@ -235,7 +235,7 @@ function createUnitInner(race_id, caste_id, caste_id_choices, pos, locationChoic
   local dwarfmodeScreen = df.viewscreen_dwarfmodest:new() -- the viewscreen present in arena "overseer" mode
   curViewscreen.child = dwarfmodeScreen
   dwarfmodeScreen.parent = curViewscreen
-  df.global.ui.main.mode = df.ui_sidebar_mode.LookAround -- produce the cursor
+  df.global.plotinfo.main.mode = df.ui_sidebar_mode.LookAround -- produce the cursor
 
   df.global.gametype = df.game_type.DWARF_ARENA
 
@@ -1090,7 +1090,7 @@ if args.setUnitToFort or args.civId == '\\LOCAL' then
   if not isFortressMode then
     qerror("The LOCAL civ cannot be specified outside of Fortress mode!")
   end
-  civ_id = df.global.ui.civ_id
+  civ_id = df.global.plotinfo.civ_id
 else
   civ_id = args.civId
 end
@@ -1100,7 +1100,7 @@ if args.setUnitToFort or args.groupId == '\\LOCAL' then
   if not isFortressMode then
     qerror("The LOCAL group cannot be specified outside of Fortress mode!")
   end
-  group_id = df.global.ui.group_id
+  group_id = df.global.plotinfo.group_id
 else
   group_id = args.groupId
 end
@@ -1112,7 +1112,7 @@ if args.name then
     if not isFortressMode then
       qerror("The LOCAL entityRawName cannot be specified outside of Fortress mode!")
     else
-      entityRawName = df.historical_entity.find(df.global.ui.group_id).entity_raw.code
+      entityRawName = df.historical_entity.find(df.global.plotinfo.group_id).entity_raw.code
     end
   end
 end

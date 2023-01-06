@@ -63,7 +63,7 @@ end
 
 local civ = nil --as:df.historical_entity
 if args.civ == 'player' then
- civ = df.historical_entity.find(df.global.ui.civ_id)
+ civ = df.historical_entity.find(df.global.plotinfo.civ_id)
 elseif args.civ then
  civ = findCiv(args.civ)
 end
@@ -77,7 +77,7 @@ if args.eventType == 'Caravan' or args.eventType == 'Diplomat' then
 end
 
 if args.eventType == 'Migrants' then
- civ = df.historical_entity.find(df.global.ui.civ_id)
+ civ = df.historical_entity.find(df.global.plotinfo.civ_id)
 end
 
 local timedEvent = df.timed_event:new()

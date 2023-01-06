@@ -2,7 +2,7 @@
 -- based on ban-cooking.rb by Putnam: https://github.com/DFHack/scripts/pull/427/files
 -- Putnams work completed by TBSTeun
 
-local kitchen = df.global.ui.kitchen
+local kitchen = df.global.plotinfo.kitchen
 
 local already_banned = {}
 

@@ -58,14 +58,14 @@ function isCitizen(unit)
         return false
     end
     for _,link in ipairs(hf.entity_links) do
-        if link.entity_id == df.global.ui.group_id and df.histfig_entity_link_type[link:getType()] == 'MEMBER' then
+        if link.entity_id == df.global.plotinfo.group_id and df.histfig_entity_link_type[link:getType()] == 'MEMBER' then
             return true
         end
     end
 end
 
 function isFortCivMember(unit)
-    if unit.civ_id == df.global.ui.civ_id then
+    if unit.civ_id == df.global.plotinfo.civ_id then
         return true
     end
 end
@@ -108,7 +108,7 @@ function heal(unit,resurrect,keep_corpse)
             if dfhack.world.isFortressMode() and isFortCivMember(unit) then
                 unit.flags2.resident = false -- appears to be set to true for dead citizens in a reclaimed fortress, which causes them to be marked as hostile when resurrected
 
-                local deadCitizens = df.global.ui.main.dead_citizens
+                local deadCitizens = df.global.plotinfo.main.dead_citizens
                 for i = #deadCitizens-1,0,-1 do
                     if deadCitizens[i].unit_id == unit.id then
                         deadCitizens:erase(i)

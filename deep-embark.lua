@@ -196,7 +196,7 @@ end
 
 function moveEmbarkStuff(selectedBlock, embarkTiles)
   local spawnPosCentre
-  for _, hotkey in ipairs(df.global.ui.main.hotkeys) do
+  for _, hotkey in ipairs(df.global.plotinfo.main.hotkeys) do
     if hotkey.name == "Gate" then -- the preset hotkey is centred around the spawn point
       spawnPosCentre = xyz2pos(hotkey.x, hotkey.y, hotkey.z)
       hotkey:assign(embarkTiles[math.random(1, #embarkTiles)]) -- set the hotkey to the new spawn point
@@ -217,7 +217,7 @@ function moveEmbarkStuff(selectedBlock, embarkTiles)
   local unitsAtSpawn = dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2)
   local movedUnit = false
   for i, unit in ipairs(unitsAtSpawn) do
-    if unit.civ_id == df.global.ui.civ_id and not unit.flags1.inactive and not unit.flags2.killed then
+    if unit.civ_id == df.global.plotinfo.civ_id and not unit.flags1.inactive and not unit.flags2.killed then
       local pos = embarkTiles[math.random(1, #embarkTiles)]
       dfhack.units.teleport(unit, pos)
       reveal(pos)

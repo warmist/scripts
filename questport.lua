@@ -48,7 +48,7 @@ end
 target_x = target_x * 48 -- converting to the army coordinates scale
 target_y = target_y * 48
 
-local advmode = df.global.ui_advmode
+local advmode = df.global.adventure
 advmode.message = '' -- clear messages like "You cannot travel until you leave this site" to permit travel
 
 if advmode.menu == df.ui_advmode_menu.Default then

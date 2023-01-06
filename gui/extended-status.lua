@@ -48,7 +48,7 @@ function defsubpage(name)
 end
 
 function has_manager()
-    return #df.historical_entity.find(df.global.ui.group_id).assignments_by_type.MANAGE_PRODUCTION > 0
+    return #df.historical_entity.find(df.global.plotinfo.group_id).assignments_by_type.MANAGE_PRODUCTION > 0
 end
 
 function queue_beds(amount)

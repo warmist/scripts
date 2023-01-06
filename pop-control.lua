@@ -22,7 +22,7 @@ local function popControl(forceEnterSettings)
         persistTable.GlobalTable.fortPopInfo = {}
     end
 
-    local siteId = df.global.ui.site_id
+    local siteId = df.global.plotinfo.site_id
 
     script.start(function()
         local siteInfo = persistTable.GlobalTable.fortPopInfo[siteId]
@@ -76,7 +76,7 @@ local function popControl(forceEnterSettings)
 end
 
 local function viewSettings()
-    local siteId = df.global.ui.site_id
+    local siteId = df.global.plotinfo.site_id
     if not persistTable.GlobalTable.fortPopInfo or not persistTable.GlobalTable.fortPopInfo[siteId] then
         print("Could not find site information")
         return
