@@ -18,7 +18,7 @@ if not.
 While the UI is active, you can use the following hotkeys to change the
 behavior:
 
-- :kbd:`Ctrl`:kbd:`l`: Lock target: when enabled, you can move the map around
+- :kbd:`Ctrl`:kbd:`t`: Lock target: when enabled, you can move the map around
   and the target tile will not change. This is useful to check whether parts of
   the map far away from the target tile can be pathed to from the target tile.
 - :kbd:`Ctrl`:kbd:`d`: Draw: allows temporarily disabling the highlighting
