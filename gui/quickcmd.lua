@@ -205,4 +205,4 @@ function QCMDScreen:onDismiss()
     view = nil
 end
 
-view = view or QCMDScreen{}:show()
+view = view and view:raise() or QCMDScreen{}:show()

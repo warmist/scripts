@@ -95,4 +95,4 @@ if not dfhack.isMapLoaded() then
     return
 end
 
-view = view or Pathable{}:show()
+view = view and view:raise() or Pathable{}:show()

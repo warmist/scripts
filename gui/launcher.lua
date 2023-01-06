@@ -704,9 +704,13 @@ if dfhack_flags.module then
 end
 
 if view then
-    -- running the launcher while it is open (e.g. from hitting the launcher
-    -- hotkey a second time) should close the dialog
-    view:dismiss()
+    if not view:isOnTop() then
+        view:raise()
+    else
+        -- running the launcher while it is open (e.g. from hitting the launcher
+        -- hotkey a second time) should close the dialog
+        view:dismiss()
+    end
 else
     local args = {...}
     local minimal

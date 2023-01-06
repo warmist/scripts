@@ -96,4 +96,4 @@ function CPScreen:onDismiss()
     view = nil
 end
 
-view = view or CPScreen{}:show()
+view = view and view:raise() or CPScreen{}:show()

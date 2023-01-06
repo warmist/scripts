@@ -629,4 +629,4 @@ if not dfhack.isMapLoaded() then
     qerror('Map is not loaded.')
 end
 
-view = view or WatchList{}:show()
+view = view and view:raise() or WatchList{}:show()
