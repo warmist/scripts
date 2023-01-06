@@ -10,10 +10,10 @@ config.wrapper = function(test_fn)
 
     local mock_df = {}
     mock_df.global = {}
-    mock_df.global.ui = {}
-    mock_df.global.ui.hauling = {}
-    mock_df.global.ui.hauling.routes = mock_routes
-    mock_df.global.ui.hauling.vehicles = mock_vehicles
+    mock_df.global.plotinfo = {}
+    mock_df.global.plotinfo.hauling = {}
+    mock_df.global.plotinfo.hauling.routes = mock_routes
+    mock_df.global.plotinfo.hauling.vehicles = mock_vehicles
 
     mock_apply_blueprint, mock_print = mock.func(), mock.func()
     mock_script_help = mock.func()
