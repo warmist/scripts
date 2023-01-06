@@ -143,7 +143,7 @@ function WarningBox:onInput(keys)
     WarningBox.super.onInput(self, keys)
 end
 
-WarningBox{
+view = view or WarningBox{
     frame_title = title,
     text = message,
     text_pen = color
