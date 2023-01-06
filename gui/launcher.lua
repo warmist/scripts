@@ -695,10 +695,6 @@ function LauncherUI:onGetSelectedPlant()
     return getAny(self, 'Plant')
 end
 
-function LauncherUI:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function LauncherUI:onDismiss()
     view = nil
 end

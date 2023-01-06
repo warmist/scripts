@@ -201,10 +201,6 @@ function QCMDScreen:init()
     self:addviews{QCMDDialog{}}
 end
 
-function QCMDScreen:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function QCMDScreen:onDismiss()
     view = nil
 end

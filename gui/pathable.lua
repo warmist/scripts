@@ -82,10 +82,6 @@ function Pathable:onRenderBody()
     end
 end
 
-function Pathable:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function Pathable:onDismiss()
     view = nil
 end
