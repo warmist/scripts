@@ -100,9 +100,6 @@ local function get_first_word(text)
     return word
 end
 
-command_bias = command_bias or get_config(BASE_FREQUENCY_FILE)
-command_counts = command_counts or get_config(USER_FREQUENCY_FILE)
-
 local function get_command_count(command)
     return (base_freq.data[command] or 0) + (user_freq.data[command] or 0)
 end
