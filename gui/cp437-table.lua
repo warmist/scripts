@@ -7,7 +7,8 @@ local widgets = require('gui.widgets')
 CPDialog = defclass(CPDialog, widgets.Window)
 CPDialog.ATTRS {
     focus_path='cp437-table',
-    frame_title = 'CP437 table',
+    frame_title='CP437 table',
+    drag_anchors={frame=true, body=true},
     frame={w=36, h=17},
 }
 
