@@ -5,23 +5,18 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 local overlay = require('plugins.overlay')
 
-InspectScreen = defclass(InspectScreen, gui.Screen)
+Inspect = defclass(Inspect, widgets.Window)
+Inspect.ATTRS{
+    frame={w=40, h=20},
+    resizable=true,
+    frame_title='Screen Inspector',
+}
 
-function InspectScreen:init()
-    -- prevent hotspot widgets from reacting
-    overlay.register_trigger_lock_screen(self)
-
+function Inspect:init()
     local scr_name = overlay.simplify_viewscreen_name(
-            getmetatable(dfhack.gui.getCurViewscreen(true)))
+            getmetatable(dfhack.gui.getDFViewscreen(true)))
 
-    local main_panel = widgets.Window{
-        view_id='window',
-        frame={w=40, h=20},
-        drag_anchors={title=true, body=true},
-        resizable=true,
-        frame_title='Screen inspector',
-    }
-    main_panel:addviews{
+    self:addviews{
         widgets.Label{
             frame={t=0, l=0},
             text={'Current screen: ', {text=scr_name, pen=COLOR_CYAN}}},
@@ -51,23 +46,18 @@ function InspectScreen:init()
             view_id='report',
             frame={t=8},},
     }
-    self:addviews{main_panel}
 end
 
-function InspectScreen:is_unfrozen()
+function Inspect:is_unfrozen()
     return not self.subviews.freeze:getOptionValue()
 end
 
-function InspectScreen:mouse_is_over_window()
-    return self:getMousePos(gui.ViewRect{rect=self.subviews.window.frame_rect})
-end
-
-function InspectScreen:do_refresh()
-    return self:is_unfrozen() and not self:mouse_is_over_window()
+function Inspect:do_refresh()
+    return self:is_unfrozen() and not self:getMouseFramePos()
 end
 
 local cur_mouse_pos = {x=-1, y=-1}
-function InspectScreen:get_mouse_pos()
+function Inspect:get_mouse_pos()
     local pos, text = cur_mouse_pos, ''
     if self.subviews.layer:getOptionValue() == 'ui' then
         if self:do_refresh() then
@@ -303,29 +293,37 @@ local function get_map_report(show_empty)
     return report
 end
 
-function InspectScreen:onRenderFrame()
-    self:renderParent()
+function Inspect:onRenderBody()
     if self:do_refresh() then
         local show_empty = self.subviews.empties:getOptionValue() == 'show'
         local report = self.subviews.layer:getOptionValue() == 'ui' and
                 get_ui_report(show_empty) or get_map_report(show_empty)
         self.subviews.report:setText(report)
-        self.subviews.window:updateLayout()
+        self:updateLayout()
     end
 end
 
-function InspectScreen:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-        self:dismiss()
+function Inspect:onInput(keys)
+    if Inspect.super.onInput(self, keys) then
         return true
-    elseif keys._MOUSE_L_DOWN and not self:mouse_is_over_window() then
-        self.subviews.freeze:cycle()
     end
-    return self.super.onInput(self, keys)
+    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+        self.subviews.freeze:cycle()
+        return true
+    end
+end
+
+InspectScreen = defclass(InspectScreen, gui.ZScreen)
+
+function InspectScreen:init()
+    -- prevent hotspot widgets from reacting
+    overlay.register_trigger_lock_screen(self)
+
+    self:addviews{Inspect{view_id='main'}}
 end
 
 function InspectScreen:onDismiss()
     view = nil
 end
 
-view = view or InspectScreen{}:show()
+view = view and view:raise() or InspectScreen{}:show()
