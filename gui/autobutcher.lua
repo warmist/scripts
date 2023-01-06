@@ -626,7 +626,7 @@ function WatchList:onDismiss()
 end
 
 if not dfhack.isMapLoaded() then
-    qerror('Map is not loaded.')
+    qerror('autobutcher requires a fortress map to be loaded')
 end
 
 view = view and view:raise() or WatchList{}:show()
