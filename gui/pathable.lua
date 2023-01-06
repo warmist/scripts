@@ -22,7 +22,7 @@ function Pathable:init()
         widgets.ToggleHotkeyLabel{
             view_id='lock',
             frame={t=0, l=0},
-            key='CUSTOM_CTRL_L',
+            key='CUSTOM_CTRL_T',
             label='Lock target',
             initial_option=false,
         },
