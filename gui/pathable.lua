@@ -1,28 +1,24 @@
 -- View whether tiles on the map can be pathed to
---@module = true
+--@module=true
 
 local gui = require('gui')
-local overlay = require('plugins.overlay')
 local plugin = require('plugins.pathable')
 local widgets = require('gui.widgets')
 
-Pathable = defclass(Pathable, overlay.OverlayWidget)
+Pathable = defclass(Pathable, gui.ZScreen)
 Pathable.ATTRS{
-    viewscreens='dwarfmode',
-    default_pos={x=-3, y=20},
-    frame_title='Pathability viewer',
-    frame_style=gui.GREY_LINE_FRAME,
-    frame_background=gui.CLEAR_PEN,
-    frame={w=32, h=11},
-    draggable=true,
-    drag_anchors={title=true, body=true},
-    resizable=true,
-    frame_inset=1,
-    always_enabled=true,
+    focus_path='pathable',
 }
 
 function Pathable:init()
-    self:addviews{
+    local window = widgets.Window{
+        view_id='main',
+        frame={t=20, r=3, w=32, h=11},
+        frame_title='Pathability Viewer',
+        drag_anchors={title=true, frame=true, body=true},
+    }
+
+    window:addviews{
         widgets.ToggleHotkeyLabel{
             view_id='lock',
             frame={t=0, l=0},
@@ -54,27 +50,11 @@ function Pathable:init()
             frame={t=6, l=0},
             key='LEAVESCREEN',
             label='Close',
-            on_activate=self:callback('overlay_trigger'),
+            on_activate=self:callback('dismiss'),
         },
     }
-end
 
-function Pathable:overlay_trigger()
-    if not dfhack.isMapLoaded() then
-        if not self.triggered then
-            dfhack.printerr('gui/pathable requires a fortress map to be loaded')
-        end
-        self.triggered = false
-        return
-    end
-
-    self.subviews.lock.option_idx = 2
-    self.triggered = not self.triggered
-end
-
-function Pathable:render(dc)
-    if not self.triggered then return end
-    Pathable.super.render(self, dc)
+    self:addviews{window}
 end
 
 function Pathable:onRenderBody()
@@ -102,21 +82,21 @@ function Pathable:onRenderBody()
     end
 end
 
-function Pathable:onInput(keys)
-    if not self.triggered then return end
-
-    if keys._MOUSE_R_DOWN then
-        self:overlay_trigger()
-        return true
-    end
-
-    return Pathable.super.onInput(self, keys)
+function Pathable:isMouseOver()
+    return self.subviews.main:getMouseFramePos()
 end
 
-OVERLAY_WIDGETS = {overlay=Pathable}
+function Pathable:onDismiss()
+    view = nil
+end
 
 if dfhack_flags.module then
     return
 end
 
-dfhack.run_command('overlay trigger gui/pathable.overlay')
+if not dfhack.isMapLoaded() then
+    dfhack.printerr('gui/pathable requires a fortress map to be loaded')
+    return
+end
+
+view = view or Pathable{}:show()

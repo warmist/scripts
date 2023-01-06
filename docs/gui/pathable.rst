@@ -7,7 +7,7 @@ gui/pathable
 
 This tool highlights each visible map tile to indicate whether it is possible to
 path to that tile from the tile under the mouse cursor. You can move the mouse
-around and the highlight will change dynamically.
+(and the map) around and the highlight will change dynamically.
 
 If graphics are enabled, then tiles show a small yellow box if they are pathable
 and a small black box if not.
@@ -29,7 +29,7 @@ behavior:
   sections.
 
 You can drag the informational panel around while it is visible if it's in the
-way. You can also set the default panel position in `gui/overlay`.
+way.
 
 .. note::
     This tool uses a cache used by DF, which currently does *not* account for

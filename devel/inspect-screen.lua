@@ -315,7 +315,7 @@ function InspectScreen:onRenderFrame()
 end
 
 function InspectScreen:onInput(keys)
-    if keys.LEAVESCREEN then
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
         return true
     elseif keys._MOUSE_L_DOWN and not self:mouse_is_over_window() then
