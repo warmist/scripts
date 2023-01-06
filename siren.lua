@@ -82,7 +82,7 @@ function wake_unit(unit)
 end
 
 -- Check siege for thought purpose
-for _,v in ipairs(df.global.ui.invasions.list) do
+for _,v in ipairs(df.global.plotinfo.invasions.list) do
     if v.flags.siege and v.flags.active then
         in_siege = true
         break
@@ -101,7 +101,7 @@ for _,v in ipairs(df.global.world.units.active) do
 end
 
 -- Stop parties
-for _,v in ipairs(df.global.ui.parties) do
+for _,v in ipairs(df.global.plotinfo.parties) do
     local pos = utils.getBuildingCenter(v.location)
     if is_in_burrows(pos) then
         v.timer = 0

@@ -15,7 +15,7 @@ of the last migrant bringing his family. Likewise, king arrival ignores cap.
 ]====]
 local args = {...}
 
-local ui = df.global.ui
+local ui = df.global.plotinfo
 local ui_stats = ui.tasks
 local civ = df.historical_entity.find(ui.civ_id)
 

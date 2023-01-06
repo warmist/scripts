@@ -134,7 +134,7 @@ else
         print(header)
     end
     for _,v in ipairs(df.global.world.units.active) do
-        if v.civ_id == df.global.ui.civ_id and v.flags1.tame then
+        if v.civ_id == df.global.plotinfo.civ_id and v.flags1.tame then
             if not (args.male or args.female) or args.male and v.sex == 1 or args.female and v.sex == 0 then
                 if not args.race or tonumber(args.race) == v.race then
                     if not args.markedfor or (args.markedfor == "slaughter" and v.flags2.slaughter) or (args.markedfor == "gelding" and v.flags3.marked_for_gelding) then

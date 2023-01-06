@@ -38,7 +38,7 @@ end
 function test.changeOrderDetails()
     --[[ this is not needed because of how gui.simulateInput'D_JOBLIST' works
     -- verify expected starting state
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
     expect.true_(df.viewscreen_dwarfmodest:is_instance(scr))
     --]]
 

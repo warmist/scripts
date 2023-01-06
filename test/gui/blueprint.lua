@@ -227,9 +227,9 @@ end
 function test.restore_mode()
     guidm.enterSidebarMode(df.ui_sidebar_mode.Stockpiles)
     load_ui()
-    expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.LookAround, df.global.plotinfo.main.mode)
     send_keys('LEAVESCREEN') -- cancel out of ui
-    expect.eq(df.ui_sidebar_mode.Stockpiles, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Stockpiles, df.global.plotinfo.main.mode)
     send_keys('LEAVESCREEN') -- get back to Default mode
 end
 
@@ -237,9 +237,9 @@ function test.restore_default_on_unsupported_mode()
     guidm.enterSidebarMode(df.ui_sidebar_mode.Default)
     send_keys('D_BURROWS')
     load_ui()
-    expect.eq(df.ui_sidebar_mode.LookAround, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.LookAround, df.global.plotinfo.main.mode)
     send_keys('LEAVESCREEN') -- cancel out of ui
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
 end
 
 function test.fail_to_find_default_mode()
@@ -251,7 +251,7 @@ function test.fail_to_find_default_mode()
                                function() load_ui() end)
         end)
     send_keys('LEAVESCREEN') -- cancel out of ui
-    expect.eq(df.ui_sidebar_mode.Default, df.global.ui.main.mode)
+    expect.eq(df.ui_sidebar_mode.Default, df.global.plotinfo.main.mode)
 end
 
 function test.exit_out_of_other_ui()

@@ -13,7 +13,7 @@ details on map blocks.
 local gui = require "gui"
 local guidm = require "gui.dwarfmode"
 
-local ui = df.global.ui
+local ui = df.global.plotinfo
 
 local DRAW_CHARS = {
     ns = string.char(179),

@@ -22,10 +22,10 @@ if df.global.gamemode ~= df.game_mode.ADVENTURE then
   qerror("This script can only be used in adventure mode!")
 end
 
-local adventurer = df.nemesis_record.find(df.global.ui_advmode.player_id).unit
+local adventurer = df.nemesis_record.find(df.global.adventure.player_id).unit
 if not adventurer or not adventurer.flags2.killed then
   qerror("Your adventurer hasn't died yet!")
 end
 
 fullHeal.heal(adventurer, true)
-df.global.ui_advmode.player_control_state = 1 -- this ensures that the player will be able to regain control of their unit after resurrection if the script is run before hitting DONE at the "You are deceased" message
+df.global.adventure.player_control_state = 1 -- this ensures that the player will be able to regain control of their unit after resurrection if the script is run before hitting DONE at the "You are deceased" message

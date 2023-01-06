@@ -19,7 +19,7 @@ Parameters:
 ]====]
 
 local STORAGEKEY_PREFIX = 'once-per-save'
-local storagekey = STORAGEKEY_PREFIX .. ':' .. tostring(df.global.ui.site_id)
+local storagekey = STORAGEKEY_PREFIX .. ':' .. tostring(df.global.plotinfo.site_id)
 
 local args = {...}
 local rerun = false
@@ -40,7 +40,7 @@ elseif arg_reset[args[1]] then
 end
 if #args == 0 then return end
 
-local age = df.global.ui.fortress_age
+local age = df.global.plotinfo.fortress_age
 local year = df.global.cur_year
 local year_tick = df.global.cur_year_tick
 local year_tick_advmode = df.global.cur_year_tick_advmode

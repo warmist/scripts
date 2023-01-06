@@ -279,7 +279,7 @@ end
 -- ---------------------------------------------------------------------------
 function adjust_all_dwarves(skillname)
     for _,v in ipairs(df.global.world.units.all) do
-        if v.race == df.global.ui.race_id and v.status.current_soul then
+        if v.race == df.global.plotinfo.race_id and v.status.current_soul then
             print("Adjusting "..dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(v))))
             brainwash_unit(v)
             elevate_attributes(v)

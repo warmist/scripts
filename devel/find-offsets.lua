@@ -272,7 +272,7 @@ local function dwarfmode_to_top()
     end
 
     for i=0,10 do
-        if is_known 'ui' and df.global.ui.main.mode == df.ui_sidebar_mode.Default then
+        if is_known 'ui' and df.global.plotinfo.main.mode == df.ui_sidebar_mode.Default then
             break
         end
         gui.simulateInput(screen, 'LEAVESCREEN')

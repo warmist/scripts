@@ -9,7 +9,7 @@ A hotkey-friendly teleport that places your adventurer where your cursor is.
 
 function flashstep()
     local unit = df.global.world.units.active[0]
-    if df.global.ui_advmode.menu ~= df.ui_advmode_menu.Look then
+    if df.global.adventure.menu ~= df.ui_advmode_menu.Look then
         qerror("No [l] cursor located! You kinda need it for this script.")
     end
     dfhack.units.teleport(unit, xyz2pos(pos2xyz(df.global.cursor)))

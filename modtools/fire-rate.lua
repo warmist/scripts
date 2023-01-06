@@ -326,7 +326,7 @@ end
 
 -- Returns the currently active adventurer
 function get_adventurer_unit()
-  local nemesis = df.nemesis_record.find(df.global.ui_advmode.player_id)
+  local nemesis = df.nemesis_record.find(df.global.adventure.player_id)
   local unit = df.unit.find(nemesis.unit_id)
 
   return unit

@@ -303,7 +303,7 @@ end
 -- ---------------------------------------------------------------------------
 function printpref_all_dwarves()
     for _,v in ipairs(df.global.world.units.active) do
-        if v.race == df.global.ui.race_id then
+        if v.race == df.global.plotinfo.race_id then
             print("Showing Preferences for "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
             print_all(v)
         end
@@ -312,7 +312,7 @@ end
 -- ---------------------------------------------------------------------------
 function clearpref_all_dwarves()
     for _,v in ipairs(df.global.world.units.active) do
-        if v.race == df.global.ui.race_id then
+        if v.race == df.global.plotinfo.race_id then
             print("Clearing Preferences for "..dfhack.TranslateName(dfhack.units.getVisibleName(v)))
             clear_all(v)
         end

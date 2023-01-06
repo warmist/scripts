@@ -173,7 +173,7 @@ end
 -- ---------------------------------------------------------------------------
 function clearpref_all_dwarves()
     for _,unit in ipairs(df.global.world.units.active) do
-        if unit.race == df.global.ui.race_id then
+        if unit.race == df.global.plotinfo.race_id then
             print("Clearing Preferences for "..unit_name_to_console(unit))
             clear_preferences(unit)
         end
@@ -182,7 +182,7 @@ end
 -- ---------------------------------------------------------------------------
 function adjust_all_dwarves(profile)
     for _,unit in ipairs(df.global.world.units.active) do
-        if unit.race == df.global.ui.race_id then
+        if unit.race == df.global.plotinfo.race_id then
             print("Adjusting "..unit_name_to_console(unit))
             brainwash_unit(unit,profile)
         end
