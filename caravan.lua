@@ -33,7 +33,7 @@ INTERESTING_FLAGS = {
     seized = 'Goods seized',
     offended = 'Offended'
 }
-local caravans = df.global.ui.caravans
+local caravans = df.global.plotinfo.caravans
 
 local function caravans_from_ids(ids)
     if not ids or #ids == 0 then

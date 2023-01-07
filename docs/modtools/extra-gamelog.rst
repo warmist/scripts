@@ -6,7 +6,7 @@ modtools/extra-gamelog
     :tags: dev
 
 This script writes extra information to the gamelog.
-This is useful for tools like :forums:`Soundsense <106497>`.
+This is useful for tools like :forums:`Soundsense <60287>`.
 
 Usage::
 

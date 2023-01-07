@@ -8,7 +8,7 @@ local json = require('json')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local AUTOCOMPLETE_PANEL_WIDTH = 20
+local AUTOCOMPLETE_PANEL_WIDTH = 25
 local EDIT_PANEL_HEIGHT = 4
 
 local HISTORY_SIZE = 5000
@@ -16,10 +16,14 @@ local HISTORY_ID = 'gui/launcher'
 local HISTORY_FILE = 'dfhack-config/launcher.history'
 local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
 local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
-local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
-local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
-
 local TITLE = 'DFHack Launcher'
+
+config = config or json.open('dfhack-config/launcher.json')
+base_freq = base_freq or json.open('hack/data/base_command_counts.json')
+user_freq = user_freq or json.open('dfhack-config/command_counts.json')
+
+-- track whether the user has enabled dev mode
+dev_mode = dev_mode or false
 
 -- trims the history down to its maximum size, if needed
 local function trim_history(hist, hist_set)
@@ -90,29 +94,21 @@ if not history then
     history, history_set = init_history()
 end
 
-local function get_frequency_data(fname)
-    local ok, data = pcall(json.decode_file, fname)
-    return ok and data or {}
-end
-
 local function get_first_word(text)
     local word = text:trim():split(' +')[1]
     if word:startswith(':') then word = word:sub(2) end
     return word
 end
 
-command_bias = command_bias or get_frequency_data(BASE_FREQUENCY_FILE)
-command_counts = command_counts or get_frequency_data(USER_FREQUENCY_FILE)
-
 local function get_command_count(command)
-    return (command_bias[command] or 0) + (command_counts[command] or 0)
+    return (base_freq.data[command] or 0) + (user_freq.data[command] or 0)
 end
 
 local function record_command(line)
     add_history(history, history_set, line)
     local firstword = get_first_word(line)
-    command_counts[firstword] = (command_counts[firstword] or 0) + 1
-    json.encode_file(command_counts, USER_FREQUENCY_FILE)
+    user_freq.data[firstword] = (user_freq.data[firstword] or 0) + 1
+    user_freq:write()
 end
 
 ----------------------------------
@@ -129,16 +125,11 @@ function AutocompletePanel:init()
             frame={l=0, t=0},
             text='Click or select via'
         },
-        widgets.HotkeyLabel{
+        widgets.Label{
             frame={l=1, t=1},
-            key='CHANGETAB',
-            key_sep='/',
-            label=''},
-        widgets.HotkeyLabel{
-            frame={l=5, t=1},
-            key='SEC_CHANGETAB',
-            key_sep='',
-            label=''},
+            text={{text='Shift+'..string.char(26), pen=COLOR_LIGHTGREEN},
+                  {text='/'},
+                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}},
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
@@ -319,7 +310,7 @@ local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
 Type a command to see its help text here. Hit ENTER to run the command, or Shift-ENTER to run the command and close this dialog. This dialog also closes automatically if you run a command that shows a new GUI screen.
 
-Not sure what to do? Run the "tags" command to see the different catagories of tools DFHack has to offer! Then run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
+Not sure what to do? Run the "tags" command to see the different categories of tools DFHack has to offer! Then run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
 To see help for this command launcher (including info on mouse controls), type "launcher" and hit the TAB key or click on "gui/launcher" to autocomplete.]]
 
@@ -333,8 +324,8 @@ function HelpPanel:init()
             frame_inset={r=1},
             auto_height=false,
             scroll_keys={
-                A_MOVE_N_DOWN=-1, -- Ctrl-Up
-                A_MOVE_S_DOWN=1,  -- Ctrl-Down
+                KEYBOARD_CURSOR_UP_FAST=-1,  -- Shift-Up
+                KEYBOARD_CURSOR_DOWN_FAST=1, -- Shift-Down
                 STANDARDSCROLL_PAGEUP='-halfpage',
                 STANDARDSCROLL_PAGEDOWN='+halfpage',
             },
@@ -362,14 +353,14 @@ function HelpPanel:set_entry(entry_name)
         return
     end
     self:set_help(helpdb.get_entry_long_help(entry_name,
-                                             self.frame_body.width - 3))
+                                             self.frame_body.width - 5))
     self.cur_entry = entry_name
 end
 
 function HelpPanel:postComputeFrame()
     if #self.cur_entry == 0 then return end
     self:set_help(helpdb.get_entry_long_help(self.cur_entry,
-                                             self.frame_body.width - 3),
+                                             self.frame_body.width - 5),
                   true)
 end
 
@@ -377,19 +368,27 @@ end
 -- MainPanel
 --
 
-MainPanel = defclass(MainPanel, widgets.Panel)
+MainPanel = defclass(MainPanel, widgets.Window)
 MainPanel.ATTRS{
     frame_title=TITLE,
-    frame_background=gui.CLEAR_PEN,
+    frame_inset=0,
+    resizable=true,
+    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
+    update_autocomplete=DEFAULT_NIL,
 }
 
-local H_SPLIT_PEN = dfhack.pen.parse{ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{ch=186, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{ch=203, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{ch=202, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{ch=204, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{ch=185, fg=COLOR_GREY, bg=COLOR_BLACK}
+function MainPanel:postUpdateLayout()
+    if self.get_minimal() then return end
+    config:write(self.frame)
+end
+
+local H_SPLIT_PEN = dfhack.pen.parse{tile=906, ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{tile=905, ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{tile=911, ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=912, ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=913, ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=918, ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
 
 -- paint autocomplete panel border
 local function paint_vertical_border(rect)
@@ -422,34 +421,79 @@ function MainPanel:onRenderFrame(dc, rect)
     paint_horizontal_border(rect)
 end
 
+function MainPanel:onInput(keys)
+    if MainPanel.super.onInput(self, keys) then
+        return true
+    elseif keys.CUSTOM_CTRL_C then
+        if self.focus_group.cur == self.subviews.editfield then
+            self.subviews.edit:set_text('')
+            self:on_edit_input('')
+        else
+            self.focus_group.cur:setText('')
+        end
+        return true
+    elseif keys.CUSTOM_CTRL_D then
+        dev_mode = not dev_mode
+        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
+        return true
+    elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
+        self.subviews.autocomplete:advance(1)
+        return true
+    elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
+        self.subviews.autocomplete:advance(-1)
+        return true
+    end
+end
+
+
 ----------------------------------
 -- LauncherUI
 --
-LauncherUI = defclass(LauncherUI, gui.Screen)
+
+LauncherUI = defclass(LauncherUI, gui.ZScreen)
 LauncherUI.ATTRS{
     focus_path='launcher',
     minimal=false,
 }
 
+local function get_frame_r()
+    -- scan for anchor elements and do our best to avoid them
+    local gps = df.global.gps
+    local dimy = gps.dimy
+    local maxx = gps.dimx - 1
+    for x = 0,maxx do
+        local index = x * dimy
+        if (gps.top_in_use and gps.screentexpos_top_anchored[index] ~= 0) or
+                gps.screentexpos_anchored[index] ~= 0 then
+            return maxx - x + 1
+        end
+    end
+    return 0
+end
+
 function LauncherUI:init(args)
-    self.saved_display_frames = df.global.gps.display_frames;
     self.firstword = ""
 
     local main_panel = MainPanel{
         view_id='main',
         get_minimal=function() return self.minimal end,
+        update_autocomplete=self:callback('update_autocomplete'),
     }
 
+    local frame_r = get_frame_r()
+
     local update_frames = function()
-        local new_frame = {l=5, r=5}
+        local new_frame = {}
         if self.minimal then
             new_frame.l = 0
-            new_frame.r = 0
+            new_frame.r = frame_r
             new_frame.t = 0
             new_frame.h = 1
         else
-            new_frame.t = 5
-            new_frame.b = 5
+            new_frame = config.data
+            if not next(new_frame) then
+                new_frame = {l=5, r=25, t=5, b=5}
+            end
         end
         main_panel.frame = new_frame
         main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil
@@ -463,9 +507,6 @@ function LauncherUI:init(args)
         editfield_frame.t = self.minimal and 0 or 1
         editfield_frame.l = self.minimal and 10 or 1
         editfield_frame.r = self.minimal and 11 or 1
-
-        df.global.gps.display_frames = self.minimal
-                and 0 or self.saved_display_frames
     end
 
     main_panel:addviews{
@@ -528,8 +569,6 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
--- track whether the user has enabled dev mode
-dev_mode = dev_mode or false
 local DEV_FILTER = {tag={'dev'}}
 
 -- adds the n most closely affiliated peer entries for the given entry that
@@ -596,11 +635,6 @@ function LauncherUI:on_autocomplete(_, option)
     end
 end
 
-function LauncherUI:onDismiss()
-    view = nil
-    df.global.gps.display_frames = self.saved_display_frames;
-end
-
 function LauncherUI:run_command(reappear, command)
     command = command:trim()
     if #command == 0 then return end
@@ -638,33 +672,6 @@ function LauncherUI:run_command(reappear, command)
     self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
 end
 
-function LauncherUI:onRenderFrame()
-    self:renderParent()
-end
-
-function LauncherUI:onInput(keys)
-    if self:inputToSubviews(keys) then
-        return true
-    elseif keys.LEAVESCREEN then
-        self:dismiss()
-        return true
-    elseif keys.CUSTOM_CTRL_C then
-        if self.focus_group.cur == self.subviews.editfield then
-            self.subviews.edit:set_text('')
-            self:on_edit_input('')
-        else
-            self.focus_group.cur:setText('')
-        end
-    elseif keys.CUSTOM_CTRL_D then
-        dev_mode = not dev_mode
-        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
-    elseif keys.CHANGETAB then
-        self.subviews.autocomplete:advance(1)
-    elseif keys.SEC_CHANGETAB then
-        self.subviews.autocomplete:advance(-1)
-    end
-end
-
 local function getAny(scr, thing)
     if not scr._native or not scr._native.parent then return nil end
     return dfhack.gui['getAny'..thing](scr._native.parent)
@@ -682,14 +689,22 @@ function LauncherUI:onGetSelectedPlant()
     return getAny(self, 'Plant')
 end
 
+function LauncherUI:onDismiss()
+    view = nil
+end
+
 if dfhack_flags.module then
     return
 end
 
 if view then
-    -- running the launcher while it is open (e.g. from hitting the launcher
-    -- hotkey a second time) should close the dialog
-    view:dismiss()
+    if not view:isOnTop() then
+        view:raise()
+    else
+        -- running the launcher while it is open (e.g. from hitting the launcher
+        -- hotkey a second time) should close the dialog
+        view:dismiss()
+    end
 else
     local args = {...}
     local minimal

@@ -30,7 +30,7 @@ Options:
 :help:  shows this help screen
 
 ]====]
-local playerfortid = df.global.ui.site_id -- Player fortress id
+local playerfortid = df.global.plotinfo.site_id -- Player fortress id
 local templeagreements = {} -- Table of agreements for temples in player fort
 local guildhallagreements = {} -- Table of agreements for guildhalls in player fort
 
@@ -87,7 +87,7 @@ function get_guildhall_profession(agr)
     local profname = string.lower(df.profession[prof])
     -- *VERY* important code follows
     if string.find(profname, "man") then
-        profname = string.gsub(profname,"man",string.lower(dfhack.units.getRaceNameById(df.global.ui.race_id)))
+        profname = string.gsub(profname,"man",string.lower(dfhack.units.getRaceNameById(df.global.plotinfo.race_id)))
     end
     if not profname then
         profname = 'profession-less'

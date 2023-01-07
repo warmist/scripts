@@ -7,7 +7,7 @@ local base_editor = reqscript("internal/gm-unit/base_editor")
 
 
 Editor_Orientation=defclass(Editor_Orientation, base_editor.Editor)
-Editor_Orientation.ATTRS={
+Editor_Orientation.ATTRS{
     frame_title = "Orientation editor"
 }
 
@@ -57,7 +57,6 @@ function Editor_Orientation:init(args)
     widgets.Label{
       frame = {b=0, l=1},
       text = {
-        {text = ": exit editor ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
         {text = ": cycle selected ", key = "SELECT"},
         {text = ": randomise selected", key = "CUSTOM_R", on_activate = self:callback("random")},
       },

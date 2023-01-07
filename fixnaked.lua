@@ -12,7 +12,7 @@ local total_fixed = 0
 local total_removed = 0
 
 for fnUnitCount,fnUnit in ipairs(df.global.world.units.all) do
-    if fnUnit.race == df.global.ui.race_id and fnUnit.status.current_soul then
+    if fnUnit.race == df.global.plotinfo.race_id and fnUnit.status.current_soul then
         local found = true
         local fixed = false
         while found do

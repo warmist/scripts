@@ -51,7 +51,7 @@ function rumorUpdate()
     local shortenString = true
     local addKeywordNames = true
 
-    for i, choice in ipairs(df.global.ui_advmode.conversation.choices) do
+    for i, choice in ipairs(df.global.adventure.conversation.choices) do
         if choice.choice.type == df.talk_choice_type.SummarizeConflict then
             if improveReadability then
                 condenseChoiceTitle(choice)

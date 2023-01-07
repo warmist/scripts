@@ -47,7 +47,7 @@ if not args.id or not args.cmd or args.help then
     return
 end
 
-local entsrc = df.historical_entity.find(df.global.ui.civ_id)
+local entsrc = df.historical_entity.find(df.global.plotinfo.civ_id)
 if entsrc == nil then
     dfhack.printerr("Could not find current entity. No world loaded?")
     return

@@ -23,10 +23,14 @@ Overlay
 -------
 
 This script also provides an overlay that is managed by the `overlay` framework.
-When enabled, it will display a colored 'X' over suspended buildings. A green
-'X' indicates that the building is waiting on materials, and `buildingplan` will
-unsuspend it for you when those materials become available. A yellow 'X' means
-that the building is suspended and that you can unsuspend it manually or with
-the `unsuspend` command. A red 'X' indicates that the building has been
-re-suspended multiple times, and that you might need to look into whatever is
-preventing the building from being built.
+When the overlay is enabled and the game is paused, a letter will appear over
+the building:
+
+- ``P`` (green in ASCII mode) indicates that the building still in planning mode
+  and is waiting on materials. The `buildingplan` plugin will unsuspend it for
+  you when those materials become available.
+- ``x`` (yellow in ASCII mode) means that the building is suspended and that you
+  can unsuspend it manually or with the `unsuspend` command.
+- ``X`` (red in ASCII mode) means that the building has been re-suspended
+  multiple times, and that you might need to look into whatever is preventing
+  the building from being built.

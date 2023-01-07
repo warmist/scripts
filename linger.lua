@@ -28,7 +28,7 @@ if df.global.gamemode ~= df.game_mode.ADVENTURE then
   qerror("This script can only be used in adventure mode!")
 end
 
-local adventurer = df.nemesis_record.find(df.global.ui_advmode.player_id).unit
+local adventurer = df.nemesis_record.find(df.global.adventure.player_id).unit
 if not adventurer.flags2.killed then
   qerror("Your adventurer hasn't died yet!")
 end

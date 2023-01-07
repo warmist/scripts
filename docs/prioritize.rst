@@ -24,7 +24,7 @@ a good default set of job types to prioritize that have been suggested and
 playtested by the DF community.
 
 Also see the `do-job-now tweak <tweak>` and the `do-job-now` script for boosting
-the priority of specific individual jobs.
+the priority of specific individual jobs (as opposed to entire classes of jobs).
 
 Usage
 -----
@@ -64,7 +64,7 @@ Options
 ``-j``, ``--jobs``
     Print out how many unassigned jobs of each type there are. This is useful
     for discovering the types of the jobs that you can prioritize right now. If
-    any job types are specified, only returns the count for those types.
+    any job types are specified, only jobs of those types are listed.
 ``-l``, ``--haul-labor <labor>[,<labor>...]``
     For StoreItemInStockpile jobs, match only the specified hauling labor(s).
     Valid ``labor`` strings are: "Stone", "Wood", "Body", "Food", "Refuse",
@@ -111,9 +111,9 @@ Default list of job types to prioritize
 
 The community has assembled a good default list of job types that most players
 will benefit from. They have been playtested across a wide variety of fort
-types. Add ``prioritize -aq defaults`` to your
+types. Add ``on-new-fortress prioritize -aq defaults`` to your
 :file:`dfhack-config/init/onMapLoad.init` file to have them automatically
-prioritized for you in your fort.
+prioritized for you in all your forts.
 
 They include:
 

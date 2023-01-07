@@ -7,7 +7,7 @@ local base_editor = reqscript("internal/gm-unit/base_editor")
 
 
 Editor_Attrs = defclass(Editor_Attrs, base_editor.Editor)
-Editor_Attrs.ATTRS = {
+Editor_Attrs.ATTRS{
     frame_title = "Attributes editor"
 }
 function format_attr( name ,max_len)
@@ -80,11 +80,7 @@ function Editor_Attrs:init( args )
         },
         widgets.Label{
             frame = { b=0,l=1},
-            text ={{text= ": exit editor ",
-                key  = "LEAVESCREEN",
-                on_activate= self:callback("dismiss")
-                },
-                {text=": set max attribute ",
+            text ={{text=": set max attribute ",
                 key = "SEC_SELECT",
                 on_activate= function (  )
                     local a,a_name=self:get_cur_attr()

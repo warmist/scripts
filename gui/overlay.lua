@@ -13,26 +13,32 @@ local LIST_HEIGHT = 14
 local SHADOW_FRAME = copyall(gui.GREY_LINE_FRAME)
 SHADOW_FRAME.signature_pen = false
 
-local HIGHLIGHT_FRAME = copyall(SHADOW_FRAME)
-HIGHLIGHT_FRAME.h_frame_pen = dfhack.pen.parse{ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.v_frame_pen = dfhack.pen.parse{ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.lt_frame_pen = dfhack.pen.parse{ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.lb_frame_pen = dfhack.pen.parse{ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.rt_frame_pen = dfhack.pen.parse{ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK}
-HIGHLIGHT_FRAME.rb_frame_pen = dfhack.pen.parse{ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK}
+local to_pen = dfhack.pen.parse
+
+local HIGHLIGHT_FRAME = {
+    t_frame_pen = to_pen{tile=902, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    l_frame_pen = to_pen{tile=908, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    b_frame_pen = to_pen{tile=916, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    r_frame_pen = to_pen{tile=910, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lt_frame_pen = to_pen{tile=901, ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lb_frame_pen = to_pen{tile=915, ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rt_frame_pen = to_pen{tile=903, ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rb_frame_pen = to_pen{tile=917, ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    signature_pen=false,
+}
 
 local function make_highlight_frame_style(frame)
     local frame_style = copyall(HIGHLIGHT_FRAME)
     local fg, bg = COLOR_GREEN, COLOR_LIGHTGREEN
     if frame.t then
-        frame_style.t_frame_pen = dfhack.pen.parse{ch=205, fg=fg, bg=bg}
+        frame_style.t_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
     elseif frame.b then
-        frame_style.b_frame_pen = dfhack.pen.parse{ch=205, fg=fg, bg=bg}
+        frame_style.b_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
     end
     if frame.l then
-        frame_style.l_frame_pen = dfhack.pen.parse{ch=186, fg=fg, bg=bg}
+        frame_style.l_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
     elseif frame.r then
-        frame_style.r_frame_pen = dfhack.pen.parse{ch=186, fg=fg, bg=bg}
+        frame_style.r_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
     end
     return frame_style
 end
@@ -43,97 +49,55 @@ end
 
 DraggablePanel = defclass(DraggablePanel, widgets.Panel)
 DraggablePanel.ATTRS{
-    name=DEFAULT_NIL,
     on_click=DEFAULT_NIL,
+    name=DEFAULT_NIL,
+    draggable=true,
+    drag_anchors={frame=true, body=true},
+    drag_bound='body',
 }
 
-function DraggablePanel:init()
-    self.is_dragging = false -- relative pos of the tile that we're dragging
-end
-
 function DraggablePanel:onInput(keys)
-    if not keys._MOUSE_L_DOWN then return end
-    local rect = self.frame_rect
-    local x,y = self:getMousePos(gui.ViewRect{rect=rect})
-    if not x then return end
-    self.on_click()
-    self.is_dragging = {x=x, y=y}
-    return true
+    if keys._MOUSE_L_DOWN then
+        local rect = self.frame_rect
+        local x,y = self:getMousePos(gui.ViewRect{rect=rect})
+        if x then
+            self.on_click()
+        end
+    end
+    return DraggablePanel.super.onInput(self, keys)
 end
 
-local function make_frame(old_frame, scr, scr_pos)
-    local frame = copyall(old_frame)
-    local ytop = scr_pos.y
-    local xleft = scr_pos.x
-    local ybottom = ytop + old_frame.h
-    local xright = xleft + old_frame.w
-    if ytop <= 0 then
-        frame.t, frame.b = 0, nil
-    elseif ybottom >= scr.height then
-        frame.t, frame.b = nil, 0
+function DraggablePanel:postUpdateLayout()
+    local frame = self.frame
+    local matcher = {t=not not frame.t, b=not not frame.b,
+                     l=not not frame.l, r=not not frame.r}
+    local parent_rect, frame_rect = self.frame_parent_rect, self.frame_rect
+    if frame_rect.y1 <= parent_rect.y1 then
+        frame.t, frame.b = frame_rect.y1-parent_rect.y1, nil
+    elseif frame_rect.y2 >= parent_rect.y2 then
+        frame.t, frame.b = nil, parent_rect.y2-frame_rect.y2
     end
-    if xleft <= 0 then
-        frame.l, frame.r = 0, nil
-    elseif xright >= scr.width then
-        frame.l, frame.r = nil, 0
+    if frame_rect.x1 <= parent_rect.x1 then
+        frame.l, frame.r = frame_rect.x1-parent_rect.x1, nil
+    elseif frame_rect.x2 >= parent_rect.x2 then
+        frame.l, frame.r = nil, parent_rect.x2-frame_rect.x2
     end
-    if frame.t then
-        frame.t = math.max(-1, ytop)
-    elseif frame.b then
-        frame.b = math.max(-1, scr.height - ybottom)
+    self.frame_style = make_highlight_frame_style(self.frame)
+    if not not frame.t ~= matcher.t or not not frame.b ~= matcher.b
+            or not not frame.l ~= matcher.l or not not frame.r ~= matcher.r then
+        -- we've changed edge affinity, recalculate our frame
+        self:updateLayout()
     end
-    if frame.l then
-        frame.l = math.max(-1, xleft)
-    elseif frame.r then
-        frame.r = math.max(-1, scr.width - xright)
-    end
-    return frame
-end
-
-function DraggablePanel:update_position(scr_pos)
-    local frame = make_frame(self.frame, self.frame_parent_rect, scr_pos)
-    if self.frame.l == frame.l and self.frame.r == frame.r
-            and self.frame.t == frame.t and self.frame.b == frame.b then
-        return
-    end
-    self.frame = frame
-    self.frame_style = make_highlight_frame_style(frame)
-    self:updateLayout()
-    local posx = frame.l and tostring(frame.l+2) or tostring(-(frame.r+2))
-    local posy = frame.t and tostring(frame.t+2) or tostring(-(frame.b+2))
-    overlay.overlay_command({'position', self.name, posx, posy}, true)
 end
 
 function DraggablePanel:onRenderFrame(dc, rect)
-    if self.is_dragging then
-        if df.global.enabler.mouse_lbut == 0 then
-            self.is_dragging = false
-        else
-            local screenx, screeny = dfhack.screen.getMousePos()
-            local scr_pos = {x=screenx - self.is_dragging.x,
-                             y=screeny - self.is_dragging.y}
-            self:update_position(scr_pos)
-        end
-    end
     if self:getMousePos(gui.ViewRect{rect=self.frame_rect}) then
-        self.frame_background = dfhack.pen.parse{
+        self.frame_background = to_pen{
                 ch=32, fg=COLOR_LIGHTGREEN, bg=COLOR_LIGHTGREEN}
     else
         self.frame_background = nil
     end
     DraggablePanel.super.onRenderFrame(self, dc, rect)
-end
-
--- called when this panel is being repositioned with the cursor keys
-function DraggablePanel:cursor_move(keys)
-    for code in pairs(keys) do
-        local dx, dy = guidm.get_movement_delta(code, 1, 10)
-        if dx then
-            local scr_pos = {x=self.frame_rect.x1+dx, y=self.frame_rect.y1+dy}
-            self:update_position(scr_pos)
-            return true
-        end
-    end
 end
 
 -------------------
@@ -147,57 +111,55 @@ function OverlayConfig:init()
     overlay.register_trigger_lock_screen(self)
 
     self.scr_name = overlay.simplify_viewscreen_name(
-            getmetatable(dfhack.gui.getCurViewscreen(true)))
+            getmetatable(dfhack.gui.getDFViewscreen(true)))
 
-    local main_panel = widgets.ResizingPanel{
-        frame={w=DIALOG_WIDTH},
-        frame_style=gui.GREY_LINE_FRAME,
+    local main_panel = widgets.Window{
+        frame={w=DIALOG_WIDTH, h=LIST_HEIGHT+15},
+        resizable=true,
+        resize_min={h=20},
         frame_title='Overlay config',
-        frame_background=gui.CLEAR_PEN,
-        frame_inset=1,
-        autoarrange_subviews=true,
-        autoarrange_gap=1,
     }
     main_panel:addviews{
-        widgets.Label{text={'Current screen: ',
-                            {text=self.scr_name, pen=COLOR_CYAN}}},
+        widgets.Label{
+            frame={t=0, l=0},
+            text={'Current screen: ', {text=self.scr_name, pen=COLOR_CYAN}}},
         widgets.CycleHotkeyLabel{
             view_id='filter',
-            key='CUSTOM_CTRL_A',
+            frame={t=2, l=0},
+            key='CUSTOM_CTRL_O',
             label='Showing:',
-            options={{label='overlays for the current screen',
-                    value='cur'},
-                    {label='all overlays', value='all'}},
+            options={{label='overlays for the current screen', value='cur'},
+                     {label='all overlays', value='all'}},
             on_change=self:callback('refresh_list')},
         widgets.FilteredList{
             view_id='list',
-            frame={h=LIST_HEIGHT},
+            frame={t=4, b=7},
             on_select=self:callback('highlight_selected'),
             on_submit=self:callback('toggle_enabled'),
             on_submit2=self:callback('reposition'),
         },
-        widgets.ResizingPanel{
-            autoarrange_subviews=true,
-            subviews={
-                widgets.HotkeyLabel{
-                    key='SELECT',
-                    key_sep=' or click widget name to enable/disable',
-                    scroll_keys={},
-                },
-                widgets.HotkeyLabel{
-                    key='SEC_SELECT',
-                    key_sep=' or drag the on-screen widget to reposition ',
-                    scroll_keys={},
-                },
-                widgets.HotkeyLabel{
-                    key='CUSTOM_CTRL_D',
-                    scroll_keys={},
-                    label='reset selected widget to its default position',
-                    on_activate=self:callback('reset'),
-                },
-            },
+        widgets.HotkeyLabel{
+            frame={b=5, l=0},
+            key='SELECT',
+            key_sep=' or click widget name to enable/disable',
+            scroll_keys={},
+        },
+        widgets.HotkeyLabel{
+            frame={b=4, l=0},
+            key='CUSTOM_CTRL_T',
+            key_sep=' or drag the on-screen widget to reposition ',
+            on_activate=function() self:reposition(self.subviews.list:getSelected()) end,
+            scroll_keys={},
+        },
+        widgets.HotkeyLabel{
+            frame={b=3, l=0},
+            key='CUSTOM_CTRL_D',
+            scroll_keys={},
+            label='reset selected widget to its default position',
+            on_activate=self:callback('reset'),
         },
         widgets.WrappedLabel{
+            frame={b=0, l=0},
             scroll_keys={},
             text_to_wrap='When repositioning a widget, touch an edge of the'..
                 ' screen to anchor the widget to that edge.',
@@ -238,10 +200,22 @@ function OverlayConfig:refresh_list(filter)
         end
         local panel = nil
         if not widget.overlay_only then
-            panel = DraggablePanel{frame=make_highlight_frame(widget.frame),
-                                   frame_style=SHADOW_FRAME,
-                                   name=name,
-                                   on_click=make_on_click_fn(#choices+1)}
+            panel = DraggablePanel{
+                    frame=make_highlight_frame(widget.frame),
+                    frame_style=SHADOW_FRAME,
+                    on_click=make_on_click_fn(#choices+1),
+                    name=name}
+            panel.on_drag_end = function(success)
+                if (success) then
+                    local frame = panel.frame
+                    local posx = frame.l and tostring(frame.l+2)
+                            or tostring(-(frame.r+2))
+                    local posy = frame.t and tostring(frame.t+2)
+                            or tostring(-(frame.b+2))
+                    overlay.overlay_command({'position', name, posx, posy},true)
+                end
+                self.reposition_panel = nil
+            end
         end
         local cfg = state.config[name]
         local tokens = {}
@@ -253,7 +227,7 @@ function OverlayConfig:refresh_list(filter)
         table.insert(tokens, name)
         table.insert(tokens, {text=function()
                 if self.reposition_panel and self.reposition_panel == panel then
-                    return ' (repositioning)'
+                    return ' (repositioning with keyboard)'
                 end
                 return ''
             end})
@@ -275,7 +249,10 @@ function OverlayConfig:highlight_selected(_, obj)
         self.selected_panel.frame_style = SHADOW_FRAME
         self.selected_panel = nil
     end
-    self.reposition_panel = nil
+    if self.reposition_panel then
+        self.reposition_panel:setKeyboardDragEnabled(false)
+        self.reposition_panel = nil
+    end
     if not obj or not obj.panel then return end
     local panel = obj.panel
     panel.frame_style = make_highlight_frame_style(panel.frame)
@@ -289,7 +266,11 @@ function OverlayConfig:toggle_enabled(_, obj)
 end
 
 function OverlayConfig:reposition(_, obj)
+    if not obj then return end
     self.reposition_panel = obj.panel
+    if self.reposition_panel then
+        self.reposition_panel:setKeyboardDragEnabled(true)
+    end
 end
 
 function OverlayConfig:reset()
@@ -313,10 +294,7 @@ end
 
 function OverlayConfig:onInput(keys)
     if self.reposition_panel then
-        if keys.LEAVESCREEN or keys.SELECT then
-            self.reposition_panel = nil
-            return true
-        elseif self.reposition_panel:cursor_move(keys) then
+        if self.reposition_panel:onInput(keys) then
             return true
         end
     end

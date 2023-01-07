@@ -4,8 +4,12 @@
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
-local buildingplan = require('plugins.buildingplan')
 local overlay = require('plugins.overlay')
+
+local ok, buildingplan = pcall(require, 'plugins.buildingplan')
+if not ok then
+    buildingplan = nil
+end
 
 local function foreach_construction_job(fn)
     for _,job in utils.listpairs(df.global.world.jobs.list) do
@@ -146,18 +150,19 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
         return
     end
     local color = COLOR_YELLOW
+    local ch = 'x'
     if data.suspend_count > 1 then
         color = COLOR_RED
-    elseif buildingplan.isPlannedBuilding(bld) then
+        ch = 'X'
+    elseif buildingplan and buildingplan.isPlannedBuilding(bld) then
         color = COLOR_GREEN
+        ch = 'P'
     end
-    -- + 1 for the screen border
-    dc:seek(screen_pos.x + 1, screen_pos.y + 1):string('X', color)
+    dc:seek(screen_pos.x, screen_pos.y):tile(ch, nil, color)
 end
 
 function SuspendOverlay:onRenderFrame(dc)
-    if not df.global.pause_state
-            or df.global.ui.main.mode ~= df.ui_sidebar_mode.Default then
+    if not df.global.pause_state then
         return
     end
 
@@ -186,7 +191,7 @@ foreach_construction_job(function(job)
         return
     end
     local bld = dfhack.buildings.findAtTile(job.pos)
-    if bld and buildingplan.isPlannedBuilding(bld) then
+    if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
         buildingplan_count = buildingplan_count + 1
         return
     end

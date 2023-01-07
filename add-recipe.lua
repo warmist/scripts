@@ -22,8 +22,8 @@ things such as instruments are not. Available options:
 ]====]
 
 local itemDefs = df.global.world.raws.itemdefs
-local resources = df.historical_entity.find(df.global.ui.civ_id).resources
-local civ = df.historical_entity.find(df.global.ui.civ_id).entity_raw
+local resources = df.historical_entity.find(df.global.plotinfo.civ_id).resources
+local civ = df.historical_entity.find(df.global.plotinfo.civ_id).entity_raw
 
 if (resources == nil) then
   qerror("Could not find entity resources")

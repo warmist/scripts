@@ -44,7 +44,7 @@ end
 CivBox = defclass(CivBox,dialog.ListBox)
 CivBox.focus_path = "CivBox"
 
-CivBox.ATTRS={
+CivBox.ATTRS{
     format_name="$NAME ($ENGLISH):$ID",
     format_no_name="<unnamed>:$ID",
     name_other="<other(-1)>",
@@ -129,7 +129,7 @@ function showCivPrompt(title, text, tcolor, on_select, on_cancel, min_width,allo
 end
 
 Editor_Civ=defclass(Editor_Civ, base_editor.Editor)
-Editor_Civ.ATTRS={
+Editor_Civ.ATTRS{
     frame_title = "Civilization editor"
 }
 
@@ -145,8 +145,8 @@ function Editor_Civ:init( args )
     widgets.Label{view_id="civ_name",frame = { t=1,l=1}, text="Currently: "..civ_name(self.target_unit.civ_id)},
     widgets.Label{frame = { t=2,l=1}, text={{text=": set to other (-1, usually enemy)",key="CUSTOM_N",
         on_activate= function() self.target_unit.civ_id=-1;self:update_curren_civ() end}}},
-    widgets.Label{frame = { t=3,l=1}, text={{text=": set to current civ ("..df.global.ui.civ_id..")",key="CUSTOM_C",
-        on_activate= function() self.target_unit.civ_id=df.global.ui.civ_id;self:update_curren_civ() end}}},
+    widgets.Label{frame = { t=3,l=1}, text={{text=": set to current civ ("..df.global.plotinfo.civ_id..")",key="CUSTOM_C",
+        on_activate= function() self.target_unit.civ_id=df.global.plotinfo.civ_id;self:update_curren_civ() end}}},
     widgets.Label{frame = { t=4,l=1}, text={{text=": manually enter",key="CUSTOM_E",
         on_activate=function ()
          dialog.showInputPrompt("Civ id","Enter new civ id:",COLOR_WHITE,
@@ -164,13 +164,5 @@ function Editor_Civ:init( args )
             end,nil,nil,true)
         end
         }}},
-    widgets.Label{
-                frame = { b=0,l=1},
-                text ={{text= ": exit editor ",
-                    key  = "LEAVESCREEN",
-                    on_activate= self:callback("dismiss")
-                    },
-                    }
-            },
-        }
+    }
 end

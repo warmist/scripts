@@ -272,7 +272,7 @@ function do_undo(zlevel, grid, ctx)
     -- move the cursor when we're in mode Zones to avoid having the viewport
     -- jump around when it doesn't need to
     local restore_cursor = false
-    if not dry_run and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
+    if not dry_run and df.global.plotinfo.main.mode == df.ui_sidebar_mode.Zones then
         quickfort_map.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
         restore_cursor = true
     end

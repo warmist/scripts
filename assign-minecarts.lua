@@ -31,7 +31,7 @@ local quickfort = reqscript('quickfort')
 -- ensures the list of available minecarts has been calculated by the game
 local function refresh_ui_hauling_vehicles()
     local qfdata
-    if #df.global.ui.hauling.routes > 0 then
+    if #df.global.plotinfo.hauling.routes > 0 then
         -- if there is an existing route, move to the vehicle screen and back
         -- out to force the game to scan for assignable minecarts
         qfdata = 'hv^^'
@@ -48,7 +48,7 @@ end
 function get_free_vehicles()
     refresh_ui_hauling_vehicles()
     local free_vehicles = {}
-    for _,minecart in ipairs(df.global.ui.hauling.vehicles) do
+    for _,minecart in ipairs(df.global.plotinfo.hauling.vehicles) do
         if minecart and minecart.route_id == -1 then
             table.insert(free_vehicles, minecart)
         end
@@ -106,7 +106,7 @@ end
 -- assign first free minecart to the most recently-created route
 -- returns whether route now has a minecart assigned
 function assign_minecart_to_last_route(quiet)
-    local routes = df.global.ui.hauling.routes
+    local routes = df.global.plotinfo.hauling.routes
     local route_idx = #routes - 1
     if route_idx < 0 then
         return false
@@ -116,7 +116,7 @@ function assign_minecart_to_last_route(quiet)
 end
 
 local function get_route_by_id(route_id)
-    for _,route in ipairs(df.global.ui.hauling.routes) do
+    for _,route in ipairs(df.global.plotinfo.hauling.routes) do
         if route.id == route_id then
             return route
         end
@@ -124,7 +124,7 @@ local function get_route_by_id(route_id)
 end
 
 local function list()
-    local routes = df.global.ui.hauling.routes
+    local routes = df.global.plotinfo.hauling.routes
     if 0 == #routes then
         print('No hauling routes defined.')
     else
@@ -147,7 +147,7 @@ end
 
 local function all(quiet)
     local minecarts, idx = get_free_vehicles(), 1
-    local routes = df.global.ui.hauling.routes
+    local routes = df.global.plotinfo.hauling.routes
     for _,route in ipairs(routes) do
         if has_minecart(route) then
             goto continue

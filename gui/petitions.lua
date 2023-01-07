@@ -117,7 +117,7 @@ end
 --------------------------------------------------
 end
 
-local we = df.global.ui.group_id
+local we = df.global.plotinfo.group_id
 
 local function getAgreementDetails(a)
     local sb = {} -- StringBuilder

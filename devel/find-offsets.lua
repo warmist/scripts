@@ -272,7 +272,7 @@ local function dwarfmode_to_top()
     end
 
     for i=0,10 do
-        if is_known 'ui' and df.global.ui.main.mode == df.ui_sidebar_mode.Default then
+        if is_known 'plotinfo' and df.global.plotinfo.main.mode == df.ui_sidebar_mode.Default then
             break
         end
         gui.simulateInput(screen, 'LEAVESCREEN')
@@ -624,7 +624,7 @@ end
 local function is_valid_world(world)
     if not ms.is_valid_vector(world.units.all, PTR_SIZE)
     or not ms.is_valid_vector(world.units.active, PTR_SIZE)
-    or not ms.is_valid_vector(world.units.bad, PTR_SIZE)
+    or not ms.is_valid_vector(world.units.temp_save, PTR_SIZE)
     or not ms.is_valid_vector(world.history.figures, PTR_SIZE)
     or not ms.is_valid_vector(world.features.map_features, PTR_SIZE)
     then
@@ -632,8 +632,8 @@ local function is_valid_world(world)
         return false
     end
 
-    if #world.units.all == 0 or #world.units.all ~= #world.units.bad then
-        print('Different or zero size of units.all and units.bad:'..#world.units.all..' vs '..#world.units.bad)
+    if #world.units.all == 0 or #world.units.all ~= #world.units.temp_save then
+        print('Different or zero size of units.all and units.temp_save:'..#world.units.all..' vs '..#world.units.temp_save)
         if not utils.prompt_yes_no('Ignore?') then
             return false
         end
@@ -676,26 +676,26 @@ menu, and select different types as instructed below:]],
 end
 
 --
--- UI
+-- plotinfo
 --
 
-local function is_valid_ui(ui)
-    if not ms.is_valid_vector(ui.economic_stone, 1)
-    or not ms.is_valid_vector(ui.dipscripts, PTR_SIZE)
+local function is_valid_plotinfo(plotinfo)
+    if not ms.is_valid_vector(plotinfo.economic_stone, 1)
+    or not ms.is_valid_vector(plotinfo.dipscripts, PTR_SIZE)
     then
         dfhack.printerr('Vector layout check failed.')
         return false
     end
 
-    if ui.follow_item ~= -1 or ui.follow_unit ~= -1 then
-        print('Invalid follow state: '..ui.follow_item..', '..ui.follow_unit)
+    if plotinfo.follow_item ~= -1 or plotinfo.follow_unit ~= -1 then
+        print('Invalid follow state: '..plotinfo.follow_item..', '..plotinfo.follow_unit)
         return false
     end
 
     return true
 end
 
-local function find_ui()
+local function find_plotinfo()
     local catnames = {
         'DesignateMine', 'DesignateChannel', 'DesignateRemoveRamps',
         'DesignateUpStair', 'DesignateDownStair', 'DesignateUpDownStair',
@@ -712,7 +712,7 @@ local function find_ui()
         dwarfmode_feed_input('D_DESIGNATE')
 
         addr = searcher:find_interactive(
-            'Auto-searching for ui.',
+            'Auto-searching for plotinfo.',
             'int16_t',
             feed_menu_choice(catnames, catkeys, df.ui_sidebar_mode),
             20
@@ -721,20 +721,20 @@ local function find_ui()
 
     if not addr then
         addr = searcher:find_menu_cursor([[
-Searching for ui. Please open the designation
+Searching for plotinfo. Please open the designation
 menu, and switch modes as instructed below:]],
             'int16_t', catnames, df.ui_sidebar_mode
         )
     end
 
-    validate_offset('ui', is_valid_ui, addr, df.ui, 'main', 'mode')
+    validate_offset('plotinfo', is_valid_plotinfo, addr, df.plotinfost, 'main', 'mode')
 end
 
 --
--- ui_sidebar_menus
+-- game
 --
 
-local function is_valid_ui_sidebar_menus(usm)
+local function is_valid_game(usm)
     if not ms.is_valid_vector(usm.workshop_job.choices_all, 4)
     or not ms.is_valid_vector(usm.workshop_job.choices_visible, 4)
     then
@@ -754,14 +754,14 @@ local function is_valid_ui_sidebar_menus(usm)
     return true
 end
 
-local function find_ui_sidebar_menus()
+local function find_game()
     local addr
 
     if dwarfmode_to_top() then
         dwarfmode_feed_input('D_BUILDJOB')
 
         addr = searcher:find_interactive([[
-Auto-searching for ui_sidebar_menus. Please select a Mason's,
+Auto-searching for game. Please select a Mason's,
 Craftsdwarf's, or Carpenter's workshop:]],
             'int32_t',
             function(idx)
@@ -779,7 +779,7 @@ Craftsdwarf's, or Carpenter's workshop:]],
 
     if not addr then
         addr = searcher:find_menu_cursor([[
-Searching for ui_sidebar_menus. Please switch to 'q' mode,
+Searching for game. Please switch to 'q' mode,
 select a Mason, Craftsdwarfs, or Carpenters workshop, open
 the Add Job menu, and move the cursor within:]],
             'int32_t',
@@ -788,15 +788,15 @@ the Add Job menu, and move the cursor within:]],
         )
     end
 
-    validate_offset('ui_sidebar_menus', is_valid_ui_sidebar_menus,
-                    addr, df.ui_sidebar_menus, 'workshop_job', 'cursor')
+    validate_offset('game', is_valid_game,
+                    addr, df.game, 'workshop_job', 'cursor')
 end
 
 --
--- ui_build_selector
+-- buildreq
 --
 
-local function is_valid_ui_build_selector(ubs)
+local function is_valid_buildreq(ubs)
     if not ms.is_valid_vector(ubs.requirements, 4)
     or not ms.is_valid_vector(ubs.choices, 4)
     then
@@ -813,12 +813,12 @@ local function is_valid_ui_build_selector(ubs)
     return true
 end
 
-local function find_ui_build_selector()
+local function find_buildreq()
     local addr
 
     if dwarfmode_to_top() then
         addr = searcher:find_interactive([[
-Auto-searching for ui_build_selector. This requires mechanisms.]],
+Auto-searching for buildreq. This requires mechanisms.]],
             'int32_t',
             function(idx)
                 if idx == 0 then
@@ -840,16 +840,16 @@ Auto-searching for ui_build_selector. This requires mechanisms.]],
 
     if not addr then
         addr = searcher:find_menu_cursor([[
-Searching for ui_build_selector. Please start constructing
+Searching for buildreq. Please start constructing
 a pressure plate, and enable creatures. Then change the min
-weight as requested, knowing that the ui shows 5000 as 5K:]],
+weight as requested, knowing that the UI shows 5000 as 5K:]],
             'int32_t',
             { 5000, 6000, 7000, 8000, 9000, 10000, 11000 }
         )
     end
 
-    validate_offset('ui_build_selector', is_valid_ui_build_selector,
-                    addr, df.ui_build_selector, 'plate_info', 'unit_min')
+    validate_offset('buildreq', is_valid_buildreq,
+                    addr, df.buildreq, 'plate_info', 'unit_min')
 end
 
 --
@@ -874,7 +874,7 @@ end
 local function find_init()
     local zone
     --[[if os_type == 'windows' then
-        zone = zoomed_searcher('ui_build_selector', 0x3000)
+        zone = zoomed_searcher('buildreq', 0x3000)
     elseif os_type == 'linux' or os_type == 'darwin' then
         zone = zoomed_searcher('d_init', -0x2000)
     end]]
@@ -1840,9 +1840,9 @@ if not prompt_proceed() then
 end
 
 exec_finder(find_world, 'world', is_valid_world)
-exec_finder(find_ui, 'ui', is_valid_ui)
-exec_finder(find_ui_sidebar_menus, 'ui_sidebar_menus')
-exec_finder(find_ui_build_selector, 'ui_build_selector')
+exec_finder(find_plotinfo, 'plotinfo', is_valid_plotinfo)
+exec_finder(find_game, 'game')
+exec_finder(find_buildreq, 'buildreq')
 exec_finder(find_init, 'init', is_valid_init)
 
 print('\nPrimitive globals:\n')

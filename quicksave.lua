@@ -30,7 +30,7 @@ if not dfhack.world.isFortressMode() then
     qerror('This script can only be used in fortress mode')
 end
 
-local ui_main = df.global.ui.main
+local ui_main = df.global.plotinfo.main
 local flags4 = df.global.d_init.flags4
 
 local function restore_autobackup()

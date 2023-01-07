@@ -8,7 +8,7 @@ local base_editor = reqscript("internal/gm-unit/base_editor")
 --TODO set local should or better yet skills vector to reduce long skill list access typing
 Editor_Skills = defclass(Editor_Skills, base_editor.Editor)
 
-Editor_Skills.ATTRS = {
+Editor_Skills.ATTRS{
     frame_title = "Skill editor",
     learned_only = false
 }
@@ -72,10 +72,7 @@ function Editor_Skills:init( args )
         },
         widgets.Label{
             frame = { b=0,l=1},
-            text ={{text= ": exit editor ",
-                key  = "LEAVESCREEN",
-                on_activate= self:callback("dismiss")
-                },
+            text ={
                 {text=": remove level ",
                 key = "SECONDSCROLL_UP",
                 on_activate=self:callback("level_skill",-1)},

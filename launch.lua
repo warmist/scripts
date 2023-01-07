@@ -10,7 +10,7 @@ something first to ride them there.
 ]====]
 function launch(unitSource,unitRider)
     local curpos
-    if df.global.ui_advmode.menu == df.ui_advmode_menu.Look then
+    if df.global.adventure.menu == df.ui_advmode_menu.Look then
         curpos = df.global.cursor
     elseif df.global.gamemode == df.game_mode.ADVENTURE then
         qerror("No [l] cursor located! You would have slammed into the ground and exploded.")

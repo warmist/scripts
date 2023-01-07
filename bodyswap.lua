@@ -92,12 +92,12 @@ function processNemesisParty(nemesis, targetUnitID, alreadyProcessed)
 
   local nemUnit = nemesis.unit
   if nemesis.unit_id == targetUnitID then -- the target you're bodyswapping into
-    df.global.ui_advmode.interactions.party_core_members:insert('#', nemesis.figure.id)
+    df.global.adventure.interactions.party_core_members:insert('#', nemesis.figure.id)
     nemUnit.relationship_ids.GroupLeader = -1
   elseif isPet(nemesis) then -- pets belonging to the target or to their companions
-    df.global.ui_advmode.interactions.party_pets:insert('#', nemesis.figure.id)
+    df.global.adventure.interactions.party_pets:insert('#', nemesis.figure.id)
   else
-    df.global.ui_advmode.interactions.party_core_members:insert('#', nemesis.figure.id) -- placing all non-pet companions into the core party list to enable tactical mode swapping
+    df.global.adventure.interactions.party_core_members:insert('#', nemesis.figure.id) -- placing all non-pet companions into the core party list to enable tactical mode swapping
     nemesis.flags.ADVENTURER = true
     if nemUnit then -- check in case the companion is offloaded
       nemUnit.relationship_ids.GroupLeader = targetUnitID
@@ -124,7 +124,7 @@ function processNemesisParty(nemesis, targetUnitID, alreadyProcessed)
 end
 
 function configureAdvParty(targetNemesis)
-  local party = df.global.ui_advmode.interactions
+  local party = df.global.adventure.interactions
   party.party_core_members:resize(0)
   party.party_pets:resize(0)
   party.party_extra_members:resize(0)
@@ -137,7 +137,7 @@ function swapAdvUnit(newUnit)
     qerror('Target unit not specified!')
   end
 
-  local oldNem = df.nemesis_record.find(df.global.ui_advmode.player_id)
+  local oldNem = df.nemesis_record.find(df.global.adventure.player_id)
   local oldUnit = oldNem.unit
   if newUnit == oldUnit then
     return
@@ -175,7 +175,7 @@ function swapAdvUnit(newUnit)
   setOldAdvNemFlags(oldNem)
   setNewAdvNemFlags(newNem)
   configureAdvParty(newNem)
-  df.global.ui_advmode.player_id = newNem.id
+  df.global.adventure.player_id = newNem.id
   activeUnits[newUnitIndex] = oldUnit
   activeUnits[oldUnitIndex] = newUnit
   oldUnit.idle_area:assign(oldUnit.pos)
