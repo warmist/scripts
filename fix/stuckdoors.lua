@@ -67,41 +67,5 @@ function unstickDoors()
 
     return unstuck_doors_count
 end
+
 unstickDoors()
-
-
--- simple test to be run on map, assumes no corrupted doors currently exist
--- to get started select a door that is currently closed in the UI and run this script
--- after uncommenting the call this function below
-function unstickDoorsTest()
-    local selectedDoor = dfhack.gui.getSelectedBuilding()
-    assert(selectedDoor, "no door currently selected in UI")
-
-    print(selectedDoor.close_timer)
-    local x,y,z = selectedDoor.x1,selectedDoor.y1,selectedDoor.z
-    local occ = dfhack.maps.getTileBlock(x,y,z).occupancy[x % 16][y % 16]
-    print(occ.unit, occ.unit_grounded, occ.item)
-    -- simulate open door, it should close on its own after unpause if the test passes
-    selectedDoor.close_timer = 1
-
-    -- bookkeeping
-    local returned_val = 0
-    -- simulate door has unit flag set
-    occ.unit = true
-    returned_val = unstickDoors()
-    assert(returned_val == 1, "the doors were not correctly unstuck, instead of 1 got: " .. returned_val)
-    assert(occ.unit == false, "occupancy for the door should have been reset")
-
-    -- simulate door has unit lying on ground
-    occ.unit_grounded = true
-    returned_val = unstickDoors()
-    assert(returned_val == 1, "the doors were not correctly unstuck, instead of 1 got: " .. returned_val)
-    assert(occ.unit_grounded == false, "occupancy for the door should have been reset")
-
-    -- simulate door has has item lying on ground
-    occ.item = true
-    returned_val = unstickDoors()
-    assert(returned_val == 1, "the doors were not correctly unstuck, instead of 1 got: " .. returned_val)
-    assert(occ.item == false, "occupancy for the door should have been reset")
-end
--- unstickDoorsTest()
