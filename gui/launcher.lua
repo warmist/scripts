@@ -16,11 +16,11 @@ local HISTORY_ID = 'gui/launcher'
 local HISTORY_FILE = 'dfhack-config/launcher.history'
 local CONSOLE_HISTORY_FILE = 'dfhack-config/dfhack.history'
 local CONSOLE_HISTORY_FILE_OLD = 'dfhack.history'
-local BASE_FREQUENCY_FILE = 'hack/data/base_command_counts.json'
-local USER_FREQUENCY_FILE = 'dfhack-config/command_counts.json'
-local CONFIG_FILE = 'dfhack-config/launcher.json'
-
 local TITLE = 'DFHack Launcher'
+
+config = config or json.open('dfhack-config/launcher.json')
+base_freq = base_freq or json.open('hack/data/base_command_counts.json')
+user_freq = user_freq or json.open('dfhack-config/command_counts.json')
 
 -- track whether the user has enabled dev mode
 dev_mode = dev_mode or false
@@ -94,30 +94,21 @@ if not history then
     history, history_set = init_history()
 end
 
-local function get_config(fname, default)
-    default = default == nil and {} or default
-    local ok, data = pcall(json.decode_file, fname)
-    return ok and data or default
-end
-
 local function get_first_word(text)
     local word = text:trim():split(' +')[1]
     if word:startswith(':') then word = word:sub(2) end
     return word
 end
 
-command_bias = command_bias or get_config(BASE_FREQUENCY_FILE)
-command_counts = command_counts or get_config(USER_FREQUENCY_FILE)
-
 local function get_command_count(command)
-    return (command_bias[command] or 0) + (command_counts[command] or 0)
+    return (base_freq.data[command] or 0) + (user_freq.data[command] or 0)
 end
 
 local function record_command(line)
     add_history(history, history_set, line)
     local firstword = get_first_word(line)
-    command_counts[firstword] = (command_counts[firstword] or 0) + 1
-    json.encode_file(command_counts, USER_FREQUENCY_FILE)
+    user_freq.data[firstword] = (user_freq.data[firstword] or 0) + 1
+    user_freq:write()
 end
 
 ----------------------------------
@@ -389,7 +380,7 @@ MainPanel.ATTRS{
 
 function MainPanel:postUpdateLayout()
     if self.get_minimal() then return end
-    json.encode_file(self.frame, CONFIG_FILE)
+    config:write(self.frame)
 end
 
 local H_SPLIT_PEN = dfhack.pen.parse{tile=902, ch=205, fg=COLOR_GREY, bg=COLOR_BLACK}
@@ -499,7 +490,10 @@ function LauncherUI:init(args)
             new_frame.t = 0
             new_frame.h = 1
         else
-            new_frame = get_config(CONFIG_FILE, {l=5, r=25, t=5, b=5})
+            new_frame = config.data
+            if not next(new_frame) then
+                new_frame = {l=5, r=25, t=5, b=5}
+            end
         end
         main_panel.frame = new_frame
         main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil
@@ -695,10 +689,6 @@ function LauncherUI:onGetSelectedPlant()
     return getAny(self, 'Plant')
 end
 
-function LauncherUI:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function LauncherUI:onDismiss()
     view = nil
 end
@@ -708,9 +698,13 @@ if dfhack_flags.module then
 end
 
 if view then
-    -- running the launcher while it is open (e.g. from hitting the launcher
-    -- hotkey a second time) should close the dialog
-    view:dismiss()
+    if not view:isOnTop() then
+        view:raise()
+    else
+        -- running the launcher while it is open (e.g. from hitting the launcher
+        -- hotkey a second time) should close the dialog
+        view:dismiss()
+    end
 else
     local args = {...}
     local minimal

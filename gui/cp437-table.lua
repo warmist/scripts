@@ -92,12 +92,8 @@ function CPScreen:init()
     self:addviews{CPDialog{view_id='main'}}
 end
 
-function CPScreen:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function CPScreen:onDismiss()
     view = nil
 end
 
-view = view or CPScreen{}:show()
+view = view and view:raise() or CPScreen{}:show()

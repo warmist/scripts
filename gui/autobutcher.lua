@@ -6,7 +6,7 @@ local dlg = require 'gui.dialogs'
 
 local plugin = require 'plugins.autobutcher'
 
-WatchList = defclass(WatchList, gui.Screen)
+WatchList = defclass(WatchList, gui.ZScreen)
 
 -- width of the race name column in the UI
 local racewidth = 25
@@ -37,6 +37,7 @@ function WatchList:init(args)
     local colwidth = 7
     self:addviews{
         widgets.Window{
+            view_id = 'main',
             frame_title = 'Autobutcher Watchlist',
             frame = { w=84, h=30 },
             resizable = true,
@@ -81,10 +82,6 @@ function WatchList:init(args)
 
     self:initListChoices()
     self:updateBottom()
-end
-
-function WatchList:onRenderFrame()
-    self:renderParent()
 end
 
 -- change the viewmode for stock data displayed in left section of columns
@@ -261,14 +258,6 @@ function WatchList:initListChoices()
 
     local list = self.subviews.list
     list:setChoices(choices)
-end
-
-function WatchList:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-    else
-        WatchList.super.onInput(self, keys)
-    end
 end
 
 -- check the user input for target population values
@@ -637,7 +626,7 @@ function WatchList:onDismiss()
 end
 
 if not dfhack.isMapLoaded() then
-    qerror('Map is not loaded.')
+    qerror('autobutcher requires a fortress map to be loaded')
 end
 
-view = view or WatchList{}:show()
+view = view and view:raise() or WatchList{}:show()

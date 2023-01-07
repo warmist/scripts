@@ -82,10 +82,6 @@ function Pathable:onRenderBody()
     end
 end
 
-function Pathable:isMouseOver()
-    return self.subviews.main:getMouseFramePos()
-end
-
 function Pathable:onDismiss()
     view = nil
 end
@@ -95,8 +91,7 @@ if dfhack_flags.module then
 end
 
 if not dfhack.isMapLoaded() then
-    dfhack.printerr('gui/pathable requires a fortress map to be loaded')
-    return
+    qerror('gui/pathable requires a map to be loaded')
 end
 
-view = view or Pathable{}:show()
+view = view and view:raise() or Pathable{}:show()

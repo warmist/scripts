@@ -1,13 +1,13 @@
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-TileBrowser = defclass(TileBrowser, gui.Screen)
+TileBrowser = defclass(TileBrowser, gui.ZScreen)
 
 function TileBrowser:init()
     self.max_texpos = #df.global.enabler.textures.raws
 
     local main_panel = widgets.Window{
-        view_id='window',
+        view_id='main',
         frame={w=36, h=59},
         drag_anchors={title=true, body=true},
         resizable=true,
@@ -78,8 +78,6 @@ function TileBrowser:set_start_index(idx)
 end
 
 function TileBrowser:update_report()
-    if not self.dirty then return end
-
     local idx = tonumber(self.subviews.start_index.text)
     local end_idx = math.min(self.max_texpos, idx + 999)
     local prefix_len = #tostring(idx) + 4
@@ -104,24 +102,18 @@ function TileBrowser:update_report()
     end
 
     self.subviews.report:setText(report)
-    self.subviews.window:updateLayout()
+    self.subviews.main:updateLayout()
 end
 
 function TileBrowser:onRenderFrame()
-    self:renderParent()
-    self:update_report()
-end
-
-function TileBrowser:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-        return true
+    if self.dirty then
+        self:update_report()
+        self.dirty = false
     end
-    return self.super.onInput(self, keys)
 end
 
 function TileBrowser:onDismiss()
     view = nil
 end
 
-view = view or TileBrowser{}:show()
+view = view and view:raise() or TileBrowser{}:show()

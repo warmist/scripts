@@ -111,7 +111,7 @@ function OverlayConfig:init()
     overlay.register_trigger_lock_screen(self)
 
     self.scr_name = overlay.simplify_viewscreen_name(
-            getmetatable(dfhack.gui.getCurViewscreen(true)))
+            getmetatable(dfhack.gui.getDFViewscreen(true)))
 
     local main_panel = widgets.Window{
         frame={w=DIALOG_WIDTH, h=LIST_HEIGHT+15},
