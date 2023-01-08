@@ -9,21 +9,20 @@ Usage
 -----
 
 ``lever list``
-    Print out a list of your fort's levers, including their name, activation
+    Print out a list of your fort's levers, including their ID, name, activation
     state, and what they are linked to (if anything).
-``lever pull <id> [<options>]``
+``lever pull --id <id> [<options>]``
     Queue a job so a dwarf will pull the specified lever. This is the same as
     :kbd:`q` querying the building and queueing a :kbd:`P` pull job.
-
-If your levers aren't named, you can find out a lever's ID with the
-`bprobe <probe>` command.
+``lever show --id <id>``
+    Center the display on the specified lever and print information about it.
 
 Examples
 --------
 
-``lever pull 42 --priority``
+``lever pull --id 42 --priority``
     Queue a job to pull lever 42 at high priority.
-``lever pull 42 --now``
+``lever pull --id 42 --cheat``
     Skip the job and pull the lever with the hand of Armok!
 
 Options
@@ -31,5 +30,5 @@ Options
 
 ``--priority``
     Queue a job at high priority.
-``--now``
+``--cheat``
     Magically toggle the lever immediately.
