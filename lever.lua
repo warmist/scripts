@@ -1,7 +1,5 @@
 -- Inspect and pull levers
-world = df.global.world
 local argparse = require('argparse')
-local utils = require('utils')
 
 function leverPullJob(lever, priority)
     local ref = df.general_ref_building_holderst:new()
@@ -12,7 +10,7 @@ function leverPullJob(lever, priority)
     job.pos = {
         x = lever.centerx,
         y = lever.centery,
-        z = z
+        z = lever.z
     }
     job.flags.do_now = priority
     job.general_refs:insert("#", ref)
@@ -24,7 +22,7 @@ function leverPullJob(lever, priority)
     print(leverDescribe(lever))
 end
 
-function leverPullCheat(lever)
+function leverPullInstant(lever)
     for _, m in ipairs(lever.linked_mechanisms) do
         local tref = dfhack.items.getGeneralRef(m, df.general_ref_type.BUILDING_HOLDER)
         if tref then
@@ -43,7 +41,7 @@ end
 
 function leverDescribe(lever)
     local lever_name = ''
-    if string.len(lever.name) > 0 then
+    if #lever.name > 0 then
         lever_name = ' ' .. lever.name
     end
 
@@ -105,7 +103,7 @@ function leverDescribe(lever)
 end
 
 function ListLevers()
-    for k, v in ipairs(world.buildings.other.TRAP) do -- hint:df.building_trapst
+    for k, v in ipairs(df.global.world.buildings.other.TRAP) do -- hint:df.building_trapst
         if v.trap_type == df.trap_type.Lever then
             print(('#%d: %s'):format(k, leverDescribe(v)))
         end
@@ -113,19 +111,10 @@ function ListLevers()
 end
 
 function getLever(opts)
-    local lever = utils.binsearch(world.buildings.all, opts.pullId, 'id')
+    local lever = df.building.find(opts.pullId)
 
-    if lever then
-        if pcall(function()
-            return lever.trap_type
-        end) then
-            if not lever.trap_type == df.trap_type.Lever then
-                return nil
-            end
-        end
+    if df.building_trapst:is_instance(lever) and lever.trap_type == df.trap_type.Lever then
         return lever
-    else
-        return nil
     end
 end
 
@@ -147,8 +136,8 @@ function PullLever(opts)
         return
     end
 
-    if opts.cheat then
-        leverPullNow(lever)
+    if opts.instant then
+        leverPullInstant(lever)
     else
         leverPullJob(lever, opts.priority)
     end
@@ -177,9 +166,9 @@ local function parse_commandline(args)
         end
     }, {
         nil,
-        'cheat',
+        'instant',
         handler = function()
-            opts.cheat = true
+            opts.instant = true
         end
     }})
 

@@ -22,7 +22,7 @@ Examples
 
 ``lever pull --id 42 --priority``
     Queue a job to pull lever 42 at high priority.
-``lever pull --id 42 --cheat``
+``lever pull --id 42 --instant``
     Skip the job and pull the lever with the hand of Armok!
 
 Options
@@ -30,5 +30,5 @@ Options
 
 ``--priority``
     Queue a job at high priority.
-``--cheat``
-    Magically toggle the lever immediately.
+``--instant``
+    Instantly toggle the lever without a job.
