@@ -672,23 +672,6 @@ function LauncherUI:run_command(reappear, command)
     self.subviews.help:set_help(('> %s\n\n%s'):format(command, output))
 end
 
-local function getAny(scr, thing)
-    if not scr._native or not scr._native.parent then return nil end
-    return dfhack.gui['getAny'..thing](scr._native.parent)
-end
-function LauncherUI:onGetSelectedUnit()
-    return getAny(self, 'Unit')
-end
-function LauncherUI:onGetSelectedItem()
-    return getAny(self, 'Item')
-end
-function LauncherUI:onGetSelectedBuilding()
-    return getAny(self, 'Building')
-end
-function LauncherUI:onGetSelectedPlant()
-    return getAny(self, 'Plant')
-end
-
 function LauncherUI:onDismiss()
     view = nil
 end
