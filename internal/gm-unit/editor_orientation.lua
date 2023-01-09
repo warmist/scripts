@@ -50,12 +50,12 @@ function Editor_Orientation:init(args)
 
   self:addviews{
     widgets.List{
-      frame = {t=0, b=1,l=1},
+      frame = {t=0, b=2,l=0},
       view_id = "sex",
       on_submit = self:callback("sexSelected"),
     },
     widgets.Label{
-      frame = {b=0, l=1},
+      frame = {b=0, l=0},
       text = {
         {text = ": cycle selected ", key = "SELECT"},
         {text = ": randomise selected", key = "CUSTOM_R", on_activate = self:callback("random")},

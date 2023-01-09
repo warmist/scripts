@@ -75,25 +75,22 @@ function Editor_Personality:init(args)
 
   self:addviews{
     widgets.List{
-      frame = {t=0, b=2,l=1},
+      frame = {t=0, b=4,l=0},
       view_id = "traits",
       on_submit = self:callback("editTrait"),
-      on_submit2 = self:callback("averageTrait")
     },
     widgets.Label{
-      frame = {b=1, l=1},
+      frame = {b=0, l=0},
       text = {
         {text = ": edit value ", key = "SELECT"},
         {text = ": randomise selected ", key = "CUSTOM_R", on_activate = self:callback("randomiseSelected")},
-        {text = ": raise ", key = "CURSOR_RIGHT", on_activate = self:callback("step", 1)},
-        {text = ": reduce", key = "CURSOR_LEFT", on_activate = self:callback("step", -1)},
+        NEWLINE,
+        {text = ": raise ", key = "KEYBOARD_CURSOR_RIGHT", on_activate = self:callback("step", 1)},
+        {text = ": reduce ", key = "KEYBOARD_CURSOR_LEFT", on_activate = self:callback("step", -1)},
+        {text = ": set to caste average", key = "STRING_A047", on_activate = function()
+            self:averageTrait(self.subviews.traits:getSelected())
+         end},
       },
-    },
-    widgets.Label{
-      frame = {b = 0, l = 1},
-      text = {
-        {text = ": set to caste average", key = "SEC_SELECT"}
-      }
     },
   }
 

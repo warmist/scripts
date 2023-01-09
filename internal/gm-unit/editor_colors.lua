@@ -132,12 +132,12 @@ function Editor_Colors:init(args)
 
   self:addviews{
     widgets.List{
-      frame = {t=0, b=1,l=1},
+      frame = {t=0, b=2,l=0},
       view_id = "features",
       on_submit = self:callback("featureSelected"),
     },
     widgets.Label{
-      frame = {b=0, l=1},
+      frame = {b=0, l=0},
       text = {
         {text = ": edit feature ", key = "SELECT"},
         {text = ": randomise color", key = "CUSTOM_R", on_activate = self:callback("random")},

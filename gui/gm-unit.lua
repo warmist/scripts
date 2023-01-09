@@ -90,36 +90,20 @@ local editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
-Editor_Unit = defclass(Editor_Unit, gui.Screen)
+Editor_Unit = defclass(Editor_Unit, widgets.Window)
 Editor_Unit.ATTRS{
+    frame_title=MAIN_TITLE,
+    frame={t=20, r=3, w=50, h=30},
+    resizable=true,
     target_unit = DEFAULT_NIL,
 }
 
 local MAIN_TITLE = "GameMaster's unit editor"
 
-function make_choices(window)
-    local choices = {}
-    for _,editor in ipairs(editors) do
-        local title = editor.ATTRS.frame_title
-        table.insert(choices, {text=title, search_key=title:lower(),
-                on_submit=function()
-                    window.frame_title = title
-                    window.subviews.pages:setSelected(title)
-                end})
-    end
-    return choices
-end
-
 function Editor_Unit:init()
-    local window = widgets.Window{
-        view_id='window',
-        frame={w=65, h=50},
-        frame_title=MAIN_TITLE,
-        resizable=true,
-    }
-
     local main = widgets.FilteredList{
-            choices=make_choices(window),
+            view_id='main_list',
+            choices=self:make_choices(),
             on_submit=function(_,choice) choice.on_submit() end
         }
 
@@ -130,7 +114,7 @@ function Editor_Unit:init()
                     target_unit=self.target_unit})
     end
 
-    window:addviews{
+    self:addviews{
         widgets.Pages{
             view_id='pages',
             frame={t=0, l=0, b=2},
@@ -140,31 +124,54 @@ function Editor_Unit:init()
             frame={b=0, l=0},
             label='Back',
             key='LEAVESCREEN',
-            on_activate=self:callback('onBack'),
         },
     }
-    self:addviews{window}
 end
 
-function Editor_Unit:onBack()
-    local pages = self.subviews.pages
-    if pages:getSelected() == 1 then
-        self:dismiss()
-    else
-        local page = pages:getSelectedPage()
-        if page.onClose then page:onClose() end
-        self.subviews.window.frame_title = MAIN_TITLE
-        pages:setSelected(1)
+function Editor_Unit:make_choices()
+    local choices = {}
+    for _,editor in ipairs(editors) do
+        local title = editor.ATTRS.frame_title
+        table.insert(choices, {text=title, search_key=title:lower(),
+                on_submit=function()
+                    self.frame_title = title
+                    local pages = self.subviews.pages
+                    pages:setSelected(title)
+                    local page = pages:getSelectedPage()
+                    if page.onOpen then page:onOpen() end
+                end})
     end
+    return choices
 end
 
-function Editor_Unit:onRenderFrame(dc, rect)
-    -- since we're not taking up the entire screen
-    self:renderParent()
+function Editor_Unit:onInput(keys)
+    local pages = self.subviews.pages
+    if pages:getSelected() == 1 or
+            (not keys.LEAVESCREEN and not keys._MOUSE_R_DOWN) then
+        return Editor_Unit.super.onInput(self, keys)
+    end
+    local page = pages:getSelectedPage()
+    if page.onClose then page:onClose() end
+    self.frame_title = MAIN_TITLE
+    pages:setSelected(1)
+    self.subviews.main_list.edit:setFocus(true)
+    return true
 end
 
-function Editor_Unit:onDismiss()
+-------------------------------screen management----------------
+
+Editor_Screen = defclass(Editor_Screen, gui.ZScreen)
+Editor_Screen.ATTRS {
+    focus_path='gm-unit',
+    target_unit=DEFAULT_NIL,
+}
+
+function Editor_Screen:init()
+    self:addviews{Editor_Unit{target_unit=self.target_unit}}
+end
+
+function Editor_Screen:onDismiss()
     view = nil
 end
 
-view = view or Editor_Unit{target_unit=target}:show()
+view = view and view:raise() or Editor_Screen{target_unit=target}:show()
