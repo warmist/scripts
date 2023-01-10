@@ -66,22 +66,22 @@ function Editor_Skills:init( args )
     self:addviews{
         widgets.FilteredList{
             choices=skill_list,
-            frame = {t=0, b=1,l=1},
+            frame = {t=0, b=3,l=0},
             view_id="skills",
-            edit_ignore_keys={"SECONDSCROLL_UP", "SECONDSCROLL_DOWN"},
+            edit_ignore_keys={"KEYBOARD_CURSOR_UP_Z", "KEYBOARD_CURSOR_DOWN_Z", "STRING_A047"},
         },
         widgets.Label{
-            frame = { b=0,l=1},
+            frame = { b=0,l=0},
             text ={
                 {text=": remove level ",
-                key = "SECONDSCROLL_UP",
+                key = "KEYBOARD_CURSOR_UP_Z",
                 on_activate=self:callback("level_skill",-1)},
                 {text=": add level ",
-                key = "SECONDSCROLL_DOWN",
-                on_activate=self:callback("level_skill",1)}
-                ,
+                key = "KEYBOARD_CURSOR_DOWN_Z",
+                on_activate=self:callback("level_skill",1)},
+                NEWLINE,
                 {text=": show learned only ",
-                key = "CHANGETAB",
+                key = "STRING_A047",
                 on_activate=function ()
                     self.learned_only=not self.learned_only
                     self:update_list(true)
@@ -89,6 +89,9 @@ function Editor_Skills:init( args )
             }
         },
     }
+end
+function Editor_Skills:onOpen()
+    self.subviews[1].edit:setFocus(true)
 end
 function Editor_Skills:get_cur_skill()
     local list_wid=self.subviews.skills

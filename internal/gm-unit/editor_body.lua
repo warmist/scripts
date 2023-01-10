@@ -8,18 +8,11 @@ local base_editor = reqscript("internal/gm-unit/base_editor")
 
 -- TODO: Trigger recalculation of body sizes after size is edited
 
-Editor_Body_Modifier=defclass(Editor_Body_Modifier, gui.Screen)
+Editor_Body_Modifier=defclass(Editor_Body_Modifier, widgets.Window)
 Editor_Body_Modifier.ATTRS{
-    target_unit = DEFAULT_NIL,
-    partChoice = DEFAULT_NIL,
+    frame={w=50, h=20},
+    resizable=true,
 }
-
-function showModifierScreen(target_unit, partChoice)
-  Editor_Body_Modifier{
-    target_unit = target_unit,
-    partChoice = partChoice
-  }:show()
-end
 
 function Editor_Body_Modifier:beautifyString(text)
   local out = text
@@ -144,16 +137,8 @@ end
 
 function Editor_Body_Modifier:init(args)
   self.target_unit = args.target_unit
-  self.partChoice = args.partChoice
 
-  local window = widgets.Window{
-        view_id='window',
-        frame={w=50, h=20},
-        frame_title=self.partChoice.text .. " - Select a modifier",
-        resizable=true,
-    }
-
-  window:addviews{
+  self:addviews{
     widgets.List{
       frame = {t=0, b=2,l=1},
       view_id = "modifiers",
@@ -162,27 +147,29 @@ function Editor_Body_Modifier:init(args)
     widgets.Label{
       frame = {b=1, l=1},
       text = {
-        {text = ": back ", key = "LEAVESCREEN", on_activate = self:callback("dismiss")},
+        {text = ": back ", key = "LEAVESCREEN"},
         {text = ": edit modifier ", key = "SELECT"},
-        {text = ": raise ", key = "CURSOR_RIGHT", on_activate = self:callback("step", 1)},
+        {text = ": raise ", key = "KEYBOARD_CURSOR_RIGHT", on_activate = self:callback("step", 1)},
       },
     },
     widgets.Label{
       frame = {b=0, l=1},
       text = {
-        {text = ": reduce ", key = "CURSOR_LEFT", on_activate = self:callback("step", -1)},
+        {text = ": reduce ", key = "KEYBOARD_CURSOR_LEFT", on_activate = self:callback("step", -1)},
         {text = ": randomise selected", key = "CUSTOM_R", on_activate = self:callback("random")},
       },
     }
   }
-
-  self:addviews{window}
-
-  self:updateChoices()
 end
 
-function Editor_Body_Modifier:onRenderFrame(dc, rect)
-    self:renderParent()
+function Editor_Body_Modifier:onInput(keys)
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        self:setFocus(false)
+        self.visible = false
+    else
+        Editor_Body_Modifier.super.onInput(self, keys)
+    end
+    return true -- we're modal
 end
 
 Editor_Body=defclass(Editor_Body, base_editor.Editor)
@@ -246,7 +233,12 @@ function Editor_Body:updateChoices()
 end
 
 function Editor_Body:partSelected(index, choice)
-  showModifierScreen(self.target_unit, choice)
+  local modifier = self.subviews.modifier
+  modifier.visible = true
+  modifier:setFocus(true)
+  modifier.partChoice = choice
+  modifier:updateChoices()
+  modifier.frame_title = choice.text .. " - Select a modifier"
 end
 
 function Editor_Body:init(args)
@@ -256,16 +248,21 @@ function Editor_Body:init(args)
 
   self:addviews{
     widgets.List{
-      frame = {t=0, b=1,l=1},
+      frame = {t=0, b=2,l=0},
       view_id = "featureSelect",
       on_submit = self:callback("partSelected"),
     },
     widgets.Label{
-      frame = {b=0, l=1},
+      frame = {b=0, l=0},
       text = {
         {text = ": select feature ", key = "SELECT"},
       },
-    }
+    },
+    Editor_Body_Modifier{
+      view_id = 'modifier',
+      visible = false,
+      target_unit = self.target_unit,
+    },
   }
 
   self:updateChoices()

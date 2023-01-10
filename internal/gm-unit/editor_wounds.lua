@@ -115,15 +115,18 @@ function Editor_Wounds:init( args )
 
     self:addviews{
     widgets.List{
-        frame = {t=0, b=1,l=1},
+        frame = {t=0, b=2,l=0},
         view_id="wounds",
         on_submit=self:callback("edit_cur_wound"),
         on_submit2=self:callback("delete_current_wound")
     },
     widgets.HotkeyLabel{
-        frame = { b=0,l=1},
+        frame = { b=0,l=0},
         label = 'delete wound',
-        key = 'SEC_SELECT',
+        key = 'STRING_A045', -- '-'
+        on_activate = function()
+            self:delete_current_wound(self.subviews.wounds:getSelected())
+        end,
     },
 
     --[[ TODO(warmist): implement this and the create_new_wound

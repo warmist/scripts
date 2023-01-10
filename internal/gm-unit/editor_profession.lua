@@ -33,7 +33,7 @@ function Editor_Prof:init()
 
     self:addviews{
         widgets.FilteredList{
-            frame = {t=1, l=1, b=2},
+            frame = {t=0, l=0, b=0},
             choices = opts,
             view_id = 'professions',
             on_submit = self:callback('save_profession'),
@@ -44,5 +44,8 @@ end
 function Editor_Prof:save_profession(_, choice)
     self.target_unit.profession = choice.profession
     self.target_unit.profession2 = choice.profession
-    self:dismiss()
+end
+
+function Editor_Prof:onOpen()
+    self.subviews[1].edit:setFocus(true)
 end

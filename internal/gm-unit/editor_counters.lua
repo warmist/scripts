@@ -54,7 +54,7 @@ function Editor_Counters:update_counters()
     end
     self.subviews.counters:setChoices(self.counter_list)
 end
-function Editor_Counters:set_cur_counter(value,index,choice)
+function Editor_Counters:set_cur_counter(value,_,choice)
     choice.f.value = value
     self:update_counters()
 end
@@ -75,23 +75,25 @@ function Editor_Counters:init( args )
     self:addviews{
         widgets.FilteredList{
             choices=self.counter_list,
-            frame = {t=0, b=1,l=1},
+            frame = {t=0, b=2,l=0},
             view_id="counters",
+            edit_ignore_keys={"STRING_A047"},
             on_submit=self:callback("choose_cur_counter"),
-            on_submit2=self:callback("set_cur_counter",0),--TODO some things need to be set to different defaults
         },
         widgets.Label{
-            frame = { b=0,l=1},
+            frame = {b=0,l=0},
             text = {
-                {text=": reset counter ",
-                key = "SEC_SELECT",
-                },
-                {text=": set counter ",
-                key = "SELECT",
-                }
-
+                {text=": set counter ", key = "SELECT"},
+                --TODO some things need to be set to different defaults
+                {text=": reset counter ", key = "STRING_A047",
+                 on_activate=function()
+                    self:set_cur_counter(0, self.subviews.counters:getSelected())
+                 end},
             }
         },
     }
     self:update_counters()
+end
+function Editor_Counters:onOpen()
+    self.subviews[1].edit:setFocus(true)
 end
