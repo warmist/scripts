@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `gui/autochop`: configuration frontend for the `autochop` plugin. you can pin the window and leave it up on the screen somewhere for live monitoring of your logging industry.
 - `devel/tile-browser`: page through available textures and see their texture ids
 
 ## Fixes
