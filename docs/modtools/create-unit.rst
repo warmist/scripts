@@ -3,7 +3,7 @@ modtools/create-unit
 
 .. dfhack-tool::
     :summary: Create arbitrary units.
-    :tags: dev
+    :tags: untested dev
 
 Creates a unit.  Usage::
 

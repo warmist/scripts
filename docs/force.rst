@@ -3,7 +3,7 @@ force
 
 .. dfhack-tool::
     :summary: Trigger in-game events.
-    :tags: fort armok gameplay
+    :tags: untested fort armok gameplay
 
 This tool triggers events like megabeasts, caravans, and migrants. Note that you
 can only trigger one caravan per civ at the same time, and that DF may choose to

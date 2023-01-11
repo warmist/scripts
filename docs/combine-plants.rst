@@ -3,7 +3,7 @@ combine-plants
 
 .. dfhack-tool::
     :summary: Merge stacks of plants in the selected container or stockpile.
-    :tags: fort productivity items plants
+    :tags: untested fort productivity items plants
 
 Usage
 -----

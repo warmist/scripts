@@ -3,7 +3,7 @@ add-thought
 
 .. dfhack-tool::
     :summary: Adds a thought to the selected unit.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Usage
 -----

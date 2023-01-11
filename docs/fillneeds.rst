@@ -3,7 +3,7 @@ fillneeds
 
 .. dfhack-tool::
     :summary: Temporarily satisfy the needs of a unit.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Use with a unit selected to make them focused and unstressed.
 

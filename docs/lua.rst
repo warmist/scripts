@@ -3,7 +3,7 @@ lua
 
 .. dfhack-tool::
     :summary: Run Lua script commands.
-    :tags: dev
+    :tags: dfhack dev
 
 Usage
 -----

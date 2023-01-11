@@ -3,7 +3,7 @@ assign-skills
 
 .. dfhack-tool::
     :summary: Adjust a unit's skills.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Skills are defined by their token and their rank. You can see a list of valid
 skill tokens by running ``devel/query --table df.job_skill`` or by browsing the

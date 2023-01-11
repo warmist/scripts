@@ -3,7 +3,7 @@ gui/mass-remove
 
 .. dfhack-tool::
     :summary: Mass select buildings and constructions to suspend or remove.
-    :tags: fort productivity buildings stockpiles
+    :tags: untested fort productivity buildings stockpiles
 
 This tool lets you remove buildings/constructions or suspend/unsuspend
 construction jobs using a mouse-driven box selection.

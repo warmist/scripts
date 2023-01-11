@@ -3,7 +3,7 @@ quickfort
 
 .. dfhack-tool::
     :summary: Apply pre-designed blueprints to your fort.
-    :tags: fort design productivity buildings map stockpiles
+    :tags: untested fort design productivity buildings map stockpiles
 
 Quickfort reads blueprint files stored in the ``blueprints`` subfolder under the
 main DF game folder and applies the blueprint of your choice to the game map.

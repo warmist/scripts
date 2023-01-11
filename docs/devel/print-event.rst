@@ -3,7 +3,7 @@ devel/print-event
 
 .. dfhack-tool::
     :summary: Show historical events.
-    :tags: dev inspection
+    :tags: untested dev
 
 This tool displays the description of a historical event.
 

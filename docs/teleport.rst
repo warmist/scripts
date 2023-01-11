@@ -3,7 +3,7 @@ teleport
 
 .. dfhack-tool::
     :summary: Teleport a unit anywhere.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 This tool teleports any unit, friendly or hostile, to somewhere else on the map.
 

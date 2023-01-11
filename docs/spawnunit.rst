@@ -3,7 +3,7 @@ spawnunit
 
 .. dfhack-tool::
     :summary: Create a unit.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 This tool allows you to easily spawn a unit of your choice. It is a simplified
 interface to `modtools/create-unit`, which this tool uses to actually create

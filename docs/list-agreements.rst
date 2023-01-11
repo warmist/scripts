@@ -3,7 +3,7 @@ list-agreements
 
 .. dfhack-tool::
     :summary: List guildhall and temple agreements.
-    :tags: fort inspection
+    :tags: untested fort inspection
 
 If you have trouble remembering which guildhalls and temples you've agreed to
 build (and don't we all?), then this script is for you! You can use this command

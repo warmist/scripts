@@ -3,7 +3,7 @@ gui/create-item
 
 .. dfhack-tool::
     :summary: Magically summon any item.
-    :tags: fort armok items
+    :tags: untested fort armok items
 
 This tool provides a graphical interface for creating items of your choice. It
 walks you through the creation process with a series of prompts, asking you

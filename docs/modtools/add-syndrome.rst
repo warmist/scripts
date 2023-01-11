@@ -3,7 +3,7 @@ modtools/add-syndrome
 
 .. dfhack-tool::
     :summary: Add and remove syndromes from units.
-    :tags: dev
+    :tags: untested dev
 
 This allows adding and removing syndromes from units.
 

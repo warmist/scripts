@@ -3,7 +3,7 @@ masspit
 
 .. dfhack-tool::
     :summary: Designate creatures for pitting.
-    :tags: fort productivity animals
+    :tags: untested fort productivity animals
 
 If you have prepared an animal stockpile on top of a pit zone, and that
 stockpile has been filled with animals/prisoners in cages, then this tool can

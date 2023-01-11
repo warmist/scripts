@@ -3,7 +3,7 @@ modtools/force
 
 .. dfhack-tool::
     :summary: Trigger game events.
-    :tags: dev
+    :tags: untested dev
 
 This tool triggers events like megabeasts, caravans, and migrants.
 

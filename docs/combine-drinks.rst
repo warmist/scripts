@@ -3,7 +3,7 @@ combine-drinks
 
 .. dfhack-tool::
     :summary: Merge stacks of drinks in the selected stockpile.
-    :tags: fort productivity items
+    :tags: untested fort productivity items
 
 Usage
 -----

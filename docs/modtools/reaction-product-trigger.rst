@@ -3,7 +3,7 @@ modtools/reaction-product-trigger
 
 .. dfhack-tool::
     :summary: Call DFHack commands when reaction products are produced.
-    :tags: dev
+    :tags: untested dev
 
 This triggers dfhack commands when reaction products are produced, once per
 product.  Usage::

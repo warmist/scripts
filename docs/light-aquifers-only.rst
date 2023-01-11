@@ -3,7 +3,7 @@ light-aquifers-only
 
 .. dfhack-tool::
     :summary: Change heavy and varied aquifers to light aquifers.
-    :tags: embark fort armok map
+    :tags: untested embark fort armok map
 
 This script behaves differently depending on whether it's called pre-embark or
 post-embark. Pre-embark, it changes all aquifers in the world to light ones,

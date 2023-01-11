@@ -3,7 +3,7 @@ startdwarf
 
 .. dfhack-tool::
     :summary: Increase the number of dwarves you embark with.
-    :tags: embark fort armok
+    :tags: untested embark fort armok
 
 You must use this tool before embarking (e.g. at the site selection screen or
 any time before) to change the number of dwarves you embark with from the

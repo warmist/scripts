@@ -3,7 +3,7 @@ devel/prepare-save
 
 .. dfhack-tool::
     :summary: Set internal game state to known values for memory analysis.
-    :tags: dev
+    :tags: untested dev
 
 .. warning::
 
