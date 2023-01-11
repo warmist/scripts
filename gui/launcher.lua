@@ -569,7 +569,7 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
-local DEV_FILTER = {tag={'dev'}}
+local DEV_FILTER = {tag={'dev', 'untested'}}
 
 -- adds the n most closely affiliated peer entries for the given entry that
 -- aren't already in the entries list. affiliation is determined by how many
