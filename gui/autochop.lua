@@ -261,14 +261,14 @@ function Autochop:refresh_data()
     local log_count = plugin.autochop_getLogCounts()
     local summary = self.data.summary
     local summary_text = {
-        '                        Logs in stock: ',
+        '                 Usable logs in stock: ',
         get_stat_text(log_count, target_max, target_min),
         NEWLINE,
         'Approx. logs left in accessible trees: ',
         get_stat_text(summary.accessible_yield, 3*target_max, target_max),
         NEWLINE,
         '               Total trees designated: ', tostring(summary.designated_trees), NEWLINE,
-        '    Approx logs from designated trees: ',
+        '   Approx. logs from designated trees: ',
         get_stat_text(summary.expected_yield, target_max-log_count, target_max-log_count),
         NEWLINE,
         NEWLINE,
