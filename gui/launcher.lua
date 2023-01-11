@@ -434,7 +434,7 @@ function MainPanel:onInput(keys)
         return true
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
-        self:update_autocomplete(get_first_word(self.subviews.editfield.text))
+        self.update_autocomplete(get_first_word(self.subviews.editfield.text))
         return true
     elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
         self.subviews.autocomplete:advance(1)
