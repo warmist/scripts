@@ -13,86 +13,58 @@ function TileBrowser:init()
         drag_anchors={title=true, body=true},
         resizable=true,
         resize_min={h=20},
-        frame_inset=0,
-        frame_background=gui.TRANSPARENT_PEN, -- shine through, you sparkling tiles
         on_layout=self:callback('on_resize'),
         frame_title='Tile Browser',
     }
 
     main_panel:addviews{
+        widgets.EditField{
+            view_id='start_index',
+            frame={t=0, l=0},
+            key='CUSTOM_CTRL_A',
+            label_text='Start index: ',
+            text='0',
+            on_submit=self:callback('set_start_index'),
+            on_char=function(ch) return ch:match('%d') end},
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='Prev',
+            key='KEYBOARD_CURSOR_UP_FAST',
+            on_activate=self:callback('shift_start_index', -1000)},
+        widgets.Label{
+            frame={t=1, l=6, w=1},
+            text={{text=string.char(24), pen=COLOR_LIGHTGREEN}}},
+        widgets.HotkeyLabel{
+            frame={t=1, l=15},
+            label='Next',
+            key='KEYBOARD_CURSOR_DOWN_FAST',
+            on_activate=self:callback('shift_start_index', 1000)},
+        widgets.Label{
+            frame={t=1, l=21, w=1},
+            text={{text=string.char(25), pen=COLOR_LIGHTGREEN}}},
+        widgets.Label{
+            view_id='header',
+            frame={t=3, l=0, r=2}},
         widgets.Panel{
-            frame={t=0, l=0, r=0, h=5},
-            frame_background=gui.CLEAR_PEN,
-            frame_inset={t=1, l=1, r=1},
-            subviews={
-                widgets.EditField{
-                    view_id='start_index',
-                    frame={t=0, l=0},
-                    key='CUSTOM_CTRL_A',
-                    label_text='Start index: ',
-                    text='0',
-                    on_submit=self:callback('set_start_index'),
-                    on_char=function(ch) return ch:match('%d') end},
-                widgets.HotkeyLabel{
-                    frame={t=1, l=0},
-                    label='Prev',
-                    key='KEYBOARD_CURSOR_UP_FAST',
-                    on_activate=self:callback('shift_start_index', -1000)},
-                widgets.Label{
-                    frame={t=1, l=6, w=1},
-                    text={{text=string.char(24), pen=COLOR_LIGHTGREEN}}},
-                widgets.HotkeyLabel{
-                    frame={t=1, l=15},
-                    label='Next',
-                    key='KEYBOARD_CURSOR_DOWN_FAST',
-                    on_activate=self:callback('shift_start_index', 1000)},
-                widgets.Label{
-                    frame={t=1, l=21, w=1},
-                    text={{text=string.char(25), pen=COLOR_LIGHTGREEN}}},
-                widgets.Label{
-                    view_id='header',
-                    frame={t=3, l=0, r=2}},
-            },
-        },
-        widgets.Panel{
-            view_id='margin',
-            frame={t=5, b=5, l=0, w=5},
-            frame_background=gui.CLEAR_PEN,
-        },
-        widgets.Panel{
-            frame={t=5, b=5, r=0, w=3},
-            frame_background=gui.CLEAR_PEN,
-        },
-        widgets.Panel{
-            frame={t=5, b=5},
-            frame_inset={l=1, r=1},
-            subviews={
-                widgets.Label{
-                    view_id='report',
-                    frame={t=0, b=0},
-                    scroll_keys={
-                        STANDARDSCROLL_UP = -1,
-                        KEYBOARD_CURSOR_UP = -1,
-                        STANDARDSCROLL_DOWN = 1,
-                        KEYBOARD_CURSOR_DOWN = 1,
-                        STANDARDSCROLL_PAGEUP = '-page',
-                        STANDARDSCROLL_PAGEDOWN = '+page',
-                    }},
-            },
-        },
-        widgets.Panel{
-            frame={b=0, l=0, r=0, h=5},
-            frame_inset={b=1, l=1, r=1},
-            frame_background=gui.CLEAR_PEN,
-            subviews={
-                widgets.Label{
-                    view_id='footer',
-                    frame={b=3, l=0, r=2}},
-                widgets.WrappedLabel{
-                    frame={b=0},
-                    text_to_wrap='Please resize window to change visible tile size.'},
-            },
-        },
+            view_id='transparent_area',
+            frame={t=4, b=4, l=5, r=2},
+            frame_background=gui.TRANSPARENT_PEN},
+        widgets.Label{
+            view_id='report',
+            frame={t=4, b=4},
+            scroll_keys={
+                STANDARDSCROLL_UP = -1,
+                KEYBOARD_CURSOR_UP = -1,
+                STANDARDSCROLL_DOWN = 1,
+                KEYBOARD_CURSOR_DOWN = 1,
+                STANDARDSCROLL_PAGEUP = '-page',
+                STANDARDSCROLL_PAGEDOWN = '+page'}},
+        widgets.Label{
+            view_id='footer',
+            frame={b=3, l=0, r=2}},
+        widgets.WrappedLabel{
+            frame={b=0},
+            text_to_wrap='Please resize window to change visible tile size.'},
     }
     self:addviews{main_panel}
 
@@ -111,7 +83,7 @@ function TileBrowser:set_start_index(idx)
 
     idx = idx - (idx % 20) -- floor to nearest multiple of 20
     self.subviews.start_index:setText(tostring(idx))
-    self.subviews.margin.frame.w = #tostring(idx) + 5
+    self.subviews.transparent_area.frame.l = #tostring(idx) + 4
     self.dirty = true
 end
 
