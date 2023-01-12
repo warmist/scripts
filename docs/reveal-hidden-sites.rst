@@ -3,7 +3,7 @@ reveal-hidden-sites
 
 .. dfhack-tool::
     :summary: Reveal all sites in the world.
-    :tags: adventure armok map
+    :tags: untested adventure fort armok map
 
 This tool reveals all sites in the world that have yet to be discovered by the
 player (camps, lairs, shrines, vaults, etc), making them visible on the map.

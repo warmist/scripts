@@ -3,7 +3,7 @@ remove-wear
 
 .. dfhack-tool::
     :summary: Remove wear from items in your fort.
-    :tags: fort armok items
+    :tags: untested fort armok items
 
 If your clothes are all wearing out and you wish you could just repair them
 instead of having to make new clothes, then this tool is for you! This tool will

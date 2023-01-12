@@ -3,7 +3,7 @@ pref-adjust
 
 .. dfhack-tool::
     :summary: Set the preferences of a dwarf to an ideal.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 This tool replaces a dwarf's preferences with an "ideal" set which is easy to
 satisfy::

@@ -3,7 +3,7 @@ modtools/anonymous-script
 
 .. dfhack-tool::
     :summary: Run dynamically generated script code.
-    :tags: dev
+    :tags: untested dev
 
 This allows running a short simple Lua script passed as an argument instead of
 running a script from a file. This is useful when you want to do something too

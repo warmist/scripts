@@ -3,7 +3,7 @@ assign-preferences
 
 .. dfhack-tool::
     :summary: Adjust a unit's preferences.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 You will need to know the token of the object you want your dwarf to like.
 You can find them in the wiki, otherwise in the folder "/raw/objects/" under

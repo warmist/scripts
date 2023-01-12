@@ -3,7 +3,7 @@ armoks-blessing
 
 .. dfhack-tool::
     :summary: Bless units with superior stats and traits.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
 `brainwash` on all dwarves currently on the map. This is an extreme change,

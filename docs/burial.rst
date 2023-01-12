@@ -3,7 +3,7 @@ burial
 
 .. dfhack-tool::
     :summary: Configures all unowned coffins to allow burial.
-    :tags: fort productivity buildings
+    :tags: untested fort productivity buildings
 
 Usage
 -----

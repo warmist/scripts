@@ -3,7 +3,7 @@ fix/stable-temp
 
 .. dfhack-tool::
     :summary: Solve FPS issues caused by fluctuating temperature.
-    :tags: fort bugfix fps map
+    :tags: untested fort bugfix fps map
 
 This tool instantly sets the temperature of all free-lying items to be in
 equilibrium with the environment. This effectively halts FPS-draining

@@ -3,7 +3,7 @@ assign-beliefs
 
 .. dfhack-tool::
     :summary: Adjust a unit's beliefs and values.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Beliefs are defined with the belief token and a number from -3 to 3,
 which describes the different levels of belief strength, as explained on the

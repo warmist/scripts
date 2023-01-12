@@ -3,7 +3,7 @@ gui/liquids
 
 .. dfhack-tool::
     :summary: Interactively paint liquids or obsidian onto the map.
-    :tags: fort armok map
+    :tags: untested fort armok map
 
 This tool is a gui front-end to `liquids` and works similarly, allowing you to
 add or remove water/magma, and create obsidian walls & floors.

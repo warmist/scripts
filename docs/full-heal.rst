@@ -3,7 +3,7 @@ full-heal
 
 .. dfhack-tool::
     :summary: Fully heal the selected unit.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 This script attempts to heal the selected unit from anything, optionally
 including death.

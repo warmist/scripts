@@ -3,7 +3,7 @@ fix/population-cap
 
 .. dfhack-tool::
     :summary: Ensure the population cap is respected.
-    :tags: fort bugfix units
+    :tags: untested fort bugfix units
 
 Run this after every migrant wave to ensure your population cap is not exceeded.
 

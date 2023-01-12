@@ -3,7 +3,7 @@ assign-minecarts
 
 .. dfhack-tool::
     :summary: Assign minecarts to hauling routes.
-    :tags: fort productivity
+    :tags: untested fort productivity
 
 This script allows you to assign minecarts to hauling routes without having to
 use the in-game interface.

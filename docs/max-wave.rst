@@ -3,7 +3,7 @@ max-wave
 
 .. dfhack-tool::
     :summary: Dynamically limit the next immigration wave.
-    :tags: fort units
+    :tags: untested fort gameplay
 
 Limit the number of migrants that can arrive in the next wave by
 overriding the population cap value from data/init/d_init.txt.

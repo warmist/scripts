@@ -3,7 +3,7 @@ modtools/reaction-trigger
 
 .. dfhack-tool::
     :summary: Run DFHack commands when custom reactions complete.
-    :tags: dev
+    :tags: untested dev
 
 Triggers dfhack commands when custom reactions complete, regardless of whether
 it produced anything, once per completion.  Arguments::

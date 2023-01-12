@@ -3,7 +3,7 @@ devel/light
 
 .. dfhack-tool::
     :summary: Experiment with lighting overlays.
-    :tags: dev graphics
+    :tags: untested dev graphics
 
 This is an experimental lighting engine for DF, using the `rendermax` plugin.
 

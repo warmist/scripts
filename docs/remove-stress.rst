@@ -3,7 +3,7 @@ remove-stress
 
 .. dfhack-tool::
     :summary: Reduce stress values for fortress dwarves.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Generally happy dwarves have stress values in the range of 0 to 500,000. If they
 encounter things that stress them out, or if their needs are not being met, that

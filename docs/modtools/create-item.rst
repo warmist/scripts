@@ -3,7 +3,7 @@ modtools/create-item
 
 .. dfhack-tool::
     :summary: Create arbitrary items.
-    :tags: dev
+    :tags: untested dev
 
 Replaces the `createitem` plugin, with standard
 arguments. The other versions will be phased out in a later version.

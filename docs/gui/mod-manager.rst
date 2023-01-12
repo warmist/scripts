@@ -3,7 +3,7 @@ gui/mod-manager
 
 .. dfhack-tool::
     :summary: Easily install and uninstall mods.
-    :tags: dfhack
+    :tags: untested dfhack
 
 This tool provides a simple way to install and remove small mods that you have
 downloaded from the internet -- or have created yourself! Several mods are

@@ -3,7 +3,7 @@ exterminate
 
 .. dfhack-tool::
     :summary: Kills things.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 Kills any unit, or all units of a given race. You can target any unit on a
 revealed tile of the map, including ambushers, but caged/chained creatures are

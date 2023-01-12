@@ -3,7 +3,7 @@ dwarf-op
 
 .. dfhack-tool::
     :summary: Tune units to perform underrepresented job roles in your fortress.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 ``dwarf-op`` examines the distribution of skills and attributes across the
 dwarves in your fortress and can rewrite the characteristics of a dwarf (or

@@ -3,7 +3,7 @@ create-items
 
 .. dfhack-tool::
     :summary: Spawn items under the cursor.
-    :tags: fort armok items
+    :tags: untested fort armok items
 
 This script is handy to create basic resources you need to get your fortress
 started.

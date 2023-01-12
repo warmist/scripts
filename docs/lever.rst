@@ -3,7 +3,7 @@ lever
 
 .. dfhack-tool::
     :summary: Inspect and pull levers.
-    :tags: fort armok inspection productivity buildings
+    :tags: untested fort armok inspection productivity buildings
 
 Usage
 -----

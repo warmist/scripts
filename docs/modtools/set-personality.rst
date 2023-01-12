@@ -3,7 +3,7 @@ modtools/set-personality
 
 .. dfhack-tool::
     :summary: Change a unit's personality.
-    :tags: dev
+    :tags: untested dev
 
 Changes the personality of units.
 

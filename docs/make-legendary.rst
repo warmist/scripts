@@ -3,7 +3,7 @@ make-legendary
 
 .. dfhack-tool::
     :summary: Boost skills of the selected dwarf.
-    :tags: fort armok units
+    :tags: untested fort armok units
 
 This tool can make the selected dwarf legendary in one skill, a group of skills,
 or all skills.

@@ -3,7 +3,7 @@ caravan
 
 .. dfhack-tool::
     :summary: Adjust properties of caravans on the map.
-    :tags: fort armok bugfix
+    :tags: untested fort armok bugfix
 
 This tool can help with caravans that are leaving too quickly, refuse to unload,
 or are just plain unhappy that you are such a poor negotiator.

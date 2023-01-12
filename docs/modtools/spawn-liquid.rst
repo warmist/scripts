@@ -3,7 +3,7 @@ modtools/spawn-liquid
 
 .. dfhack-tool::
     :summary: Spawn water or lava.
-    :tags: dev
+    :tags: untested dev
 
 This script spawns liquid at the given coordinates.
 
