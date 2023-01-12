@@ -14,10 +14,10 @@ function TileBrowser:init()
         resizable=true,
         resize_min={h=20},
         frame_inset=0,
+        frame_background=gui.TRANSPARENT_PEN, -- shine through, you sparkling tiles
         on_layout=self:callback('on_resize'),
         frame_title='Tile Browser',
     }
-    main_panel.frame_background=nil -- shine through, you sparkling tiles
 
     main_panel:addviews{
         widgets.Panel{
