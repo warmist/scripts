@@ -51,6 +51,7 @@ that repo.
 
 ## New Scripts
 - `gui/autochop`: configuration frontend for the `autochop` plugin. you can pin the window and leave it up on the screen somewhere for live monitoring of your logging industry.
+- `gui/control-panel`: see what DFHack tools are enabled, toggle them, and launch their config UIs
 - `devel/tile-browser`: page through available textures and see their texture ids
 - `allneeds`: list all unmet needs sorted by how many dwarves suffer from them.
 
