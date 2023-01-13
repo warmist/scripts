@@ -14,7 +14,7 @@ local function getUnit(obj)
     -- Passed an ID as a string or number
     if type(obj) == 'string' or type(obj) == 'number' then
         obj = tonumber(obj) -- Can be nil if someone passed something like a name
-        return obj and df.unit.find(tonumber(obj))
+        return obj and df.unit.find(obj)
     end
     -- Passed a unit object as a table or userdata
     return obj
@@ -49,7 +49,6 @@ commands = {
         local unit = getUnit(arg)
         if not unit then
             qerror('No unit found to add; select a unit or provide a unit id')
-            return
         end
         print(
             string.format('Applying superdwarf to [%d] %s', unit.id, getName(unit))
@@ -100,8 +99,7 @@ commands = {
     end
 }
 
-function main(...)
-    local args = ...
+function main(args)
     local command = args[1] and string.lower(args[1])
 
     if commands[command] then
