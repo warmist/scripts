@@ -111,7 +111,12 @@ function ListLevers()
 end
 
 function getLever(opts)
-    local lever = df.building.find(opts.pullId)
+    local lever
+    if opts.pullId == nil then
+        lever = dfhack.gui.getSelectedBuilding()
+    else
+        lever = df.building.find(opts.pullId)
+    end
 
     if df.building_trapst:is_instance(lever) and lever.trap_type == df.trap_type.Lever then
         return lever
@@ -121,7 +126,7 @@ end
 function ShowLever(opts)
     local lever = getLever(opts)
     if lever == nil then
-        print("Can't find lever with ID")
+        print("Can't find lever with ID, or no lever selected")
         return
     end
 
@@ -132,7 +137,7 @@ end
 function PullLever(opts)
     local lever = getLever(opts)
     if lever == nil then
-        print("Can't find lever with ID")
+        print("Can't find lever with ID, or no lever selected")
         return
     end
 
