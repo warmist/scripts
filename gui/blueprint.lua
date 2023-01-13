@@ -1,7 +1,7 @@
 -- A GUI front-end for the blueprint plugin
 --@ module = true
 
-local blueprint = require('plugins.blueprint')
+local plugin = require('plugins.blueprint')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
@@ -41,7 +41,7 @@ function ActionPanel:get_action_text()
     else
         text = text .. 'first corner'
     end
-    return text .. ' with the cursor or mouse.'
+    return text .. ' with the mouse.'
 end
 function ActionPanel:get_area_text()
     local mark = self.get_mark_fn()
@@ -56,7 +56,6 @@ NamePanel = defclass(NamePanel, widgets.ResizingPanel)
 NamePanel.ATTRS{
     name=DEFAULT_NIL,
     autoarrange_subviews=true,
-    show_help_fn=DEFAULT_NIL,
     on_layout_change=DEFAULT_NIL,
 }
 function NamePanel:init()
@@ -74,8 +73,7 @@ function NamePanel:init()
             text_to_wrap=self:callback('get_name_help'),
             text_dpen=COLOR_RED,
             disabled=function() return self.has_name_collision end,
-            show_tooltip=function()
-                    return self.has_name_collision or self.show_help_fn() end,
+            show_tooltip=true,
         },
     }
 
@@ -139,7 +137,6 @@ end
 PhasesPanel = defclass(PhasesPanel, widgets.ResizingPanel)
 PhasesPanel.ATTRS{
     phases=DEFAULT_NIL,
-    show_help_fn=DEFAULT_NIL,
     on_layout_change=DEFAULT_NIL,
     autoarrange_subviews=true,
 }
@@ -160,46 +157,50 @@ function PhasesPanel:init()
             on_activate=self:callback('toggle_all'),
         },
         -- we need an explicit spacer since the subviews are autoarranged
-        widgets.Panel{frame={h=1}},
-        widgets.Panel{frame={h=1},
+        widgets.Panel{
+            frame={h=1}},
+        widgets.Panel{
+            frame={h=1},
             subviews={widgets.ToggleHotkeyLabel{view_id='dig_phase',
                         frame={t=0, l=0}, key='CUSTOM_D', label='dig',
-                        initial_option=self:get_default('dig'), label_width=5},
-                    widgets.ToggleHotkeyLabel{view_id='carve_phase',
-                        frame={t=0, l=15}, key='CUSTOM_SHIFT_D', label='carve',
+                        initial_option=self:get_default('dig'), label_width=9},
+                      widgets.ToggleHotkeyLabel{view_id='carve_phase',
+                        frame={t=0, l=19}, key='CUSTOM_SHIFT_D', label='carve',
                         initial_option=self:get_default('carve')},
                     }},
-        widgets.ToggleHotkeyLabel{view_id='construct_phase',
-                                  key='CUSTOM_SHIFT_B', label='construct',
-                                  initial_option=self:get_default('construct')},
-        widgets.ToggleHotkeyLabel{view_id='build_phase',
-                                  key='CUSTOM_B', label='build', label_width=9,
-                                  initial_option=self:get_default('build')},
-        widgets.Panel{frame={h=1},
-            subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
-                        frame={t=0, l=0},
-                        key='CUSTOM_P', label='place',
-                        initial_option=self:get_default('place')},
-                    widgets.ToggleHotkeyLabel{view_id='zone_phase',
-                        frame={t=0, l=15},
-                        key='CUSTOM_Z', label='zone',
-                        initial_option=self:get_default('zone'),
-                        label_width=5}
-                    }},
-        widgets.Panel{frame={h=1},
-            subviews={widgets.ToggleHotkeyLabel{view_id='query_phase',
-                        frame={t=0, l=0},
-                        key='CUSTOM_Q', label='query',
-                        initial_option=self:get_default('query')},
-                    widgets.ToggleHotkeyLabel{view_id='rooms_phase',
-                        frame={t=0, l=15},
-                        key='CUSTOM_SHIFT_Q', label='rooms',
-                        initial_option=self:get_default('rooms')}
-                    }},
+        widgets.Panel{
+            frame={h=1},
+            subviews={widgets.ToggleHotkeyLabel{view_id='construct_phase',
+                        frame={t=0, l=0}, key='CUSTOM_SHIFT_B',
+                        label='construct',
+                        initial_option=self:get_default('construct')},
+                      widgets.ToggleHotkeyLabel{view_id='build_phase',
+                        frame={t=0, l=19}, key='CUSTOM_B', label='build',
+                        initial_option=self:get_default('build')}}},
+--         widgets.Panel{frame={h=1},
+--             subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
+--                         frame={t=0, l=0},
+--                         key='CUSTOM_P', label='place',
+--                         initial_option=self:get_default('place')},
+--                     widgets.ToggleHotkeyLabel{view_id='zone_phase',
+--                         frame={t=0, l=15},
+--                         key='CUSTOM_Z', label='zone',
+--                         initial_option=self:get_default('zone'),
+--                         label_width=5}
+--                     }},
+--         widgets.Panel{frame={h=1},
+--             subviews={widgets.ToggleHotkeyLabel{view_id='query_phase',
+--                         frame={t=0, l=0},
+--                         key='CUSTOM_Q', label='query',
+--                         initial_option=self:get_default('query')},
+--                     widgets.ToggleHotkeyLabel{view_id='rooms_phase',
+--                         frame={t=0, l=15},
+--                         key='CUSTOM_SHIFT_Q', label='rooms',
+--                         initial_option=self:get_default('rooms')}
+--                     }},
         widgets.TooltipLabel{
             text_to_wrap='Select blueprint phases to export.',
-            show_tooltip=self.show_help_fn,
-        },
+            show_tooltip=true},
     }
 end
 function PhasesPanel:get_default(label)
@@ -229,7 +230,6 @@ StartPosPanel.ATTRS{
     start_pos=DEFAULT_NIL,
     start_comment=DEFAULT_NIL,
     on_setting_fn=DEFAULT_NIL,
-    show_help_fn=DEFAULT_NIL,
     on_layout_change=DEFAULT_NIL,
     autoarrange_subviews = true,
 }
@@ -252,7 +252,7 @@ function StartPosPanel:init()
         widgets.TooltipLabel{
             text_to_wrap='Choose where the cursor should be positioned when ' ..
                     'replaying the blueprints.',
-            show_tooltip=self.show_help_fn,
+            show_tooltip=true,
         },
     }
 end
@@ -282,115 +282,103 @@ function StartPosPanel:on_change()
     self.on_layout_change()
 end
 
-BlueprintUI = defclass(BlueprintUI, guidm.MenuOverlay)
-BlueprintUI.ATTRS {
+--
+-- Blueprint
+--
+
+Blueprint = defclass(Blueprint, widgets.Window)
+Blueprint.ATTRS {
+    frame_title='Blueprint',
+    frame={w=47, h=40, r=2, t=18},
+    resizable=true,
+    resize_min={h=10},
+    pinnable=false,
+    autoarrange_subviews=true,
+    autoarrange_gap=1,
     presets=DEFAULT_NIL,
-    frame_inset=1,
-    focus_path='blueprint',
-    sidebar_mode=df.ui_sidebar_mode.LookAround,
 }
-function BlueprintUI:preinit(info)
+
+function Blueprint:preinit(info)
     if not info.presets then
         local presets = {}
-        blueprint.parse_gui_commandline(presets, {})
+        plugin.parse_gui_commandline(presets, {})
         info.presets = presets
     end
 end
-function BlueprintUI:init()
-    -- show_help gets toggled when the help text would make the sidebar contents
-    -- taller than the visible frame height
-    self.show_help = true
-    local function get_show_help() return self.show_help end
 
-    local main_panel = widgets.Panel{view_id='main',
-                                     autoarrange_subviews=true,
-                                     autoarrange_gap=1}
-    main_panel:addviews{
-        widgets.Label{text='Blueprint'},
-        widgets.TooltipLabel{
-            text_to_wrap='Create quickfort blueprints from a live game map.',
-            show_tooltip=get_show_help,
-            indent=0},
+function Blueprint:init()
+    self:addviews{
         ActionPanel{
             get_mark_fn=function() return self.mark end,
             is_setting_start_pos_fn=self:callback('is_setting_start_pos')},
         NamePanel{
             name=self.presets.name,
-            show_help_fn=get_show_help,
             on_layout_change=self:callback('updateLayout')},
         PhasesPanel{
-            phases=self.presets,
             view_id='phases_panel',
-            show_help_fn=get_show_help,
+            phases=self.presets,
             on_layout_change=self:callback('updateLayout')},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
-                widgets.ToggleHotkeyLabel{
-                    view_id='engrave',
-                    key='CUSTOM_E',
-                    label='engrave',
-                    initial_option=not not self.presets.engrave},
-                widgets.TooltipLabel{
+            widgets.ToggleHotkeyLabel{
+                view_id='engrave',
+                key='CUSTOM_E',
+                label='engrave',
+                initial_option=not not self.presets.engrave},
+            widgets.TooltipLabel{
                     text_to_wrap='Capture engravings.',
-                    show_tooltip=get_show_help}}},
+                    show_tooltip=true}}},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
-                widgets.ToggleHotkeyLabel{
-                    view_id='smooth',
-                    key='CUSTOM_SHIFT_S',
-                    label='smooth',
-                    initial_option=not not self.presets.smooth},
-                widgets.TooltipLabel{
-                    text_to_wrap='Capture smoothed tiles.',
-                    show_tooltip=get_show_help}}},
+            widgets.ToggleHotkeyLabel{
+                view_id='smooth',
+                key='CUSTOM_SHIFT_S',
+                label='smooth',
+                initial_option=not not self.presets.smooth},
+            widgets.TooltipLabel{
+                text_to_wrap='Capture smoothed tiles.',
+                show_tooltip=true}}},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='format',
-                    key='CUSTOM_F',
-                    label='format',
-                    options={{label='Minimal text .csv', value='minimal'},
-                            {label='Pretty text .csv', value='pretty'}},
-                    initial_option=self.presets.format},
-                widgets.TooltipLabel{
-                    text_to_wrap='File output format.',
-                    show_tooltip=get_show_help}}},
+            widgets.CycleHotkeyLabel{
+                view_id='format',
+                key='CUSTOM_F',
+                label='format',
+                options={{label='Minimal text .csv', value='minimal'},
+                        {label='Pretty text .csv', value='pretty'}},
+                initial_option=self.presets.format},
+            widgets.TooltipLabel{
+                text_to_wrap='File output format.',
+                show_tooltip=true}}},
         StartPosPanel{
             view_id='startpos_panel',
             start_pos=self.presets.start_pos,
             start_comment=self.presets.start_comment,
             on_setting_fn=self:callback('save_cursor_pos'),
-            show_help_fn=get_show_help,
             on_layout_change=self:callback('updateLayout')},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
-                widgets.ToggleHotkeyLabel{
-                    view_id='meta',
-                    key='CUSTOM_M',
-                    label='meta',
-                    initial_option=not self.presets.nometa},
-                widgets.TooltipLabel{
-                    text_to_wrap='Combine blueprints that can be replayed together.',
-                    show_tooltip=get_show_help}}},
+            widgets.ToggleHotkeyLabel{
+                view_id='meta',
+                key='CUSTOM_M',
+                label='meta',
+                initial_option=not self.presets.nometa},
+            widgets.TooltipLabel{
+                text_to_wrap='Combine blueprints that can be replayed together.',
+                show_tooltip=true}}},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='splitby',
-                    key='CUSTOM_T',
-                    label='split',
-                    options={{label='No', value='none'},
-                             {label='By group', value='group'},
-                             {label='By phase', value='phase'}},
-                    initial_option=self.presets.split_strategy},
-                widgets.TooltipLabel{
-                    text_to_wrap='Split blueprints into multiple files.',
-                    show_tooltip=get_show_help}}},
-        widgets.HotkeyLabel{
-            view_id='cancel_label',
-            key='LEAVESCREEN',
-            label=self:callback('get_cancel_label'),
-            on_activate=self:callback('on_cancel')}
+            widgets.CycleHotkeyLabel{
+                view_id='splitby',
+                key='CUSTOM_T',
+                label='split',
+                options={{label='No', value='none'},
+                            {label='By group', value='group'},
+                            {label='By phase', value='phase'}},
+                initial_option=self.presets.split_strategy},
+            widgets.TooltipLabel{
+                text_to_wrap='Split blueprints into multiple files.',
+                show_tooltip=true}}},
     }
-    self:addviews{main_panel}
 end
 
-function BlueprintUI:onShow()
-    BlueprintUI.super.onShow(self)
+function Blueprint:onShow()
+    Blueprint.super.onShow(self)
     local start = self.presets.start
     if not start or not dfhack.maps.isValidTilePos(start) then
         return
@@ -400,61 +388,22 @@ function BlueprintUI:onShow()
     self:on_mark(start)
 end
 
-function BlueprintUI:on_mark(pos)
+function Blueprint:save_cursor_pos()
+    self.saved_cursor = copyall(df.global.cursor)
+end
+
+function Blueprint:is_setting_start_pos()
+    return self.subviews.startpos:getOptionLabel() == 'Setting'
+end
+
+function Blueprint:on_mark(pos)
     self.mark = pos
     self:updateLayout()
 end
 
-function BlueprintUI:save_cursor_pos()
-    self.saved_cursor = copyall(df.global.cursor)
-end
-
-function BlueprintUI:is_setting_start_pos()
-    return self.subviews.startpos:getOptionLabel() == 'Setting'
-end
-
-function BlueprintUI:get_cancel_label()
-    if self.mark or self:is_setting_start_pos() then
-        return 'Cancel selection'
-    end
-    return 'Back'
-end
-
-function BlueprintUI:on_cancel()
-    if self:is_setting_start_pos() then
-        self.subviews.startpos.option_idx = 1
-        self.saved_cursor = nil
-        self:updateLayout()
-    elseif self.mark then
-        self.mark = nil
-        self:updateLayout()
-    else
-        self:dismiss()
-    end
-end
-
-function BlueprintUI:postUpdateLayout(parent_rect)
-    -- if we can't fit in the screen, hide help text and try again
-    local y = self.subviews.main.frame_rect.height
-    local refresh_layout = false
-    if self.show_help and parent_rect and
-            y > parent_rect.clip_y2 - 2*self.frame_inset then
-        self.show_help = false
-        self.show_help_y = y
-        refresh_layout = true
-    elseif not self.show_help and parent_rect and
-            self.show_help_y <= parent_rect.clip_y2 - 2*self.frame_inset then
-        -- screen is tall enough for help text again
-        self.show_help = true
-        refresh_layout = true
-    end
-    if refresh_layout then
-        self:updateLayout(parent_rect)
-    end
-end
-
-function BlueprintUI:get_bounds()
-    local cur = self.saved_cursor or guidm.getCursorPos()
+function Blueprint:get_bounds()
+    local cur = self.saved_cursor or dfhack.gui.getMousePos()
+    if not cur then return end
     local mark = self.mark or cur
     local start_pos = self.subviews.startpos_panel.start_pos or mark
 
@@ -468,24 +417,43 @@ function BlueprintUI:get_bounds()
     }
 end
 
-function BlueprintUI:onRenderBody()
+function Blueprint:onRenderFrame(dc, rect)
+    Blueprint.super.onRenderFrame(self, dc, rect)
+
+    if dfhack.screen.inGraphicsMode() then return end
     if not gui.blink_visible(500) then return end
 
     local start_pos = self.subviews.startpos_panel.start_pos
     if not self.mark and not start_pos then return end
 
-    local function get_overlay_char(pos, is_cursor)
+    local function get_overlay_char(pos)
         -- always render start_pos tile, even if it would overwrite the cursor
         if same_xy(start_pos, pos) then return 'X', COLOR_BLUE end
-        if is_cursor then return nil end
         return 'X'
     end
 
-    self:renderMapOverlay(get_overlay_char, self:get_bounds())
+    local bounds = self:get_bounds()
+    if bounds then
+        guidm.renderMapOverlay(get_overlay_char, bounds)
+    end
 end
 
-function BlueprintUI:onInput(keys)
-    if self:inputToSubviews(keys) then return true end
+function Blueprint:onInput(keys)
+    if Blueprint.super.onInput(self, keys) then return true end
+
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if self:is_setting_start_pos() then
+            self.subviews.startpos.option_idx = 1
+            self.saved_cursor = nil
+            self:updateLayout()
+        elseif self.mark then
+            self.mark = nil
+            self:updateLayout()
+        else
+            self.parent_view:dismiss()
+        end
+        return true
+    end
 
     local pos = nil
     if keys._MOUSE_L_DOWN then
@@ -504,6 +472,7 @@ function BlueprintUI:onInput(keys)
             guidm.setCursorPos(self.saved_cursor)
             self.saved_cursor = nil
         elseif self.mark then
+            self.saved_cursor = pos
             self:commit(pos)
         else
             self:on_mark(pos)
@@ -511,11 +480,11 @@ function BlueprintUI:onInput(keys)
         return true
     end
 
-    return self:propagateMoveKeys(keys)
+    return true -- modal dialog
 end
 
 -- assemble and execute the blueprint commandline
-function BlueprintUI:commit(pos)
+function Blueprint:commit(pos)
     local mark = self.mark
     local width, height, depth = get_dims(mark, pos)
     if depth > 1 then
@@ -586,7 +555,7 @@ function BlueprintUI:commit(pos)
     end
 
     print('running: blueprint ' .. table.concat(params, ' '))
-    local files = blueprint.run(table.unpack(params))
+    local files = plugin.run(table.unpack(params))
 
     local text = 'No files generated (see console for any error output)'
     if files and #files > 0 then
@@ -599,8 +568,26 @@ function BlueprintUI:commit(pos)
     dialogs.MessageBox{
         frame_title='Blueprint completed',
         text=text,
-        on_close=self:callback('dismiss'),
+        on_close=function() self.parent_view:dismiss() end,
     }:show()
+end
+
+--
+-- BlueprintScreen
+--
+
+BlueprintScreen = defclass(BlueprintScreen, gui.ZScreen)
+BlueprintScreen.ATTRS {
+    focus_path='blueprint',
+    presets=DEFAULT_NIL,
+}
+
+function BlueprintScreen:init()
+    self:addviews{Blueprint{presets=presets}}
+end
+
+function BlueprintScreen:onDismiss()
+    view = nil
 end
 
 if dfhack_flags.module then
@@ -612,7 +599,7 @@ if not dfhack.isMapLoaded() then
 end
 
 local options, args = {}, {...}
-local ok, err = dfhack.pcall(blueprint.parse_gui_commandline, options, args)
+local ok, err = dfhack.pcall(plugin.parse_gui_commandline, options, args)
 if not ok then
     dfhack.printerr(tostring(err))
     options.help = true
@@ -623,5 +610,4 @@ if options.help then
     return
 end
 
-view = BlueprintUI{presets=options}
-view:show()
+view = view and view:raise() or BlueprintScreen{presets=options}:show()
