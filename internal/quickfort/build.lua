@@ -11,17 +11,20 @@ enforce that materials are accessible from the designation location. That is
 something that the player can manage.
 ]]
 
-
 if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
 local utils = require('utils')
-local buildingplan = require('plugins.buildingplan')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_building = reqscript('internal/quickfort/building')
 local quickfort_orders = reqscript('internal/quickfort/orders')
 local quickfort_transform = reqscript('internal/quickfort/transform')
+
+local ok, buildingplan = pcall(require, 'plugins.buildingplan')
+if not ok then
+    buildingplan = nil
+end
 
 local log = quickfort_common.log
 
@@ -938,8 +941,10 @@ local function create_building(b, dry_run)
         -- is supposed to prevent this from ever happening
         error(string.format('unable to place %s: %s', db_entry.label, err))
     end
-    if buildingplan.isEnabled() and buildingplan.isPlannableBuilding(
-            db_entry.type, db_entry.subtype or -1, db_entry.custom or -1) then
+    if buildingplan and buildingplan.isEnabled() and
+            buildingplan.isPlannableBuilding(
+                db_entry.type, db_entry.subtype or -1,
+                db_entry.custom or -1) then
         log('registering %s with buildingplan', db_entry.label)
         buildingplan.addPlannedBuilding(bld)
     end
@@ -954,7 +959,7 @@ function do_run(zlevel, grid, ctx)
     stats.build_unsuitable = stats.build_unsuitable or
             {label='Unsuitable tiles for building', value=0}
 
-    if not warning_shown and not buildingplan.isEnabled() then
+    if not warning_shown and buildingplan and not buildingplan.isEnabled() then
         dfhack.printerr('the buildingplan plugin is not enabled. buildings '
                         ..'placed with #build blueprints will disappear if you '
                         ..'do not have required building materials in stock.')
@@ -979,7 +984,7 @@ function do_run(zlevel, grid, ctx)
             stats.build_designated.value = stats.build_designated.value + 1
         end
     end
-    if not ctx.dry_run then
+    if not ctx.dry_run and buildingplan then
         buildingplan.scheduleCycle()
     end
 end
