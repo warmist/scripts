@@ -443,7 +443,7 @@ function Blueprint:onRenderFrame(dc, rect)
 
     local bounds = self:get_bounds(start_pos)
 
-    local function get_overlay_char(pos)
+    local function get_overlay_pen(pos)
         -- always render start_pos tile, even if it would overwrite the cursor
         if same_xy(start_pos, pos) then return START_PEN end
         if self.mark then
@@ -452,7 +452,7 @@ function Blueprint:onRenderFrame(dc, rect)
     end
 
     if bounds then
-        guidm.renderMapOverlay(get_overlay_char, bounds)
+        guidm.renderMapOverlay(get_overlay_pen, bounds)
     end
 end
 
