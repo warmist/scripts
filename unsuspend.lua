@@ -163,7 +163,7 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
 end
 
 function SuspendOverlay:onRenderFrame(dc)
-    if not df.global.pause_state then
+    if not df.global.pause_state and not dfhack.screen.inGraphicsMode() then
         return
     end
 

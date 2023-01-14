@@ -25,6 +25,7 @@ that repo.
 - `emigration`: now saves its state with your fort
 - `prioritize`: now saves its state with your fort
 - `unsuspend`: overlay now displays different letters for different suspend states so they can be differentiated in graphics mode (P=planning, x=suspended, X=repeatedly suspended)
+- `unsuspend`: overlay now shows a marker all the time when in graphics mode.  ascii mode still only shows when paused so that you can see what's underneath.
 - `gui/gm-editor`: converted to a movable, resizable, mouse-enabled window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/launcher`: can now be dragged from anywhere on the window body
