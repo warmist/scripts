@@ -3,7 +3,7 @@ rejuvenate
 
 .. dfhack-tool::
     :summary: Sets unit age to 20 years.
-    :tags: untested fort armok units
+    :tags: fort armok units
 
 If your most valuable citizens are getting old, this tool can save them. It
 decreases the age of the selected dwarf to 20 years.

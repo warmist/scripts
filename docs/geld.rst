@@ -3,7 +3,7 @@ geld
 
 .. dfhack-tool::
     :summary: Geld and ungeld animals.
-    :tags: untested fort armok animals
+    :tags: fort armok animals
 
 Usage
 -----

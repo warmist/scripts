@@ -3,7 +3,7 @@ ungeld
 
 .. dfhack-tool::
     :summary: Undo gelding for an animal.
-    :tags: untested fort armok animals
+    :tags: fort armok animals
 
 This tool will restore an animal's ability to reproduce after it has been
 gelded. Also see `geld` if you'd like to re-geld the animal.

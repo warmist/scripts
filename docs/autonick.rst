@@ -3,7 +3,7 @@ autonick
 
 .. dfhack-tool::
     :summary: Give dwarves random unique nicknames.
-    :tags: untested fort productivity units
+    :tags: fort productivity units
 
 Names are chosen randomly from the ``dfhack-config/autonick.txt`` config file,
 which you can edit with your own preferred names, if you like.

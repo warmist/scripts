@@ -3,7 +3,7 @@ devel/query
 
 .. dfhack-tool::
     :summary: Search/print data algorithmically.
-    :tags: untested dev inspection
+    :tags: dev inspection
 
 Query is a useful script for finding and reading values of data structure
 fields. Players can use it to explore data structures or list elements of enums
