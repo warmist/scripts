@@ -3,8 +3,7 @@
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
-local GUIDE_FILE = 'hack/docs/docs/tools/dfhack-quickstart-guide.txt'
-local SECTION_CHAR = '~'
+local GUIDE_FILE = 'hack/docs/docs/Quickstart.txt'
 
 local function add_section_widget(sections, section)
     if #section > 0 then
@@ -26,11 +25,10 @@ local function get_sections()
     end
     local in_section, prev_line = false, ''
     for line in lines do
-        if line:match('^'..SECTION_CHAR..'+$') then
+        if line:match('^-+$') then
             add_section_widget(sections, section)
             section = {}
             in_section = true
-            line = line:gsub(SECTION_CHAR, '-')
         end
         if in_section then
             table.insert(section, prev_line)
