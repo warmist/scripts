@@ -6,14 +6,13 @@ local widgets = require('gui.widgets')
 local GUIDE_FILE = 'hack/docs/docs/Quickstart.txt'
 
 local function add_section_widget(sections, section)
-    if #section > 0 then
-        local section_text = table.concat(section, NEWLINE)
-        local widget = widgets.WrappedLabel{
-            frame={t=0},
-            text_to_wrap=section_text,
-        }
-        table.insert(sections, widget)
-    end
+    if #section == 0 then return end
+    local section_text = table.concat(section, NEWLINE)
+    local widget = widgets.WrappedLabel{
+        frame={t=0},
+        text_to_wrap=section_text,
+    }
+    table.insert(sections, widget)
 end
 local function get_sections()
     local sections, section = {}, {}
@@ -23,23 +22,17 @@ local function get_sections()
         add_section_widget(sections, section)
         return sections
     end
-    local in_section, prev_line = false, ''
+    local prev_line = nil
     for line in lines do
-        if line:match('^-+$') then
+        if line:match('^[=-]+$') then
             add_section_widget(sections, section)
             section = {}
-            in_section = true
         end
-        if in_section then
-            table.insert(section, prev_line)
-        end
-        prev_line = line
-        ::continue::
-    end
-    if in_section then
         table.insert(section, prev_line)
-        add_section_widget(sections, section)
+        prev_line = line
     end
+    table.insert(section, prev_line)
+    add_section_widget(sections, section)
     return sections
 end
 
@@ -126,7 +119,5 @@ end
 function QuickstartScreen:onDismiss()
     view = nil
 end
-
-print(dfhack.script_help())
 
 view = view and view:raise() or QuickstartScreen{}:show()
