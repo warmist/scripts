@@ -4,6 +4,7 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 
 local GUIDE_FILE = 'hack/docs/docs/tools/dfhack-quickstart-guide.txt'
+local SECTION_CHAR = '~'
 
 local function add_section_widget(sections, section)
     if #section > 0 then
@@ -25,11 +26,11 @@ local function get_sections()
     end
     local in_section, prev_line = false, ''
     for line in lines do
-        if line:match('^~+$') then
+        if line:match('^'..SECTION_CHAR..'+$') then
             add_section_widget(sections, section)
             section = {}
             in_section = true
-            line = line:gsub('~', '-')
+            line = line:gsub(SECTION_CHAR, '-')
         end
         if in_section then
             table.insert(section, prev_line)
@@ -84,6 +85,11 @@ function Quickstart:init()
           enabled=is_not_first_page_fn,
       },
       widgets.Label{
+          frame={l=0, b=0, w=1},
+          text_pen=COLOR_LIGHTGREEN,
+          text=string.char(27),
+      },
+      widgets.Label{
           frame={b=0},
           auto_width=true,
           text={
@@ -101,6 +107,11 @@ function Quickstart:init()
           on_activate=next_page_fn,
           active=is_not_last_page_fn,
           enabled=is_not_last_page_fn,
+      },
+      widgets.Label{
+          frame={r=6, b=0, w=1},
+          text_pen=COLOR_LIGHTGREEN,
+          text=string.char(26),
       },
     }
 end
