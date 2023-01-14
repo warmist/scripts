@@ -90,6 +90,8 @@ local editor_personality = reqscript("internal/gm-unit/editor_personality")
 add_editor(editor_personality.Editor_Personality)
 
 -------------------------------main window----------------
+local MAIN_TITLE = "GameMaster's unit editor"
+
 Editor_Unit = defclass(Editor_Unit, widgets.Window)
 Editor_Unit.ATTRS{
     frame_title=MAIN_TITLE,
@@ -97,8 +99,6 @@ Editor_Unit.ATTRS{
     resizable=true,
     target_unit = DEFAULT_NIL,
 }
-
-local MAIN_TITLE = "GameMaster's unit editor"
 
 function Editor_Unit:init()
     local main = widgets.FilteredList{
