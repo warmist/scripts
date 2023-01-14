@@ -9,8 +9,13 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local stockflow = require('plugins.stockflow')
 local quickfort_common = reqscript('internal/quickfort/common')
+
+local ok, stockflow = pcall(require, 'plugins.stockflow')
+if not ok then
+    stockflow = nil
+end
+
 local log = quickfort_common.log
 
 local function inc_order_spec(order_specs, quantity, reactions, label)
@@ -124,7 +129,7 @@ function create_orders(ctx)
     for k,order_spec in pairs(ctx.order_specs or {}) do
         local quantity = math.ceil(order_spec.quantity)
         log('ordering %d %s', quantity, k)
-        if not ctx.dry_run then
+        if not ctx.dry_run and stockflow then
             stockflow.create_orders(order_spec.order, quantity)
         end
         table.insert(ctx.stats, {label=k, value=quantity, is_order=true})
@@ -135,7 +140,7 @@ end
 -- care about the built-in reactions, not the mod-added ones.
 -- note that we also shouldn't reinit this because it contains allocated memory
 local function get_reactions()
-    g_reactions = g_reactions or stockflow.collect_reactions()
+    g_reactions = g_reactions or (stockflow and stockflow.collect_reactions()) or {}
     return g_reactions
 end
 
