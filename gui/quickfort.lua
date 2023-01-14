@@ -237,10 +237,10 @@ end
 -- the main map screen UI. the information panel appears in a window and
 -- the loaded blueprint generates a flashing shadow over tiles that will be
 -- modified by the blueprint when it is applied.
-Quickfort = defclass(QuickfortUI, widgets.Window)
+Quickfort = defclass(Quickfort, widgets.Window)
 Quickfort.ATTRS {
     frame_title='Quickfort',
-    frame={w=47, h=40, r=2, t=18},
+    frame={w=34, h=30, r=2, t=18},
     resizable=true,
     resize_min={h=10},
     pinnable=false,
@@ -249,10 +249,12 @@ Quickfort.ATTRS {
     filter='',
 }
 function Quickfort:init()
+    self.saved_cursor = dfhack.gui.getMousePos() or {x=0, y=0, z=0}
+
     self:addviews{
         widgets.ResizingPanel{subviews={
             widgets.WrappedLabel{view_id='summary',
-                frame={t=0, l=0},
+                frame={t=0, l=0, w=32},
                 text_pen=COLOR_GREY,
                 text_to_wrap=self:callback('get_summary_label')},
             widgets.HotkeyLabel{view_id='commit_label',
@@ -327,10 +329,10 @@ function Quickfort:init()
                     subviews={
                 widgets.HotkeyLabel{key='STRING_A040',
                     frame={l=2}, key_sep='',
-                    on_activate=self:callback('on_transform', 'cw')},
+                    on_activate=self:callback('on_transform', 'ccw')},
                 widgets.HotkeyLabel{key='STRING_A041',
                     frame={l=3}, key_sep='',
-                    on_activate=self:callback('on_transform', 'ccw')},
+                    on_activate=self:callback('on_transform', 'cw')},
                 widgets.HotkeyLabel{key='STRING_A095',
                     frame={l=4}, key_sep='',
                     on_activate=self:callback('on_transform', 'flipv')},
@@ -343,13 +345,13 @@ function Quickfort:init()
                             return #transformations == 0 and 'No transform'
                                 or table.concat(transformations, ', ') end}}}}},
         widgets.HotkeyLabel{key='CUSTOM_O', label='Generate manager orders',
-            active=function() return self.blueprint_name end,
-            enabled=function() return self.blueprint_name end,
+            active=function() return self.blueprint_name and false end,
+            enabled=function() return self.blueprint_name and false end,
             on_activate=self:callback('do_command', 'orders')},
         widgets.HotkeyLabel{key='CUSTOM_SHIFT_O',
             label='Preview manager orders',
-            active=function() return self.blueprint_name end,
-            enabled=function() return self.blueprint_name end,
+            active=function() return self.blueprint_name and false end,
+            enabled=function() return self.blueprint_name and false end,
             on_activate=self:callback('do_command', 'orders', true)},
         widgets.HotkeyLabel{key='CUSTOM_SHIFT_U', label='Undo blueprint',
             active=function() return self.blueprint_name end,
@@ -518,12 +520,6 @@ function Quickfort:show_dialog(initial)
     self._dialog = file_dialog
 end
 
-function Quickfort:onShow()
-    QuickfortUI.super.onShow(self)
-    self.saved_cursor = guidm.getCursorPos()
-    self:show_dialog(true)
-end
-
 function Quickfort:run_quickfort_command(command, dry_run, preview)
     local ctx = quickfort_command.init_ctx{
         command=command,
@@ -562,7 +558,7 @@ local to_pen = dfhack.pen.parse
 local GOOD_PEN = to_pen{ch='x', fg=COLOR_GREEN,
                         tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
 local BAD_PEN = to_pen{ch='X', fg=COLOR_RED,
-                       tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 20)}
+                       tile=dfhack.screen.findGraphicsTile('CURSORS', 3, 0)}
 
 function Quickfort:onRenderFrame(dc, rect)
     Quickfort.super.onRenderFrame(self, dc, rect)
@@ -574,7 +570,7 @@ function Quickfort:onRenderFrame(dc, rect)
 
     -- if the (non-locked) cursor has moved since last preview processing or any
     -- settings have changed, regenerate the preview
-    local cursor = dfhack.gui.getMousePos()
+    local cursor = dfhack.gui.getMousePos() or self.saved_cursor
     if self.dirty or not same_xyz(self.saved_cursor, cursor) then
         if not self.cursor_locked then
             self.saved_cursor = cursor
@@ -667,6 +663,11 @@ QuickfortScreen.ATTRS {
 
 function QuickfortScreen:init()
     self:addviews{Quickfort{filter=filter}}
+end
+
+function QuickfortScreen:onShow()
+    QuickfortScreen.super.onShow(self)
+    self.subviews[1]:show_dialog(true)
 end
 
 function QuickfortScreen:onDismiss()
