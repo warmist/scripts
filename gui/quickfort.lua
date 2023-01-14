@@ -278,18 +278,22 @@ function Quickfort:init()
                 disabled=self:callback('has_invalid_tiles')}}},
         widgets.HotkeyLabel{key='CUSTOM_SHIFT_L',
             label=self:callback('get_lock_cursor_label'),
+            active=function() return self.blueprint_name end,
+            enabled=function() return self.blueprint_name end,
             on_activate=self:callback('toggle_lock_cursor')},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
             widgets.CycleHotkeyLabel{key='CUSTOM_R',
                 view_id='repeat_cycle',
                 label='Repeat',
+                active=function() return self.blueprint_name end,
+                enabled=function() return self.blueprint_name end,
                 options={{label='No', value=false},
                          {label='Down z-levels', value='>'},
                          {label='Up z-levels', value='<'}},
                 initial_option=repeat_dir,
                 on_change=self:callback('on_repeat_change')},
             widgets.ResizingPanel{view_id='repeat_times_panel',
-                    visible=repeat_dir,
+                    visible=function() return repeat_dir and self.blueprint_name end,
                     subviews={
                 widgets.HotkeyLabel{key='STRING_A046',
                     frame={l=2}, key_sep='',
@@ -314,28 +318,42 @@ function Quickfort:init()
             widgets.ToggleHotkeyLabel{key='CUSTOM_T',
                 view_id='transform',
                 label='Transform',
+                active=function() return self.blueprint_name end,
+                enabled=function() return self.blueprint_name end,
                 initial_option=transform,
                 on_change=self:callback('on_transform_change')},
             widgets.ResizingPanel{view_id='transform_panel',
-                    visible=transform,
+                    visible=function() return transform and self.blueprint_name end,
                     subviews={
-                widgets.Label{text={{text='Ctrl+'..string.char(24)..
-                                          string.char(25)..string.char(26)..
-                                          string.char(27),
-                                     pen=COLOR_LIGHTGREEN},
-                                    {text=':'}},
-                    frame={l=2}},
+                widgets.HotkeyLabel{key='STRING_A040',
+                    frame={l=2}, key_sep='',
+                    on_activate=self:callback('on_transform', 'cw')},
+                widgets.HotkeyLabel{key='STRING_A041',
+                    frame={l=3}, key_sep='',
+                    on_activate=self:callback('on_transform', 'ccw')},
+                widgets.HotkeyLabel{key='STRING_A095',
+                    frame={l=4}, key_sep='',
+                    on_activate=self:callback('on_transform', 'flipv')},
+                widgets.HotkeyLabel{key='STRING_A061',
+                    frame={l=5}, key_sep=':',
+                    on_activate=self:callback('on_transform', 'fliph')},
                 widgets.WrappedLabel{
-                    frame={l=14},
+                    frame={l=8},
                     text_to_wrap=function()
                             return #transformations == 0 and 'No transform'
                                 or table.concat(transformations, ', ') end}}}}},
         widgets.HotkeyLabel{key='CUSTOM_O', label='Generate manager orders',
+            active=function() return self.blueprint_name end,
+            enabled=function() return self.blueprint_name end,
             on_activate=self:callback('do_command', 'orders')},
         widgets.HotkeyLabel{key='CUSTOM_SHIFT_O',
             label='Preview manager orders',
+            active=function() return self.blueprint_name end,
+            enabled=function() return self.blueprint_name end,
             on_activate=self:callback('do_command', 'orders', true)},
         widgets.HotkeyLabel{key='CUSTOM_SHIFT_U', label='Undo blueprint',
+            active=function() return self.blueprint_name end,
+            enabled=function() return self.blueprint_name end,
             on_activate=self:callback('do_command', 'undo')},
     }
 end
@@ -391,7 +409,6 @@ end
 
 function Quickfort:on_repeat_change(val)
     repeat_dir = val
-    self.subviews.repeat_times_panel.visible = val
     self:updateLayout()
     self.dirty = true
 end
@@ -413,7 +430,6 @@ end
 
 function Quickfort:on_transform_change(val)
     transform = val
-    self.subviews.transform_panel.visible = val
     self:updateLayout()
     self.dirty = true
 end
@@ -582,14 +598,6 @@ end
 function Quickfort:onInput(keys)
     if Quickfort.super.onInput(self, keys) then
         return true
-    end
-
-    if transform then
-        if keys.A_MOVE_E_DOWN then self:on_transform('cw')
-        elseif keys.A_MOVE_W_DOWN then self:on_transform('ccw')
-        elseif keys.A_MOVE_N_DOWN then self:on_transform('flipv')
-        elseif keys.A_MOVE_S_DOWN then self:on_transform('fliph')
-        end
     end
 
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
