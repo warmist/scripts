@@ -46,7 +46,9 @@ end
 function ActionPanel:get_area_text()
     local mark = self.get_mark_fn()
     if not mark then return '' end
-    local width, height, depth = get_dims(mark, df.global.cursor)
+    local other = dfhack.gui.getMousePos()
+            or {x=mark.x, y=mark.y, z=df.global.window_z}
+    local width, height, depth = get_dims(mark, other)
     local tiles = width * height * depth
     local plural = tiles > 1 and 's' or ''
     return ('%dx%dx%d (%d tile%s)'):format(width, height, depth, tiles, plural)
@@ -146,7 +148,8 @@ function PhasesPanel:init()
             view_id='phases',
             key='CUSTOM_A',
             label='phases',
-            options={'Autodetect', 'Custom'},
+            options={{label='Autodetect', value='Autodetect', pen=COLOR_GREEN},
+                     'Custom'},
             initial_option=self.phases.auto_phase and 'Autodetect' or 'Custom',
             on_change=function() self.on_layout_change() end,
         },
@@ -323,6 +326,7 @@ function Blueprint:init()
                 view_id='engrave',
                 key='CUSTOM_E',
                 label='engrave',
+                options={{label='On', value=true}, {label='Off', value=false}},
                 initial_option=not not self.presets.engrave},
             widgets.TooltipLabel{
                     text_to_wrap='Capture engravings.',
@@ -332,6 +336,7 @@ function Blueprint:init()
                 view_id='smooth',
                 key='CUSTOM_SHIFT_S',
                 label='smooth',
+                options={{label='On', value=true}, {label='Off', value=false}},
                 initial_option=not not self.presets.smooth},
             widgets.TooltipLabel{
                 text_to_wrap='Capture smoothed tiles.',
@@ -341,7 +346,7 @@ function Blueprint:init()
                 view_id='format',
                 key='CUSTOM_F',
                 label='format',
-                options={{label='Minimal text .csv', value='minimal'},
+                options={{label='Minimal text .csv', value='minimal', pen=COLOR_GREEN},
                         {label='Pretty text .csv', value='pretty'}},
                 initial_option=self.presets.format},
             widgets.TooltipLabel{
@@ -367,7 +372,7 @@ function Blueprint:init()
                 view_id='splitby',
                 key='CUSTOM_T',
                 label='split',
-                options={{label='No', value='none'},
+                options={{label='No', value='none', pen=COLOR_GREEN},
                             {label='By group', value='group'},
                             {label='By phase', value='phase'}},
                 initial_option=self.presets.split_strategy},
@@ -401,11 +406,11 @@ function Blueprint:on_mark(pos)
     self:updateLayout()
 end
 
-function Blueprint:get_bounds()
+function Blueprint:get_bounds(start_pos)
     local cur = self.saved_cursor or dfhack.gui.getMousePos()
     if not cur then return end
     local mark = self.mark or cur
-    local start_pos = self.subviews.startpos_panel.start_pos or mark
+    start_pos = start_pos or self.subviews.startpos_panel.start_pos or mark
 
     return {
         x1=math.min(cur.x, mark.x, start_pos.x),
@@ -417,22 +422,35 @@ function Blueprint:get_bounds()
     }
 end
 
+local to_pen = dfhack.pen.parse
+local START_PEN = to_pen{ch='X', fg=COLOR_BLUE,
+                         tile=dfhack.screen.findGraphicsTile('CURSORS', 5, 22)}
+local BOX_PEN = to_pen{ch='X', fg=COLOR_GREEN,
+                       tile=dfhack.screen.findGraphicsTile('CURSORS', 0, 0)}
+
 function Blueprint:onRenderFrame(dc, rect)
     Blueprint.super.onRenderFrame(self, dc, rect)
 
-    if dfhack.screen.inGraphicsMode() then return end
-    if not gui.blink_visible(500) then return end
+    if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
+        return
+    end
 
     local start_pos = self.subviews.startpos_panel.start_pos
+    if self:is_setting_start_pos() then
+        start_pos = dfhack.gui.getMousePos()
+    end
     if not self.mark and not start_pos then return end
+
+    local bounds = self:get_bounds(start_pos)
 
     local function get_overlay_char(pos)
         -- always render start_pos tile, even if it would overwrite the cursor
-        if same_xy(start_pos, pos) then return 'X', COLOR_BLUE end
-        return 'X'
+        if same_xy(start_pos, pos) then return START_PEN end
+        if self.mark then
+            return BOX_PEN
+        end
     end
 
-    local bounds = self:get_bounds()
     if bounds then
         guidm.renderMapOverlay(get_overlay_char, bounds)
     end
@@ -456,7 +474,7 @@ function Blueprint:onInput(keys)
     end
 
     local pos = nil
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
         pos = dfhack.gui.getMousePos()
         if pos then
             guidm.setCursorPos(pos)
@@ -480,7 +498,8 @@ function Blueprint:onInput(keys)
         return true
     end
 
-    return true -- modal dialog
+    -- send movement keys through, but otherwise we're a modal dialog
+    return not guidm.getMapKey(keys)
 end
 
 -- assemble and execute the blueprint commandline
