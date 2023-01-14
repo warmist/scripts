@@ -308,11 +308,11 @@ HelpPanel = defclass(HelpPanel, widgets.Panel)
 -- this text is intentionally unwrapped so the in-UI wrapping can do the job
 local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
-Type a command to see its help text here. Hit ENTER to run the command, or Shift-ENTER to run the command and close this dialog. This dialog also closes automatically if you run a command that shows a new GUI screen.
+Type a command to see its help text here. Hit ENTER to run the command, or tap backtick (`) or hit ESC to close this dialog. This dialog also closes automatically if you run a command that shows a new GUI screen.
 
-Not sure what to do? Run the "tags" command to see the different categories of tools DFHack has to offer! Then run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
+Not sure what to do? First, try running "dfhack-quickstart-guide" to get oriented. Then maybe try the "tags" command to see the different categories of tools DFHack has to offer! Then run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
-To see help for this command launcher (including info on mouse controls), type "launcher" and hit the TAB key or click on "gui/launcher" to autocomplete.]]
+To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.]]
 
 function HelpPanel:init()
     self.cur_entry = ''
