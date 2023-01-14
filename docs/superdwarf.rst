@@ -18,6 +18,8 @@ Usage
     Give superspeed to selected creature.
 ``superdwarf add <ID>``
     Give superspeed to a creature by its unit ID.
+``superdwarf all``
+    Give superspeed to all of your citizens.
 ``superdwarf del``
     Remove superspeed from selected creature.
 ``superdwarf del <ID>``
