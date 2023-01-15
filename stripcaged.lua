@@ -153,7 +153,7 @@ local function cage_dump_list(list)
     end
 
     if #list > 1 then
-        print '\nTotal:'
+        print('\nTotal:')
         local sortedlist = {}
         for classname, n in pairs(count_total) do
             sortedlist[#sortedlist + 1] = {classname = classname, count = n}
@@ -176,7 +176,7 @@ if args[2] == 'here' then
     local it = dfhack.gui.getSelectedItem(true)
     list = {it}
     if not df.item_cagest:is_instance(it) and
-        not df.item_animaltrapst:is_instance(it) then
+            not df.item_animaltrapst:is_instance(it) then
         list = {}
         for _, cage in ipairs(df.global.world.items.other.ANY_CAGE_OR_TRAP) do
             if same_xyz(df.global.cursor, cage.pos) then
