@@ -117,7 +117,7 @@ function Masspit:focusOnZone(index, choice)
     end
 end
 
-function Masspit:setStockpile(index, choice)
+function Masspit:setStockpile(_, choice)
     self.stockpile = utils.binsearch(df.global.world.buildings.other.STOCKPILE, choice.zone_id, 'id')
     self.caged_units = {}
 
@@ -143,7 +143,7 @@ function Masspit:setStockpile(index, choice)
     end
 end
 
-function Masspit:setPit(index, choice)
+function Masspit:setPit(_, choice)
     self.pit = utils.binsearch(df.global.world.buildings.other.ACTIVITY_ZONE, choice.zone_id, 'id')
 
     self.subviews.label.text_to_wrap = ([[Pitting %s units.]]):format(#self.caged_units)
@@ -209,6 +209,10 @@ end
 
 function MasspitScreen:onDismiss()
     view = nil
+end
+
+if not dfhack.isMapLoaded() then
+    qerror('This script requires a fortress map to be loaded')
 end
 
 view = view and view:raise() or MasspitScreen{}:show()
