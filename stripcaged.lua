@@ -141,7 +141,7 @@ local function cage_dump_list(list)
         else
             local sortedlist = {}
             for classname, n in pairs(count) do
-                sortedlist[#sortedlist + 1] = {classname = classname, count = n}
+                table.insert(sortedlist, {classname = classname, count = n})
             end
             table.sort(sortedlist, (function(i, j) return i.count < j.count end))
             print(('%s %d: '):format(type, cage.id))
@@ -172,14 +172,13 @@ local args = {...}
 
 local list
 if args[2] == 'here' then
-    print "NOTE: The 'here' option isn't well tested for v50 and only works with the keyboard cursor."
     local it = dfhack.gui.getSelectedItem(true)
     list = {it}
     if not df.item_cagest:is_instance(it) and
             not df.item_animaltrapst:is_instance(it) then
         list = {}
         for _, cage in ipairs(df.global.world.items.other.ANY_CAGE_OR_TRAP) do
-            if same_xyz(df.global.cursor, cage.pos) then
+            if same_xyz(it.pos, cage.pos) then
                 table.insert(list, cage)
             end
         end
