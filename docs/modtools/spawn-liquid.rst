@@ -3,7 +3,7 @@ modtools/spawn-liquid
 
 .. dfhack-tool::
     :summary: Spawn water or lava.
-    :tags: dev fort map fun
+    :tags: dev fort map
 
 GUI for spawning in liquids (water or magma) by either clicking, dragging, or 
 selecting an area.
