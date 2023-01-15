@@ -5,7 +5,7 @@ modtools/spawn-liquid
     :summary: Spawn water or lava.
     :tags: dev fort map
 
-GUI for spawning in liquids (water or magma) by either clicking, dragging, or 
+GUI for spawning in liquids (water or magma) by either clicking, dragging, or
 selecting an area.
 
 Usage
