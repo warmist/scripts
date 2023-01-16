@@ -14,7 +14,7 @@ for index, value in pairs(df.global.world.items.other) do
     end
 end
 
-print("Found in the following indecies:")
+print("Found in the following indices:")
 for _, index in pairs(indices) do
     print(" " .. index)
 end
