@@ -50,7 +50,7 @@ function BlueprintDetails:onRenderFrame(dc, rect)
 end
 
 function BlueprintDetails:onInput(keys)
-    if keys.STANDARDSCROLL_LEFT or keys.SELECT or keys.LEAVESCREEN then
+    if keys.KEYBOARD_CURSOR_LEFT or keys.SELECT or keys.LEAVESCREEN then
         self:dismiss()
     end
 end
@@ -598,7 +598,7 @@ function Quickfort:onInput(keys)
 
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
         local pos = dfhack.gui.getMousePos()
-        if pos then guidm.setCursorPos(pos) end
+        if pos then self:commit() end
     end
 
     -- send movement and cancel keys through, but otherwise we're a modal dialog
