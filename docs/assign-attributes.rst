@@ -3,7 +3,7 @@ assign-attributes
 
 .. dfhack-tool::
     :summary: Adjust physical and mental attributes.
-    :tags: untested fort armok units
+    :tags: fort armok units
 
 Attributes are divided into tiers from -4 to 4. Tier 0 is the standard level and
 represents the average values for that attribute, tier 4 is the maximum level,

@@ -3,7 +3,7 @@ fix/dry-buckets
 
 .. dfhack-tool::
     :summary: Allow discarded water buckets to be used again.
-    :tags: untested fort bugfix items
+    :tags: fort bugfix items
 
 Sometimes, dwarves drop buckets of water on the ground if their water hauling
 job is interrupted. These buckets then become unavailable for any other kind of

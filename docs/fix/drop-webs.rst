@@ -3,7 +3,7 @@ fix/drop-webs
 
 .. dfhack-tool::
     :summary: Make floating webs drop to the ground.
-    :tags: untested fort bugfix items
+    :tags: fort bugfix items
 
 Webs can be left floating in mid-air for a variety of reasons, such as getting
 caught in a tree and the tree subsequently being chopped down (:bug:`595`). This
