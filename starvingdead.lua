@@ -47,10 +47,6 @@ function StarvingDead:checkDecay()
   self.timeout_id = dfhack.timeout(self.decay_rate, 'days', self:callback('checkDecay'))
 end
 
-if not dfhack.isMapLoaded() then
-  qerror('This script requires a fortress map to be loaded')
-end
-
 local options, args = {
   decay_rate = nil,
   death_threshold = nil
@@ -74,6 +70,10 @@ local function persist_state()
   })
 end
 
+if not dfhack.isMapLoaded() then
+  qerror('This script requires a fortress map to be loaded')
+end
+
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
   if sc == SC_MAP_UNLOADED then
       enabled = false
@@ -94,15 +94,14 @@ end
 if dfhack_flags.enable then
   if dfhack_flags.enable_state then
     if starvingDeadInstance then
-      print("Stopping previous instance of StarvingDead...")
-      dfhack.timeout_active(starvingDeadInstance.timeout_id, nil)
+      return
     end
 
-    starvingDeadInstance = StarvingDead{options.decay_rate, options.death_threshold}
+    starvingDeadInstance = StarvingDead{}
     persist_state()
   else
     if not starvingDeadInstance then
-      qerror("StarvingDead is not running!")
+      return
     end
 
     dfhack.timeout_active(starvingDeadInstance.timeout_id, nil)
@@ -110,7 +109,8 @@ if dfhack_flags.enable then
   end
 else
   if positionals[1] == "help" or options.help then
-    return print(dfhack.script_help())
+    print(dfhack.script_help())
+    return
   end
 
   if positionals[1] == nil then
