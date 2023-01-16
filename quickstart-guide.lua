@@ -38,7 +38,7 @@ end
 
 Quickstart = defclass(Quickstart, widgets.Window)
 Quickstart.ATTRS {
-    frame_title='Quickstart Guide',
+    frame_title='DFHack Quickstart Guide',
     frame={w=50, h=45},
     resizable=true,
     resize_min={w=43, h=20},
