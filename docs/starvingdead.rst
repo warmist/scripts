@@ -21,22 +21,22 @@ Usage
 
 ::
 
-    starvingdead start
-    starvingdead stop
+    enable starvingdead
+    starvingdead [<options>]
 
 Examples
 --------
 
-``starvingdead start --decay-rate 28``
+``starvingdead --decay-rate 28``
     Undead will lose strength roughly once a month.
-``starvingdead start --decay-rate 1 --death-threshold 1``
+``starvingdead --decay-rate 1 --death-threshold 1``
     Undead will lose strength each day and die after they have spent a month
     on the map.
 
 Options
 -------
 
-``--decay-rate``
+``--decay-rate <days>``
     Specify how often, in days, undead should lose strength.
-``--death-threshold``
+``--death-threshold <months>``
     How many months should undead lose strength for before being removed.

@@ -1,6 +1,12 @@
 -- Weaken and eventually destroy undead over time.
+--@enable = true
+--@module = true
 
 local argparse = require('argparse')
+local json = require('json')
+local persist = require('persist-table')
+
+local GLOBAL_KEY = 'starvingdead'
 
 StarvingDead = defclass(StarvingDead)
 StarvingDead.ATTRS{
@@ -46,8 +52,8 @@ if not dfhack.isMapLoaded() then
 end
 
 local options, args = {
-  decay_rate = 1,
-  death_threshold = 6
+  decay_rate = nil,
+  death_threshold = nil
 }, {...}
 
 local positionals = argparse.processArgsGetopt(args, {
@@ -56,24 +62,67 @@ local positionals = argparse.processArgsGetopt(args, {
   {'t', 'death-threshold', hasArg = true, handler=function(arg) options.death_threshold = argparse.positiveInt(arg, 'death-threshold') end },
 })
 
-if positionals[1] == "help" or options.help then
-  return print(dfhack.script_help())
+function isEnabled()
+  return starvingDeadInstance ~= nil
 end
 
-if positionals[1] == "stop" then
-  if not starvingDeadInstance then
-    qerror("StarvingDead is not running!")
+local function persist_state()
+  persist.GlobalTable[GLOBAL_KEY] = json.encode({
+    enabled = starvingDeadInstance ~= nil,
+    decay_rate = starvingDeadInstance.decay_rate,
+    death_threshold = starvingDeadInstance.death_threshold
+  })
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+  if sc == SC_MAP_UNLOADED then
+      enabled = false
+      return
   end
 
-  dfhack.timeout_active(starvingDeadInstance.timeout_id, nil)
-  starvingDeadInstance = nil
+  if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+      return
+  end
+
+  local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+
+  if persisted_data.enabled then
+    starvingDeadInstance = StarvingDead{persisted_data.decay_rate, persisted_data.death_threshold}
+  end
 end
 
-if positionals[1] == "start" then
-  if starvingDeadInstance then
-    print("Stopping previous instance of StarvingDead...")
+if dfhack_flags.enable then
+  if dfhack_flags.enable_state then
+    if starvingDeadInstance then
+      print("Stopping previous instance of StarvingDead...")
+      dfhack.timeout_active(starvingDeadInstance.timeout_id, nil)
+    end
+
+    starvingDeadInstance = StarvingDead{options.decay_rate, options.death_threshold}
+    persist_state()
+  else
+    if not starvingDeadInstance then
+      qerror("StarvingDead is not running!")
+    end
+
     dfhack.timeout_active(starvingDeadInstance.timeout_id, nil)
+    starvingDeadInstance = nil
+  end
+else
+  if positionals[1] == "help" or options.help then
+    return print(dfhack.script_help())
   end
 
-  starvingDeadInstance = StarvingDead{options.decay_rate, options.death_threshold}
+  if positionals[1] == nil then
+    if starvingDeadInstance then
+      starvingDeadInstance.decay_rate = options.decay_rate and options.decay_rate or starvingDeadInstance.decay_rate
+      starvingDeadInstance.death_threshold = options.death_threshold and options.death_threshold or starvingDeadInstance.death_threshold
+
+      print(([[StarvingDead is running, checking every %s days and killing off at %s months]]):format(
+        starvingDeadInstance.decay_rate, starvingDeadInstance.death_threshold
+      ))
+    else
+      print("StarvingDead is not running!")
+    end
+  end
 end
