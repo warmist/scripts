@@ -123,15 +123,47 @@ Autochop.ATTRS {
 }
 
 function Autochop:init()
+    local minimal = false
+    local saved_frame = {w=45, h=6, r=2, t=18}
+    local saved_resize_min = {w=saved_frame.w, h=saved_frame.h}
+    local function toggle_minimal()
+        minimal = not minimal
+        local swap = self.frame
+        self.frame = saved_frame
+        saved_frame = swap
+        swap = self.resize_min
+        self.resize_min = saved_resize_min
+        saved_resize_min = swap
+        self:updateLayout()
+        self:refresh_data()
+    end
+    local function is_minimal()
+        return minimal
+    end
+    local function is_not_minimal()
+        return not minimal
+    end
+
     self:addviews{
         widgets.ToggleHotkeyLabel{
             view_id='enable_toggle',
-            frame={t=0, l=0},
-            label='Autochop is ',
+            frame={t=0, l=0, w=31},
+            label='Autochop is',
             key='CUSTOM_CTRL_E',
             options={{value=true, label='Enabled', pen=COLOR_GREEN},
                      {value=false, label='Disabled', pen=COLOR_RED}},
             on_change=function(val) plugin.setEnabled(val) end,
+        },
+        widgets.HotkeyLabel{
+            frame={r=0, t=0, w=10},
+            key='CUSTOM_ALT_M',
+            label=string.char(31)..string.char(30),
+            on_activate=toggle_minimal},
+        widgets.Label{
+            view_id='minimal_summary',
+            frame={t=1, l=0, h=1},
+            auto_height=false,
+            visible=is_minimal,
         },
         widgets.EditField{
             view_id='target',
@@ -144,25 +176,30 @@ function Autochop:init()
                 self:refresh_data()
                 self:update_choices()
             end,
+            visible=is_not_minimal,
         },
         widgets.Label{
             frame={t=3, l=0},
             text='Burrow',
             auto_width=true,
+            visible=is_not_minimal,
         },
         widgets.Label{
             frame={t=3, r=0},
             text=PROPERTIES_HEADER,
             auto_width=true,
+            visible=is_not_minimal,
         },
         widgets.List{
             view_id='list',
             frame={t=5, l=0, r=0, b=14},
             on_submit=self:callback('configure_burrow'),
+            visible=is_not_minimal,
         },
         widgets.Label{
             frame={b=12, l=0},
             view_id='chop_message',
+            visible=is_not_minimal,
         },
         widgets.ToggleHotkeyLabel{
             view_id='hide',
@@ -171,6 +208,7 @@ function Autochop:init()
             key='CUSTOM_CTRL_H',
             initial_option=false,
             on_change=function() self:update_choices() end,
+            visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
             frame={b=9, l=0},
@@ -181,6 +219,7 @@ function Autochop:init()
                 self:refresh_data()
                 self:update_choices()
             end,
+            visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
             frame={b=8, l=0},
@@ -191,10 +230,12 @@ function Autochop:init()
                 self:refresh_data()
                 self:update_choices()
             end,
+            visible=is_not_minimal,
         },
         widgets.Label{
             view_id='summary',
             frame={b=0, l=0},
+            visible=is_not_minimal,
         },
         BurrowSettings{
             view_id='burrow_settings',
@@ -229,7 +270,7 @@ function Autochop:update_choices()
                     num_trees, self.data.designated_tree_counts[c.id] or 0,
                     (c.protect_brewable and 'b' or '')..
                         (c.protect_edible and 'e' or '')..
-                        (c.protect_cookable and 'c' or ''))
+                        (c.protect_cookable and 'z' or ''))
             table.insert(choices, {text=text, data=c})
         end
     end
@@ -275,6 +316,14 @@ function Autochop:refresh_data()
         'Total trees harvested: ', tostring(df.global.plotinfo.trees_removed)
     }
     self.subviews.summary:setText(summary_text)
+
+    local minimal_summary_text = {
+        'Usable logs in stock: ',
+        get_stat_text(log_count, target_max, target_min),
+        '/',
+        tostring(target_max),
+    }
+    self.subviews.minimal_summary:setText(minimal_summary_text)
 
     self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
 end
