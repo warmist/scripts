@@ -22,7 +22,7 @@ Examples
 --------
 
 ``load-save region1``
-    Load the savegame in the ``data/save/region1`` directory.
+    Load the savegame in the ``save/region1`` directory.
 
 Autoloading a game on DF start
 ------------------------------
