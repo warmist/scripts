@@ -602,11 +602,14 @@ BlueprintScreen.ATTRS {
 }
 
 function BlueprintScreen:init()
+    self.saved_pause_state = df.global.pause_state
+    df.global.pause_state = true
     self:addviews{Blueprint{presets=presets}}
 end
 
 function BlueprintScreen:onDismiss()
     view = nil
+    df.global.pause_state = self.saved_pause_state
 end
 
 if dfhack_flags.module then

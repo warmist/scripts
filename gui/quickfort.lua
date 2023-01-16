@@ -598,7 +598,10 @@ function Quickfort:onInput(keys)
 
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
         local pos = dfhack.gui.getMousePos()
-        if pos then self:commit() end
+        if pos then
+            self:commit()
+            return true
+        end
     end
 
     -- send movement and cancel keys through, but otherwise we're a modal dialog
@@ -662,6 +665,8 @@ QuickfortScreen.ATTRS {
 }
 
 function QuickfortScreen:init()
+    self.saved_pause_state = df.global.pause_state
+    df.global.pause_state = true
     self:addviews{Quickfort{filter=filter}}
 end
 
@@ -672,6 +677,7 @@ end
 
 function QuickfortScreen:onDismiss()
     view = nil
+    df.global.pause_state = self.saved_pause_state
 end
 
 if dfhack_flags.module then
