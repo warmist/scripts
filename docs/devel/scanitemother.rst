@@ -3,7 +3,7 @@ devel/scanitemother
 
 .. dfhack-tool::
     :summary: Display the item lists that the selected item is part of.
-    :tags: untested dev
+    :tags: dev
 
 When an item is selected in the UI, this tool will list the indices in
 ``world.item.other[]`` where the item appears. For example, if a piece of good
