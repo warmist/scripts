@@ -1,81 +1,45 @@
--- print sum of all needs
---[====[
+-- Prints the sum of all citizens' needs.
 
-allneeds
-========
-Show which needs are high for all dwarfs.
-Weight and Focus are divided by the number of dwarves that have that need.
-
-]====]
-local ENUM = {}
-
-ENUM[0]  = "Socialize"
-ENUM[1]  = "DrinkAlcohol"
-ENUM[2]  = "PrayOrMedidate"
-ENUM[3]  = "StayOccupied"
-ENUM[4]  = "BeCreative"
-ENUM[5]  = "Excitement"
-ENUM[6]  = "LearnSomething"
-ENUM[7]  = "BeWithFamily"
-ENUM[8]  = "BeWithFriends"
-ENUM[9]  = "HearEloquence"
-ENUM[10] = "UpholdTradition"
-ENUM[11] = "SelfExamination"
-ENUM[12] = "MakeMerry"
-ENUM[13] = "CraftObject"
-ENUM[14] = "MartialTraining"
-ENUM[15] = "PracticeSkill"
-ENUM[16] = "TakeItEasy"
-ENUM[17] = "MakeRomance"
-ENUM[18] = "SeeAnimal"
-ENUM[19] = "SeeGreatBeast"
-ENUM[20] = "AcquireObject"
-ENUM[21] = "EatGoodMeal"
-ENUM[22] = "Fight"
-ENUM[23] = "CauseTrouble"
-ENUM[24] = "Argue"
-ENUM[25] = "BeExtravagant"
-ENUM[26] = "Wander"
-ENUM[27] = "HelpSomebody"
-ENUM[28] = "ThinkAbstractly"
-ENUM[29] = "AdmireArt"
-
-
-local need = {}
-local n = 0
-for _, unit in ipairs(df.global.world.units.all) do
-    if not unit then
-      qerror('Unit not real.')
+local fort_needs = {}
+for _, unit in pairs(df.global.world.units.all) do
+    if not dfhack.units.isCitizen(unit) or not dfhack.units.isAlive(unit) then
+        goto skipunit
     end
-    -- Select valid dwarf
-    if unit.status.current_soul and unit.race == 572 then
-        n = n+1
-        local mind = unit.status.current_soul.personality.needs
-        -- sum need_level and focus_level for each need
-        for k,v in pairs(mind) do
-            if need[v.id] == nil then
-                need[v.id] = {0, 0, 0}
-            end
-            need[v.id] = {need[v.id][1] + v.need_level, need[v.id][2] + v.focus_level, need[v.id][3] + 1}
+
+    local mind = unit.status.current_soul.personality.needs
+    -- sum need_level and focus_level for each need
+    for _,need in pairs(mind) do
+        if fort_needs[need.id] then
+            fort_needs[need.id].cummulitative_need = fort_needs[need.id].cummulitative_need + need.need_level
+            fort_needs[need.id].cummulitative_focus = fort_needs[need.id].cummulitative_focus + need.focus_level
+            fort_needs[need.id].citizen_count = fort_needs[need.id].citizen_count + 1
+        else
+            fort_needs[need.id] = {}
+            fort_needs[need.id].cummulitative_need = need.need_level
+            fort_needs[need.id].cummulitative_focus = need.focus_level
+            fort_needs[need.id].citizen_count = 1
         end
     end
+
+    :: skipunit ::
 end
 
--- for sorting output
-function compare(a,b)
-    return a[1]*a[2] > b[1]*b[2]
+local sorted_fort_needs = {}
+for id, need in pairs(fort_needs) do
+    table.insert(sorted_fort_needs, {
+        df.need_type[id],
+        need.cummulitative_need,
+        need.cummulitative_focus,
+        need.citizen_count
+    })
 end
 
-sorted = {}
-i = 1
-for k,v in pairs(need) do
-    sorted[i] = {v[1], v[2], v[3], ENUM[k]}
-    i = i + 1
-end
-table.sort(sorted, compare)
+table.sort(sorted_fort_needs, function(a, b)
+    return a[2] > b[2]
+end)
 
 -- Print sorted output
-print(string.format("%20s %8s %8s %9s", "Need", "Weight", "Focus", "# Dwarves"))
-for k,v in ipairs(sorted) do
-    print(string.format("%20s %8.1f %8.1f %9d",  v[3], v[1]/v[3], v[2]/v[3], v[3]))
+print(([[%20s %8s %8s %10s]]):format("Need", "Weight", "Focus", "# Dwarves"))
+for _, need in pairs(sorted_fort_needs) do
+    print(([[%20s %8.f %8.f %10d]]):format(need[1], need[2], need[3], need[4]))
 end
