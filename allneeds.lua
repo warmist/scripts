@@ -9,16 +9,10 @@ for _, unit in pairs(df.global.world.units.all) do
     local mind = unit.status.current_soul.personality.needs
     -- sum need_level and focus_level for each need
     for _,need in pairs(mind) do
-        if fort_needs[need.id] then
-            fort_needs[need.id].cumulative_need = fort_needs[need.id].cumulative_need + need.need_level
-            fort_needs[need.id].cumulative_focus = fort_needs[need.id].cumulative_focus + need.focus_level
-            fort_needs[need.id].citizen_count = fort_needs[need.id].citizen_count + 1
-        else
-            fort_needs[need.id] = {}
-            fort_needs[need.id].cumulative_need = need.need_level
-            fort_needs[need.id].cumulative_focus = need.focus_level
-            fort_needs[need.id].citizen_count = 1
-        end
+        local needs = ensure_key(fort_needs, need.id)
+        needs.cumulative_need = (needs.cumulative_need or 0) + need.need_level
+        needs.cumulative_focus = (needs.cumulative_focus or 0) + need.focus_level
+        needs.citizen_count = (needs.citizen_count or 0) + 1
     end
 
     :: skipunit ::
