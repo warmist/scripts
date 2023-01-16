@@ -10,13 +10,13 @@ for _, unit in pairs(df.global.world.units.all) do
     -- sum need_level and focus_level for each need
     for _,need in pairs(mind) do
         if fort_needs[need.id] then
-            fort_needs[need.id].cummulitative_need = fort_needs[need.id].cummulitative_need + need.need_level
-            fort_needs[need.id].cummulitative_focus = fort_needs[need.id].cummulitative_focus + need.focus_level
+            fort_needs[need.id].cumulative_need = fort_needs[need.id].cumulative_need + need.need_level
+            fort_needs[need.id].cumulative_focus = fort_needs[need.id].cumulative_focus + need.focus_level
             fort_needs[need.id].citizen_count = fort_needs[need.id].citizen_count + 1
         else
             fort_needs[need.id] = {}
-            fort_needs[need.id].cummulitative_need = need.need_level
-            fort_needs[need.id].cummulitative_focus = need.focus_level
+            fort_needs[need.id].cumulative_need = need.need_level
+            fort_needs[need.id].cumulative_focus = need.focus_level
             fort_needs[need.id].citizen_count = 1
         end
     end
@@ -28,8 +28,8 @@ local sorted_fort_needs = {}
 for id, need in pairs(fort_needs) do
     table.insert(sorted_fort_needs, {
         df.need_type[id],
-        need.cummulitative_need,
-        need.cummulitative_focus,
+        need.cumulative_need,
+        need.cumulative_focus,
         need.citizen_count
     })
 end
