@@ -1,5 +1,5 @@
 gui/masspit
-=======
+===========
 
 .. dfhack-tool::
     :summary: Designate creatures for pitting.
