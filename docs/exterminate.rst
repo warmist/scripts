@@ -2,33 +2,29 @@ exterminate
 ===========
 
 .. dfhack-tool::
-    :summary: Kills things.
-    :tags: untested fort armok units
+    :summary: Kills creatures.
+    :tags: fort armok units
 
 Kills any unit, or all units of a given race. You can target any unit on a
 revealed tile of the map, including ambushers, but caged/chained creatures are
 ignored.
+
+If ``method`` is specified, ``exterminate`` will kill the selected units
+using the provided method. ``Instant`` will instantly kill the units.
+``Butcher`` will mark the units for butchering, not kill them, useful for pets
+and not for armed enemies. ``Drown`` and ``Magma`` will spawn a 7/7 column of
+water or magma on the units respectively, cleaning up the liquid as the moves
+and dies. Not recommended to be used on magma-safe creatures...
 
 Usage
 -----
 
 ``exterminate``
     List the available targets.
-``exterminate this|him|her|it [magma|butcher]``
-    Kills the selected unit.
-``exterminate <race>[:<caste>] [magma|butcher]``
+``exterminate this [--method <method>] [--only-visible] [--only-hostile]``
+    Kills the selected unit, instantly by default.
+``exterminate <race>[:<caste>] [--method <method>] [--only-visible] [--only-hostile]``
     Kills all available units of the specified race, or all undead units.
-``exterminate undead [magma|butcher]``
-    Kills all available undead units, regardless of race.
-
-If ``magma`` is specified, a column of 7/7 magma is generated on top of the
-targets until they die. Warning: do not try this on magma-safe creatures! Also,
-using this mode on flyers is not recommended unless you like magma rain.
-
-Alternately, if ``butcher`` is specified, ``exterminate`` will mark the units
-for butchering but does not kill them. A dwarf will take the creature to a
-butcher's shop and do the deed there. This mode is, of course, useful for pets
-and not for armed enemies.
 
 Examples
 --------
@@ -37,10 +33,10 @@ Examples
     Kill the selected unit.
 ``exterminate``
     List the targets on your map.
-``exterminate BIRD_RAVEN:male``
+``exterminate BIRD_RAVEN:MALE``
     Kill the ravens flying around the map (but only the male ones).
-``exterminate undead magma``
-    Kill all undead on the map by pouring magma on them.
+``exterminate GOBLIN --method MAGMA --only-visible --only-hostile``
+    Kill all visible, hostile goblins on the map by drowning them in magma.
 
 Technical details
 -----------------
@@ -48,3 +44,7 @@ Technical details
 This tool kills by setting a unit's ``blood_count`` set to 0, which means
 immediate death at the next game tick. For creatures where this is not enough,
 such as vampires, it also sets animal.vanish_countdown to 2.
+
+The script drowns units in the liquid of choice by modifying the tile with a
+liquid level of 7 every tick, and watching for changes in the units' positions
+cleaning up the liquids in the previous tiles.
