@@ -2,8 +2,8 @@ modtools/spawn-liquid
 =====================
 
 .. dfhack-tool::
-    :summary: Spawn water or lava.
-    :tags: untested dev
+    :summary: Spawn a liquid at a given position.
+    :tags: dev
 
 This script spawns liquid at the given coordinates.
 
@@ -12,14 +12,23 @@ Usage
 
 ::
 
-    modtools/spawn-liquid <height> water|magma <x> <y> <z> [<xOff> <yOff> <zOff>]
+    modtools/spawn-liquid --type <type> --level <level> --position [ <x> <y> <z> ]
 
 Options
 -------
 
-``<height>``
-    The height of the water/magma (1 to 7)
-``<x>``, ``<y>``, ``<z>``
-    The location to spawn liquid at (replacing any preexisting liquid).
-``<xOff>``, ``<yOff>``, ``<zOff>``
-    Optional convenience offsets, added to ``<x>``, ``<y>``, and ``<z>``.
+``--type <type>``
+    Liquid tile type:
+        Water
+        Magma
+``--level <level>``
+    The amount of liquid units to spawn from 1-7.
+``--position [ <x> <y> <z> ]``
+    The position at which to spawn the liquid.
+
+Examples
+--------
+
+``modtools/spawn-liquid --type Water --level 7 --position 60,60,143``
+    Spawn 7/7 Water on tile coordinates 60, 60, 143
+
