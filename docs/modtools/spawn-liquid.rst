@@ -31,4 +31,3 @@ Examples
 
 ``modtools/spawn-liquid --type Water --level 7 --position 60,60,143``
     Spawn 7/7 Water on tile coordinates 60, 60, 143
-
