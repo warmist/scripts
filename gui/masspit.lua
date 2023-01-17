@@ -4,12 +4,32 @@ local utils = require 'utils'
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
+local function getCagedUnits(stockpile)
+    local cagedUnits = {}
+
+    for _, item in pairs(dfhack.buildings.getStockpileContents(stockpile)) do
+        if not dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINS_UNIT) then
+            goto skipitem
+        end
+
+        for _, ref in pairs(item.general_refs) do
+            if ref:getType() == df.general_ref_type.CONTAINS_UNIT then
+                table.insert(cagedUnits, ref.unit_id)
+            end
+        end
+
+        :: skipitem ::
+    end
+
+    return cagedUnits
+end
+
 Masspit = defclass(Masspit, widgets.Window)
 Masspit.ATTRS {
-    frame_title='masspit',
-    frame={w=43, h=22},
+    frame_title='Mass-pit caged creatures',
+    frame={w=43, h=22, r = 2, t = 18},
     resizable=true,
-    resize_min={w=43, h=12},
+    resize_min={h=12},
 }
 
 function Masspit:init()
@@ -52,24 +72,26 @@ function Masspit:showStockpiles()
 
     for _, zone in pairs(df.global.world.buildings.other.STOCKPILE) do
         if (#zone.settings.animals.enabled > 0) then
-            local zone_name = zone.name.length and dfhack.TranslateName(zone.name) or "Animal stockpile #" .. zone.stockpile_number
-            local zone_position = df.coord:new()
-            zone_position.x = zone.centerx
-            zone_position.y = zone.centery
-            zone_position.z = zone.z
+            if #getCagedUnits(zone) > 0 then
+                local zone_name = zone.name.length and dfhack.TranslateName(zone.name) or "Animal stockpile #" .. zone.stockpile_number
+                local zone_position = df.coord:new()
+                zone_position.x = zone.centerx
+                zone_position.y = zone.centery
+                zone_position.z = zone.z
 
-            table.insert(choices, {
-                text = ([[%s: %s x:%s y:%s]]):format(zone.id, zone_name, zone.centerx, zone.centery),
-                zone_position = zone_position,
-                zone_id = zone.id
-            })
+                table.insert(choices, {
+                    text = ([[%s: %s x:%s y:%s]]):format(zone.id, zone_name, zone.centerx, zone.centery),
+                    zone_position = zone_position,
+                    zone_id = zone.id
+                })
+            end
         end
     end
 
     self.subviews.pages.subviews.stockpiles:setChoices(choices)
 
     if #choices == 0 then
-        self.subviews.label.text_to_wrap = "No animal stockpiles found! Create one first."
+        self.subviews.label.text_to_wrap = "No stockpiles with caged creatures found! Create one first."
     else
         self.subviews.label.text_to_wrap = "Select (or click on) an animal stockpile with caged creatures to pit."
     end
@@ -119,21 +141,7 @@ end
 
 function Masspit:setStockpile(_, choice)
     self.stockpile = utils.binsearch(df.global.world.buildings.other.STOCKPILE, choice.zone_id, 'id')
-    self.caged_units = {}
-
-    for _, cage in pairs(dfhack.buildings.getStockpileContents(self.stockpile)) do
-        if not dfhack.items.getGeneralRef(cage, df.general_ref_type.CONTAINS_UNIT) then
-            goto skipcage
-        end
-
-        for _, ref in pairs(cage.general_refs) do
-            if ref:getType() == df.general_ref_type.CONTAINS_UNIT then
-                table.insert(self.caged_units, ref.unit_id)
-            end
-        end
-
-        :: skipcage ::
-    end
+    self.caged_units = getCagedUnits(self.stockpile)
 
     if #self.caged_units == 0 then
         self.subviews.label.text_to_wrap = "This stockpile contains no caged units."
