@@ -14,6 +14,16 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.05-alpha1
+
+## New Scripts
 - `gui/autochop`: configuration frontend for the `autochop` plugin. you can pin the window and leave it up on the screen somewhere for live monitoring of your logging industry.
 - `devel/tile-browser`: page through available textures and see their texture ids
 - `allneeds`: list all unmet needs sorted by how many dwarves suffer from them.
@@ -39,8 +49,6 @@ that repo.
 
 ## Documentation
 - `devel/hello-world`: updated to be a better example from which to start new gui scripts
-
-## Removed
 
 # 0.47.05-r8
 
