@@ -3,7 +3,7 @@ gui/blueprint
 
 .. dfhack-tool::
     :summary: Record a live game map in a quickfort blueprint.
-    :tags: untested fort design buildings map stockpiles
+    :tags: fort design buildings map stockpiles
 
 
 The `blueprint` plugin records the structure of a portion of your fortress in
