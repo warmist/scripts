@@ -35,6 +35,7 @@ that repo.
 - `gui/quickcmd`: converted to a movable, resizable, mouse-enabled window
 - `gui/quickcmd`: commands are now stored globally so you don't have to recreate commands for every fort
 - `devel/inspect-screen`: updated for new rendering semantics and can now also inspect map textures
+- `exterminate`: added drown method. magma and drown methods will now clean up liquids automatically.
 
 ## Documentation
 - `devel/hello-world`: updated to be a better example from which to start new gui scripts
