@@ -21,9 +21,9 @@ Usage
 
 ``exterminate``
     List the available targets.
-``exterminate this [--method <method>] [--only-visible] [--only-hostile]``
+``exterminate this [<options>]``
     Kills the selected unit, instantly by default.
-``exterminate <race>[:<caste>] [--method <method>] [--only-visible] [--only-hostile]``
+``exterminate <race>[:<caste>] [<options>]``
     Kills all available units of the specified race, or all undead units.
 
 Examples
@@ -41,14 +41,14 @@ Examples
 Options
 -------
 
-``--method <method>``
+``-m``, ``--method <method>``
     Specifies the "method" of killing units. See ``exterminate --help`` for a
     list of possible methods.
-``--only-visible``
-    Specifies the tool should only kill units that are visible to the player
+``-o``, ``--only-visible``
+    Specifies the tool should only kill units visible to the player
     on the map.
-``--only-hostile``
-    Specifies the tool should only kill units that are hostile to the player.
+``-f``, ``--include-friendly``
+    Specifies the tool should also kill units friendly to the player.
 
 Technical details
 -----------------
@@ -58,5 +58,5 @@ immediate death at the next game tick. For creatures where this is not enough,
 such as vampires, it also sets animal.vanish_countdown to 2.
 
 The script drowns units in the liquid of choice by modifying the tile with a
-liquid level of 7 every tick, and watching for changes in the units' positions
-cleaning up the liquids in the previous tiles.
+liquid level of 7 every tick. If the unit moves, the liquid moves along with
+it, leaving the vacated tiles clean.

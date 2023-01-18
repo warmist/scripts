@@ -21,6 +21,18 @@ local function checkUnit(unit)
         not unit.flags1.chained
 end
 
+local function isUnitFriendly(unit)
+    return dfhack.units.isCitizen(unit) or
+        dfhack.units.isOwnCiv(unit) or
+        dfhack.units.isOwnGroup(unit) or
+        dfhack.units.isVisiting(unit) or
+        dfhack.units.isTame(unit) or
+        dfhack.units.isDomesticated(unit) or
+        dfhack.units.isVisitor(unit) or
+        dfhack.units.isDiplomat(unit) or
+        dfhack.units.isMerchant(unit)
+end
+
 local killMethod = {
     INSTANT = 0,
     BUTCHER = 1,
@@ -71,11 +83,15 @@ local function getRaceCastes(race_id)
     return unit_castes
 end
 
-local function getMapRaces(only_visible)
+local function getMapRaces(only_visible, include_friendly)
     local map_races = {}
 
     for _, unit in pairs(df.global.world.units.active) do
         if only_visible and not dfhack.units.isVisible(unit) then
+            goto skipunit
+        end
+
+        if not include_friendly and isUnitFriendly(unit) then
             goto skipunit
         end
 
@@ -98,14 +114,14 @@ local options, args = {
     help = false,
     method = killMethod.INSTANT,
     only_visible = false,
-    only_hostile = false,
+    include_friendly = false,
 }, {...}
 
 local positionals = argparse.processArgsGetopt(args, {
     {'h', 'help', handler = function() options.help = true end},
     {'m', 'method', handler = function(arg) options.method = killMethod[arg] end, hasArg = true},
     {'o', 'only-visible', handler = function() options.only_visible = true end},
-    {'e', 'only-hostile', handler = function() options.only_hostile = true end},
+    {'f', 'include-friendly', handler = function() options.include_friendly = true end},
 })
 
 if not dfhack.isMapLoaded() then
@@ -127,7 +143,7 @@ if positionals[1] == "this" then
 end
 
 if positionals[1] == nil then
-    local map_races = getMapRaces(options.only_visible)
+    local map_races = getMapRaces(options.only_visible, options.include_friendly)
 
     local sorted_races = {}
     for race, value in pairs(map_races) do
