@@ -106,4 +106,3 @@ if count then
 else
     print("No loyalty cascade found.")
 end
-
