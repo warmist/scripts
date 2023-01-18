@@ -13,8 +13,8 @@ If ``method`` is specified, ``exterminate`` will kill the selected units
 using the provided method. ``Instant`` will instantly kill the units.
 ``Butcher`` will mark the units for butchering, not kill them, useful for pets
 and not for armed enemies. ``Drown`` and ``Magma`` will spawn a 7/7 column of
-water or magma on the units respectively, cleaning up the liquid as the moves
-and dies. Not recommended to be used on magma-safe creatures...
+water or magma on the units respectively, cleaning up the liquid as they move
+and die. Magma not recommended for magma-safe creatures...
 
 Usage
 -----
@@ -38,10 +38,22 @@ Examples
 ``exterminate GOBLIN --method MAGMA --only-visible --only-hostile``
     Kill all visible, hostile goblins on the map by drowning them in magma.
 
+Options
+-------
+
+``--method <method>``
+    Specifies the "method" of killing units. See ``exterminate --help`` for a
+    list of possible methods.
+``--only-visible``
+    Specifies the tool should only kill units that are visible to the player
+    on the map.
+``--only-hostile``
+    Specifies the tool should only kill units that are hostile to the player.
+
 Technical details
 -----------------
 
-This tool kills by setting a unit's ``blood_count`` set to 0, which means
+This tool kills by setting a unit's ``blood_count`` to 0, which means
 immediate death at the next game tick. For creatures where this is not enough,
 such as vampires, it also sets animal.vanish_countdown to 2.
 
