@@ -17,8 +17,8 @@ end
 local function persist_state()
   persist.GlobalTable[GLOBAL_KEY] = json.encode({
     enabled = starvingDeadInstance ~= nil,
-    decay_rate = starvingDeadInstance.decay_rate,
-    death_threshold = starvingDeadInstance.death_threshold
+    decay_rate = starvingDeadInstance and starvingDeadInstance.decay_rate or 1,
+    death_threshold = starvingDeadInstance and starvingDeadInstance.death_threshold or 6
   })
 end
 
@@ -32,10 +32,13 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
       return
   end
 
-  local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+  local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '{}')
 
   if persisted_data.enabled then
-    starvingDeadInstance = StarvingDead{persisted_data.decay_rate, persisted_data.death_threshold}
+    starvingDeadInstance = StarvingDead{
+      decay_rate = persisted_data.decay_rate,
+      death_threshold = persisted_data.death_threshold
+    }
   end
 end
 
@@ -121,8 +124,8 @@ else
 
   if positionals[1] == nil then
     if starvingDeadInstance then
-      starvingDeadInstance.decay_rate = options.decay_rate and options.decay_rate or starvingDeadInstance.decay_rate
-      starvingDeadInstance.death_threshold = options.death_threshold and options.death_threshold or starvingDeadInstance.death_threshold
+      starvingDeadInstance.decay_rate = options.decay_rate or starvingDeadInstance.decay_rate
+      starvingDeadInstance.death_threshold = options.death_threshold or starvingDeadInstance.death_threshold
 
       print(([[StarvingDead is running, checking every %s days and killing off at %s months]]):format(
         starvingDeadInstance.decay_rate, starvingDeadInstance.death_threshold
