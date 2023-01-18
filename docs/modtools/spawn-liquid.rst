@@ -12,7 +12,7 @@ Usage
 
 ::
 
-    modtools/spawn-liquid --type <type> --level <level> --position [ <x> <y> <z> ]
+    modtools/spawn-liquid --type <type> --level <level> --position <x>,<y>,<z>
 
 Options
 -------
@@ -23,7 +23,7 @@ Options
         Magma
 ``--level <level>``
     The amount of liquid units to spawn from 1-7.
-``--position [ <x> <y> <z> ]``
+``--position <x>,<y>,<z>``
     The position at which to spawn the liquid.
 
 Examples
