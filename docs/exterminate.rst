@@ -42,8 +42,7 @@ Options
 -------
 
 ``-m``, ``--method <method>``
-    Specifies the "method" of killing units. See ``exterminate --help`` for a
-    list of possible methods.
+    Specifies the "method" of killing units.
 ``-o``, ``--only-visible``
     Specifies the tool should only kill units visible to the player
     on the map.
