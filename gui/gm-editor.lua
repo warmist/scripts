@@ -31,7 +31,7 @@ local keybindings_raw = {
     {name='start_filter', key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     {name='help', key="STRING_A063",desc="Show this help"},
     {name='displace', key="STRING_A093",desc="Open reference offseted by index"},
-    {name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
+    --{name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
 }
 
 local keybindings = {}
