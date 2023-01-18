@@ -197,6 +197,14 @@ else
             goto skipunit
         end
 
+        if options.only_visible and not dfhack.units.isVisible(unit) then
+            goto skipunit
+        end
+
+        if not options.include_friendly and isUnitFriendly(unit) then
+            goto skipunit
+        end
+
         if selected_caste and selected_caste ~= df.creature_raw.find(unit.race).caste[unit.caste].caste_id then
             goto skipunit
         end
