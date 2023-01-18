@@ -8,6 +8,37 @@ local persist = require('persist-table')
 
 local GLOBAL_KEY = 'starvingdead'
 
+starvingDeadInstance = starvingDeadInstance or nil
+
+function isEnabled()
+  return starvingDeadInstance ~= nil
+end
+
+local function persist_state()
+  persist.GlobalTable[GLOBAL_KEY] = json.encode({
+    enabled = starvingDeadInstance ~= nil,
+    decay_rate = starvingDeadInstance.decay_rate,
+    death_threshold = starvingDeadInstance.death_threshold
+  })
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+  if sc == SC_MAP_UNLOADED then
+      enabled = false
+      return
+  end
+
+  if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+      return
+  end
+
+  local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+
+  if persisted_data.enabled then
+    starvingDeadInstance = StarvingDead{persisted_data.decay_rate, persisted_data.death_threshold}
+  end
+end
+
 StarvingDead = defclass(StarvingDead)
 StarvingDead.ATTRS{
   decay_rate = 1,
@@ -47,6 +78,10 @@ function StarvingDead:checkDecay()
   self.timeout_id = dfhack.timeout(self.decay_rate, 'days', self:callback('checkDecay'))
 end
 
+if dfhack_flags.module then
+  return
+end
+
 local options, args = {
   decay_rate = nil,
   death_threshold = nil
@@ -57,39 +92,6 @@ local positionals = argparse.processArgsGetopt(args, {
   {'r', 'decay-rate', hasArg = true, handler=function(arg) options.decay_rate = argparse.positiveInt(arg, 'decay-rate') end },
   {'t', 'death-threshold', hasArg = true, handler=function(arg) options.death_threshold = argparse.positiveInt(arg, 'death-threshold') end },
 })
-
-function isEnabled()
-  return starvingDeadInstance ~= nil
-end
-
-local function persist_state()
-  persist.GlobalTable[GLOBAL_KEY] = json.encode({
-    enabled = starvingDeadInstance ~= nil,
-    decay_rate = starvingDeadInstance.decay_rate,
-    death_threshold = starvingDeadInstance.death_threshold
-  })
-end
-
-if not dfhack.isMapLoaded() then
-  qerror('This script requires a fortress map to be loaded')
-end
-
-dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-  if sc == SC_MAP_UNLOADED then
-      enabled = false
-      return
-  end
-
-  if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-      return
-  end
-
-  local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-
-  if persisted_data.enabled then
-    starvingDeadInstance = StarvingDead{persisted_data.decay_rate, persisted_data.death_threshold}
-  end
-end
 
 if dfhack_flags.enable then
   if dfhack_flags.enable_state then
@@ -108,6 +110,10 @@ if dfhack_flags.enable then
     starvingDeadInstance = nil
   end
 else
+  if not dfhack.isMapLoaded() then
+    qerror('This script requires a fortress map to be loaded')
+  end
+
   if positionals[1] == "help" or options.help then
     print(dfhack.script_help())
     return
