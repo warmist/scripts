@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `gui/gm-editor`: fix errors displayed while viewing help screen
 
 ## Misc Improvements
 
