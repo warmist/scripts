@@ -3,7 +3,7 @@ devel/spawn-unit-helper
 
 .. dfhack-tool::
     :summary: Prepares the game for spawning creatures by switching to arena.
-    :tags: untested dev
+    :tags: dev
 
 This script initializes game state to allow you to switch to arena mode, spawn
 creatures, and then switch back to fortress mode.

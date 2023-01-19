@@ -3,7 +3,7 @@ stripcaged
 
 .. dfhack-tool::
     :summary: Remove items from caged prisoners.
-    :tags: untested fort productivity items
+    :tags: fort productivity items
 
 This tool helps with the tedious task of going through all your cages and
 marking the items inside for dumping. This lets you get leftover seeds out of
