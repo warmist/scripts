@@ -21,6 +21,7 @@ that repo.
 ## Misc Improvements
 
 ## Removed
+- `create-items`: replaced by `gui/create-item` ``--multi``
 
 # 50.05-alpha1
 
