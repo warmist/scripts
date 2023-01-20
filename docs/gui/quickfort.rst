@@ -6,10 +6,10 @@ gui/quickfort
     :tags: fort design productivity buildings map stockpiles
 
 This is the graphical interface for the `quickfort` script. Once you load a
-blueprint, you will see a blinking "shadow" over the tiles that will be
-modified. You can use the cursor to reposition the blueprint or the hotkeys to
-rotate and repeat the blueprint up or down z-levels. Once you are satisfied, hit
-:kbd:`Enter` to apply the blueprint to the map.
+blueprint, you will see a highlight over the tiles that will be modified. You
+can use the mouse cursor to reposition the blueprint and the hotkeys to
+rotate and repeat the blueprint up or down z-levels. Once you are satisfied,
+click the mouse or hit :kbd:`Enter` to apply the blueprint to the map.
 
 Usage
 -----
@@ -30,12 +30,12 @@ blueprint labels, modes, or comments. Note that, depending on the active list
 filters, the id numbers in the list may not be contiguous.
 
 To rotate or flip the blueprint around, enable transformations with :kbd:`t` and
-use :kbd:`Ctrl` with the arrow keys to add a transformation step:
+use the following keys to add a transformation step:
 
-:kbd:`Ctrl`:kbd:`Left`:  Rotate counterclockwise (ccw)
-:kbd:`Ctrl`:kbd:`Right`: Rotate clockwise (cw)
-:kbd:`Ctrl`:kbd:`Up`:    Flip vertically (vflip)
-:kbd:`Ctrl`:kbd:`Down`:  Flip horizontally (hflip)
+:kbd:`(`:  Rotate counterclockwise (ccw)
+:kbd:`)`: Rotate clockwise (cw)
+:kbd:`_`:    Flip vertically (vflip)
+:kbd:`=`:  Flip horizontally (hflip)
 
 If you have applied several transformations, but there is a shorter sequence
 that can be used to get the blueprint into the configuration you want, it will
