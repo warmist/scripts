@@ -499,6 +499,14 @@ for _,job in ipairs(get_jobs(opts)) do
     -- retrieve the items attached to the job before we destroy the references
     local items = get_items(job)
 
+    local bld_type = bld:getType()
+    if #items == 0 and bld_type ~= df.building_type.RoadDirt
+            and bld_type ~= df.building_type.FarmPlot then
+        print(('skipping building with no items attached at'..
+               ' (%d, %d, %d)'):format(bld.centerx, bld.centery, bld.z))
+        goto continue
+    end
+
     -- skip jobs whose attached items are already owned by the target building
     -- but are not already part of the building. They are actively being used to
     -- construct the building and we can't safely change the building's state.
@@ -534,7 +542,7 @@ for _,job in ipairs(get_jobs(opts)) do
               'failed to attach items to building; state may be inconsistent')
     end
 
-    if bld:getType() == df.building_type.Construction then
+    if bld_type == df.building_type.Construction then
         build_construction(bld)
     else
         build_building(bld)

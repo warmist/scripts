@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 -@ `gui/gm-editor`: fix errors displayed while viewing help screen
+- `build-now`: don't error on constructions that do not have an item attached
 
 ## Misc Improvements
 
