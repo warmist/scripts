@@ -22,7 +22,7 @@ function satisfyNeeds(unit)
     for k,v in ipairs(mind) do
         mind[k].focus_level = 400
     end
-    unit.status.current_soul.personality.stress_level = -1000000
+    unit.status.current_soul.personality.stress = -1000000
 end
 
 if args.all then

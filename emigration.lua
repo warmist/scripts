@@ -21,7 +21,7 @@ end
 
 function desireToStay(unit,method,civ_id)
     -- on a percentage scale
-    local value = 100 - unit.status.current_soul.personality.stress_level / 5000
+    local value = 100 - unit.status.current_soul.personality.stress / 5000
     if method == 'merchant' or method == 'diplomat' then
         if civ_id ~= unit.civ_id then value = value*2 end end
     if method == 'wild' then

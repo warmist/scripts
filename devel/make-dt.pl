@@ -386,7 +386,7 @@ sub generate_dt_ini($$$$) {
     emit_addr 'goals',%all,'unit_personality','dreams';
     emit_addr 'goal_realized',%all,'unit_personality::anon5','unk8';
     emit_addr 'traits',%all,'unit_personality','traits';
-    emit_addr 'stress_level',%all,'unit_personality','stress_level';
+    emit_addr 'stress',%all,'unit_personality','stress';
 
     emit_header 'emotion_offsets';
     emit_addr 'emotion_type',%all,'unit_personality::anon4','type';

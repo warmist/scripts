@@ -41,7 +41,7 @@ function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     })
     local divider=df.emotion_type.attrs[emotion].divider
     if divider~=0 then
-        unit.status.current_soul.personality.stress_level=unit.status.current_soul.personality.stress_level+math.ceil(severity/df.emotion_type.attrs[emotion].divider)
+        unit.status.current_soul.personality.stress=unit.status.current_soul.personality.stress+math.ceil(severity/df.emotion_type.attrs[emotion].divider)
     end
 end
 
