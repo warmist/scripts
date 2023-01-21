@@ -4,7 +4,7 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 local plugin = require('plugins.automelt')
 
-local PROPERTIES_HEADER = 'Monitor  Melt  Items Marked  '
+local PROPERTIES_HEADER = 'Monitor Items Marked  '
 local REFRESH_MS = 10000
 
 --
@@ -34,13 +34,6 @@ function StockpileSettings:init()
             key='CUSTOM_M',
             label='Monitor stockpile',
         },
-        widgets.ToggleHotkeyLabel{
-            view_id='melt',
-            frame={t=3, l=0},
-            key='CUSTOM_SHIFT_M',
-            label='Melt all items',
-        },
-
         widgets.HotkeyLabel{
             frame={t=8, l=0},
             key='SELECT',
@@ -56,7 +49,6 @@ function StockpileSettings:show(choice, on_commit)
     local data = self.data
     self.subviews.name:setText(data.name)
     self.subviews.monitored:setOption(data.monitored)
-    self.subviews.melt:setOption(data.melt)
     self.visible = true
     self:setFocus(true)
     self:updateLayout()
@@ -71,7 +63,6 @@ function StockpileSettings:commit()
     local data = {
         id=self.data.id,
         monitored=self.subviews.monitored:getOptionValue(),
-        melt=self.subviews.melt:getOptionValue(),
 
     }
     plugin.setStockpileConfig(data)
@@ -205,7 +196,7 @@ end
 function Automelt:update_choices()
     local list = self.subviews.list
     local name_width = list.frame_body.width - #PROPERTIES_HEADER
-    local fmt = '%-'..tostring(name_width)..'s [%s]   [%s]   %5d  %5d  '
+    local fmt = '%-'..tostring(name_width)..'s [%s]   %5d  %5d  '
     local hide_empty = self.subviews.hide:getOptionValue()
     local choices = {}
     for _,c in ipairs(self.data.stockpile_configs) do
@@ -213,7 +204,6 @@ function Automelt:update_choices()
         if not hide_empty or num_items > 0 then
             local text = (fmt):format(
                     c.name:sub(1,name_width), c.monitored and 'x' or ' ',
-                    c.melt and 'x' or ' ',
                     num_items or 0, self.data.premarked_item_counts[c.id] or 0)
             table.insert(choices, {text=text, data=c})
         end
