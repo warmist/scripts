@@ -140,6 +140,7 @@ if positionals[1] == "this" then
     end
 
     killUnit(selected_unit)
+    return
 end
 
 if positionals[1] == nil then
@@ -161,7 +162,7 @@ if positionals[1] == nil then
     return
 end
 
-local map_races = getMapRaces(options.only_visible)
+local map_races = getMapRaces(options.only_visible, options.include_friendly)
 
 if string.find(positionals[1], "UNDEAD") then
     if map_races.UNDEAD then
