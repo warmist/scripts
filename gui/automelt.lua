@@ -40,7 +40,7 @@ function StockpileSettings:init()
             key='CUSTOM_SHIFT_M',
             label='Melt all items',
         },
-       
+
         widgets.HotkeyLabel{
             frame={t=8, l=0},
             key='SELECT',
@@ -72,7 +72,7 @@ function StockpileSettings:commit()
         id=self.data.id,
         monitored=self.subviews.monitored:getOptionValue(),
         melt=self.subviews.melt:getOptionValue(),
-        
+
     }
     plugin.setStockpileConfig(data)
     self:hide()
@@ -220,7 +220,7 @@ function Automelt:update_choices()
     end
     self.subviews.list:setChoices(choices)
     self.subviews.list:updateLayout()
-    
+
 end
 
 function Automelt:refresh_data()
@@ -232,7 +232,7 @@ function Automelt:refresh_data()
     local summary_text = {
         ' Items in monitored stockpiles: ', tostring(summary.total_items),
         NEWLINE,
-        'Total items marked for melting: ', tostring(summary.premarked_items), NEWLINE,        
+        'Total items marked for melting: ', tostring(summary.premarked_items), NEWLINE,
     }
     self.subviews.summary:setText(summary_text)
 
