@@ -428,9 +428,9 @@ if options.help == true then
 end
 
 if commands.contains('all') then
-    for _, v in pairs(funcs) do
-        if _ ~= 'show' then
-            funcs[_]()
+    for func, _ in pairs(funcs) do
+        if func ~= 'show' then
+            funcs[func]()
         end
     end
 end
