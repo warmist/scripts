@@ -5,29 +5,6 @@
 local options = {}
 
 local argparse = require('argparse')
-local commands = argparse.processArgsGetopt({...}, {
-    {'h', 'help', handler=function() options.help = true end},
-    {'v', 'verbose', handler=function() options.verbose = true end},
-})
-
-if options.help == true then
-    print(dfhack.script_help())
-    return
-end
-
-if commands.contains('all') then
-    for _, v in pairs(funcs) do
-        if _ ~= 'show' then
-            funcs[_]()
-        end
-    end
-end
-
-for _, v in ipairs(commands) do
-    if funcs[v] then
-        funcs[v]()
-    end
-end
 
 local kitchen = df.global.plotinfo.kitchen
 
@@ -437,5 +414,29 @@ funcs.show = function()
 
     for k, v in pairs(output) do
         print(k .. ": |" .. v)
+    end
+end
+
+local commands = argparse.processArgsGetopt({...}, {
+    {'h', 'help', handler=function() options.help = true end},
+    {'v', 'verbose', handler=function() options.verbose = true end},
+})
+
+if options.help == true then
+    print(dfhack.script_help())
+    return
+end
+
+if commands.contains('all') then
+    for _, v in pairs(funcs) do
+        if _ ~= 'show' then
+            funcs[_]()
+        end
+    end
+end
+
+for _, v in ipairs(commands) do
+    if funcs[v] then
+        funcs[v]()
     end
 end
