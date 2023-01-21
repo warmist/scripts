@@ -427,7 +427,7 @@ if options.help == true then
     return
 end
 
-if commands.contains('all') then
+if commands[1] == 'all' then
     for func, _ in pairs(funcs) do
         if func ~= 'show' then
             funcs[func]()
