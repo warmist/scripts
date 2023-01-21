@@ -3,12 +3,10 @@
 -- Putnams work completed by TBSTeun
 
 local options = {}
-
 local argparse = require('argparse')
-
 local kitchen = df.global.plotinfo.kitchen
-
 local already_banned = {}
+local count = 0
 
 local function make_key(mat_type, mat_index, type, subtype)
     return ('%s:%s:%s:%s'):format(mat_type, mat_index, type, subtype)
@@ -31,6 +29,7 @@ local function ban_cooking(print_name, mat_type, mat_index, type, subtype)
         return
     end
     -- The item hasn't already been banned, so we do that here by appending its values to the various arrays
+    count = count + 1
     if options.verbose then
         print(print_name .. ' has been banned!')
     end
@@ -440,3 +439,5 @@ for _, v in ipairs(commands) do
         funcs[v]()
     end
 end
+
+print('banned ' .. count .. 'items.')
