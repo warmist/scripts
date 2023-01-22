@@ -86,7 +86,7 @@ end
 Automelt = defclass(Automelt, widgets.Window)
 Automelt.ATTRS {
     frame_title='Automelt',
-    frame={w=60, h=27},
+    frame={w=62, h=27},
     resizable=true,
     resize_min={h=25},
 }
@@ -220,15 +220,21 @@ function Automelt:refresh_data()
 
     local summary = self.data.summary
     local summary_text = {
-        ' Items in monitored stockpiles: ', tostring(summary.total_items),
+        '                           Items in monitored stockpiles: ', tostring(summary.total_items),
         NEWLINE,
-        'Total items marked for melting: ', tostring(summary.premarked_items), NEWLINE,
+        '        Items in monitored stockpiles marked for melting: ', tostring(summary.premarked_items), 
+        NEWLINE,
+        'Global items marked for melting (not in monotired piles): ', tostring(summary.marked_item_count_global),
+        NEWLINE,
+        ' All items marked for melting (monitored piles + global): ', tostring(summary.marked_item_count_total),
+        NEWLINE,
+
     }
     self.subviews.summary:setText(summary_text)
 
     local minimal_summary_text = {
         '         Items monitored: ', tostring(summary.total_items), NEWLINE,
-        'Items marked for melting: ',tostring(summary.premarked_items),
+        'Monitored Items marked for melting: ',tostring(summary.premarked_items),
     }
     self.subviews.minimal_summary:setText(minimal_summary_text)
 
