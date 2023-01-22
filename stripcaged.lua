@@ -266,6 +266,7 @@ end
 -- Print help if requested
 if opts.help then
     print(dfhack.script_help())
+    return
 end
 
 -- act
