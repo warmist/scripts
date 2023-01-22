@@ -18,6 +18,8 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `ban-cooking`: ban announcements are now hidden by default; use new option ``--verbose`` to show them.
+- `ban-cooking`: report number of items banned.
 
 ## Removed
 
