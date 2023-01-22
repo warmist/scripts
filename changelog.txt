@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
 
 ## Removed
 
