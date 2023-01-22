@@ -1,20 +1,33 @@
-local rawargs = {...}
-local args = require 'utils'.invert(rawargs)
+local argparse = require('argparse')
+local opts = {}
+local positionals = argparse.processArgsGetopt({...},
+    {{'h', 'help', handler = function() opts.help = true end},
+    {nil, 'include-vermin',
+    handler = function() opts.include_vermin = true end},
+    {nil, 'include-pets',
+    handler = function() opts.include_pets = true end},
+})
+local posflags = require('utils').invert(positionals)
+
 
 local function plural(nr, name)
     -- '1 cage' / '4 cages'
     return string.format('%s %s%s', nr, name, nr ~= 1 and 's' or '')
 end
 
-local function isexcludedvermin(item)
+---Checks item against opts to see if it's a vermin type that we ignore
+---@param item any
+---@param opts table
+---@return boolean
+local function isexcludedvermin(item, opts)
     if df.item_verminst:is_instance(item) then
-        if args['--include-vermin'] then
+        if opts.include_vermin then
             return false
         else
             return true
         end
     elseif df.item_petst:is_instance(item) then
-        if args['--include-pets'] then
+        if opts.include_pets then
             return false
         else
             return true
@@ -32,7 +45,7 @@ local function cage_dump_items(list)
         for _, ref in ipairs(cage.general_refs) do
             if df.general_ref_contains_itemst:is_instance(ref) then
                 local item = df.item.find(ref.item_id)
-                if not item.flags.dump and not isexcludedvermin(item) then
+                if not item.flags.dump and not isexcludedvermin(item, opts) then
                     count = count + 1
                     item.flags.dump = true
                 end
@@ -100,14 +113,14 @@ local function cage_dump_all(list)
 
             if df.general_ref_contains_itemst:is_instance(ref) then
                 local item = df.item.find(ref.item_id)
-                if not item.flags.dump and not isexcludedvermin(item) then
+                if not item.flags.dump and not isexcludedvermin(item, opts) then
                     count = count + 1
                     item.flags.dump = true
                 end
             elseif df.general_ref_contains_unitst:is_instance(ref) then
                 local inventory = df.unit.find(ref.unit_id).inventory
                 for _, it in ipairs(inventory) do
-                    if not it.item.flags.dump and not isexcludedvermin(it.item) then
+                    if not it.item.flags.dump and not isexcludedvermin(it.item, opts) then
                         count = count + 1
                         it.item.flags.dump = true
                     end
@@ -129,14 +142,14 @@ local function cage_dump_list(list)
         for _, ref in ipairs(cage.general_refs) do
             if df.general_ref_contains_itemst:is_instance(ref) then
                 local item = df.item.find(ref.item_id)
-                if not isexcludedvermin(item) then
+                if not isexcludedvermin(item, opts) then
                     local classname = df.item_type.attrs[item:getType()].caption
                     count[classname] = (count[classname] or 0) + 1
                 end
             elseif df.general_ref_contains_unitst:is_instance(ref) then
                 local inventory = df.unit.find(ref.unit_id).inventory
                 for _, it in ipairs(inventory) do
-                    if not isexcludedvermin(it.item) then
+                    if not isexcludedvermin(it.item, opts) then
                         local classname = df.item_type.attrs[it.item:getType()].caption
                         count[classname] = (count[classname] or 0) + 1
                     end
@@ -193,7 +206,7 @@ end
 -- handle magic script arguments
 
 local list = {}
-if args.here then
+if posflags.here then
     local built = dfhack.gui.getSelectedBuilding(true)
     local item = dfhack.gui.getSelectedItem(true)
     local unit = dfhack.gui.getSelectedUnit(true)
@@ -227,9 +240,9 @@ if args.here then
         print 'Please select a cage'
         return
     end
-elseif tonumber(rawargs[2]) then -- Check if user provided ids
-    for i = 2, #rawargs do
-        local id = rawargs[i]
+elseif tonumber(positionals[2]) then -- Check if user provided ids
+    for i = 2, #positionals do
+        local id = positionals[i]
         local it = df.item.find(tonumber(id))
         if not it then
             print('Invalid item id ' .. id)
@@ -252,8 +265,13 @@ else
     end
 end
 
+-- Print help if requested
+if opts.help then
+    print(dfhack.script_help())
+end
+
 -- act
-local choice = rawargs[1] or ''
+local choice = positionals[1] or ''
 
 if choice:match '^it' then
     cage_dump_items(list)
