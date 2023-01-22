@@ -440,4 +440,4 @@ for _, v in ipairs(commands) do
     end
 end
 
-print('banned ' .. count .. 'items.')
+print('banned ' .. count .. ' items.')
