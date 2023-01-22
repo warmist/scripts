@@ -1,4 +1,4 @@
--- config ui for autochop
+-- config ui for automelt
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
@@ -222,7 +222,7 @@ function Automelt:refresh_data()
     local summary_text = {
         '                           Items in monitored stockpiles: ', tostring(summary.total_items),
         NEWLINE,
-        '        Items in monitored stockpiles marked for melting: ', tostring(summary.premarked_items), 
+        '        Items in monitored stockpiles marked for melting: ', tostring(summary.premarked_items),
         NEWLINE,
         'Global items marked for melting (not in monotired piles): ', tostring(summary.marked_item_count_global),
         NEWLINE,
