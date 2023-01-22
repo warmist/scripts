@@ -16,10 +16,16 @@ that repo.
 ## New Scripts
 
 ## Fixes
--@ `gui/gm-editor`: fix errors displayed while viewing help screen
-- `build-now`: don't error on constructions that do not have an item attached
 
 ## Misc Improvements
+
+## Removed
+
+# 50.05-alpha2
+
+## Fixes
+-@ `gui/gm-editor`: fix errors displayed while viewing help screen
+- `build-now`: don't error on constructions that do not have an item attached
 
 ## Removed
 - `create-items`: replaced by `gui/create-item` ``--multi``
