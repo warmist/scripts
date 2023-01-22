@@ -7,8 +7,6 @@ local positionals = argparse.processArgsGetopt({...},
     {nil, 'include-pets',
     handler = function() opts.include_pets = true end},
 })
-local posflags = require('utils').invert(positionals)
-
 
 local function plural(nr, name)
     -- '1 cage' / '4 cages'
@@ -206,7 +204,7 @@ end
 -- handle magic script arguments
 
 local list = {}
-if posflags.here then
+if positionals[2] == 'here' then
     local built = dfhack.gui.getSelectedBuilding(true)
     local item = dfhack.gui.getSelectedItem(true)
     local unit = dfhack.gui.getSelectedUnit(true)
