@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `autofish`: Auto-manage fishing labors to control your stock of fish.
 
 ## Fixes
 - `quickfort`: allow floor bars, floor grates, and hatches to be placed over all stair types like vanilla allows
