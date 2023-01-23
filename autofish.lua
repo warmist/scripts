@@ -14,7 +14,7 @@ local GLOBAL_KEY = "autofish"
 enabled = enabled or false
 set_maxFish = set_maxFish or 100
 set_minFish = set_minFish or 50
-set_useRaw = set_useRaw or false
+set_useRaw = set_useRaw or true
 isFishing = isFishing or true
 
 function isEnabled()
@@ -34,7 +34,7 @@ local function load_state()
     enabled = (persisted_data or {enabled=false})["enabled"]
     set_maxFish = (persisted_data or {set_maxFish=100})["set_maxFish"]
     set_minFish = (persisted_data or {set_minFish=50})["set_minFish"]
-    set_useRaw = (persisted_data or {set_useRaw=false})["set_useRaw"]
+    set_useRaw = (persisted_data or {set_useRaw=true})["set_useRaw"]
     isFishing = (persisted_data or {isFishing=true})["isFishing"]
 end
 
@@ -165,7 +165,7 @@ end
 
 -- find flags in args:
 local positionals = argparse.processArgsGetopt(args,
-    {{"r", "include-raw",
+    {{"r", "toggle-raw",
     handler=function() set_useRaw = not set_useRaw end}
 })
 

@@ -2,8 +2,8 @@ autofish
 ========
 
 .. dfhack-tool::
-    :summary: Auto-manage fishing labors to control your stock of fish.
-    :tags: fort auto fps jobs
+    :summary: Keep a specific quantity of fish in your fortress.
+    :tags: fort auto fps labor
 
 This script makes managing how much fish you keep around automatic. It tries to
 maintain a configured stock level of raw and/or prepared fish, partially to keep
@@ -29,13 +29,15 @@ Usage
     ``min`` (default: 50) controls the minimum fish you want before restarting
     fishing.
 
-    Use ``--include-raw``(``-r``) (default: off) to toggle letting the script
+    Use ``--toggle-raw``(``-r``) (default: on) to toggle letting the script
     also count your raw fish as part of your quota. Use it a second time to
     disable this.
 
 Examples
 --------
 
+``enable autofish``
+    Enables the script.
 ``autofish -r 150``
     Sets your maximum fish to 150, and enables counting raw fish.
 ``autofish 300 250``
