@@ -269,11 +269,7 @@ function Autochop:hasEnabledBurrows()
 end
 
 function Autochop:getDefaultHide()
-
-    if not self.hasEnabledBurrows(self) then
-        return false
-    end
-    return true
+    return self:hasEnabledBurrows()
 end
 
 function Autochop:configure_burrow(idx, choice)
