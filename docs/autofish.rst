@@ -1,7 +1,7 @@
 autofish
 ========
 
-.. dfhack_tool::
+.. dfhack-tool::
     :summary: Auto-manage fishing labors to control your stock of fish.
     :tags: fort auto fps jobs
 
