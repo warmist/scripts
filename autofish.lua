@@ -98,7 +98,7 @@ function event_loop()
 
     -- hande pausing/resuming labour
     local numFish = set_useRaw and (prepared + raw) or prepared
-    print(numFish)
+    --print(numFish)
     if numFish >= set_maxFish and isFishing then
         toggle_fishing_labour(false)
     elseif numFish < set_minFish and not isFishing then
@@ -137,8 +137,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
 
-    -- only run in dorf mode
-    if sc ~= SC_MAP_LOADED or df.global.gamemode == df.game_mode.DWARF then
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
 
