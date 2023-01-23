@@ -169,8 +169,8 @@ function Automelt:init()
             label='Hide unmonitored stockpiles: ',
             key='CUSTOM_CTRL_U',
             initial_option=self:getDefaultHide(),
-            on_change=function() 
-                self:update_choices() 
+            on_change=function()
+                self:update_choices()
             end,
             visible=is_not_minimal,
         },
@@ -212,7 +212,7 @@ function Automelt:hasMonitoredStockpiles()
 end
 
 function Automelt:getDefaultHide()
-    
+
     if not self.hasMonitoredStockpiles(self) then
         return false
     end
