@@ -3,7 +3,7 @@ autofish
 
 .. dfhack-tool::
     :summary: Keep a specific quantity of fish in your fortress.
-    :tags: fort auto fps labor
+    :tags: fort auto fps labors
 
 This script makes managing how much fish you keep around automatic. It tries to
 maintain a configured stock level of raw and/or prepared fish, partially to keep
