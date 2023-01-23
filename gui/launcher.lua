@@ -376,6 +376,7 @@ MainPanel.ATTRS{
     resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
     update_autocomplete=DEFAULT_NIL,
+    on_edit_input=DEFAULT_NIL,
 }
 
 function MainPanel:postUpdateLayout()
@@ -427,7 +428,7 @@ function MainPanel:onInput(keys)
     elseif keys.CUSTOM_CTRL_C then
         if self.focus_group.cur == self.subviews.editfield then
             self.subviews.edit:set_text('')
-            self:on_edit_input('')
+            self.on_edit_input('')
         else
             self.focus_group.cur:setText('')
         end
@@ -478,6 +479,7 @@ function LauncherUI:init(args)
         view_id='main',
         get_minimal=function() return self.minimal end,
         update_autocomplete=self:callback('update_autocomplete'),
+        on_edit_input=self:callback('on_edit_input'),
     }
 
     local frame_r = get_frame_r()
