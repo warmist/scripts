@@ -264,12 +264,12 @@ function Autochop:hasEnabledBurrows()
             return true
         end
     end
-    
+
     return false
 end
 
 function Autochop:getDefaultHide()
-    
+
     if not self.hasEnabledBurrows(self) then
         return false
     end
