@@ -13,10 +13,7 @@ local function plural(nr, name)
     return string.format('%s %s%s', nr, name, nr ~= 1 and 's' or '')
 end
 
----Checks item against opts to see if it's a vermin type that we ignore
----@param item any
----@param opts table
----@return boolean
+-- Checks item against opts to see if it's a vermin type that we ignore
 local function isexcludedvermin(item, opts)
     if df.item_verminst:is_instance(item) then
         if opts.include_vermin then
