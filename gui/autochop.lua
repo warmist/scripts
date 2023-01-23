@@ -120,7 +120,6 @@ Autochop.ATTRS {
     frame={w=60, h=28},
     resizable=true,
     resize_min={h=25},
-    have_enabled=false,
 }
 
 function Autochop:init()
@@ -198,7 +197,7 @@ function Autochop:init()
             visible=is_not_minimal,
         },
         widgets.Label{
-            frame={b=12, l=0},
+            frame={b=13, l=0},
             view_id='chop_message',
             visible=is_not_minimal,
         },
