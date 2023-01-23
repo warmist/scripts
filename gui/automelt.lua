@@ -86,7 +86,7 @@ end
 Automelt = defclass(Automelt, widgets.Window)
 Automelt.ATTRS {
     frame_title='Automelt',
-    frame={w=62, h=27},
+    frame={w=64, h=27},
     resizable=true,
     resize_min={h=25},
 }
@@ -161,6 +161,15 @@ function Automelt:init()
             on_change=function() self:update_choices() end,
             visible=is_not_minimal,
         },
+        widgets.ToggleHotkeyLabel{
+            view_id='hide_unmonitored',
+            frame={b=10, l=0},
+            label='Hide unmonitored stockpiles: ',
+            key='CUSTOM_CTRL_U',
+            initial_option=false,
+            on_change=function() self:update_choices() end,
+            visible=is_not_minimal,
+        },
         widgets.HotkeyLabel{
             frame={b=9, l=0},
             label='Designate items for melting now',
@@ -198,14 +207,17 @@ function Automelt:update_choices()
     local name_width = list.frame_body.width - #PROPERTIES_HEADER
     local fmt = '%-'..tostring(name_width)..'s [%s]   %5d  %5d  '
     local hide_empty = self.subviews.hide:getOptionValue()
+    local hide_unmonitored = self.subviews.hide_unmonitored:getOptionValue()
     local choices = {}
     for _,c in ipairs(self.data.stockpile_configs) do
         local num_items = self.data.item_counts[c.id] or 0
         if not hide_empty or num_items > 0 then
-            local text = (fmt):format(
-                    c.name:sub(1,name_width), c.monitored and 'x' or ' ',
-                    num_items or 0, self.data.premarked_item_counts[c.id] or 0)
-            table.insert(choices, {text=text, data=c})
+            if not hide_unmonitored or c.monitored then
+                local text = (fmt):format(
+                        c.name:sub(1,name_width), c.monitored and 'x' or ' ',
+                        num_items or 0, self.data.premarked_item_counts[c.id] or 0)
+                table.insert(choices, {text=text, data=c})
+            end
         end
     end
     self.subviews.list:setChoices(choices)
