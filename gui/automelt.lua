@@ -212,11 +212,7 @@ function Automelt:hasMonitoredStockpiles()
 end
 
 function Automelt:getDefaultHide()
-
-    if not self.hasMonitoredStockpiles(self) then
-        return false
-    end
-    return true
+    return self:hasMonitoredStockpiles()
 end
 
 function Automelt:configure_stockpile(idx, choice)
