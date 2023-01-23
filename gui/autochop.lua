@@ -117,7 +117,7 @@ end
 Autochop = defclass(Autochop, widgets.Window)
 Autochop.ATTRS {
     frame_title='Autochop',
-    frame={w=60, h=27},
+    frame={w=60, h=28},
     resizable=true,
     resize_min={h=25},
     have_enabled=false,
@@ -193,7 +193,7 @@ function Autochop:init()
         },
         widgets.List{
             view_id='list',
-            frame={t=5, l=0, r=0, b=14},
+            frame={t=5, l=0, r=0, b=15},
             on_submit=self:callback('configure_burrow'),
             visible=is_not_minimal,
         },
@@ -204,7 +204,7 @@ function Autochop:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='hide',
-            frame={b=10, l=0},
+            frame={b=11, l=0},
             label='Hide burrows with no trees: ',
             key='CUSTOM_CTRL_H',
             initial_option=false,
@@ -213,7 +213,7 @@ function Autochop:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='hide_disabled',
-            frame={b=9, l=0},
+            frame={b=10, l=0},
             label='Hide burrows with no chop/clear order set: ',
             key='CUSTOM_ALT_H',
             initial_option=self:getDefaultHide(),
@@ -221,7 +221,7 @@ function Autochop:init()
             visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
-            frame={b=8, l=0},
+            frame={b=9, l=0},
             label='Designate trees for chopping now',
             key='CUSTOM_CTRL_D',
             on_activate=function()
@@ -232,7 +232,7 @@ function Autochop:init()
             visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
-            frame={b=7, l=0},
+            frame={b=8, l=0},
             label='Undesignate all trees now',
             key='CUSTOM_CTRL_U',
             on_activate=function()
