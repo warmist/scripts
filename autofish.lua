@@ -2,39 +2,14 @@
 -- autofish [enable | disable] <max> [min] [--include-raw | -r]
 
 --@ enable=true
+--@ module=true
 
 local json = require("json")
 local persist = require("persist-table")
 local argparse = require("argparse")
-local dump = require("dumper")
 
 local GLOBAL_KEY = "autofish"
 
-local help = [====[
-autofish
-=============
-Manages your fish stocks by toggling fishing labours as you reach certain stock thresholds.
-
-
-Usage
--------------
-  autofish [enable | disable | status] | <max> [min] [--include-raw | -r]
-
-Arguments
--------------
--r, --include-raw
-  Allow the stock tracking to also count raw fish
-enable
-  Enable this script
-disable
-  Disable this script
-status
-  Print the current status
-max
-  The maximum number of fish you want to stop fishing at.
-min
-  the minimum number of fish before restarting fishing.
-]====]
 -- set default enabled state
 enabled = enabled or false
 set_maxFish = set_maxFish or 100
@@ -69,28 +44,44 @@ function toggle_fishing_labour(state)
     -- pass true to state to turn on, otherwise disable
     -- find all work details that have fishing enabled:
     local work_details = df.global.plotinfo.hauling.work_details
-    for k,v in pairs(work_details) do
+    for _,v in pairs(work_details) do
         if v.allowed_labors.FISH then
             -- set limited to true just in case a custom work detail is being
             -- changed, to prevent *all* dwarves from fishing.
             v.work_detail_flags.limited = true
             v.work_detail_flags.enabled = state
+
+            -- workaround to actually enable labours
+            for _,v2 in ipairs(v.assigned_units) do
+                -- find unit by ID and toggle fishing
+                local unit = df.unit.find(v2)
+                unit.status.labors.FISH = state
+            end
         end
     end
     isFishing = state -- save current state
+
+    -- let the user know we've got enough, or run out of fish
+    if isFishing then
+        print("autofish: Re-enabling fishing, fallen below minimum.")
+    else
+        print("autofish: Disabling fishing, reached desired quota.")
+    end
 end
 
 -- check if an item isn't forbidden/rotten/on fire/etc..
 function isValidItem(item)
     local flags = item.flags
     if flags.rotten or flags.trader or flags.hostile or flags.forbid
-        or flags.dump or flags.on_fire or flags.garbage_collect then
+        or flags.dump or flags.on_fire or flags.garbage_collect or flags.owned
+        or flags.removed or flags.encased or flags.spider_web then
         return false
     end
     return true
 end
 
 function event_loop()
+    --print(enabled, set_minFish, set_maxFish, set_useRaw, isFishing)
     if not enabled then return end
     local world = df.global.world
 
@@ -106,22 +97,13 @@ function event_loop()
     end
 
     -- hande pausing/resuming labour
-    local sumFish = prepared + raw
-
-    if set_useRaw then
-        if sumFish >= set_maxFish then
-            toggle_fishing_labour(false)
-        elseif sumFish < set_minFish then
-            toggle_fishing_labour (true)
-        end
-    else
-        if prepared >= set_maxFish then
-            toggle_fishing_labour(false)
-        elseif prepared < set_minFish then
-            toggle_fishing_labour(true)
-        end
+    local numFish = set_useRaw and (prepared + raw) or prepared
+    print(numFish)
+    if numFish >= set_maxFish and isFishing then
+        toggle_fishing_labour(false)
+    elseif numFish < set_minFish and not isFishing then
+        toggle_fishing_labour(true)
     end
-
     -- don't need to check *that* often
     dfhack.timeout(1, "days", event_loop)
 end
@@ -133,12 +115,9 @@ local function print_status()
     --print(string.format("%s max, %s min, %s useraw", settings.maxFish, settings.minFish, tostring(settings.useRawFish)))
     print(string.format("autofish is currently %s.\n", (enabled and "enabled" or "disabled")))
     if enabled then
+
         local rfs
-        if set_useRaw then
-            rfs="raw & prepared"
-        else
-            rfs="prepared"
-        end
+        rfs = set_useRaw and "raw & prepared" or "prepared"
 
         print(string.format("Stopping at %s %s fish.", set_maxFish, rfs))
         print(string.format("Restarting at %s %s fish.", set_minFish, rfs))
@@ -152,7 +131,6 @@ end
 
 -- handle loading
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-    print("state change")
     -- unload with game
     if sc == SC_MAP_UNLOADED then
         enabled = false
@@ -181,7 +159,6 @@ if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
 end
 
 -- argument handling
--- autofish [enable | disable | status] | <max> [min] [--include-raw | -r]
 local args = {...}
 if dfhack_flags and dfhack_flags.enable then
     args = {dfhack_flags.enable_state and "enable" or "disable"}
@@ -200,21 +177,25 @@ elseif positionals[1] == "disable" then
     enabled = false
 elseif positionals[1] == "status" then
     print_status()
+    return
 elseif positionals ~= nil then
     -- positionals is a number?
     if positionals[1] and tonumber(positionals[1]) then
         -- assume we're changing setting:
         set_maxFish = tonumber(positionals[1])
     else
+        -- invalid or no argument
         return
     end
     if positionals[2] and tonumber(positionals[2]) then
         set_minFish = tonumber(positionals[2])
     end
-    -- a setting probably changed, show the updated settings.
+    -- a setting probably changed, save & show the updated settings.
+    persist_state()
     print_status()
+    return
 end
 
-
+--load_state()
 event_loop()
 persist_state()
