@@ -384,12 +384,21 @@ function MainPanel:postUpdateLayout()
     config:write(self.frame)
 end
 
-local H_SPLIT_PEN = dfhack.pen.parse{tile=906, ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{tile=905, ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{tile=911, ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=912, ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=913, ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=918, ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
+local texpos = dfhack.textures.getThinBordersTexposStart()
+local tp = function(offset)
+    if texpos == -1 then return nil end
+    return texpos + offset
+end
+
+local H_SPLIT_PEN = dfhack.pen.parse{tile=tp(5), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{tile=tp(4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.t_frame_pen.tile,
+        ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.b_frame_pen.tile,
+        ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.l_frame_pen.tile,
+        ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=tp(17), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
 
 -- paint autocomplete panel border
 local function paint_vertical_border(rect)
@@ -498,7 +507,7 @@ function LauncherUI:init(args)
             end
         end
         main_panel.frame = new_frame
-        main_panel.frame_style = not self.minimal and gui.GREY_LINE_FRAME or nil
+        main_panel.frame_style = not self.minimal and gui.WINDOW_FRAME or nil
 
         local edit_frame = self.subviews.edit.frame
         edit_frame.r = self.minimal and
