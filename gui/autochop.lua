@@ -120,6 +120,7 @@ Autochop.ATTRS {
     frame={w=60, h=27},
     resizable=true,
     resize_min={h=25},
+    have_enabled=false,
 }
 
 function Autochop:init()
@@ -210,8 +211,17 @@ function Autochop:init()
             on_change=function() self:update_choices() end,
             visible=is_not_minimal,
         },
-        widgets.HotkeyLabel{
+        widgets.ToggleHotkeyLabel{
+            view_id='hide_disabled',
             frame={b=9, l=0},
+            label='Hide burrows with no chop/clear order set: ',
+            key='CUSTOM_ALT_H',
+            initial_option=self:getDefaultHide(),
+            on_change=function() self:update_choices() end,
+            visible=is_not_minimal,
+        },
+        widgets.HotkeyLabel{
+            frame={b=8, l=0},
             label='Designate trees for chopping now',
             key='CUSTOM_CTRL_D',
             on_activate=function()
@@ -222,7 +232,7 @@ function Autochop:init()
             visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
-            frame={b=8, l=0},
+            frame={b=7, l=0},
             label='Undesignate all trees now',
             key='CUSTOM_CTRL_U',
             on_activate=function()
@@ -246,6 +256,26 @@ function Autochop:init()
     self:refresh_data()
 end
 
+function Autochop:hasEnabledBurrows()
+    self.data = plugin.getTreeCountsAndBurrowConfigs()
+    --- check to see if we have any already chop/clear enabled burrows
+    for _,c in ipairs(self.data.burrow_configs) do
+        if c.chop or c.clearcut then
+            return true
+        end
+    end
+    
+    return false
+end
+
+function Autochop:getDefaultHide()
+    
+    if not self.hasEnabledBurrows(self) then
+        return false
+    end
+    return true
+end
+
 function Autochop:configure_burrow(idx, choice)
     self.subviews.burrow_settings:show(choice, function()
                 self:refresh_data()
@@ -258,20 +288,24 @@ function Autochop:update_choices()
     local name_width = list.frame_body.width - #PROPERTIES_HEADER
     local fmt = '%-'..tostring(name_width)..'s [%s]   [%s]   %5d  %5d    %s'
     local hide_empty = self.subviews.hide:getOptionValue()
+    local hide_disabled = self.subviews.hide_disabled:getOptionValue()
     local choices = {}
     local has_chop_burrow = false
+
     for _,c in ipairs(self.data.burrow_configs) do
         has_chop_burrow = has_chop_burrow or c.chop
         local num_trees = self.data.tree_counts[c.id] or 0
         if not hide_empty or num_trees > 0 then
-            local text = (fmt):format(
-                    c.name:sub(1,name_width), c.chop and 'x' or ' ',
-                    c.clearcut and 'x' or ' ',
-                    num_trees, self.data.designated_tree_counts[c.id] or 0,
-                    (c.protect_brewable and 'b' or '')..
-                        (c.protect_edible and 'e' or '')..
-                        (c.protect_cookable and 'z' or ''))
-            table.insert(choices, {text=text, data=c})
+            if not hide_disabled or (c.chop or c.clearcut) then
+                local text = (fmt):format(
+                        c.name:sub(1,name_width), c.chop and 'x' or ' ',
+                        c.clearcut and 'x' or ' ',
+                        num_trees, self.data.designated_tree_counts[c.id] or 0,
+                        (c.protect_brewable and 'b' or '')..
+                            (c.protect_edible and 'e' or '')..
+                            (c.protect_cookable and 'z' or ''))
+                table.insert(choices, {text=text, data=c})
+            end
         end
     end
     self.subviews.list:setChoices(choices)

@@ -89,6 +89,8 @@ Automelt.ATTRS {
     frame={w=64, h=27},
     resizable=true,
     resize_min={h=25},
+    hide_unmonitored=DEFAULT_NIL,
+    manual_hide_unmonitored_touched=DEFAULT_NIL,
 }
 
 function Automelt:init()
@@ -154,8 +156,8 @@ function Automelt:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='hide',
-            frame={b=10, l=0},
-            label='Hide stockpiles with no items: ',
+            frame={b=11, l=0},
+            label='Hide stockpiles with no meltable items: ',
             key='CUSTOM_CTRL_H',
             initial_option=false,
             on_change=function() self:update_choices() end,
@@ -166,8 +168,10 @@ function Automelt:init()
             frame={b=10, l=0},
             label='Hide unmonitored stockpiles: ',
             key='CUSTOM_CTRL_U',
-            initial_option=false,
-            on_change=function() self:update_choices() end,
+            initial_option=self:getDefaultHide(),
+            on_change=function() 
+                self:update_choices() 
+            end,
             visible=is_not_minimal,
         },
         widgets.HotkeyLabel{
@@ -193,6 +197,26 @@ function Automelt:init()
     }
 
     self:refresh_data()
+end
+
+function Automelt:hasMonitoredStockpiles()
+    self.data = plugin.getItemCountsAndStockpileConfigs()
+    --- check to see if we have any already monitored stockpiles
+    for _,c in ipairs(self.data.stockpile_configs) do
+        if c.monitored then
+            return true
+        end
+    end
+
+    return false
+end
+
+function Automelt:getDefaultHide()
+    
+    if not self.hasMonitoredStockpiles(self) then
+        return false
+    end
+    return true
 end
 
 function Automelt:configure_stockpile(idx, choice)
@@ -223,22 +247,18 @@ function Automelt:update_choices()
     self.subviews.list:setChoices(choices)
     self.subviews.list:updateLayout()
 
+
 end
 
 function Automelt:refresh_data()
     self.subviews.enable_toggle:setOption(plugin.isEnabled())
-
     self.data = plugin.getItemCountsAndStockpileConfigs()
 
     local summary = self.data.summary
     local summary_text = {
-        '                           Items in monitored stockpiles: ', tostring(summary.total_items),
+        '                          Items in monitored stockpiles: ', tostring(summary.total_items),
         NEWLINE,
-        '        Items in monitored stockpiles marked for melting: ', tostring(summary.premarked_items),
-        NEWLINE,
-        'Global items marked for melting (not in monotired piles): ', tostring(summary.marked_item_count_global),
-        NEWLINE,
-        ' All items marked for melting (monitored piles + global): ', tostring(summary.marked_item_count_total),
+        'All items marked for melting (monitored piles + global): ', tostring(summary.marked_item_count_total),
         NEWLINE,
 
     }
@@ -252,6 +272,7 @@ function Automelt:refresh_data()
 
     self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
 end
+
 
 function Automelt:postUpdateLayout()
     self:update_choices()
