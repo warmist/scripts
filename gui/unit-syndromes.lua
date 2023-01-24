@@ -219,16 +219,6 @@ local function getEffectDescription(effect)
     return EffectFlagDescription[effect:getType()] and EffectFlagDescription[effect:getType()](effect) or ""
 end
 
-local function getUnitSyndromes(unit)
-    local unit_syndromes = {}
-
-    for _, syndrome in pairs(unit.syndromes.active) do
-        table.insert(unit_syndromes, syndrome)
-    end
-
-    return unit_syndromes
-end
-
 local function getSyndromeEffects(syndrome_type)
     local syndrome_raw = df.global.world.raws.syndromes.all[syndrome_type]
     local syndrome_effects = {}
@@ -238,6 +228,42 @@ local function getSyndromeEffects(syndrome_type)
     end
 
     return syndrome_effects
+end
+
+local function getSyndromeDescription(syndrome_raw, syndrome)
+    local syndrome_duration = nil
+    local syndrome_min_duration = nil
+    local syndrome_max_duration = nil
+
+    for _, effect in pairs(syndrome_raw.ce) do
+        syndrome_min_duration = math.min(syndrome_min_duration or effect["end"], effect["end"])
+        syndrome_max_duration = math.max(syndrome_max_duration or effect["end"], effect["end"])
+    end
+
+    if syndrome_min_duration == -1 then
+        syndrome_duration = "[permanent]"
+    elseif syndrome_min_duration == syndrome_max_duration then
+        syndrome_duration = syndrome_min_duration
+    else
+        syndrome_duration = ("%s-%s"):format(syndrome_min_duration, syndrome_max_duration)
+    end
+
+    return ("%-22s %s%s \n%s effects"):format(
+        syndrome_raw.syn_name ~= "" and syndrome_raw.syn_name:gsub("^%l", string.upper) or "Mystery",
+        syndrome and ("%s of "):format(syndrome.ticks) or "",
+        syndrome_duration,
+        #getSyndromeEffects(syndrome_raw.id)
+    )
+end
+
+local function getUnitSyndromes(unit)
+    local unit_syndromes = {}
+
+    for _, syndrome in pairs(unit.syndromes.active) do
+        table.insert(unit_syndromes, syndrome)
+    end
+
+    return unit_syndromes
 end
 
 local function getCitizens()
@@ -311,10 +337,18 @@ UnitSyndromes.ATTRS {
 }
 
 function UnitSyndromes:init()
+    local is_not_main_page = function()
+        return self.subviews.pages:getSelected() > 1
+    end
+
+    local previous_page = function()
+        self.subviews.pages:setSelected(self.subviews.pages:getSelected() - 1)
+    end
+
     self:addviews{
         widgets.Pages{
             view_id = 'pages',
-            frame = { t = 0, l = 0},
+            frame = {t = 0, l = 0, b = 2},
             subviews = {
                 widgets.List{
                     view_id = 'category',
@@ -349,6 +383,15 @@ function UnitSyndromes:init()
                 }
             }
         },
+        widgets.HotkeyLabel{
+            frame={l=0, b=0},
+            label='Back',
+            auto_width=true,
+            key='KEYBOARD_CURSOR_LEFT',
+            on_activate=previous_page,
+            active=is_not_main_page,
+            enabled=is_not_main_page,
+        },
     }
 end
 
@@ -357,34 +400,13 @@ function UnitSyndromes:showUnits(index, choice)
 
     if choice.text == "All syndromes" then
         for _, syndrome in pairs(df.global.world.raws.syndromes.all) do
-            local syndrome_duration = nil
-            local syndrome_min_duration = nil
-            local syndrome_max_duration = nil
-
             if #syndrome.ce == 0 then
                 goto skipsyndrome
             end
 
-            for _, effect in pairs(syndrome.ce) do
-                syndrome_min_duration = math.min(syndrome_min_duration or effect["end"], effect["end"])
-                syndrome_max_duration = math.max(syndrome_max_duration or effect["end"], effect["end"])
-            end
-
-            if syndrome_min_duration == -1 then
-                syndrome_duration = "[permanent]"
-            elseif syndrome_min_duration == syndrome_max_duration then
-                syndrome_duration = syndrome_min_duration
-            else
-                syndrome_duration = ("%s-%s"):format(syndrome_min_duration, syndrome_max_duration)
-            end
-
             table.insert(choices, {
                 syndrome_type = syndrome.id,
-                text = ("%-22s %s \n%s effects"):format(
-                    (syndrome.syn_name ~= "" and syndrome.syn_name:gsub("^%l", string.upper) or "Mystery"),
-                    syndrome_duration,
-                    #getSyndromeEffects(syndrome.id)
-                ),
+                text = getSyndromeDescription(syndrome)
             })
 
             :: skipsyndrome ::
@@ -422,37 +444,16 @@ function UnitSyndromes:showUnitSyndromes(index, choice)
         return
     end
 
-    for _, syndprirome in pairs(unit_syndromes) do
+    for _, syndrome in pairs(unit_syndromes) do
         local syndrome_raw = df.global.world.raws.syndromes.all[syndrome.type]
-        local syndrome_duration = nil
-        local syndrome_min_duration = nil
-        local syndrome_max_duration = nil
 
-        if #syndrome.ce == 0 then
+        if #syndrome_raw.ce == 0 then
             goto skipsyndrome
         end
 
-        for _, effect in pairs(syndrome.ce) do
-            syndrome_min_duration = math.min(syndrome_min_duration or effect["end"], effect["end"])
-            syndrome_max_duration = math.max(syndrome_max_duration or effect["end"], effect["end"])
-        end
-
-        if syndrome_min_duration == -1 then
-            syndrome_duration = "[permanent]"
-        elseif syndrome_min_duration == syndrome_max_duration then
-            syndrome_duration = syndrome_min_duration
-        else
-            syndrome_duration = ("%s-%s"):format(syndrome_min_duration, syndrome_max_duration)
-        end
-
         table.insert(choices, {
-            syndrome_type = syndrome.type,
-            text = ("%-22s %s of %s \n%s effects"):format(
-                (syndrome_raw.syn_name:gsub("^%l", string.upper)),
-                syndrome.ticks,
-                syndrome_duration,
-                #getSyndromeEffects(syndrome.type)
-            ),
+            syndrome_type = syndrome_raw.id,
+            text = getSyndromeDescription(syndrome_raw, syndrome)
         })
 
         :: skipsyndrome ::
