@@ -295,7 +295,6 @@ Blueprint.ATTRS {
     frame={w=47, h=40, r=2, t=18},
     resizable=true,
     resize_min={h=10},
-    pinnable=false,
     autoarrange_subviews=true,
     autoarrange_gap=1,
     presets=DEFAULT_NIL,
