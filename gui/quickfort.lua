@@ -243,7 +243,7 @@ Quickfort.ATTRS {
     frame_title='Quickfort',
     frame={w=34, h=30, r=2, t=18},
     resizable=true,
-    resize_min={h=10},
+    resize_min={h=26},
     autoarrange_subviews=true,
     autoarrange_gap=1,
     filter='',
