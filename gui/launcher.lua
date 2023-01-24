@@ -709,11 +709,17 @@ function LauncherUI:run_command(reappear, command)
     record_command(command)
     -- remember the previous parent screen address so we can detect changes
     local _,prev_parent_addr = self._native.parent:sizeof()
+    -- propagate saved unpaused status to the new ZScreen
+    local saved_pause_state = df.global.pause_state
+    if not self.saved_pause_state then
+        df.global.pause_state = false
+    end
     -- remove our viewscreen from the stack while we run the command. this
     -- allows hotkey guards and tools that interact with the top viewscreen
     -- without checking whether it is active to work reliably.
     local output = dfhack.screen.hideGuard(self, dfhack.run_command_silent,
                                            command)
+    df.global.pause_state = saved_pause_state
     if #output > 0 then
         print('Output from command run from gui/launcher:')
         print('> ' .. command)
