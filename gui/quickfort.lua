@@ -50,7 +50,8 @@ function BlueprintDetails:onRenderFrame(dc, rect)
 end
 
 function BlueprintDetails:onInput(keys)
-    if keys.STANDARDSCROLL_LEFT or keys.SELECT or keys.LEAVESCREEN then
+    if keys.KEYBOARD_CURSOR_LEFT or keys.SELECT
+            or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
     end
 end
@@ -209,7 +210,7 @@ function BlueprintDialog:onInput(keys)
         details:show()
         -- for testing
         self._details = details
-    elseif keys.LEAVESCREEN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
@@ -242,8 +243,7 @@ Quickfort.ATTRS {
     frame_title='Quickfort',
     frame={w=34, h=30, r=2, t=18},
     resizable=true,
-    resize_min={h=10},
-    pinnable=false,
+    resize_min={h=26},
     autoarrange_subviews=true,
     autoarrange_gap=1,
     filter='',
@@ -253,13 +253,18 @@ function Quickfort:init()
 
     self:addviews{
         widgets.ResizingPanel{subviews={
-            widgets.WrappedLabel{view_id='summary',
-                frame={t=0, l=0, w=32},
+            widgets.Label{
+                frame={t=0, l=0, w=30},
                 text_pen=COLOR_GREY,
-                text_to_wrap=self:callback('get_summary_label')},
-            widgets.HotkeyLabel{view_id='commit_label',
-                frame={t=1, l=13}, key='SELECT', key_sep=' ', label='to apply.',
-                text_pen=COLOR_GREY, on_activate=self:callback('commit')}
+                text={
+                    {text=self:callback('get_summary_label')},
+                    NEWLINE,
+                    'Click or hit ',
+                    {key='SELECT', key_sep=' ',
+                     on_activate=self:callback('commit')},
+                    'to apply.',
+                },
+            },
         }},
         widgets.HotkeyLabel{key='CUSTOM_L', label='Load new blueprint',
             on_activate=self:callback('show_dialog')},
@@ -297,21 +302,21 @@ function Quickfort:init()
             widgets.ResizingPanel{view_id='repeat_times_panel',
                     visible=function() return repeat_dir and self.blueprint_name end,
                     subviews={
-                widgets.HotkeyLabel{key='STRING_A046',
-                    frame={l=2}, key_sep='',
+                widgets.HotkeyLabel{key='STRING_A045',
+                    frame={t=1, l=2}, key_sep='',
                     on_activate=self:callback('on_adjust_repetitions', -1)},
                 widgets.HotkeyLabel{key='STRING_A043',
-                    frame={l=3}, key_sep='',
+                    frame={t=1, l=3}, key_sep='',
                     on_activate=self:callback('on_adjust_repetitions', 1)},
                 widgets.HotkeyLabel{key='STRING_A047',
-                    frame={l=4}, key_sep='',
+                    frame={t=1, l=4}, key_sep='',
                     on_activate=self:callback('on_adjust_repetitions', -10)},
                 widgets.HotkeyLabel{key='STRING_A042',
-                    frame={l=5}, key_sep='',
+                    frame={t=1, l=5}, key_sep='',
                     on_activate=self:callback('on_adjust_repetitions', 10)},
                 widgets.EditField{key='CUSTOM_SHIFT_R',
                     view_id='repeat_times',
-                    frame={l=7, h=1},
+                    frame={t=1, l=7, h=1},
                     label_text='x ',
                     text=tostring(repetitions),
                     on_char=function(ch) return ch:match('%d') end,
@@ -328,19 +333,19 @@ function Quickfort:init()
                     visible=function() return transform and self.blueprint_name end,
                     subviews={
                 widgets.HotkeyLabel{key='STRING_A040',
-                    frame={l=2}, key_sep='',
+                    frame={t=1, l=2}, key_sep='',
                     on_activate=self:callback('on_transform', 'ccw')},
                 widgets.HotkeyLabel{key='STRING_A041',
-                    frame={l=3}, key_sep='',
+                    frame={t=1, l=3}, key_sep='',
                     on_activate=self:callback('on_transform', 'cw')},
                 widgets.HotkeyLabel{key='STRING_A095',
-                    frame={l=4}, key_sep='',
+                    frame={t=1, l=4}, key_sep='',
                     on_activate=self:callback('on_transform', 'flipv')},
                 widgets.HotkeyLabel{key='STRING_A061',
-                    frame={l=5}, key_sep=':',
+                    frame={t=1, l=5}, key_sep=':',
                     on_activate=self:callback('on_transform', 'fliph')},
                 widgets.WrappedLabel{
-                    frame={l=8},
+                    frame={t=1, l=8},
                     text_to_wrap=function()
                             return #transformations == 0 and 'No transform'
                                 or table.concat(transformations, ', ') end}}}}},
@@ -361,16 +366,12 @@ function Quickfort:init()
 end
 
 function Quickfort:get_summary_label()
-    local commit_label_frame = self.subviews.commit_label.frame
     if self.mode == 'config' then
-        commit_label_frame.l = 13
-        return 'Blueprint configures game, not map. Hit'
+        return 'Blueprint configures game, not map.'
     elseif self.mode == 'notes' then
-        commit_label_frame.l = 4
-        return 'Blueprint shows help text. Hit'
+        return 'Blueprint shows help text.'
     end
-    commit_label_frame.l = 13
-    return 'Reposition with the cursor keys and hit'
+    return 'Reposition with the mouse.'
 end
 
 function Quickfort:get_blueprint_name()
@@ -598,7 +599,10 @@ function Quickfort:onInput(keys)
 
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
         local pos = dfhack.gui.getMousePos()
-        if pos then guidm.setCursorPos(pos) end
+        if pos then
+            self:commit()
+            return true
+        end
     end
 
     -- send movement and cancel keys through, but otherwise we're a modal dialog
@@ -607,9 +611,7 @@ function Quickfort:onInput(keys)
 end
 
 function Quickfort:commit()
-    if self.mode ~= 'notes' then
-        self.parent_view:dismiss()
-    end
+    -- don't dismiss the window in case the player wants to lay down more copies
     self:do_command('run', false)
 end
 
@@ -658,10 +660,16 @@ end
 QuickfortScreen = defclass(QuickfortScreen, gui.ZScreen)
 QuickfortScreen.ATTRS {
     focus_path='quickfort',
+    force_pause=true,
+    pass_pause=false,
+    pass_movement_keys=true,
+    pass_mouse_clicks=false,
     filter=DEFAULT_NIL,
 }
 
 function QuickfortScreen:init()
+    self.saved_pause_state = df.global.pause_state
+    df.global.pause_state = true
     self:addviews{Quickfort{filter=filter}}
 end
 
@@ -672,6 +680,7 @@ end
 
 function QuickfortScreen:onDismiss()
     view = nil
+    df.global.pause_state = self.saved_pause_state
 end
 
 if dfhack_flags.module then

@@ -3,7 +3,7 @@ clear-webs
 
 .. dfhack-tool::
     :summary: Removes all webs from the map.
-    :tags: untested adventure fort armok map units
+    :tags: adventure fort armok map units
 
 In addition to removing webs, this tool also frees any creatures who have been
 caught in one. Usable in both fortress and adventurer mode.

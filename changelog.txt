@@ -14,8 +14,35 @@ that repo.
 # Future
 
 ## New Scripts
+- `autofish`: Auto-manage fishing labors to control your stock of fish.
+
+## Fixes
+- `quickfort`: allow floor bars, floor grates, and hatches to be placed over all stair types like vanilla allows
+-@ `gui/quickcmd`: can now be pinned like other windows
+
+## Misc Improvements
+- `ban-cooking`: ban announcements are now hidden by default; use new option ``--verbose`` to show them.
+- `ban-cooking`: report number of items banned.
+- `gui/launcher`: make command output scrollback separate from the help text so players can continue to see the output of the previous command as they type the next one
+- `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
+
+## Removed
+
+# 50.05-alpha2
+
+## Fixes
+-@ `gui/gm-editor`: fix errors displayed while viewing help screen
+- `build-now`: don't error on constructions that do not have an item attached
+
+## Removed
+- `create-items`: replaced by `gui/create-item` ``--multi``
+
+# 50.05-alpha1
+
+## New Scripts
 - `gui/autochop`: configuration frontend for the `autochop` plugin. you can pin the window and leave it up on the screen somewhere for live monitoring of your logging industry.
 - `devel/tile-browser`: page through available textures and see their texture ids
+- `allneeds`: list all unmet needs sorted by how many dwarves suffer from them.
 
 ## Fixes
 - `make-legendary`: "MilitaryUnarmed" option now functional
@@ -25,6 +52,7 @@ that repo.
 - `emigration`: now saves its state with your fort
 - `prioritize`: now saves its state with your fort
 - `unsuspend`: overlay now displays different letters for different suspend states so they can be differentiated in graphics mode (P=planning, x=suspended, X=repeatedly suspended)
+- `unsuspend`: overlay now shows a marker all the time when in graphics mode.  ascii mode still only shows when paused so that you can see what's underneath.
 - `gui/gm-editor`: converted to a movable, resizable, mouse-enabled window
 - `gui/launcher`: now supports a smaller, minimal mode. click the toggle in the launcher UI or start in minimal mode via the ``Ctrl-Shift-P`` keybinding
 - `gui/launcher`: can now be dragged from anywhere on the window body
@@ -34,11 +62,10 @@ that repo.
 - `gui/quickcmd`: converted to a movable, resizable, mouse-enabled window
 - `gui/quickcmd`: commands are now stored globally so you don't have to recreate commands for every fort
 - `devel/inspect-screen`: updated for new rendering semantics and can now also inspect map textures
+- `exterminate`: added drown method. magma and drown methods will now clean up liquids automatically.
 
 ## Documentation
 - `devel/hello-world`: updated to be a better example from which to start new gui scripts
-
-## Removed
 
 # 0.47.05-r8
 
