@@ -87,6 +87,8 @@ local function fixUnit(unit)
             status_cache.rel_map[index] = -1
         end
 
+        -- TODO: what if there were status slots taken above status_slot?
+        -- does everything need to be moved down by one?
         if cache.next_slot > status_slot then
             cache.next_slot = status_slot
         end
