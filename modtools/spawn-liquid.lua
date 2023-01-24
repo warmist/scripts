@@ -1,208 +1,67 @@
--- Interface for spawning liquids on tiles.
+-- Spawn liquid on specified tile.
+--@ module = true
 
-local gui = require('gui')
-local guidm = require('gui.dwarfmode')
-local widgets = require('gui.widgets')
+local argparse = require('argparse')
 
-local SpawnLiquidMode = {
-    DRAG = 1,
-    CLICK = 2,
-    AREA = 3,
-}
+function spawnLiquid(position, liquid_level, liquid_type)
+  local map_block = dfhack.maps.getTileBlock(position)
+  local tile = dfhack.maps.getTileFlags(position)
 
-SpawnLiquid = defclass(SpawnLiquid, widgets.Window)
-SpawnLiquid.ATTRS {
-    frame_title='Spawn liquid menu',
-    frame={b = 4, r = 4, w = 50, h = 12},
-}
+  tile.flow_size = liquid_level or 3
+  tile.liquid_type = liquid_type or df.tile_liquid.Water
+  tile.flow_forbid = liquid_type == df.tile_liquid.Magma or liquid_level >= 4
 
-function SpawnLiquid:init()
-    self.type = df.tile_liquid.Water
-    self.level = 3
-    self.mode = SpawnLiquidMode.DRAG
+  map_block.flags.update_liquid = true
+  map_block.flags.update_liquid_twice = true
 
-    self:addviews{
-        widgets.Label{
-            frame = {l = 0, t = 0},
-            text = {{ text = self:callback('getLabel') }}
-        },
-        widgets.HotkeyLabel{
-            frame = {l = 0, b = 2},
-            label = 'Decrease level',
-            auto_width = true,
-            key = 'KEYBOARD_CURSOR_LEFT',
-            on_activate = self:callback('decreaseLiquidLevel'),
-            disabled = function() return self.level == 1 end
-        },
-        widgets.HotkeyLabel{
-            frame = { l = 18, b = 2},
-            label = 'Increase level',
-            auto_width = true,
-            key = 'KEYBOARD_CURSOR_RIGHT',
-            on_activate = self:callback('increaseLiquidLevel'),
-            disabled = function() return self.level == 7 end
-        },
-        widgets.CycleHotkeyLabel{
-            frame = {l = 0, b = 1},
-            label = 'Liquid type:',
-            auto_width = true,
-            key = 'KEYBOARD_CURSOR_UP',
-            options = {
-                { label = "Water", value = df.tile_liquid.Water, pen = COLOR_CYAN },
-                { label = "Magma", value = df.tile_liquid.Magma, pen = COLOR_RED },
-            },
-            initial_option = 0,
-            on_change = function(new, old) self.type = new end,
-        },
-        widgets.CycleHotkeyLabel{
-            frame = {l = 0, b = 0},
-            label = 'Mode:',
-            auto_width = true,
-            key = 'KEYBOARD_CURSOR_DOWN',
-            options = {
-                { label = "Drag ", value = SpawnLiquidMode.DRAG, pen = COLOR_WHITE },
-                { label = "Click", value = SpawnLiquidMode.CLICK, pen = COLOR_WHITE },
-                { label = "Area ", value = SpawnLiquidMode.AREA, pen = COLOR_WHITE },
-            },
-            initial_option = 1,
-            on_change = function(new, old) self.mode = new end,
-        },
-    }
+  local z_level = df.global.world.map_extras.z_level_flags
+  z_level.update = true
+  z_level.update_twice = true
 end
 
-function SpawnLiquid:getLabel()
-    return ([[Cick on a tile to spawn a %s/7 level of %s]]):format(self.level, self.type and "Water" or "Magma")
+local options, args = {
+  type = nil,
+  level = nil,
+  position = nil,
+}, {...}
+
+local positionals = argparse.processArgsGetopt(args, {
+  {'h', 'help', handler=function() options.help = true end},
+  {'t', 'type', handler=function(arg) options.type = arg end, hasArg = true},
+  {'l', 'level', handler=function(arg)
+    options.level = argparse.positiveInt(arg, "level")
+  end, hasArg = true},
+  {'p', 'pos', 'position', handler=function(arg)
+    options.position = argparse.coords(arg, "position")
+  end, hasArg = true},
+})
+
+local function main()
+  if positionals[1] == "help" or options.help then
+    print(dfhack.script_help())
+  end
+
+  if options.type and df.tile_liquid[options.type] then
+    options.type = df.tile_liquid[options.type]
+  elseif options.type then
+    qerror(([[%s is an unrecognized liquid type. Types available: Water Magma]]):format(options.type))
+  else
+    qerror("No liquid type specified. Use `--type <type>`")
+  end
+
+  if options.level > 7 then
+    qerror("Invalid liquid level specified. Minimum of 1 and maximum of 7.")
+  elseif not options.level then
+    qerror("No liquid level specified. Use `--level <level>`")
+  end
+
+  if not options.position then
+    qerror("No position specified. Use `--position [ <x> <y> <z> ]")
+  end
+
+  spawnLiquid(options.position, options.level, options.type)
 end
 
-function SpawnLiquid:increaseLiquidLevel()
-    if self.level < 7 then
-        self.level = self.level + 1
-    end
+if not dfhack_flags.module then
+  main()
 end
-
-function SpawnLiquid:decreaseLiquidLevel()
-    if self.level > 1 then
-        self.level = self.level - 1
-    end
-end
-
-function SpawnLiquid:spawn(pos)
-    if dfhack.maps.isValidTilePos(pos) and dfhack.maps.isTileVisible(pos) then
-        local map_block = dfhack.maps.getTileBlock(pos)
-        local tile = dfhack.maps.getTileFlags(pos)
-
-        tile.flow_size = self.level
-        tile.liquid_type = self.type
-        tile.flow_forbid = true
-
-        map_block.flags.update_liquid = true
-        map_block.flags.update_liquid_twice = true
-
-        -- TODO: Figure out why water won't fall instantly.
-        local z_pos = pos.z - 129
-        local z_level = df.global.world.map_extras.z_level_flags
-        z_level.update = true
-        z_level.update_twice = true
-        df.global.world.map_extras.z_level_flags[z_pos] = true
-    else
-        qerror("Tile is not visible or cursor is off screen.")
-    end
-end
-
-function SpawnLiquid:getPen()
-    local tile = nil
-
-    if self.type == df.tile_liquid.Water then
-        tile = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 0, 0)
-    else
-        tile = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 1, 0)
-    end
-
-    return self.type == df.tile_liquid.Water and COLOR_BLUE or COLOR_RED, "X", tile
-end
-
-function SpawnLiquid:getBounds(start_position, end_position)
-    return {
-        x1=math.min(start_position.x, end_position.x),
-        x2=math.max(start_position.x, end_position.x),
-        y1=math.min(start_position.y, end_position.y),
-        y2=math.max(start_position.y, end_position.y)
-    }
-end
-
-function SpawnLiquid:onRenderFrame(dc, rect)
-    SpawnLiquid.super.onRenderFrame(self, dc, rect)
-
-    if self.is_dragging then
-        if df.global.enabler.mouse_lbut == 0 then
-            self.is_dragging = false
-        end
-
-        if not self:getMouseFramePos() then
-            self:spawn(dfhack.gui.getMousePos())
-        end
-    end
-
-    local mouse_pos = dfhack.gui.getMousePos()
-    if mouse_pos and dfhack.maps.isValidTilePos(mouse_pos) then
-        if self.is_dragging_area then
-            guidm.renderMapOverlay(self:callback('getPen'), self:getBounds(self.area_first_pos, mouse_pos))
-        else
-            guidm.renderMapOverlay(self:callback('getPen'), self:getBounds(mouse_pos, mouse_pos))
-        end
-    end
-end
-
-function SpawnLiquid:onInput(keys)
-    if SpawnLiquid.super.onInput(self, keys) then return true end
-
-
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
-        if self.mode == SpawnLiquidMode.CLICK then
-            self:spawn(dfhack.gui.getMousePos())
-        elseif self.mode == SpawnLiquidMode.DRAG then
-            self.is_dragging = true
-        elseif self.mode == SpawnLiquidMode.AREA then
-            if self.is_dragging_area then
-                local mouse_pos = dfhack.gui.getMousePos()
-                local bounds = self:getBounds(self.area_first_pos, mouse_pos)
-                for y=bounds.y1, bounds.y2 do
-                    for x=bounds.x1, bounds.x2 do
-                        self:spawn(xyz2pos(x, y, mouse_pos.z))
-                    end
-                end
-                self.is_dragging_area = false
-                return true
-            else
-                self.is_dragging_area = true
-                self.area_first_pos = dfhack.gui.getMousePos()
-            end
-        end
-    end
-
-    if keys._MOUSE_L and not self:getMouseFramePos() then
-        if self.mode == SpawnLiquidMode.DRAG then
-            self.is_dragging = true
-            return true
-        end
-    end
-end
-
-SpawnLiquidScreen = defclass(SpawnLiquidScreen, gui.ZScreen)
-SpawnLiquidScreen.ATTRS {
-    focus_path='spawnliquid',
-}
-
-function SpawnLiquidScreen:init()
-    self:addviews{SpawnLiquid{}}
-end
-
-function SpawnLiquidScreen:onDismiss()
-    view = nil
-end
-
-if not dfhack.isMapLoaded() then
-    qerror('This script requires a fortress map to be loaded')
-end
-
-view = view and view:raise() or SpawnLiquidScreen{}:show()
