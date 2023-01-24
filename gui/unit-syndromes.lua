@@ -22,9 +22,22 @@ local function getEffectInteraction(effect)
     return ("%s"):format(effect.interaction.adv_name)
 end
 
--- TODO: Unfinished.
+-- TODO: Many creature names are empty, placeholder?
 local function getEffectCreatureName(effect)
-    return ""
+    if effect.race_str == "" then
+        return "UNKNOWN"
+    end
+
+    local creature = df.global.world.raws.creatures.all[effect.race[0]]
+
+    if effect.caste_str == "DEFAULT" then
+        return ("%s%s"):format(string.upper(creature.name[0]), (", %s"):format(effect.caste_str))
+    else
+        -- TODO: This seems to be unused.
+        local caste = creature.caste[effect.caste[0]]
+
+        return ("%s%s"):format(string.upper(creature.name[0]), (", %s"):format(string.upper(caste.name[0])))
+    end
 end
 
 local function getAttributePairs(values, percentages)
@@ -170,7 +183,11 @@ local EffectFlagDescription = {
         return ("MODIFIER=%s, CHANGE=%s"):format(effect.multiplier, effect.chance)
     end,
     [df.creature_interaction_effect_type.BODY_TRANSFORMATION] = function(effect)
-        return ("%s"):format(getEffectCreatureName(effect))
+        if effect.chance > 0 then
+            return ("%s, CHANCE=%s%%"):format(getEffectCreatureName(effect), effect.chance)
+        else
+            return getEffectCreatureName(effect)
+        end
     end,
     [df.creature_interaction_effect_type.PHYS_ATT_CHANGE] = function(effect)
         return ("%s"):format(table.concat(getAttributePairs(effect.phys_att_add, effect.phys_att_perc), "\n"))
@@ -178,13 +195,13 @@ local EffectFlagDescription = {
     [df.creature_interaction_effect_type.MENT_ATT_CHANGE] = function(effect)
         return ("%s"):format(table.concat(getAttributePairs(effect.ment_att_add, effect.ment_att_perc), "\n"))
     end,
+    -- TODO: Unfinished.
     [df.creature_interaction_effect_type.MATERIAL_FORCE_MULTIPLIER] = function(effect)
         local material = df.material[effect.mat_type]
 
-        return ("RECIEVED DAMAGE SCALED BY %s%%%s%s"):format(
+        return ("RECIEVED DAMAGE SCALED BY %s%%%s"):format(
             (effect.fraction_mul * 100 / effect.fraction_div * 100) / 100,
-            material and "vs.",
-            " " .. material
+            material and ("vs. %s"):format(material.stone_name)
         )
     end,
     -- TODO: Unfinished.
@@ -219,6 +236,24 @@ local function getEffectDescription(effect)
     return EffectFlagDescription[effect:getType()] and EffectFlagDescription[effect:getType()](effect) or ""
 end
 
+local function getSyndromeName(syndrome_raw)
+    local is_transformation = false
+
+    for _, effect in pairs(syndrome_raw.ce) do 
+        if df.creature_interaction_effect_body_transformationst:is_instance(effect) then
+            is_transformation = true
+        end
+    end
+
+    if syndrome_raw.syn_name ~= "" then
+        syndrome_raw.syn_name:gsub("^%l", string.upper)
+    elseif is_transformation then
+        return "Body transformation"
+    end
+
+    return "Mystery"
+end
+
 local function getSyndromeEffects(syndrome_type)
     local syndrome_raw = df.global.world.raws.syndromes.all[syndrome_type]
     local syndrome_effects = {}
@@ -249,7 +284,7 @@ local function getSyndromeDescription(syndrome_raw, syndrome)
     end
 
     return ("%-22s %s%s \n%s effects"):format(
-        syndrome_raw.syn_name ~= "" and syndrome_raw.syn_name:gsub("^%l", string.upper) or "Mystery",
+        getSyndromeName(syndrome_raw),
         syndrome and ("%s of "):format(syndrome.ticks) or "",
         syndrome_duration,
         #getSyndromeEffects(syndrome_raw.id)
