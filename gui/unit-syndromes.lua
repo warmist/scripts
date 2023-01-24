@@ -239,7 +239,7 @@ end
 local function getSyndromeName(syndrome_raw)
     local is_transformation = false
 
-    for _, effect in pairs(syndrome_raw.ce) do 
+    for _, effect in pairs(syndrome_raw.ce) do
         if df.creature_interaction_effect_body_transformationst:is_instance(effect) then
             is_transformation = true
         end
