@@ -146,7 +146,7 @@ function PhasesPanel:init()
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='phases',
-            key='CUSTOM_A',
+            key='CUSTOM_SHIFT_P',
             label='phases',
             options={{label='Autodetect', value='Autodetect', pen=COLOR_GREEN},
                      'Custom'},
@@ -240,7 +240,7 @@ function StartPosPanel:init()
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='startpos',
-            key='CUSTOM_S',
+            key='CUSTOM_P',
             label='playback start',
             options={'Unset', 'Setting', 'Set'},
             initial_option=self.start_pos and 'Set' or 'Unset',
@@ -324,7 +324,7 @@ function Blueprint:init()
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
             widgets.ToggleHotkeyLabel{
                 view_id='engrave',
-                key='CUSTOM_E',
+                key='CUSTOM_SHIFT_E',
                 label='engrave',
                 options={{label='On', value=true}, {label='Off', value=false}},
                 initial_option=not not self.presets.engrave},
@@ -598,6 +598,10 @@ end
 BlueprintScreen = defclass(BlueprintScreen, gui.ZScreen)
 BlueprintScreen.ATTRS {
     focus_path='blueprint',
+    force_pause=true,
+    pass_pause=false,
+    pass_movement_keys=true,
+    pass_mouse_clicks=false,
     presets=DEFAULT_NIL,
 }
 
