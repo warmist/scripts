@@ -2,29 +2,30 @@ fix/restore-nicks
 =================
 
 .. dfhack-tool::
-    :summary: Workaround for the v50.x bug where Dwarf Fortress occasionally erase Dwarf's nicknames.
+    :summary: Restore nicknames when DF loses them.
     :tags: fort bugfix units
 
-Units occasionally lose their nicknames, in event such as killing a forgotten beast.
+Due to a bug, units occasionally lose their nicknames, such as when killing a forgotten beast.
 
 `fix/restore-nicks` will save the nicknames of the units once an in-game day, and restore any removed
 nickname.
 
 .. note::
-    It does not make the difference between a nickname removed by the player or by a bug, so
-    it will also prevent to remove the nickname of a dwarf.
+    It does not distinguish between a nickname removed by the player or by a bug. If you want
+    to remove a dwarf's nickname, please run ``fix/restore-nicks forget`` to reset the tracking.
 
 Usage
 -----
 
 ``enable fix/restore-nicks``
-    Enable saving and restoring of the nicknames daily.
+    Enable daily restoring and saving of the nicknames.
 
 ``disable fix/restore-nicks``
-    Disable saving and restoring the nicknames daily.
+    Disable the daily check.
 
 ``fix/restore-nicks now``
-    Save and restore the nicknames once.
+    Immediately restore lost nicknames. Note for this to work, ``fix/restore-nicks`` must have
+    already been enabled when the dwarf lost their nickname.
 
 ``fix/restore-nicks forget``
     Forget all the saved nicknames. Useful in order to actually remove nicknames.

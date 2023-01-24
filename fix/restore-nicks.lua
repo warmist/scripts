@@ -1,6 +1,7 @@
 -- Workaround for the v50.x bug where Dwarf Fortress occasionally erase Dwarf's nicknames.
 -- It happen when killing certain figures, such as forgotten beasts.
 --@ enable = true
+--@ module = true
 
 local json = require('json')
 local persist = require('persist-table')
@@ -102,7 +103,7 @@ if args[1] == "enable" then
 elseif args[1] == "disable" then
     enabled = false
 elseif args[1] == "now" then
-    print("Saving and restoring the nicknames")
+    print("Restoring and saving nicknames")
     save_and_restore_nicks()
     return
 elseif args[1] == "forget" then
