@@ -748,7 +748,7 @@ if dfhack_flags.module then
 end
 
 if view then
-    if not view:isOnTop() then
+    if not view:hasFocus() then
         view:raise()
     else
         -- running the launcher while it is open (e.g. from hitting the launcher
