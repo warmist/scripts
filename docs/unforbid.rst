@@ -19,5 +19,8 @@ Usage
 Options
 -------
 
+``-a``, ``--allow-unreachable``
+    Allows unforbidding unreachable items.
+
 ``-q``, ``--quiet``
     Suppress non-error console output.
