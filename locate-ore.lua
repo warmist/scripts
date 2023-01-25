@@ -87,7 +87,7 @@ local function findOreVeins(target_ore, show_undiscovered)
 
     local ore_veins = {}
     for _, block in pairs(df.global.world.map.map_blocks) do
-        for _, bevent in pairs(block.block_events) do    
+        for _, bevent in pairs(block.block_events) do
             if bevent:getType() ~= df.block_square_event_type.mineral then
                 goto skipevent
             end
