@@ -141,13 +141,11 @@ end
 
 local options, args = {
     help = false,
-    list = false,
     show_undiscovered = false
 }, {...}
 
 local positionals = argparse.processArgsGetopt(args, {
     {'h', 'help', handler=function() options.help = true end},
-    {'l', 'list', handler=function() options.list = true end},
     {'a', 'all', handler=function() options.show_undiscovered = true end},
 })
 
@@ -156,13 +154,15 @@ if positionals[1] == "help" or options.help then
     return
 end
 
-if positionals[1] == list or options.list then
+if positionals[1] == nil or positionals[1] == "list" then
+    print(dfhack.script_help())
     local veins = findOreVeins(nil, options.show_undiscovered)
     local sorted = sortTableBy(veins, function(a, b) return #a.positions < #b.positions end)
 
     for _, vein in ipairs(sorted) do
         print("  " .. getOreDescription(vein))
     end
+    return
 else
     local veins = findOreVeins(positionals[1], options.show_undiscovered)
     local vein_keys = extractKeys(veins)
