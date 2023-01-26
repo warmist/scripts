@@ -2,7 +2,7 @@
 
 local argparse = require('argparse')
 
-local function unforbid_all(allow_unreachable, quiet)
+local function unforbid_all(include_unreachable, quiet)
     if not quiet then print('Unforbidding all items...') end
 
     local count = 0
@@ -13,7 +13,7 @@ local function unforbid_all(allow_unreachable, quiet)
             if block then
                 local walkable = block.walkable[item.pos.x%16][item.pos.y%16]
 
-                if walkable == 0 and not allow_unreachable then
+                if walkable == 0 and not include_unreachable then
                     if not quiet then print(('  unreachable: %s (skipping)'):format(item)) end
                     goto skipitem
                 end
@@ -34,13 +34,13 @@ end
 local options, args = {
     help = false,
     quiet = false,
-    allow_unreachable = false
+    include_unreachable = false
 }, {...}
 
 local positionals = argparse.processArgsGetopt(args, {
     {'h', 'help', handler=function() options.help = true end},
     {'q', 'quiet', handler=function() options.quiet = true end},
-    {'a', 'allow-unreachable', handler=function() options.allow_unreachable = true end},
+    {'u', 'include-unreachable', handler=function() options.include_unreachable = true end},
 })
 
 if positionals[1] == nil or positionals[1] == "help" or options.help then
@@ -48,5 +48,5 @@ if positionals[1] == nil or positionals[1] == "help" or options.help then
 end
 
 if positionals[1] == "all" then
-    unforbid_all(options.allow_unreachable, options.quiet)
+    unforbid_all(options.include_unreachable, options.quiet)
 end

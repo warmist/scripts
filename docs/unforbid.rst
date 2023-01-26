@@ -19,8 +19,8 @@ Usage
 Options
 -------
 
-``-a``, ``--allow-unreachable``
-    Allows unforbidding unreachable items.
+``-u``, ``--include-unreachable``
+    Allows the tool to unforbid unreachable items.
 
 ``-q``, ``--quiet``
     Suppress non-error console output.
