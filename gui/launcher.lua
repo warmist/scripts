@@ -126,19 +126,24 @@ AutocompletePanel.ATTRS{
 function AutocompletePanel:init()
     self:addviews{
         widgets.Label{
-            view_id="autocomplete_label",
             frame={l=0, t=0},
-            text='All scripts'
-        },
-        widgets.Label{
-            frame={l=0, t=2},
             text='Click or select via'
         },
         widgets.Label{
-            frame={l=1, t=3},
+            frame={l=1, t=1},
             text={{text='Shift+'..string.char(26), pen=COLOR_LIGHTGREEN},
                   {text='/'},
-                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}},
+                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}
+        },
+        widgets.Label{
+            frame={l=0, t=3},
+            text='Showing:',
+        },
+        widgets.Label{
+            view_id="autocomplete_label",
+            frame={l=9, t=3},
+            text='All scripts'
+        },
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
