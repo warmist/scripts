@@ -11,6 +11,11 @@ local SpawnLiquidMode = {
     AREA = 3,
 }
 
+local SpawnLiquidCursor = {
+    [df.tile_liquid.Water] = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 0, 0),
+    [df.tile_liquid.Magma] = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 1, 0),
+}
+
 SpawnLiquid = defclass(SpawnLiquid, widgets.Window)
 SpawnLiquid.ATTRS {
     frame_title='Spawn liquid menu',
@@ -21,6 +26,7 @@ function SpawnLiquid:init()
     self.type = df.tile_liquid.Water
     self.level = 3
     self.mode = SpawnLiquidMode.DRAG
+    self.tile = SpawnLiquidCursor[self.type]
 
     self:addviews{
         widgets.Label{
@@ -53,7 +59,10 @@ function SpawnLiquid:init()
                 { label = "Magma", value = df.tile_liquid.Magma, pen = COLOR_RED },
             },
             initial_option = 0,
-            on_change = function(new, old) self.type = new end,
+            on_change = function(new, _)
+                self.type = new
+                self.tile = SpawnLiquidCursor[self.type]
+            end,
         },
         widgets.CycleHotkeyLabel{
             frame = {l = 0, b = 0},
@@ -94,15 +103,7 @@ function SpawnLiquid:spawn(pos)
 end
 
 function SpawnLiquid:getPen()
-    local tile = nil
-
-    if self.type == df.tile_liquid.Water then
-        tile = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 0, 0)
-    else
-        tile = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 1, 0)
-    end
-
-    return self.type == df.tile_liquid.Water and COLOR_BLUE or COLOR_RED, "X", tile
+    return self.type == df.tile_liquid.Water and COLOR_BLUE or COLOR_RED, "X", self.tile
 end
 
 function SpawnLiquid:getBounds(start_position, end_position)
@@ -119,23 +120,21 @@ end
 function SpawnLiquid:onRenderFrame(dc, rect)
     SpawnLiquid.super.onRenderFrame(self, dc, rect)
 
+    local mouse_pos = dfhack.gui.getMousePos()
+
     if self.is_dragging then
         if df.global.enabler.mouse_lbut == 0 then
             self.is_dragging = false
-        end
-
-        if not self:getMouseFramePos() then
-            self:spawn(dfhack.gui.getMousePos())
+        elseif mouse_pos and not self:getMouseFramePos() then
+            self:spawn(mouse_pos)
         end
     end
 
-    local mouse_pos = dfhack.gui.getMousePos()
-    if mouse_pos and dfhack.maps.isValidTilePos(mouse_pos) then
-        if self.is_dragging_area then
-            guidm.renderMapOverlay(self:callback('getPen'), self:getBounds(self.area_first_pos, mouse_pos))
-        else
-            guidm.renderMapOverlay(self:callback('getPen'), self:getBounds(mouse_pos, mouse_pos))
-        end
+    if mouse_pos then
+        guidm.renderMapOverlay(self:callback('getPen'), self:getBounds(
+            self.is_dragging_area and self.area_first_pos or mouse_pos,
+            mouse_pos
+        ))
     end
 end
 
@@ -143,13 +142,12 @@ function SpawnLiquid:onInput(keys)
     if SpawnLiquid.super.onInput(self, keys) then return true end
 
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
-        if self.mode == SpawnLiquidMode.CLICK then
-            self:spawn(dfhack.gui.getMousePos())
-        elseif self.mode == SpawnLiquidMode.DRAG then
-            self.is_dragging = true
-        elseif self.mode == SpawnLiquidMode.AREA then
+        local mouse_pos = dfhack.gui.getMousePos()
+
+        if self.mode == SpawnLiquidMode.CLICK and mouse_pos then
+            self:spawn(mouse_pos)
+        elseif self.mode == SpawnLiquidMode.AREA and mouse_pos then
             if self.is_dragging_area then
-                local mouse_pos = dfhack.gui.getMousePos()
                 local bounds = self:getBounds(self.area_first_pos, mouse_pos)
                 for y = bounds.y1, bounds.y2 do
                     for x = bounds.x1, bounds.x2 do
@@ -162,8 +160,10 @@ function SpawnLiquid:onInput(keys)
                 return true
             else
                 self.is_dragging_area = true
-                self.area_first_pos = dfhack.gui.getMousePos()
+                self.area_first_pos = mouse_pos
             end
+        elseif self.mode == SpawnLiquidMode.DRAG then
+            self.is_dragging = true
         end
     end
 
