@@ -176,6 +176,7 @@ if positionals[1] == "enable" then
 elseif positionals[1] == "disable" then
     enabled = false
     persist_state()
+    repeatutil.cancel(GLOBAL_KEY)
     return
 
 elseif positionals[1] == "status" then
