@@ -6,7 +6,7 @@ local function isItemReachable(item)
     local item_position = xyz2pos(dfhack.items.getPosition(item))
     local block = dfhack.maps.getTileBlock(item_position)
 
-    return block and  block.walkable[item_position.x % 16][item_position.y % 16] ~= 0
+    return block and block.walkable[item_position.x % 16][item_position.y % 16] ~= 0
 end
 
 local function getForbiddenItems()
@@ -38,9 +38,11 @@ end
 if positionals[1] == "list" then
     local forbidden_items = getForbiddenItems()
     local sorted_items = {}
+    local item_sum = 0
 
     for item_type, count in pairs(forbidden_items) do
         table.insert(sorted_items, { type = item_type, count = count })
+        item_sum = item_sum + count
     end
 
     table.sort(sorted_items, function(a, b)
@@ -52,6 +54,7 @@ if positionals[1] == "list" then
     else
         print("Forbidden items on the map by type:\n")
         print(("%-14s %5s\n"):format("TYPE", "COUNT"))
+        print(("%-14s %5s"):format("TOTAL", item_sum))
 
         for _, item in pairs(sorted_items) do
             print(("%-14s %5s"):format(item.type, item.count))
@@ -76,10 +79,16 @@ if positionals[1] == "unreachable" then
 
     local count = 0
     for _, item in pairs(df.global.world.items.all) do
+        if item.flags.construction or item.flags.in_building or item.flags.artifact then
+            goto skipitem
+        end
+
         if not isItemReachable(item) then
             item.flags.forbid = true
             count = count + 1
         end
+
+        :: skipitem ::
     end
 
     print(("Forbade %s items, you can unforbid them by running `unforbid all`"):format(count))
