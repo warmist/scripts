@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `autofish`: Auto-manage fishing labors to control your stock of fish.
+- `forbid`: extended version of fix/forbid-unreachable with more features.
 
 ## Fixes
 - `quickfort`: allow floor bars, floor grates, and hatches to be placed over all stair types like vanilla allows
@@ -25,6 +26,7 @@ that repo.
 - `ban-cooking`: report number of items banned.
 - `gui/launcher`: make command output scrollback separate from the help text so players can continue to see the output of the previous command as they type the next one
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
+- `unforbid`: does not unforbid unreachable items by default anymore.
 
 ## Removed
 
