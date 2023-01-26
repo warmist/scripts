@@ -25,7 +25,9 @@ that repo.
 - `ban-cooking`: ban announcements are now hidden by default; use new option ``--verbose`` to show them.
 - `ban-cooking`: report number of items banned.
 - `gui/launcher`: make command output scrollback separate from the help text so players can continue to see the output of the previous command as they type the next one
+- `gui/launcher`: clarify what is being shown in the autocomplete list (all commands, autocompletion of partially typed command, or commands related to typed command)
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
+- `locate-ore`: now only searches revealed tiles by default
 
 ## Removed
 
