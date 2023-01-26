@@ -16,7 +16,7 @@ that repo.
 ## New Scripts
 - `autofish`: Auto-manage fishing labors to control your stock of fish.
 - `fix/restore-nicks`: Restore nicknames when DF loses them
-- `forbid`: extended version of fix/forbid-unreachable with more features.
+- `forbid`: Forbid and list forbidden items on the map
 
 ## Fixes
 - `quickfort`: allow floor bars, floor grates, and hatches to be placed over all stair types like vanilla allows
