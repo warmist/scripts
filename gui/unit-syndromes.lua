@@ -22,7 +22,6 @@ local function getEffectInteraction(effect)
     return ("%s"):format(effect.interaction.adv_name)
 end
 
--- TODO: Many creature names are empty, placeholder?
 local function getEffectCreatureName(effect)
     if effect.race_str == "" then
         return "UNKNOWN"
@@ -33,7 +32,7 @@ local function getEffectCreatureName(effect)
     if effect.caste_str == "DEFAULT" then
         return ("%s%s"):format(string.upper(creature.name[0]), (", %s"):format(effect.caste_str))
     else
-        -- TODO: This seems to be unused.
+        -- TODO: Caste seems to be entirely unused.
         local caste = creature.caste[effect.caste[0]]
 
         return ("%s%s"):format(string.upper(creature.name[0]), (", %s"):format(string.upper(caste.name[0])))
@@ -195,7 +194,7 @@ local EffectFlagDescription = {
     [df.creature_interaction_effect_type.MENT_ATT_CHANGE] = function(effect)
         return ("%s"):format(table.concat(getAttributePairs(effect.ment_att_add, effect.ment_att_perc), "\n"))
     end,
-    -- TODO: Unfinished.
+    -- TODO: Unfinished, materials need to be tested.
     [df.creature_interaction_effect_type.MATERIAL_FORCE_MULTIPLIER] = function(effect)
         local material = df.material[effect.mat_type]
 
@@ -204,7 +203,7 @@ local EffectFlagDescription = {
             material and ("vs. %s"):format(material.stone_name)
         )
     end,
-    -- TODO: Unfinished.
+    -- TODO: Unfinished, unknown fields from previous script.
     [df.creature_interaction_effect_type.BODY_MAT_INTERACTION] = function(effect)
         return ("%s %s"):format(effect.interaction_name, effect.interaction_id)
     end,
@@ -422,12 +421,18 @@ function UnitSyndromes:init()
             frame={l=0, b=0},
             label='Back',
             auto_width=true,
-            key='KEYBOARD_CURSOR_LEFT',
+            key='LEAVESCREEN',
             on_activate=previous_page,
             active=is_not_main_page,
             enabled=is_not_main_page,
         },
     }
+end
+
+function UnitSyndromes:onInput(keys)
+    if keys._R_MOUSE_DOWN then
+        self:previous_page()
+    end
 end
 
 function UnitSyndromes:showUnits(index, choice)
