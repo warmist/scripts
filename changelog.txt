@@ -30,6 +30,7 @@ that repo.
 - `locate-ore`: now only searches revealed tiles by default
 
 ## Removed
+-- `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.
 
 # 50.05-alpha2
 
