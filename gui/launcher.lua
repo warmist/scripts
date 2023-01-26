@@ -133,12 +133,22 @@ function AutocompletePanel:init()
             frame={l=1, t=1},
             text={{text='Shift+'..string.char(26), pen=COLOR_LIGHTGREEN},
                   {text='/'},
-                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}},
+                  {text='Shift+'..string.char(27), pen=COLOR_LIGHTGREEN}}
+        },
+        widgets.Label{
+            frame={l=0, t=3},
+            text='Showing:',
+        },
+        widgets.Label{
+            view_id="autocomplete_label",
+            frame={l=9, t=3},
+            text='All scripts'
+        },
         widgets.List{
             view_id='autocomplete_list',
             scroll_keys={},
             on_select=self:callback('on_list_select'),
-            frame={l=0, r=0, t=3, b=1}},
+            frame={l=0, r=0, t=5, b=1}},
     }
 end
 
@@ -684,8 +694,16 @@ function LauncherUI:update_autocomplete(firstword)
     sort_by_freq(entries)
     if found then
         table.insert(entries, 1, firstword)
+        self.subviews.autocomplete_label:setText("Similar scripts")
         add_top_related_entries(entries, firstword, 20)
+    else
+        self.subviews.autocomplete_label:setText("Suggestions")
     end
+
+    if #firstword == 0 then
+        self.subviews.autocomplete_label:setText("All scripts")
+    end
+
     self.subviews.autocomplete:set_options(entries, found)
 end
 
