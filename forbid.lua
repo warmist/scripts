@@ -5,16 +5,7 @@ local argparse = require('argparse')
 local function isItemReachable(item)
     local block = dfhack.maps.getTileBlock(item.pos)
 
-    -- TODO: Check item container walkability.
-    if block then
-        local walkable = block.walkable[item.pos.x % 16][item.pos.y % 16]
-
-        if walkable == 0 then
-            return false
-        else
-            return true
-        end
-    end
+    return block and block.walkable[item.pos.x % 16][item.pos.y % 16] ~= 0
 end
 
 local function getForbiddenItems()
@@ -76,7 +67,7 @@ if positionals[1] == "all" then
         count = count + 1
     end
 
-    print(("Forbid %s items, you can unforbid them by running `unforbid all`"):format(count))
+    print(("Forbade %s items, you can unforbid them by running `unforbid all`"):format(count))
 end
 
 if positionals[1] == "unreachable" then
@@ -84,11 +75,11 @@ if positionals[1] == "unreachable" then
 
     local count = 0
     for _, item in pairs(df.global.world.items.all) do
-        if not isItemReachable(item) then
+        if item.flags.on_ground and not isItemReachable(item) then
             item.flags.forbid = true
             count = count + 1
         end
     end
 
-    print(("Forbid %s items, you can unforbid them by running `unforbid all`"):format(count))
+    print(("Forbade %s items, you can unforbid them by running `unforbid all`"):format(count))
 end
