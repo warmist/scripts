@@ -155,6 +155,7 @@ end
 
 if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
     dfhack.printerr("autofish needs a loaded fortress to work")
+    return
 end
 
 -- argument handling
