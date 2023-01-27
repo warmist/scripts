@@ -32,6 +32,7 @@ that repo.
 - `unforbid`: does not unforbid unreachable items by default anymore.
 
 ## Removed
+- `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.
 
 # 50.05-alpha2
 
