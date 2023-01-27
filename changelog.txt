@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 - `autofish`: Auto-manage fishing labors to control your stock of fish.
 - `fix/restore-nicks`: Restore nicknames when DF loses them
+- `forbid`: Forbid and list forbidden items on the map
 
 ## Fixes
 - `quickfort`: allow floor bars, floor grates, and hatches to be placed over all stair types like vanilla allows
@@ -28,6 +29,7 @@ that repo.
 - `gui/launcher`: clarify what is being shown in the autocomplete list (all commands, autocompletion of partially typed command, or commands related to typed command)
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
 - `locate-ore`: now only searches revealed tiles by default
+- `unforbid`: does not unforbid unreachable items by default anymore.
 
 ## Removed
 - `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.

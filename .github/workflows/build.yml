@@ -56,7 +56,7 @@ jobs:
         rmdir $HOME/dfhack/scripts
         ln -sv $(pwd) $HOME/dfhack/scripts
     - name: Check whitespace
-      run: python $HOME/dfhack/ci/lint.py
+      run: python $HOME/dfhack/ci/lint.py --git-only --github-actions
     - name: Check Lua syntax
       if: success() || failure()
       run: python $HOME/dfhack/ci/script-syntax.py --ext=lua --cmd="luac5.3 -p" --github-actions
