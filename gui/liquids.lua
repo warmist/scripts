@@ -13,6 +13,7 @@ local SpawnLiquidMode = {
 
 local SpawnLiquidCursor = {
     [df.tile_liquid.Water] = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 0, 0),
+    [df.tiletype.RiverSource] = dfhack.screen.findGraphicsTile('LIQUIDS', 0, 0),
     [df.tile_liquid.Magma] = dfhack.screen.findGraphicsTile('MINING_INDICATORS', 1, 0),
 }
 
@@ -56,12 +57,13 @@ function SpawnLiquid:init()
             key = 'KEYBOARD_CURSOR_UP',
             options = {
                 { label = "Water", value = df.tile_liquid.Water, pen = COLOR_CYAN },
+                { label = "River", value = df.tiletype.RiverSource, pen = COLOR_CYAN },
                 { label = "Magma", value = df.tile_liquid.Magma, pen = COLOR_RED },
             },
             initial_option = 0,
             on_change = function(new, _)
                 self.type = new
-                self.tile = SpawnLiquidCursor[self.type]
+                self.tile = SpawnLiquidCursor[new]
             end,
         },
         widgets.CycleHotkeyLabel{
@@ -98,7 +100,14 @@ end
 
 function SpawnLiquid:spawn(pos)
     if dfhack.maps.isValidTilePos(pos) and dfhack.maps.isTileVisible(pos) then
-        liquids.spawnLiquid(pos, self.level, self.type)
+        if self.type == df.tiletype.RiverSource then
+            local map_block = dfhack.maps.getTileBlock(pos)
+            map_block.tiletype[pos.x % 16][pos.y % 16] = df.tiletype.RiverSource
+
+            liquids.spawnLiquid(pos, 7, df.tile_liquid.Water)
+        else
+            liquids.spawnLiquid(pos, self.level, self.type)
+        end
     end
 end
 
@@ -138,6 +147,7 @@ function SpawnLiquid:onRenderFrame(dc, rect)
     end
 end
 
+-- TODO: Pass camera movement input through to main viewscreen.
 function SpawnLiquid:onInput(keys)
     if SpawnLiquid.super.onInput(self, keys) then return true end
 
