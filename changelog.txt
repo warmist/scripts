@@ -29,7 +29,7 @@ that repo.
 - `gui/launcher`: clarify what is being shown in the autocomplete list (all commands, autocompletion of partially typed command, or commands related to typed command)
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
 - `locate-ore`: now only searches revealed tiles by default
-- `unforbid`: does not unforbid unreachable items by default anymore.
+- `unforbid`: does not unforbid unreachable and underwater items by default
 
 ## Removed
 - `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.
