@@ -9,6 +9,7 @@ local SpawnLiquidMode = {
     SET = 1,
     ADD = 2,
     REMOVE = 3,
+    CLEAN = 4,
 }
 
 local SpawnLiquidPaintMode = {
@@ -33,7 +34,7 @@ function SpawnLiquid:init()
     self.type = df.tile_liquid.Water
     self.mode = SpawnLiquidMode.SET
     self.level = 3
-    self.paint_mode = SpawnLiquidPaintMode.DRAG
+    self.paint_mode = SpawnLiquidPaintMode.AREA
     self.tile = SpawnLiquidCursor[self.type]
 
     self:addviews{
@@ -59,9 +60,9 @@ function SpawnLiquid:init()
         },
         widgets.CycleHotkeyLabel{
             frame = {l = 0, b = 2},
-            label = 'Liquid type:',
+            label = 'Brush:',
             auto_width = true,
-            key = 'KEYBOARD_CURSOR_UP',
+            key = 'CUSTOM_Q',
             options = {
                 { label = "Water", value = df.tile_liquid.Water, pen = COLOR_CYAN },
                 { label = "Magma", value = df.tile_liquid.Magma, pen = COLOR_RED },
@@ -79,22 +80,23 @@ function SpawnLiquid:init()
             auto_width = true,
             key = 'KEYBOARD_CURSOR_DOWN',
             options = {
-                { label = "Drag ", value = SpawnLiquidPaintMode.DRAG, pen = COLOR_WHITE },
-                { label = "Click", value = SpawnLiquidPaintMode.CLICK, pen = COLOR_WHITE },
                 { label = "Area ", value = SpawnLiquidPaintMode.AREA, pen = COLOR_WHITE },
+                { label = "Click", value = SpawnLiquidPaintMode.CLICK, pen = COLOR_WHITE },
+                { label = "Drag ", value = SpawnLiquidPaintMode.DRAG, pen = COLOR_WHITE },
             },
             initial_option = 1,
             on_change = function(new, _) self.paint_mode = new end,
         },
         widgets.CycleHotkeyLabel{
-            frame = {l = 21, b = 0},
+            frame = {l = 18, b = 2},
             label = 'Mode:',
             auto_width = true,
-            key = 'CUSTOM_A',
+            key = 'CUSTOM_E',
             options = {
                 { label = "Set   ", value = SpawnLiquidMode.SET, pen = COLOR_WHITE },
                 { label = "Add   ", value = SpawnLiquidMode.ADD, pen = COLOR_WHITE },
                 { label = "Remove", value = SpawnLiquidMode.REMOVE, pen = COLOR_WHITE },
+                { label = "Clean ", value = SpawnLiquidMode.CLEAN, pen = COLOR_WHITE },
             },
             initial_option = 1,
             on_change = function(new, _) self.mode = new end,
@@ -103,8 +105,9 @@ function SpawnLiquid:init()
     }
 end
 
+-- TODO: More reactive label dependant on options selected.
 function SpawnLiquid:getLabel()
-    return ([[Cick on a tile to spawn a %s/7 level of %s]]):format(
+    return ([[Click on a tile to spawn a %s/7 level of %s]]):format(
         self.level,
         self.type == 0 and "Water" or self.type == 1 and "Magma" or "River"
     )
@@ -113,13 +116,13 @@ end
 function SpawnLiquid:getLiquidLevel(position)
     local tile = dfhack.maps.getTileFlags(position)
 
-    if self.mode == SpawnLiquidMode.SET then
-        return self.level
-    elseif self.mode == SpawnLiquidMode.ADD then
+    if self.mode == SpawnLiquidMode.ADD then
         return math.max(0, math.min(tile.flow_size + self.level, 7))
     elseif self.mode == SpawnLiquidMode.REMOVE then
         return math.max(0, math.min(tile.flow_size - self.level, 7))
     end
+
+    return self.level
 end
 
 function SpawnLiquid:increaseLiquidLevel()
@@ -134,7 +137,12 @@ function SpawnLiquid:spawn(pos)
     if dfhack.maps.isValidTilePos(pos) and dfhack.maps.isTileVisible(pos) then
         local map_block = dfhack.maps.getTileBlock(pos)
 
-        if self.type == df.tiletype.RiverSource then
+        if self.mode == SpawnLiquidMode.CLEAN then
+            local tile = dfhack.maps.getTileFlags(pos)
+
+            tile.water_salt = false
+            tile.water_stagnant = false
+        elseif self.type == df.tiletype.RiverSource then
             map_block.tiletype[pos.x % 16][pos.y % 16] = df.tiletype.RiverSource
 
             liquids.spawnLiquid(pos, 7, df.tile_liquid.Water)
