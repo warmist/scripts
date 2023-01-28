@@ -9,12 +9,30 @@ local REFRESH_MS = 10000
 
 -- eventually this should be queryable from script-manager
 local FORT_SERVICES = {
-
+    'autobutcher',
+    'autochop',
+    'autoclothing',
+    'autofarm',
+    'autofish',
+    'autounsuspend',
+    'channel-safely',
+    'emigration',
+    'fastdwarf',
+    'misery',
+    'nestboxes',
+    'prioritize',
+    'seedwatch',
+    'starvingdead',
+    'tailor',
 }
 
 -- eventually this should be queryable from script-manager
 local SYSTEM_SERVICES = {
-
+    'RemoteFortressReader',
+    'automelt',
+    'buildingplan',
+    'overlay',
+    'reveal',
 }
 
 local SETTINGS = {
@@ -34,47 +52,42 @@ local SETTINGS = {
 -- FortServices
 --
 
-
---
--- SystemServices
---
-
---
--- DFHackConfig
---
-
-DFHackConfig = defclass(DFHackConfig, widgets.Panel)
-
-function DFHackConfig:init()
-    self:addviews{
-        widgets.Label{
-            frame={t=0, l=0},
-            text='',
-        }
-    }
+local function is_fort_mode()
+    return dfhack.world.isFortressMode()
 end
 
---
--- ControlPanel
---
+FortServices = defclass(FortServices, widgets.Panel)
 
-ControlPanel = defclass(ControlPanel, widgets.Window)
-ControlPanel.ATTRS {
-    frame_title='DFHack Control Panel',
-    frame={w=45, h=20},
-    resizable=true,
-}
-
-function ControlPanel:init()
+function FortServices:init()
     self:addviews{
-        widgets.CycleHotkeyLabel{
-        },
-        widgets.FilteredList{
-            view_id='list',
+        widgets.Panel{
             frame={t=0, b=7},
-            on_select=self:callback('on_select'),
-            icon_width=2,
-            icon_pen=ICON_PEN,
+            autoarrange_subviews=true,
+            autoarrange_gap=1,
+            subviews={
+                widgets.WrappedLabel{
+                    frame={t=0},
+                    text_to_wrap='These automation tools can only be enabled when you'..
+                        ' have a fort loaded, but once you enable them, they will'..
+                        ' stay enabled when you save and reload your fort.',
+                },
+                widgets.Panel{
+                    frame={t=5},
+                    subviews={
+                        widgets.FilteredList{
+                            view_id='list',
+                            frame={t=0, b=0},
+                            on_select=self:callback('on_select'),
+                            icon_width=2,
+                            icon_pen=ICON_PEN,
+                        },
+                        widgets.Label{
+                            frame={t=0, l=0},
+                            text={{tile=ENABLED_ICON}},
+                        },
+                    },
+                },
+            },
         },
         widgets.WrappedLabel{
             view_id='desc',
@@ -85,6 +98,7 @@ function ControlPanel:init()
             frame={b=2, l=0},
             label='Toggle enabled',
             key='SELECT',
+            enabled=is_fort_mode,
             on_activate=self:callback('toggle_enabled')
         },
         widgets.HotkeyLabel{
@@ -98,37 +112,14 @@ function ControlPanel:init()
             frame={b=0, l=0},
             label='Launch config UI',
             key='CUSTOM_CTRL_G',
+            enabled=is_fort_mode,
             on_activate=self:callback('launch_config'),
         },
     }
-
-    self:refresh_list()
 end
 
-function ControlPanel:refresh_list()
-    local output = dfhack.run_command_silent('enable'):split('\n+')
-    local choices = {}
-    for _,line in ipairs(output) do
-        local _,_,command,enabled_str,extra = line:find('%s*(%S+):%s+(%S+)%s*(.*)')
-        if command and #extra == 0 then
-            local gui_config = 'gui/'..command
-            local has_gui_config = helpdb.is_entry(gui_config)
-            local text = ('[help] %11s %s')
-                    :format(has_gui_config and '[configure]' or '', command)
-            local desc = helpdb.is_entry(command) and
-                    helpdb.get_entry_short_help(command) or ''
-            local icon = enabled_str == 'on' and ENABLED_ICON or nil
-            table.insert(choices,
-                    {text=text, command=command, desc=desc, icon=icon,
-                     gui_config=has_gui_config and gui_config, search_key=command})
-        end
-    end
-    self.subviews.list:setChoices(choices)
-    self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
-end
-
-function ControlPanel:onInput(keys)
-    local handled = ControlPanel.super.onInput(self, keys)
+function FortServices:onInput(keys)
+    local handled = FortServices.super.onInput(self, keys)
     if keys._MOUSE_L_DOWN then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
@@ -149,38 +140,165 @@ function ControlPanel:onInput(keys)
     return handled
 end
 
-function ControlPanel:on_select(idx, choice)
+local function get_enabled_map()
+    local enabled_map = {}
+    local output = dfhack.run_command_silent('enable'):split('\n+')
+    for _,line in ipairs(output) do
+        local _,_,command,enabled_str,extra = line:find('%s*(%S+):%s+(%S+)%s*(.*)')
+        if enabled_str then
+            enabled_map[command] = enabled_str == 'on'
+        end
+    end
+    return enabled_map
+end
+
+function FortServices:refresh()
+    local enabled_map = get_enabled_map()
+    local choices = {}
+    for _,service in ipairs(FORT_SERVICES) do
+        local gui_config = 'gui/'..service
+        local has_gui_config = helpdb.is_entry(gui_config)
+        local text = ('[help] %11s %s')
+                :format(has_gui_config and '[configure]' or '', service)
+        local desc = helpdb.is_entry(service) and
+                helpdb.get_entry_short_help(service) or ''
+        local icon = enabled_map[service] and ENABLED_ICON or nil
+        table.insert(choices,
+                {text=text, command=service, desc=desc, icon=icon,
+                 gui_config=has_gui_config and gui_config, search_key=service})
+    end
+    self.subviews.list:setChoices(choices)
+end
+
+function FortServices:on_select(idx, choice)
     local desc = self.subviews.desc
     desc.text_to_wrap = choice and choice.desc or ''
     if desc.frame_body then
         desc:updateLayout()
     end
-    self.subviews.launch.enabled = not not choice.gui_config
+    if choice then
+        self.subviews.launch.enabled = not not choice.gui_config
+    end
 end
 
-function ControlPanel:toggle_enabled()
+function FortServices:toggle_enabled()
+    if not is_fort_mode() then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     dfhack.run_command(choice.icon and 'disable' or 'enable', choice.command)
-    self:refresh_list()
+    self:refresh()
 end
 
-function ControlPanel:show_help()
+function FortServices:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     dfhack.run_command('gui/launcher', choice.command..' ')
 end
 
-function ControlPanel:launch_config()
+function FortServices:launch_config()
+    if not is_fort_mode() then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice or not choice.gui_config then return end
     dfhack.run_command(choice.gui_config)
 end
 
+--
+-- Overlays
+--
+
+Overlays = defclass(Overlays, widgets.Panel)
+
+function Overlays:init()
+    self:addviews{
+    }
+end
+
+function Overlays:refresh()
+end
+
+--
+-- SystemServices
+--
+
+SystemServices = defclass(SystemServices, widgets.Panel)
+
+function SystemServices:init()
+    self:addviews{
+    }
+end
+
+function SystemServices:refresh()
+end
+
+--
+-- Preferences
+--
+
+Preferences = defclass(Preferences, widgets.Panel)
+
+function Preferences:init()
+    self:addviews{
+    }
+end
+
+function Preferences:refresh()
+end
+
+--
+-- ControlPanel
+--
+
+ControlPanel = defclass(ControlPanel, widgets.Window)
+ControlPanel.ATTRS {
+    frame_title='DFHack Control Panel',
+    frame={w=55, h=45},
+    resizable=true,
+    resize_min={w=45, h=20},
+}
+
+function ControlPanel:init()
+    self:addviews{
+        widgets.CycleHotkeyLabel{
+            frame={t=0, l=0},
+            label='Showing:',
+            key='CUSTOM_CTRL_N',
+            options={
+                {label='Fort services', value='fort'},
+                {label='Overlays', value='overlays'},
+                {label='System preferences', value='prefs'},
+                {label='System services', value='system'},
+            },
+            on_change=self:callback('set_page'),
+        },
+        widgets.Pages{
+            view_id='pages',
+            frame={t=2, l=0, b=0, r=0},
+            subviews={
+                FortServices{view_id='fort'},
+                Overlays{view_id='overlays'},
+                Preferences{view_id='prefs'},
+                SystemServices{view_id='system'},
+            },
+        },
+    }
+
+    self:refresh_page()
+end
+
+function ControlPanel:refresh_page()
+    self.subviews.pages:getSelectedPage():refresh()
+    self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
+end
+
+function ControlPanel:set_page(val)
+    self.subviews.pages:setSelected(val)
+    self:refresh_page()
+end
+
 -- refreshes data every 10 seconds or so
 function ControlPanel:onRenderBody()
     if self.next_refresh_ms <= dfhack.getTickCount() then
-        self:refresh_list()
+        self:refresh_page()
     end
 end
 
