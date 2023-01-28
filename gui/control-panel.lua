@@ -1,10 +1,8 @@
 local gui = require('gui')
 local helpdb = require('helpdb')
+local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local ICONS_START = dfhack.textures.getIconsTexposStart()
-local ENABLED_ICON = ICONS_START > 0 and ICONS_START + 1 or '+'
-local ICON_PEN = dfhack.pen.parse{ch=string.byte('+'), fg=COLOR_LIGHTGREEN}
 local REFRESH_MS = 10000
 
 -- eventually this should be queryable from script-manager
@@ -38,7 +36,7 @@ local SYSTEM_SERVICES = {
 local SETTINGS = {
     ['gui.widgets']={
         {id='DEFAULT_INITIAL_PAUSE', type='bool',
-         desc='Whether to pause the game when a DFHack tool is shown.'},
+         desc='Whether to pause the game when a DFHack tool is shown. You can always pause and unpause after the tool window comes up.'},
         {id='DOUBLE_CLICK_MS', type='int', min=50,
          desc='How long to wait for the second click of a double click. Larger values allow you to click slower.'},
         {id='SCROLL_INITIAL_DELAY_MS', type='int', min=5,
@@ -48,17 +46,30 @@ local SETTINGS = {
     },
 }
 
---
--- FortServices
---
-
-local function is_fort_mode()
-    return dfhack.world.isFortressMode()
+local function get_icon_pens()
+    -- these need to be dynamic because they can change between script
+    -- invocations
+    local start = dfhack.textures.getIconsTexposStart()
+    local enabled_pen = dfhack.pen.parse{
+            tile=(start>0) and (start+1) or nil,
+            ch='+', fg=COLOR_LIGHTGREEN}
+    local disabled_pen = dfhack.pen.parse{
+            tile=(start>0) and (start+0) or nil,
+            ch='-', fg=COLOR_RED}
+    return enabled_pen, disabled_pen
 end
 
-FortServices = defclass(FortServices, widgets.Panel)
+--
+-- ConfigPanel
+--
 
-function FortServices:init()
+ConfigPanel = defclass(ConfigPanel, widgets.Panel)
+ConfigPanel.ATTRS{
+    intro_text=DEFAULT_NIL,
+    is_enableable=DEFAULT_NIL,
+}
+
+function ConfigPanel:init()
     self:addviews{
         widgets.Panel{
             frame={t=0, b=7},
@@ -67,25 +78,13 @@ function FortServices:init()
             subviews={
                 widgets.WrappedLabel{
                     frame={t=0},
-                    text_to_wrap='These automation tools can only be enabled when you'..
-                        ' have a fort loaded, but once you enable them, they will'..
-                        ' stay enabled when you save and reload your fort.',
+                    text_to_wrap=self.intro_text,
                 },
-                widgets.Panel{
+                widgets.FilteredList{
                     frame={t=5},
-                    subviews={
-                        widgets.FilteredList{
-                            view_id='list',
-                            frame={t=0, b=0},
-                            on_select=self:callback('on_select'),
-                            icon_width=2,
-                            icon_pen=ICON_PEN,
-                        },
-                        widgets.Label{
-                            frame={t=0, l=0},
-                            text={{tile=ENABLED_ICON}},
-                        },
-                    },
+                    view_id='list',
+                    on_select=self:callback('on_select'),
+                    icon_width=2,
                 },
             },
         },
@@ -98,7 +97,7 @@ function FortServices:init()
             frame={b=2, l=0},
             label='Toggle enabled',
             key='SELECT',
-            enabled=is_fort_mode,
+            enabled=self.is_enableable,
             on_activate=self:callback('toggle_enabled')
         },
         widgets.HotkeyLabel{
@@ -112,14 +111,14 @@ function FortServices:init()
             frame={b=0, l=0},
             label='Launch config UI',
             key='CUSTOM_CTRL_G',
-            enabled=is_fort_mode,
+            enabled=self.is_enableable,
             on_activate=self:callback('launch_config'),
         },
     }
 end
 
-function FortServices:onInput(keys)
-    local handled = FortServices.super.onInput(self, keys)
+function ConfigPanel:onInput(keys)
+    local handled = ConfigPanel.super.onInput(self, keys)
     if keys._MOUSE_L_DOWN then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
@@ -140,6 +139,77 @@ function FortServices:onInput(keys)
     return handled
 end
 
+function ConfigPanel:refresh()
+    local enabled_icon_pen, disabled_icon_pen = get_icon_pens()
+    local choices = {}
+    for _,choice in ipairs(self:get_choices()) do
+        local command = choice.command or choice.target
+        local gui_config = 'gui/' .. command
+        local has_gui_config = helpdb.is_entry(gui_config)
+        local text = {
+            '[help] ',
+            {text=('%11s '):format(has_gui_config and '[configure]' or ''),
+             pen=not self.is_enableable() and COLOR_DARKGREY or nil},
+            choice.target,
+        }
+        local desc = helpdb.is_entry(command) and
+                helpdb.get_entry_short_help(command) or ''
+        local icon_pen = choice.enabled and enabled_icon_pen or disabled_icon_pen
+        table.insert(choices,
+                {text=text, command=choice.command, target=choice.target, desc=desc,
+                 search_key=choice.target, icon=icon_pen.tile, icon_pen=icon_pen,
+                 gui_config=has_gui_config and gui_config})
+    end
+    self.subviews.list:setChoices(choices)
+    self.subviews.list.edit:setFocus(true)
+end
+
+function ConfigPanel:on_select(idx, choice)
+    local desc = self.subviews.desc
+    desc.text_to_wrap = choice and choice.desc or ''
+    if desc.frame_body then
+        desc:updateLayout()
+    end
+    if choice then
+        self.subviews.launch.enabled = self.is_enableable() and not not choice.gui_config
+    end
+end
+
+function ConfigPanel:toggle_enabled()
+    if not self.is_enableable() then return false end
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    local is_enabled = choice.icon == get_icon_pens().tile
+    local tokens = {}
+    table.insert(tokens, choice.command)
+    table.insert(tokens, is_enabled and 'disable' or 'enable')
+    table.insert(tokens, choice.target)
+    dfhack.run_command(tokens)
+    self:refresh()
+end
+
+function ConfigPanel:show_help()
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    dfhack.run_command('gui/launcher', (choice.command or choice.target) .. ' ')
+end
+
+function ConfigPanel:launch_config()
+    if not self.is_enableable() then return false end
+    _,choice = self.subviews.list:getSelected()
+    if not choice or not choice.gui_config then return end
+    dfhack.run_command(choice.gui_config)
+end
+
+--
+-- Services
+--
+
+Services = defclass(Services, ConfigPanel)
+Services.ATTRS{
+    services_list=DEFAULT_NIL,
+}
+
 local function get_enabled_map()
     local enabled_map = {}
     local output = dfhack.run_command_silent('enable'):split('\n+')
@@ -152,82 +222,61 @@ local function get_enabled_map()
     return enabled_map
 end
 
-function FortServices:refresh()
+function Services:get_choices()
     local enabled_map = get_enabled_map()
     local choices = {}
-    for _,service in ipairs(FORT_SERVICES) do
-        local gui_config = 'gui/'..service
-        local has_gui_config = helpdb.is_entry(gui_config)
-        local text = ('[help] %11s %s')
-                :format(has_gui_config and '[configure]' or '', service)
-        local desc = helpdb.is_entry(service) and
-                helpdb.get_entry_short_help(service) or ''
-        local icon = enabled_map[service] and ENABLED_ICON or nil
-        table.insert(choices,
-                {text=text, command=service, desc=desc, icon=icon,
-                 gui_config=has_gui_config and gui_config, search_key=service})
+    for _,service in ipairs(self.services_list) do
+        table.insert(choices, {target=service, enabled=enabled_map[service]})
     end
-    self.subviews.list:setChoices(choices)
-end
-
-function FortServices:on_select(idx, choice)
-    local desc = self.subviews.desc
-    desc.text_to_wrap = choice and choice.desc or ''
-    if desc.frame_body then
-        desc:updateLayout()
-    end
-    if choice then
-        self.subviews.launch.enabled = not not choice.gui_config
-    end
-end
-
-function FortServices:toggle_enabled()
-    if not is_fort_mode() then return false end
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    dfhack.run_command(choice.icon and 'disable' or 'enable', choice.command)
-    self:refresh()
-end
-
-function FortServices:show_help()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    dfhack.run_command('gui/launcher', choice.command..' ')
-end
-
-function FortServices:launch_config()
-    if not is_fort_mode() then return false end
-    _,choice = self.subviews.list:getSelected()
-    if not choice or not choice.gui_config then return end
-    dfhack.run_command(choice.gui_config)
+    return choices
 end
 
 --
--- Overlays
+-- FortServices
 --
 
-Overlays = defclass(Overlays, widgets.Panel)
-
-function Overlays:init()
-    self:addviews{
-    }
-end
-
-function Overlays:refresh()
-end
+FortServices = defclass(FortServices, Services)
+FortServices.ATTRS{
+    is_enableable=function() return dfhack.world.isFortressMode() end,
+    intro_text='These automation tools can only be enabled when you'..
+                ' have a fort loaded, but once you enable them, they will'..
+                ' stay enabled when you save and reload your fort.',
+    services_list=FORT_SERVICES,
+}
 
 --
 -- SystemServices
 --
 
-SystemServices = defclass(SystemServices, widgets.Panel)
+SystemServices = defclass(SystemServices, Services)
+SystemServices.ATTRS{
+    is_enableable=function() return true end,
+    intro_text='These are DFHack system services that should generally not'..
+                ' be turned off. If you do turn them off, they may'..
+                ' automatically re-enable themselves when you restart DF.',
+    services_list=SYSTEM_SERVICES,
+}
 
-function SystemServices:init()
-    self:addviews{
-    }
-end
+--
+-- Overlays
+--
 
-function SystemServices:refresh()
+Overlays = defclass(Overlays, ConfigPanel)
+Overlays.ATTRS{
+    is_enableable=function() return true end,
+    intro_text='These are DFHack overlays that add information and'..
+                ' functionality to various DF screens.',
+}
+
+function Overlays:get_choices()
+    local choices = {}
+    local state = overlay.get_state()
+    for _,name in ipairs(state.index) do
+        table.insert(choices, {command='overlay',
+                               target=name,
+                               enabled=state.config[name].enabled})
+    end
+    return choices
 end
 
 --
