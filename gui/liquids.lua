@@ -78,7 +78,7 @@ function SpawnLiquid:init()
             frame = {l = 0, b = 0},
             label = 'Paint mode:',
             auto_width = true,
-            key = 'KEYBOARD_CURSOR_DOWN',
+            key = 'CUSTOM_Z',
             options = {
                 { label = "Area ", value = SpawnLiquidPaintMode.AREA, pen = COLOR_WHITE },
                 { label = "Click", value = SpawnLiquidPaintMode.CLICK, pen = COLOR_WHITE },
@@ -91,7 +91,7 @@ function SpawnLiquid:init()
             frame = {l = 18, b = 2},
             label = 'Mode:',
             auto_width = true,
-            key = 'CUSTOM_E',
+            key = 'CUSTOM_X',
             options = {
                 { label = "Set   ", value = SpawnLiquidMode.SET, pen = COLOR_WHITE },
                 { label = "Add   ", value = SpawnLiquidMode.ADD, pen = COLOR_WHITE },
@@ -231,8 +231,10 @@ end
 
 SpawnLiquidScreen = defclass(SpawnLiquidScreen, gui.ZScreen)
 SpawnLiquidScreen.ATTRS {
-    focus_path='spawnliquid',
-    pass_movement_keys=true,
+    focus_path = 'spawnliquid',
+    pass_movement_keys = true,
+    pass_mouse_clicks = false,
+    force_pause = true,
 }
 
 function SpawnLiquidScreen:init()
