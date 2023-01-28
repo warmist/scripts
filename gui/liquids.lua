@@ -188,7 +188,6 @@ function SpawnLiquid:onRenderFrame(dc, rect)
     end
 end
 
--- TODO: Pass camera movement input through to main viewscreen.
 function SpawnLiquid:onInput(keys)
     if SpawnLiquid.super.onInput(self, keys) then return true end
 
@@ -233,6 +232,7 @@ end
 SpawnLiquidScreen = defclass(SpawnLiquidScreen, gui.ZScreen)
 SpawnLiquidScreen.ATTRS {
     focus_path='spawnliquid',
+    pass_movement_keys=true,
 }
 
 function SpawnLiquidScreen:init()
