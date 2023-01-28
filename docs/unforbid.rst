@@ -22,5 +22,8 @@ Options
 ``-u``, ``--include-unreachable``
     Allows the tool to unforbid unreachable items.
 
+``-w``, ``--include-underwater``
+    Allows the tool to unforbid items in water levels above 3.
+
 ``-q``, ``--quiet``
     Suppress non-error console output.
