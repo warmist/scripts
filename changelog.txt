@@ -29,6 +29,7 @@ that repo.
 - `gui/launcher`: clarify what is being shown in the autocomplete list (all commands, autocompletion of partially typed command, or commands related to typed command)
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
 - `locate-ore`: now only searches revealed tiles by default
+- `build-now`: now handles dirt roads and initializes farm plots properly
 - `unforbid`: does not unforbid unreachable and underwater items by default
 
 ## Removed
