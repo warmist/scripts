@@ -319,7 +319,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   item.bone1.mat_index = creatureID
   item.bone2.mat_type = matType
   item.bone2.mat_index = creatureID
-  -- skin (and presumably other parts) use body part modifiers for size or amount 
+  -- skin (and presumably other parts) use body part modifiers for size or amount
   for i=0,200 do -- fuck it this works
    -- inserts
    item.body.bp_modifiers:insert('#',1) --jus,t, set a lot of it to one who cares
@@ -343,16 +343,16 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
    item.body.components.layer_status[creatorBody.body_parts[bodypart].layers[partlayer].layer_id].gone = false
   elseif generic then
    for i in pairs(creatorBody.body_parts) do
-	 for n in pairs(creatorBody.body_parts[i].layers) do
+     for n in pairs(creatorBody.body_parts[i].layers) do
       -- search through the target creature's body parts and bring back every one which has the desired material
       if creatorRaceRaw.tissue[creatorBody.body_parts[i].layers[n].tissue_id].tissue_material_str[1] == layerMat and creatorBody.body_parts[i].token ~= "SKULL" and not creatorBody.body_parts[i].flags.SMALL then
        item.body.components.body_part_status[i].missing = false
        item.body.components.body_part_status[i].grime = 2
        item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
        -- save the index of the bone layer to a variable
-	  end
-	 end
-	end
+      end
+     end
+    end
   end
   -- DO THIS LAST or else the game crashes for some reason
   item.caste = casteID
@@ -379,19 +379,19 @@ function hackWish(unit)
    mattype,matindex=getCreatureRaceAndCaste(creatureTable[3])
   end
   if df.item_type[itemtype]=='CORPSEPIECE' then
-	local bodpartok,bodypartLocal=script.showListPrompt('Wish','What body part should it be?',COLOR_LIGHTGREEN,getCreaturePartList(mattype,matindex))
-	-- createCorpsePiece() references the bodypart variable so it can't be local to here
-	bodypart = bodypartLocal
-	if bodypart == 1 then
+    local bodpartok,bodypartLocal=script.showListPrompt('Wish','What body part should it be?',COLOR_LIGHTGREEN,getCreaturePartList(mattype,matindex))
+    -- createCorpsePiece() references the bodypart variable so it can't be local to here
+    bodypart = bodypartLocal
+    if bodypart == 1 then
      corpsepieceGeneric = true
-	end
+    end
    if not bodpartok then return end
    if not corpsepieceGeneric then -- probably a better way of doing this tbh
-	partlayerok,partlayerID=script.showListPrompt('Wish','What tissue layer should it be?',COLOR_LIGHTGREEN,getCreaturePartLayerList(mattype,matindex,bodypart-2))
+    partlayerok,partlayerID=script.showListPrompt('Wish','What tissue layer should it be?',COLOR_LIGHTGREEN,getCreaturePartLayerList(mattype,matindex,bodypart-2))
    else
     partlayerok,partlayerID=script.showListPrompt('Wish','What creature material should it be?',COLOR_LIGHTGREEN,getCreatureMaterialList(mattype,matindex))
    end
-	if not partlayerok then return end
+    if not partlayerok then return end
   end
   local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
   if not qualityok then return end
@@ -408,13 +408,13 @@ function hackWish(unit)
     if df.item_type.attrs[itemtype].is_stackable then
      createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,amount)
     else
-	 local isCorpsePiece = itemtype == df.item_type.CORPSEPIECE
+     local isCorpsePiece = itemtype == df.item_type.CORPSEPIECE
      for i=1,amount do
-	  if not isCorpsePiece then
-	   createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
-	  else
-	   createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
-	  end
+      if not isCorpsePiece then
+       createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
+      else
+       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
+      end
      end
     end
     return true
@@ -422,11 +422,11 @@ function hackWish(unit)
    return false
   else
    if mattype and itemtype then
-	  if itemtype ~= df.item_type.CORPSEPIECE then
-	   createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
-	  else
-	   createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
-	  end
+      if itemtype ~= df.item_type.CORPSEPIECE then
+       createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
+      else
+       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
+      end
     return true
    end
    return false
