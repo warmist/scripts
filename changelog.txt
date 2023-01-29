@@ -31,6 +31,7 @@ that repo.
 - `locate-ore`: now only searches revealed tiles by default
 - `unforbid`: does not unforbid unreachable items by default anymore.
 - `build-now`: now handles dirt roads and initializes farm plots properly
+- `gui/create-item`: added proper corpsepiece spawning from any creature. (under "body part")
 
 ## Removed
 - `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.
