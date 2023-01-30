@@ -12,7 +12,6 @@ local AUTOSTART_FILE = 'dfhack-config/init/onMapLoad.control-panel.init'
 local FORT_SERVICES = {
     'autobutcher',
     'autochop',
-    'autoclothing',
     'autofarm',
     'autofish',
     'autoslab',
