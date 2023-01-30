@@ -159,7 +159,7 @@ function ConfigPanel:refresh()
         local icon_pen = choice.enabled and ENABLED_ICON_PEN or DISABLED_ICON_PEN
         table.insert(choices,
                 {text=text, command=choice.command, target=choice.target, desc=desc,
-                 search_key=choice.target, icon=icon_pen.tile, icon_pen=icon_pen,
+                 search_key=choice.target, icon=icon_pen,
                  gui_config=has_gui_config and gui_config})
     end
     local list = self.subviews.list
@@ -185,7 +185,7 @@ function ConfigPanel:on_submit()
     if not self.is_enableable() then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local is_enabled = choice.icon == get_icon_pens().tile
+    local is_enabled = choice.icon == ENABLED_ICON_PEN
     local tokens = {}
     table.insert(tokens, choice.command)
     table.insert(tokens, is_enabled and 'disable' or 'enable')
