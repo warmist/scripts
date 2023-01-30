@@ -432,7 +432,7 @@ function Preferences:on_submit()
         self:refresh()
     elseif choice.spec.type == 'int' then
         self.subviews.input_dlg:show(choice.id, choice.spec,
-                                     choice.ctx_env[choice.id])   
+                                     choice.ctx_env[choice.id])
     end
 end
 
