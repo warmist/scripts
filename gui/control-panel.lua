@@ -1,8 +1,10 @@
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
+local SETTINGS_INIT_FILE = 'dfhack-config/init/dfhack.control-panel.init'
 local REFRESH_MS = 10000
 
 -- eventually this should be queryable from script-manager
@@ -12,6 +14,7 @@ local FORT_SERVICES = {
     'autoclothing',
     'autofarm',
     'autofish',
+    'autoslab',
     'autounsuspend',
     'channel-safely',
     'emigration',
@@ -34,15 +37,17 @@ local SYSTEM_SERVICES = {
 }
 
 local SETTINGS = {
+    ['gui']={
+        DEFAULT_INITIAL_PAUSE={type='bool',
+         desc='Whether to pause the game when a DFHack tool is shown.'},
+    },
     ['gui.widgets']={
-        {id='DEFAULT_INITIAL_PAUSE', type='bool',
-         desc='Whether to pause the game when a DFHack tool is shown. You can always pause and unpause after the tool window comes up.'},
-        {id='DOUBLE_CLICK_MS', type='int', min=50,
-         desc='How long to wait for the second click of a double click, in milliseconds. Larger values allow you to click slower.'},
-        {id='SCROLL_INITIAL_DELAY_MS', type='int', min=5,
-         desc='The delay before the second scroll event when holding the mouse button down on a scrollbar, in milliseconds. Larger values make the scrollbar slower.'},
-        {id='SCROLL_DELAY_MS', type='int', min=5,
-         desc='The delay between scroll events when holding the mouse button down on a scrollbar, in milliseconds. Larger values make the scrollbar slower.'},
+        DOUBLE_CLICK_MS={type='int', min=50,
+         desc='How long to wait for the second click of a double click, in ms.'},
+        SCROLL_INITIAL_DELAY_MS={type='int', min=5,
+         desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
+        SCROLL_DELAY_MS={type='int', min=5,
+         desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
     },
 }
 
@@ -66,6 +71,7 @@ ConfigPanel = defclass(ConfigPanel, widgets.Panel)
 ConfigPanel.ATTRS{
     intro_text=DEFAULT_NIL,
     is_enableable=DEFAULT_NIL,
+    select_label='Toggle enabled',
 }
 
 function ConfigPanel:init()
@@ -94,12 +100,13 @@ function ConfigPanel:init()
         },
         widgets.HotkeyLabel{
             frame={b=2, l=0},
-            label='Toggle enabled',
+            label=self.select_label,
             key='SELECT',
             enabled=self.is_enableable,
-            on_activate=self:callback('toggle_enabled')
+            on_activate=self:callback('on_submit')
         },
         widgets.HotkeyLabel{
+            view_id='show_help_label',
             frame={b=1, l=0},
             label='Show tool help or run commands',
             key='CUSTOM_CTRL_H',
@@ -124,14 +131,11 @@ function ConfigPanel:onInput(keys)
         if idx then
             local x = list:getMousePos()
             if x == 0 then
-                self:toggle_enabled()
-                return true
+                self:on_submit()
             elseif x >= 2 and x <= 7 then
                 self:show_help()
-                return true
             elseif x >= 9 and x <= 19 then
                 self:launch_config()
-                return true
             end
         end
     end
@@ -158,8 +162,12 @@ function ConfigPanel:refresh()
                  search_key=choice.target, icon=icon_pen.tile, icon_pen=icon_pen,
                  gui_config=has_gui_config and gui_config})
     end
-    self.subviews.list:setChoices(choices)
-    self.subviews.list.edit:setFocus(true)
+    local list = self.subviews.list
+    local filter = list:getFilter()
+    local selected = list:getSelected()
+    list:setChoices(choices)
+    list:setFilter(filter, selected)
+    list.edit:setFocus(true)
 end
 
 function ConfigPanel:on_select(idx, choice)
@@ -173,7 +181,7 @@ function ConfigPanel:on_select(idx, choice)
     end
 end
 
-function ConfigPanel:toggle_enabled()
+function ConfigPanel:on_submit()
     if not self.is_enableable() then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
@@ -281,14 +289,179 @@ end
 -- Preferences
 --
 
-Preferences = defclass(Preferences, widgets.Panel)
+IntegerInputDialog = defclass(IntegerInputDialog, widgets.Window)
+IntegerInputDialog.ATTRS{
+    visible=false,
+    frame={w=50, h=8},
+    frame_title='Edit setting',
+    frame_style=gui.PANEL_FRAME,
+    on_hide=DEFAULT_NIL,
+}
 
-function Preferences:init()
+function IntegerInputDialog:init()
     self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text={
+                'Please enter a new value for ',
+                {text=function() return self.id or '' end},
+                NEWLINE,
+                {text=self:callback('get_spec_str')},
+            },
+        },
+        widgets.EditField{
+            view_id='input_edit',
+            frame={t=3, l=0},
+            on_char=function(ch) return ch:match('%d') end,
+        },
     }
 end
 
+function IntegerInputDialog:get_spec_str()
+    if not self.spec or (not self.spec.min and not self.spec.max) then
+        return ''
+    end
+    local strs = {}
+    if self.spec.min then
+        table.insert(strs, ('at least %d'):format(self.spec.min))
+    end
+    if self.spec.max then
+        table.insert(strs, ('at most %d'):format(self.spec.max))
+    end
+    return ('(%s)'):format(table.concat(strs, ', '))
+end
+
+function IntegerInputDialog:show(id, spec, initial)
+    self.visible = true
+    self.id, self.spec = id, spec
+    local edit = self.subviews.input_edit
+    edit:setText(tostring(initial))
+    edit:setFocus(true)
+    self:updateLayout()
+end
+
+function IntegerInputDialog:hide(val)
+    self.visible = false
+    self.on_hide(tonumber(val))
+end
+
+function IntegerInputDialog:onInput(keys)
+    if IntegerInputDialog.super.onInput(self, keys) then
+        return true
+    end
+    if keys.SELECT then
+        self:hide(self.subviews.input_edit.text)
+        return true
+    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        self:hide()
+        return true
+    end
+end
+
+Preferences = defclass(Preferences, ConfigPanel)
+Preferences.ATTRS{
+    is_enableable=function() return true end,
+    intro_text='These are the customizable DFHack system settings.',
+    select_label='Edit setting',
+}
+
+function Preferences:init()
+    self.subviews.show_help_label.visible = false
+    self.subviews.launch.visible = false
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={b=0, l=0},
+            label='Save custom settings',
+            key='CUSTOM_CTRL_G',
+            on_activate=self:callback('do_save')
+        },
+        IntegerInputDialog{
+            view_id='input_dlg',
+            on_hide=self:callback('set_val'),
+        },
+    }
+end
+
+function Preferences:onInput(keys)
+    -- call grandparent's onInput since we don't want ConfigPanel's processing
+    local handled = Preferences.super.super.onInput(self, keys)
+    if keys._MOUSE_L_DOWN then
+        local list = self.subviews.list.list
+        local idx = list:getIdxUnderMouse()
+        if idx then
+            local x = list:getMousePos()
+            if x >= 2 and x <= 9 then
+                self:on_submit()
+            end
+        end
+    end
+    return handled
+end
+
 function Preferences:refresh()
+    if self.subviews.input_dlg.visible then return end
+    local choices = {}
+    for ctx_name,settings in pairs(SETTINGS) do
+        local ctx_env = require(ctx_name)
+        for id,spec in pairs(settings) do
+            local text = {
+                '[change] ',
+                id,
+                ' (',
+                tostring(ctx_env[id]),
+                ')',
+            }
+            table.insert(choices,
+                {text=text, desc=spec.desc, search_key=id,
+                 ctx_env=ctx_env, id=id, spec=spec})
+        end
+    end
+    local list = self.subviews.list
+    local filter = list:getFilter()
+    local selected = list:getSelected()
+    list:setChoices(choices)
+    list:setFilter(filter, selected)
+    list.edit:setFocus(true)
+end
+
+function Preferences:on_submit()
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    if choice.spec.type == 'bool' then
+        choice.ctx_env[choice.id] = not choice.ctx_env[choice.id]
+        self:refresh()
+    elseif choice.spec.type == 'int' then
+        self.subviews.input_dlg:show(choice.id, choice.spec,
+                                     choice.ctx_env[choice.id])   
+    end
+end
+
+function Preferences:set_val(val)
+    _,choice = self.subviews.list:getSelected()
+    if not choice or not val then return end
+    choice.ctx_env[choice.id] = val
+    self:refresh()
+end
+
+function Preferences:do_save()
+    local ok, f = pcall(io.open, SETTINGS_INIT_FILE, 'w')
+    if not ok then
+        dialogs.showMessage('Error',
+            ('Cannot open settings file for writing: "%s"'):format(SETTINGS_INIT_FILE))
+        return
+    end
+    f:write('# DO NOT EDIT THIS FILE\n')
+    f:write('# Please use gui/control-panel to edit this file\n\n')
+    for ctx_name,settings in pairs(SETTINGS) do
+        local ctx_env = require(ctx_name)
+        for id in pairs(settings) do
+            f:write((':lua require("%s").%s=%s\n'):format(
+                    ctx_name, id, tostring(ctx_env[id])))
+        end
+    end
+    f:close()
+    dialogs.showMessage('Success',
+            ('Saved settings to "%s"'):format(SETTINGS_INIT_FILE))
 end
 
 --
@@ -300,7 +473,7 @@ ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
     frame={w=55, h=35},
     resizable=true,
-    resize_min={w=45, h=20},
+    resize_min={h=20},
 }
 
 function ControlPanel:init()
