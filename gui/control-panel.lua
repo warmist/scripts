@@ -38,26 +38,25 @@ local SETTINGS = {
         {id='DEFAULT_INITIAL_PAUSE', type='bool',
          desc='Whether to pause the game when a DFHack tool is shown. You can always pause and unpause after the tool window comes up.'},
         {id='DOUBLE_CLICK_MS', type='int', min=50,
-         desc='How long to wait for the second click of a double click. Larger values allow you to click slower.'},
+         desc='How long to wait for the second click of a double click, in milliseconds. Larger values allow you to click slower.'},
         {id='SCROLL_INITIAL_DELAY_MS', type='int', min=5,
-         desc='The delay before the second scroll event when holding the mouse button down on a scrollbar. Larger values make the scrollbar slower.'},
+         desc='The delay before the second scroll event when holding the mouse button down on a scrollbar, in milliseconds. Larger values make the scrollbar slower.'},
         {id='SCROLL_DELAY_MS', type='int', min=5,
-         desc='The delay between scroll events when holding the mouse button down on a scrollbar. Larger values make the scrollbar slower.'},
+         desc='The delay between scroll events when holding the mouse button down on a scrollbar, in milliseconds. Larger values make the scrollbar slower.'},
     },
 }
 
 local function get_icon_pens()
-    -- these need to be dynamic because they can change between script
-    -- invocations
-    local start = dfhack.textures.getIconsTexposStart()
+    local start = dfhack.textures.getOnOffTexposStart()
     local enabled_pen = dfhack.pen.parse{
-            tile=(start>0) and (start+1) or nil,
-            ch='+', fg=COLOR_LIGHTGREEN}
-    local disabled_pen = dfhack.pen.parse{
             tile=(start>0) and (start+0) or nil,
-            ch='-', fg=COLOR_RED}
+            ch=string.byte('+'), fg=COLOR_LIGHTGREEN}
+    local disabled_pen = dfhack.pen.parse{
+            tile=(start>0) and (start+1) or nil,
+            ch=string.byte('-'), fg=COLOR_RED}
     return enabled_pen, disabled_pen
 end
+local ENABLED_ICON_PEN, DISABLED_ICON_PEN = get_icon_pens()
 
 --
 -- ConfigPanel
@@ -140,7 +139,6 @@ function ConfigPanel:onInput(keys)
 end
 
 function ConfigPanel:refresh()
-    local enabled_icon_pen, disabled_icon_pen = get_icon_pens()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.command or choice.target
@@ -154,7 +152,7 @@ function ConfigPanel:refresh()
         }
         local desc = helpdb.is_entry(command) and
                 helpdb.get_entry_short_help(command) or ''
-        local icon_pen = choice.enabled and enabled_icon_pen or disabled_icon_pen
+        local icon_pen = choice.enabled and ENABLED_ICON_PEN or DISABLED_ICON_PEN
         table.insert(choices,
                 {text=text, command=choice.command, target=choice.target, desc=desc,
                  search_key=choice.target, icon=icon_pen.tile, icon_pen=icon_pen,
@@ -300,7 +298,7 @@ end
 ControlPanel = defclass(ControlPanel, widgets.Window)
 ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
-    frame={w=55, h=45},
+    frame={w=55, h=35},
     resizable=true,
     resize_min={w=45, h=20},
 }
