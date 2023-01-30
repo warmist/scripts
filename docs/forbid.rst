@@ -6,7 +6,7 @@ forbid
     :tags: fort productivity items
 
 List forbidden items, forbid all items on the map, or forbid unreachable items.
-Forbidding unreachable items checks any of your citizens can walk to the item.
+Forbidding unreachable items checks if any of your citizens can walk to the item.
 
 Usage
 -----
