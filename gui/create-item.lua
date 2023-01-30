@@ -233,7 +233,12 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  if not generic then -- if we have a specified body part and layer, figure all the stuff out about that
  -- store the tissue id of the specific layer we selected
   tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
-  layerMat = creatorRaceRaw.tissue[tissueID].tissue_material_str[1]
+  layerMat = {}
+  -- get the material name from the material itself
+  for i in string.gmatch(dfhack.matinfo.getToken(creatorRaceRaw.tissue[tissueID].mat_type,creatureID), "([^:]+)") do
+   table.insert(layerMat,i)
+  end
+  layerMat = layerMat[3]
   layerName = creatorBody.body_parts[bodypart].layers[partlayer].layer_name
  else -- otherwise, figure out the mat name from the dual-use partlayer argument
   layerMat = creatorRaceRaw.material[partlayer].id
@@ -244,15 +249,11 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  -- get race name and layer name, both for finding the item material, and the latter for determining the corpsepiece flags to set
  local raceName = string.upper(creatorRaceRaw.creature_id)
  -- every key is a valid non-hair corpsepiece, so if we try to index a key that's not on the table, we don't have a non-hair corpsepiece
- -- local corpseTable = {BONE = "BONE", SKIN = "SKIN", CARTILAGE = "CARTILAGE", TOOTH = "TOOTH", NERVE = "NERVE", NAIL = "NAIL", HORN = "HORN", HOOF = "HOOF"}
  -- we do the same as above but with hair
- -- local hairTable = {HAIR = "HAIR", EYEBROW = "EYEBROW", EYELASH = "EYELASH", MOUSTACHE = "MOUSTACHE", CHIN_WHISKERS = "CHIN_WHISKERS", SIDEBURNS = "SIDEBURNS"}
  -- if the layer is fat, spawn a glob of fat and DON'T check for other layer types
  if layerName == "FAT" then
   item_type = "GLOB"
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
-  -- farlayer = 5
-  -- layerName = "HAIR" -- we then simplify every hair-tissue into just "HAIR"
   item_type = "CORPSEPIECE"
  end
  local itemType = dfhack.items.findType(item_type..":NONE")
