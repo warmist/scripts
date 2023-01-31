@@ -615,17 +615,19 @@ if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
     return
 end
 
+local args = {...}
+
 if dfhack_flags.enable then
     if dfhack_flags.enable_state then
-        print('please use "prioritize -a" to add job types to the watch list')
+        args = {'-aq', 'defaults'}
     else
         clear_watched_job_matchers()
         persist_state()
+        return
     end
-    return
 end
 
-local opts = parse_commandline({...})
+local opts = parse_commandline(args)
 if opts.help then print(dfhack.script_help()) return end
 opts.action(opts.job_matchers, opts)
 persist_state()

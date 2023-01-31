@@ -37,6 +37,7 @@ that repo.
 - `unforbid`: does not unforbid unreachable and underwater items by default
 - `gui/create-item`: added proper corpsepiece spawning from any creature. (under "body part")
 - `gui/create-item`: added search functionality to the creature selection prompt, as well as new the body part, tissue, and creature material selection prompts.
+- `prioritize`: now automatically starts boosting the default list of job types when enabled
 
 ## Removed
 - `show-unit-syndromes`: replaced by `gui/unit-syndromes`. exporting html is no longer supported.
