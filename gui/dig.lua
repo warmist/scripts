@@ -138,13 +138,18 @@ local PENS = {
     INSIDE = { 1, 2 },
     NORTH = { 1, 1 },
     N_NUB = { 3, 2 },
+    S_NUB = { 4, 2 },
+    W_NUB = { 3, 1 },
+    E_NUB = { 5, 1 },
     NE = { 2, 1 },
     NW = { 0, 1 },
-    WEST = { 1, 2 },
+    WEST = { 0, 2 },
     EAST = { 2, 2 },
     SW = { 0, 3 },
     SOUTH = { 1, 3 },
-    SE = { 2, 3 }
+    SE = { 2, 3 },
+    VERT_NS = { 3, 3 },
+    VERT_EW = { 4, 1 }
 }
 
 function getpen(direction)
@@ -165,7 +170,6 @@ function Shape:init()
 end
 
 function Shape:update(width, height)
-    print("Updating shape")
     self.width = width
     self.height = height
     self.arr = {}
@@ -188,13 +192,54 @@ function Shape:hasPoint(x, y)
 end
 
 function Shape:getPen(x, y)
-    if self.arr[x][y] == true then
-        return getpen(PENS.INSIDE)
-    elseif (x == 0 and y == 0) or (x == #self.arr and y == 0) or (x == 0 and y == #self.arr[x]) or (x == #self.arr and y == #self.arr[x]) then
-        return self.mark_corners and getpen(PENS.CORNER) or nil
-    else
-        return nil
-    end
+
+        if (x == 0 and y == 0) or (x == #self.arr and y == 0) or (x == 0 and y == #self.arr[x]) or (x == #self.arr and y == #self.arr[x]) then
+            return getpen(PENS.CORNER)
+        end
+
+        if not self.arr[x][y] then
+            return nil
+        end
+
+        local n, w, e, s = false, false, false, false
+        if y == 0 or not self.arr[x][y - 1] then n = true end
+        if x == 0 or not self.arr[x - 1][y] then w = true end
+        if x == #self.arr or not self.arr[x + 1][y] then e = true end
+        if y == #self.arr[x] or not self.arr[x][y + 1] then s = true end
+
+        if not n and not w and not e and not s then
+            return getpen(PENS.INSIDE)
+        elseif n and w and not e and not s then
+            return getpen(PENS.NW)
+        elseif n and not w and not e and not s then
+            return getpen(PENS.NORTH)
+        elseif n and e and not w and not s then
+            return getpen(PENS.NE)
+        elseif not n and w and not e and not s then
+            return getpen(PENS.WEST)
+        elseif not n and not w and e and not s then
+            return getpen(PENS.EAST)
+        elseif not n and w and not e and s then
+            return getpen(PENS.SW)
+        elseif not n and not w and not e and s then
+            return getpen(PENS.SOUTH)
+        elseif not n and not w and e and s then
+            return getpen(PENS.SE)
+        elseif n and w and e and not s then
+            return getpen(PENS.N_NUB)
+        elseif n and not w and e and s then
+            return getpen(PENS.E_NUB)
+        elseif n and w and not e and s then
+            return getpen(PENS.W_NUB)
+        elseif not n and w and e and s then
+            return getpen(PENS.S_NUB)
+        elseif not n and w and e and not s then
+            return getpen(PENS.VERT_NS)
+        elseif n and not w and not e and s then
+            return getpen(PENS.VERT_EW)
+        else
+            return nil
+        end
 end
 
 
@@ -211,7 +256,6 @@ function Dig:onRenderFrame(dc, rect)
         local function get_overlay_pen(pos)
             if pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2 then
                 if not self.shape or (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
-                    if self.shape then print(string.format("%d - %d ~= %d ... %d - %d ~= %d", bounds.x2, bounds.x1, self.shape.width, bounds.y2, bounds.y1, self.shape.height)) end
                     self.shape:update( bounds.x2 - bounds.x1, bounds.y2 - bounds.y1)
                 end
                 return self.shape:getPen(pos.x - bounds.x1, pos.y - bounds.y1)
