@@ -17,6 +17,9 @@ local FORT_SERVICES = {
     'autofish',
     'autoslab',
     'autounsuspend',
+    'ban-cooking all',
+    --'buildingplan set boulders false',
+    --'buildingplan set logs false',
     'channel-safely',
     'emigration',
     'fastdwarf',
@@ -208,6 +211,7 @@ function ConfigPanel:refresh()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.command or choice.target
+        command = command:match('^([%S]+)')
         local gui_config = 'gui/' .. command
         local want_gui_config = utils.getval(self.is_configurable)
                 and helpdb.is_entry(gui_config)
@@ -354,7 +358,8 @@ function FortServicesAutostart:init()
         for line in f:lines() do
             line = line:trim()
             if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^on%-new%-fortress enable ([%S]+)')
+            local service = line:match('^on%-new%-fortress enable ([%S]+)$')
+                    or line:match('^on%-new%-fortress (.+)')
             if service then
                 enabled_map[service] = true
             end
@@ -376,7 +381,11 @@ function FortServicesAutostart:on_submit()
     local save_fn = function(f)
         for service,enabled in pairs(self.enabled_map) do
             if enabled then
-                f:write(('on-new-fortress enable %s\n'):format(service))
+                if service:match(' ') then
+                    f:write(('on-new-fortress %s\n'):format(service))
+                else
+                    f:write(('on-new-fortress enable %s\n'):format(service))
+                end
             end
         end
     end
