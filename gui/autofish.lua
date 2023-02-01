@@ -70,7 +70,7 @@ function Autofish:init()
             view_id="current_mode",
             frame={t=6, l=0, h=1},
             auto_height=false,
-            --visible=false
+            visible=autofish.isEnabled
         }
 
     }
