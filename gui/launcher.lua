@@ -529,6 +529,7 @@ end
 LauncherUI = defclass(LauncherUI, gui.ZScreen)
 LauncherUI.ATTRS{
     focus_path='launcher',
+    defocusable=false,
     minimal=false,
 }
 
