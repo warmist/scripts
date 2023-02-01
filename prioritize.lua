@@ -20,7 +20,7 @@ local DEFAULT_JOB_TYPES = {
     'PlaceInTraction', 'SetBone', 'Surgery', 'Suture',
     -- organize items efficiently so new items can be brought to the stockpiles
     'StoreItemInVehicle', 'StoreItemInBag', 'StoreItemInBarrel',
-    'StoreItemInLocation', 'StoreItemInBin',
+    'StoreItemInLocation', 'StoreItemInBin', 'PushTrackVehicle',
     -- ensure prisoners and animals are tended to quickly
     'TameAnimal', 'TrainAnimal', 'TrainHuntingAnimal', 'TrainWarAnimal',
     'PenLargeAnimal', 'PitLargeAnimal', 'SlaughterAnimal',
