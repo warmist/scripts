@@ -17,9 +17,6 @@ local FORT_SERVICES = {
     'autofish',
     'autoslab',
     'autounsuspend',
-    'ban-cooking all',
-    --'buildingplan set boulders false',
-    --'buildingplan set logs false',
     'channel-safely',
     'emigration',
     'fastdwarf',
@@ -30,6 +27,16 @@ local FORT_SERVICES = {
     'starvingdead',
     'tailor',
 }
+
+local FORT_AUTOSTART = {
+    'ban-cooking all',
+    --'buildingplan set boulders false',
+    --'buildingplan set logs false',
+}
+for _,v in ipairs(FORT_SERVICES) do
+    table.insert(FORT_AUTOSTART, v)
+end
+table.sort(FORT_AUTOSTART)
 
 -- eventually this should be queryable from Core/script-manager
 local SYSTEM_SERVICES = {
@@ -348,7 +355,7 @@ FortServicesAutostart.ATTRS{
                 ' you when you start a new fort, using the default'..
                 ' configuration. To see tools that are enabled right now in'..
                 ' an active fort, please see the next page.',
-    services_list=FORT_SERVICES,
+    services_list=FORT_AUTOSTART,
 }
 
 function FortServicesAutostart:init()
