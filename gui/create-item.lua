@@ -213,8 +213,9 @@ local function getCreatureRaceAndCaste(caste)
  return df.global.world.raws.creatures.list_creature[caste.index],df.global.world.raws.creatures.list_caste[caste.index]
 end
 
-local CORPSE_PIECES = utils.invert{'BONE', 'SKIN', 'CARTILAGE', 'TOOTH', 'NERVE', 'NAIL', 'HORN', 'HOOF' }
+local CORPSE_PIECES = utils.invert{'BONE', 'SKIN', 'CARTILAGE', 'TOOTH', 'NERVE', 'NAIL', 'HORN', 'HOOF', 'CHITIN', 'SHELL', 'IVORY', 'SCALE' }
 local HAIR_PIECES = utils.invert{'HAIR', 'EYEBROW', 'EYELASH', 'MOUSTACHE', 'CHIN_WHISKERS', 'SIDEBURNS' }
+local LIQUID_PIECES = utils.invert{'BLOOD', 'PUS', 'VENOM', 'SWEAT', 'TEARS', 'SPIT' }
 
 function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic, quality) -- this part was written by four rabbits in a trenchcoat (ppaawwll)
  -- (partlayer is also used to determine the material if we're spawning a "generic" body part (i'm just lazy lol))
@@ -255,6 +256,8 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   item_type = "GLOB"
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
   item_type = "CORPSEPIECE"
+ elseif LIQUID_PIECES[layerName] then -- check if hair
+  item_type = "GLOB" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
  end
  local itemType = dfhack.items.findType(item_type..":NONE")
  local itemSubtype = dfhack.items.findSubtype(item_type..":NONE")
@@ -262,8 +265,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local materialInfo = dfhack.matinfo.find(material)
  local item_id = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
  local item = df.item.find(item_id)
- item:setQuality(quality)
- local isCorpsePiece = false
+ -- item:setQuality(quality)
  -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
  if item_type == "CORPSEPIECE" then
   if layerName == "BONE" then -- check if bones
@@ -280,7 +282,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
     item.corpse_flags.yarn = true
     item.material_amount.Yarn = 1
    end
-  elseif layerName == "TOOTH" then -- check if tooth
+  elseif layerName == "TOOTH" or layerName == "IVORY" then -- check if tooth
    item.corpse_flags.tooth = true
    item.material_amount.Tooth = 1
   elseif layerName == "NERVE" then -- check if nervous tissue
@@ -290,7 +292,9 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   elseif layerName == "HORN" or layerName == "HOOF" then -- check if nail
    item.corpse_flags.horn = true
    item.material_amount.Horn = 1
-   isCorpsePiece = true
+  elseif layerName == "SHELL" then -- check if nail
+   item.corpse_flags.shell = true
+   item.material_amount.Shell = 1
   end
   -- checking for skull
   if not generic and creatorBody.body_parts[bodypart].token == "SKULL" then
