@@ -1,4 +1,4 @@
-autofish
+gui/autofish
 ========
 
 .. dfhack-tool::
