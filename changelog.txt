@@ -18,6 +18,7 @@ that repo.
 - `fix/restore-nicks`: Restore nicknames when DF loses them
 - `forbid`: Forbid and list forbidden items on the map
 - `fix/civil-war`: Removes negative relations from own government
+- `gui/autofish`: GUI config for autofish
 - `gui/control-panel`: quick access to DFHack configuration
 
 ## Fixes
