@@ -68,16 +68,39 @@ end
 
 
 local function get_icon_pens()
-    local start = dfhack.textures.getOnOffTexposStart()
-    local enabled_pen = dfhack.pen.parse{
-            tile=(start>0) and (start+0) or nil,
-            ch=string.byte('+'), fg=COLOR_LIGHTGREEN}
-    local disabled_pen = dfhack.pen.parse{
-            tile=(start>0) and (start+1) or nil,
-            ch=string.byte('-'), fg=COLOR_RED}
-    return enabled_pen, disabled_pen
+    local start = dfhack.textures.getControlPanelTexposStart()
+    local valid = start > 0
+    start = start + 10
+
+    local enabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+0) or nil, ch=string.byte('[')}
+    local enabled_pen_center = dfhack.pen.parse{fg=COLOR_LIGHTGREEN,
+            tile=valid and (start+1) or nil, ch=251} -- check
+    local enabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+2) or nil, ch=string.byte(']')}
+    local disabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+3) or nil, ch=string.byte('[')}
+    local disabled_pen_center = dfhack.pen.parse{fg=COLOR_RED,
+            tile=valid and (start+4) or nil, ch=string.byte('x')}
+    local disabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+5) or nil, ch=string.byte(']')}
+    local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+6) or nil, ch=string.byte('[')}
+    local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
+            tile=valid and (start+7) or nil, ch=string.byte(']')}
+    local help_pen_center = dfhack.pen.parse{
+            tile=valid and (start+8) or nil, ch=string.byte('?')}
+    local configure_pen_center = dfhack.pen.parse{
+            tile=valid and (start+9) or nil, ch=15} -- gear/masterwork symbol
+    return enabled_pen_left, enabled_pen_center, enabled_pen_right,
+            disabled_pen_left, disabled_pen_center, disabled_pen_right,
+            button_pen_left, button_pen_right,
+            help_pen_center, configure_pen_center
 end
-local ENABLED_ICON_PEN, DISABLED_ICON_PEN = get_icon_pens()
+local ENABLED_PEN_LEFT, ENABLED_PEN_CENTER, ENABLED_PEN_RIGHT,
+        DISABLED_PEN_LEFT, DISABLED_PEN_CENTER, DISABLED_PEN_RIGHT,
+        BUTTON_PEN_LEFT, BUTTON_PEN_RIGHT,
+        HELP_PEN_CENTER, CONFIGURE_PEN_CENTER = get_icon_pens()
 
 --
 -- ConfigPanel
@@ -107,7 +130,7 @@ function ConfigPanel:init()
                     frame={t=5},
                     view_id='list',
                     on_select=self:callback('on_select'),
-                    icon_width=2,
+                    row_height=2,
                 },
             },
         },
@@ -148,11 +171,11 @@ function ConfigPanel:onInput(keys)
         local idx = list:getIdxUnderMouse()
         if idx then
             local x = list:getMousePos()
-            if x == 0 then
+            if x <= 2 then
                 self:on_submit()
-            elseif x >= 2 and x <= 7 then
+            elseif x >= 4 and x <= 6 then
                 self:show_help()
-            elseif x >= 9 and x <= 19 then
+            elseif x >= 8 and x <= 10 then
                 self:launch_config()
             end
         end
@@ -165,20 +188,36 @@ function ConfigPanel:refresh()
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.command or choice.target
         local gui_config = 'gui/' .. command
-        local has_gui_config = helpdb.is_entry(gui_config)
+        local want_gui_config = utils.getval(self.is_configurable)
+                and helpdb.is_entry(gui_config)
+        local enabled = choice.enabled
+        local function get_enabled_pen(enabled_pen, disabled_pen)
+            if not utils.getval(self.is_enableable) then
+                return gui.CLEAR_PEN
+            end
+            return enabled and enabled_pen or disabled_pen
+        end
         local text = {
-            '[help] ',
-            {text=('%11s '):format(has_gui_config and '[configure]' or ''),
-             pen=not utils.getval(self.is_enableable) and COLOR_DARKGREY or nil},
+            {tile=get_enabled_pen(ENABLED_PEN_LEFT, DISABLED_PEN_LEFT)},
+            {tile=get_enabled_pen(ENABLED_PEN_CENTER, DISABLED_PEN_CENTER)},
+            {tile=get_enabled_pen(ENABLED_PEN_RIGHT, DISABLED_PEN_RIGHT)},
+            ' ',
+            {tile=BUTTON_PEN_LEFT},
+            {tile=HELP_PEN_CENTER},
+            {tile=BUTTON_PEN_RIGHT},
+            ' ',
+            {tile=want_gui_config and BUTTON_PEN_LEFT or gui.CLEAR_PEN},
+            {tile=want_gui_config and CONFIGURE_PEN_CENTER or gui.CLEAR_PEN},
+            {tile=want_gui_config and BUTTON_PEN_RIGHT or gui.CLEAR_PEN},
+            ' ',
             choice.target,
         }
         local desc = helpdb.is_entry(command) and
                 helpdb.get_entry_short_help(command) or ''
-        local icon_pen = choice.enabled and ENABLED_ICON_PEN or DISABLED_ICON_PEN
         table.insert(choices,
                 {text=text, command=choice.command, target=choice.target, desc=desc,
-                 search_key=choice.target, icon=icon_pen,
-                 gui_config=has_gui_config and gui_config})
+                 search_key=choice.target, enabled=enabled,
+                 gui_config=want_gui_config and gui_config})
     end
     local list = self.subviews.list
     local filter = list:getFilter()
@@ -195,7 +234,7 @@ function ConfigPanel:on_select(idx, choice)
         desc:updateLayout()
     end
     if choice then
-        self.subviews.launch.enabled = utils.getval(self.is_enableable)
+        self.subviews.launch.enabled = utils.getval(self.is_configurable)
                 and not not choice.gui_config
     end
 end
@@ -204,10 +243,9 @@ function ConfigPanel:on_submit()
     if not utils.getval(self.is_enableable) then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local is_enabled = choice.icon == ENABLED_ICON_PEN
     local tokens = {}
     table.insert(tokens, choice.command)
-    table.insert(tokens, is_enabled and 'disable' or 'enable')
+    table.insert(tokens, choice.enabled and 'disable' or 'enable')
     table.insert(tokens, choice.target)
     dfhack.run_command(tokens)
     self:refresh()
@@ -294,8 +332,9 @@ function FortServicesAutostart:init()
     if ok and f then
         for line in f:lines() do
             line = line:trim()
+            print(line)
             if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^on-new-fortress enable ([%S]+)')
+            local service = line:match('^on%-new%-fortress enable ([%S]+)')
             if service then
                 enabled_map[service] = true
             end
@@ -312,8 +351,7 @@ end
 function FortServicesAutostart:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local is_enabled = choice.icon == ENABLED_ICON_PEN
-    self.enabled_map[choice.target] = not is_enabled
+    self.enabled_map[choice.target] = not choice.enabled
 
     local save_fn = function(f)
         for service,enabled in pairs(self.enabled_map) do
@@ -472,7 +510,7 @@ function Preferences:onInput(keys)
         local idx = list:getIdxUnderMouse()
         if idx then
             local x = list:getMousePos()
-            if x >= 2 and x <= 9 then
+            if x <= 2 then
                 self:on_submit()
             end
         end
@@ -487,7 +525,10 @@ function Preferences:refresh()
         local ctx_env = require(ctx_name)
         for id,spec in pairs(settings) do
             local text = {
-                '[change] ',
+                {tile=BUTTON_PEN_LEFT},
+                {tile=CONFIGURE_PEN_CENTER},
+                {tile=BUTTON_PEN_RIGHT},
+                ' ',
                 id,
                 ' (',
                 tostring(ctx_env[id]),
@@ -545,7 +586,7 @@ end
 ControlPanel = defclass(ControlPanel, widgets.Window)
 ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
-    frame={w=55, h=35},
+    frame={w=55, h=36},
     resizable=true,
     resize_min={h=26},
 }
