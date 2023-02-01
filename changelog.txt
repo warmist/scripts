@@ -30,7 +30,7 @@ that repo.
 - `gui/quickfort`: don't close the window when applying a blueprint so players can apply the same blueprint multiple times more easily
 - `locate-ore`: now only searches revealed tiles by default
 - `unforbid`: does not unforbid unreachable items by default anymore.
-- `modtools/spawn-liquid`: resets temperature to "normal" levels, when spawning water or magma
+- `modtools/spawn-liquid`: sets tile temperature to stable levels when spawning water or magma
 - `gui/liquids`: allows spawning river sources, setting/adding/removing liquid levels, and cleaning water from being salty or stagnant
 
 ## Removed

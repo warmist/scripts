@@ -12,7 +12,7 @@ existing liquids on the map from salt or being stagnant.
 .. warning::
 
     There is **no undo support**. Be sure you know what you are doing before
-    spawning any liquid, especially river sources.
+    spawning any liquid, especially river sources!
 
 Usage
 -----
