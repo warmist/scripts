@@ -23,6 +23,7 @@ function isEnabled()
     return enabled
 end
 
+
 local function persist_state()
     persist.GlobalTable[GLOBAL_KEY] = json.encode({enabled=enabled,
         set_maxFish=set_maxFish, set_minFish=set_minFish, set_useRaw=set_useRaw,
@@ -128,6 +129,16 @@ local function print_status()
         end
     end
 end
+
+function setEnabled(val)
+    load_state()
+    enabled = val
+    persist_state()
+
+    if not enabled then return end
+    event_loop()
+end
+
 
 -- handle loading
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
