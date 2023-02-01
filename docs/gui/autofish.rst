@@ -1,5 +1,5 @@
 gui/autofish
-========
+============
 
 .. dfhack-tool::
     :summary: Auto-manage fishing labors to control your stock of fish.
