@@ -4,6 +4,7 @@
 --@module = true
 
 local utils = require 'utils'
+local guidm = require('gui.dwarfmode')
 
 function getGenderString(gender)
   local sym = df.pronoun_type.attrs[gender].symbol
@@ -215,7 +216,7 @@ end
 
 local CORPSE_PIECES = utils.invert{'BONE', 'SKIN', 'CARTILAGE', 'TOOTH', 'NERVE', 'NAIL', 'HORN', 'HOOF', 'CHITIN', 'SHELL', 'IVORY', 'SCALE' }
 local HAIR_PIECES = utils.invert{'HAIR', 'EYEBROW', 'EYELASH', 'MOUSTACHE', 'CHIN_WHISKERS', 'SIDEBURNS' }
-local LIQUID_PIECES = utils.invert{'BLOOD', 'PUS', 'VENOM', 'SWEAT', 'TEARS', 'SPIT' }
+local LIQUID_PIECES = utils.invert{'BLOOD', 'PUS', 'VENOM', 'SWEAT', 'TEARS', 'SPIT', 'MILK' }
 
 function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic, quality) -- this part was written by four rabbits in a trenchcoat (ppaawwll)
  -- (partlayer is also used to determine the material if we're spawning a "generic" body part (i'm just lazy lol))
@@ -231,6 +232,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local layerName
  local layerMat
  local tissueID
+ local liquid = false
  if not generic then -- if we have a specified body part and layer, figure all the stuff out about that
  -- store the tissue id of the specific layer we selected
   tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
@@ -257,7 +259,8 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
   item_type = "CORPSEPIECE"
  elseif LIQUID_PIECES[layerName] then -- check if hair
-  item_type = "GLOB" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
+  item_type = "LIQUID_MISC" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
+  liquid = true
  end
  local itemType = dfhack.items.findType(item_type..":NONE")
  local itemSubtype = dfhack.items.findSubtype(item_type..":NONE")
@@ -265,6 +268,13 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local materialInfo = dfhack.matinfo.find(material)
  local item_id = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
  local item = df.item.find(item_id)
+ if liquid then
+  local bucket = df.item.find(dfhack.items.createItem(18, -1, 22, 191, creator))
+  dfhack.items.moveToContainer(item, bucket)
+  guidm.setCursorPos(creator.pos)
+  dfhack.run_command("spotclean")
+ end
+
  -- item:setQuality(quality)
  -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
  if item_type == "CORPSEPIECE" then
@@ -384,10 +394,11 @@ function hackWish(unit)
    mattype,matindex=getCreatureRaceAndCaste(creatureTable[3])
   end
   if df.item_type[itemtype]=='CORPSEPIECE' then
-    local bodpartok,bodypartLocal=script.showListPrompt('Wish','What body part should it be?',COLOR_LIGHTGREEN,getCreaturePartList(mattype,matindex),1,true)
-    -- createCorpsePiece() references the bodypart variable so it can't be local to here
-    bodypart = bodypartLocal
-    if bodypart == 1 then
+   quality = 0
+   local bodpartok,bodypartLocal=script.showListPrompt('Wish','What body part should it be?',COLOR_LIGHTGREEN,getCreaturePartList(mattype,matindex),1,true)
+   -- createCorpsePiece() references the bodypart variable so it can't be local to here
+   bodypart = bodypartLocal
+   if bodypart == 1 then
      corpsepieceGeneric = true
     end
    if not bodpartok then return end
@@ -397,9 +408,10 @@ function hackWish(unit)
     partlayerok,partlayerID=script.showListPrompt('Wish','What creature material should it be?',COLOR_LIGHTGREEN,getCreatureMaterialList(mattype,matindex),1,true)
    end
     if not partlayerok then return end
+  else
+   local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
+   if not qualityok then return end
   end
-  local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
-  if not qualityok then return end
   local description
   if df.item_type[itemtype]=='SLAB' then
    local descriptionok
