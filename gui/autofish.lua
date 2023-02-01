@@ -87,6 +87,10 @@ function get_count_text(val, min, max)
     return {text=tostring(val), pen=get_count_pen(val, min, max)}
 end
 
+function get_fishing_text(val)
+    if not val then return {text="not ", pen=COLOR_RED} end
+    return ""
+end
 
 function Autofish:refresh_data()
     self.subviews.enable_toggle:setOption(autofish.isEnabled())
@@ -105,12 +109,12 @@ function Autofish:refresh_data()
         {text=tostring(raw), pen=COLOR_GREY}, " raw)"
     }
     self.subviews.fish_count:setText(counts_text)
-
-    self.subviews.current_mode.visible=autofish.isEnabled()
-    if autofish.isFishing then
-        self.subviews.current_mode:setText(string.format("Autofish has %s fishing.", (autofish.isFishing and "enabled" or "disabled")))
-    end
-
+    local fishingText = {
+        "Currently ",
+        get_fishing_text(autofish.isFishing),
+        "fishing."
+    }
+    self.subviews.current_mode:setText(fishingText)
     self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
 end
 
