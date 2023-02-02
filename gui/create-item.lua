@@ -290,7 +290,6 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   dfhack.run_command("spotclean")
  end
 
- -- item:setQuality(quality)
  -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
  if item_type == "CORPSEPIECE" then
   if layerName == "BONE" then -- check if bones
