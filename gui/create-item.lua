@@ -234,7 +234,6 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local tissueID
  local liquid = false
  local isCorpse = bodypart < -2 -- in the hackWish function, the bodypart variable is initialized to -1, which isn't changed if the spawned item is a corpse, but it's passed to this function with two subtracted from it, making it -3 instead
- print(bodypart)
  if not generic and not isCorpse then -- if we have a specified body part and layer, figure all the stuff out about that
  -- store the tissue id of the specific layer we selected
   tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
@@ -276,7 +275,6 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local item = df.item.find(item_id)
  if liquid then
   local bucketMat = dfhack.matinfo.find("PLANT_MAT:NETHER_CAP:WOOD")
-  print(bucketMat)
   if not bucketMat then
    for i,n in ipairs(df.global.world.raws.plants.all) do
     if n.flags.TREE then
