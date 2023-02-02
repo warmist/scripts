@@ -259,7 +259,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   item_type = "GLOB"
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
   item_type = "CORPSEPIECE"
- elseif LIQUID_PIECES[layerName] then -- check if hair
+ elseif LIQUID_PIECES[layerName] then
   item_type = "LIQUID_MISC" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
   liquid = true
  end
