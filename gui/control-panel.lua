@@ -139,7 +139,6 @@ local ENABLED_PEN_LEFT, ENABLED_PEN_CENTER, ENABLED_PEN_RIGHT,
 
 ConfigPanel = defclass(ConfigPanel, widgets.Panel)
 ConfigPanel.ATTRS{
-    title='Untitled page',
     intro_text=DEFAULT_NIL,
     is_enableable=DEFAULT_NIL,
     is_configurable=DEFAULT_NIL,
@@ -332,7 +331,6 @@ end
 
 FortServices = defclass(FortServices, Services)
 FortServices.ATTRS{
-    title='Fort',
     is_enableable=dfhack.world.isFortressMode,
     is_configurable=dfhack.world.isFortressMode,
     intro_text='These tools can only be enabled when you have a fort loaded,'..
@@ -348,7 +346,6 @@ FortServices.ATTRS{
 
 FortServicesAutostart = defclass(FortServicesAutostart, Services)
 FortServicesAutostart.ATTRS{
-    title='Autostart',
     is_enableable=true,
     is_configurable=false,
     intro_text='Tools that are enabled on this page will be auto-enabled for'..
@@ -720,6 +717,132 @@ function RepeatAutostart:on_submit()
     self:refresh()
 end
 
+---------
+-- Tab --
+---------
+
+local to_pen = dfhack.pen.parse
+local active_tab_pens = {
+    text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
+    text_mode_label_pen=to_pen{fg=COLOR_WHITE},
+    lt=to_pen{tile=1005, write_to_lower=true},
+    lt2=to_pen{tile=1006, write_to_lower=true},
+    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=1008, write_to_lower=true},
+    rt=to_pen{tile=1009, write_to_lower=true},
+    lb=to_pen{tile=1015, write_to_lower=true},
+    lb2=to_pen{tile=1016, write_to_lower=true},
+    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=1018, write_to_lower=true},
+    rb=to_pen{tile=1019, write_to_lower=true},
+}
+
+local inactive_tab_pens = {
+    text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
+    text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
+    lt=to_pen{tile=1000, write_to_lower=true},
+    lt2=to_pen{tile=1001, write_to_lower=true},
+    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
+    rt2=to_pen{tile=1003, write_to_lower=true},
+    rt=to_pen{tile=1004, write_to_lower=true},
+    lb=to_pen{tile=1010, write_to_lower=true},
+    lb2=to_pen{tile=1011, write_to_lower=true},
+    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
+    rb2=to_pen{tile=1013, write_to_lower=true},
+    rb=to_pen{tile=1014, write_to_lower=true},
+}
+
+Tab = defclass(Tabs, widgets.Widget)
+Tab.ATTRS{
+    id=DEFAULT_NIL,
+    label=DEFAULT_NIL,
+    on_select=DEFAULT_NIL,
+    get_pens=DEFAULT_NIL,
+}
+
+function Tab:preinit(init_table)
+    init_table.frame = init_table.frame or {}
+    init_table.frame.w = #init_table.label + 4
+    init_table.frame.h = 2
+end
+
+function Tab:onRenderBody(dc)
+    local pens = self.get_pens()
+    dc:seek(0, 0)
+    if dfhack.screen.inGraphicsMode() then
+        dc:char(nil, pens.lt):char(nil, pens.lt2)
+        for i=1,#self.label do
+            dc:char(self.label:sub(i,i), pens.t)
+        end
+        dc:char(nil, pens.rt2):char(nil, pens.rt)
+        dc:seek(0, 1)
+        dc:char(nil, pens.lb):char(nil, pens.lb2)
+        for i=1,#self.label do
+            dc:char(self.label:sub(i,i), pens.b)
+        end
+        dc:char(nil, pens.rb2):char(nil, pens.rb)
+    else
+        local tp = pens.text_mode_tab_pen
+        dc:char(' ', tp):char('/', tp)
+        for i=1,#self.label do
+            dc:char('-', tp)
+        end
+        dc:char('\\', tp):char(' ', tp)
+        dc:seek(0, 1)
+        dc:char('/', tp):char('-', tp)
+        dc:string(self.label, pens.text_mode_label_pen)
+        dc:char('-', tp):char('\\', tp)
+    end
+end
+
+function Tab:onInput(keys)
+    if keys._MOUSE_L_DOWN and self:getMousePos() then
+        self.on_select(self.id)
+        return true
+    end
+end
+
+--
+-- TabBar
+--
+
+TabBar = defclass(TabBar, widgets.ResizingPanel)
+TabBar.ATTRS{
+    labels=DEFAULT_NIL,
+    on_select=DEFAULT_NIL,
+    get_cur_page=DEFAULT_NIL,
+}
+
+function TabBar:init()
+    for idx,label in ipairs(self.labels) do
+        self:addviews{
+            Tab{
+                frame={t=0, l=0},
+                id=idx,
+                label=label,
+                on_select=self.on_select,
+                get_pens=function()
+                    return self.get_cur_page() == idx and
+                            active_tab_pens or inactive_tab_pens
+                end,
+            }
+        }
+    end
+end
+
+function TabBar:postComputeFrame(body)
+    local t, l, width = 0, 0, body.width
+    for _,tab in ipairs(self.subviews) do
+        if l > 0 and l + tab.frame.w > width then
+            t = t + 2
+            l = 0
+        end
+        tab.frame.t = t
+        tab.frame.l = l
+        l = l + tab.frame.w
+    end
+end
+
 --
 -- ControlPanel
 --
@@ -730,86 +853,35 @@ ControlPanel.ATTRS {
     frame={w=55, h=36},
     resizable=true,
     resize_min={h=26},
+    autoarrange_subviews=true,
+    autoarrange_gap=1,
 }
 
-function get_prev_page_idx(pages)
-    local idx = pages:getSelected()
-    if idx == 1 then
-        return #pages.subviews
-    end
-    return idx - 1
-end
-
-function get_next_page_idx(pages)
-    local idx = pages:getSelected()
-    if idx == #pages.subviews then
-        return 1
-    end
-    return idx + 1
-end
-
 function ControlPanel:init()
-    local cur_page_title_fn = function()
-        return self.subviews.pages:getSelectedPage().title
-    end
-    local prev_page_fn = function()
-        self:set_page(get_prev_page_idx(self.subviews.pages))
-    end
-    local prev_page_title_fn = function()
-        local pages = self.subviews.pages
-        return pages.subviews[get_prev_page_idx(pages)].title
-    end
-    local next_page_fn = function()
-        self:set_page(get_next_page_idx(self.subviews.pages))
-    end
-    local next_page_title_fn = function()
-        local pages = self.subviews.pages
-        return pages.subviews[get_next_page_idx(pages)].title
-    end
-
     self:addviews{
-        widgets.HotkeyLabel{
-            frame={l=0, t=0},
-            auto_width=true,
-            key='KEYBOARD_CURSOR_LEFT_FAST',
-            key_sep='   : ',
-            label=prev_page_title_fn,
-            on_activate=prev_page_fn,
-        },
-        widgets.Label{
-            frame={l=6, t=0, w=4},
-            text_pen=COLOR_LIGHTGREEN,
-            text='Left',
-        },
-        widgets.HotkeyLabel{
-            frame={r=0, t=0},
-            auto_width=true,
-            key='KEYBOARD_CURSOR_RIGHT_FAST',
-            key_sep='    : ',
-            label=next_page_title_fn,
-            on_activate=next_page_fn,
-        },
-        widgets.Label{
-            view_id='right_arrow',
-            frame={r=10, t=0, w=5},
-            text_pen=COLOR_LIGHTGREEN,
-            text='Right',
-        },
-        widgets.Label{
-            frame={t=1},
-            auto_width=true,
-            text={{text=cur_page_title_fn}},
+        TabBar{
+            frame={t=0},
+            labels={
+                'Fort',
+                'Autostart',
+                'Maintenance',
+                'System',
+                'Overlays',
+                'Preferences',
+            },
+            on_select=self:callback('set_page'),
+            get_cur_page=function() return self.subviews.pages:getSelected() end
         },
         widgets.Pages{
             view_id='pages',
-            frame={t=3, l=0, b=0, r=0},
+            frame={t=5, l=0, b=0, r=0},
             subviews={
-                FortServices{view_id='fort'},
-                RepeatAutostart{view_id='repeat'},
-                Overlays{view_id='overlays'},
-                Preferences{view_id='prefs'},
-                SystemServices{view_id='system'},
-                FortServicesAutostart{view_id='autostart'},
+                FortServices{},
+                FortServicesAutostart{},
+                SystemServices{},
+                RepeatAutostart{},
+                Overlays{},
+                Preferences{},
             },
         },
     }
@@ -822,10 +894,7 @@ function ControlPanel:refresh_page()
 end
 
 function ControlPanel:set_page(val)
-    local pages = self.subviews.pages
-    pages:setSelected(val)
-    self.subviews.right_arrow.frame.r = 2 +
-            #pages.subviews[get_next_page_idx(pages)].title
+    self.subviews.pages:setSelected(val)
     self:refresh_page()
     self:updateLayout()
 end
