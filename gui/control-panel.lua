@@ -738,9 +738,9 @@ function RepeatAutostart:on_submit()
     self:refresh()
 end
 
----------
--- Tab --
----------
+--
+-- Tab
+---
 
 local to_pen = dfhack.pen.parse
 local active_tab_pens = {
@@ -861,6 +861,15 @@ function TabBar:postComputeFrame(body)
         tab.frame.t = t
         tab.frame.l = l
         l = l + tab.frame.w
+    end
+end
+
+function TabBar:onInput(keys)
+    if keys.CUSTOM_CTRL_T then
+        local zero_idx = self.get_cur_page() - 1
+        local next_zero_idx = (zero_idx + 1) % #self.labels
+        self.on_select(next_zero_idx + 1)
+        return true
     end
 end
 
