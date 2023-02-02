@@ -27,17 +27,6 @@ function Autofish:init()
                      {value=false, label="Disabled", pen=COLOR_RED}},
             on_change=function(val) dfhack.run_command{val and "enable" or "disable", "autofish"} end
         },
-        --[[widgets.EditField{
-            view_id="minimum",
-            frame={t=2,l=0},
-            label_text="Minimum fish target: ",
-            key="CUSTOM_M",
-            on_char=function(ch) return ch:match("%d") end,
-            on_submit=function(text)
-                autofish.set_minFish(tonumber(text))
-                self:refresh_data()
-            end
-        },--]]
         widgets.EditField{
             view_id="maximum",
             frame={t=2,l=0},
