@@ -427,6 +427,18 @@ Overlays.ATTRS{
                 ' functionality to various DF screens.',
 }
 
+function Overlays:init()
+    self.subviews.launch.visible = false
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={b=0, l=0},
+            label='Launch overlay widget repositioning UI',
+            key='CUSTOM_CTRL_G',
+            on_activate=function() dfhack.run_script('gui/overlay') end,
+        },
+    }
+end
+
 function Overlays:get_choices()
     local choices = {}
     local state = overlay.get_state()
