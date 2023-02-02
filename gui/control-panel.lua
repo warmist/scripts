@@ -2,6 +2,7 @@ local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
+local repeatUtil = require('repeat-util')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -704,12 +705,19 @@ function RepeatAutostart:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     self.enabled_map[choice.name] = not choice.enabled
+    local run_commands = dfhack.isMapLoaded()
 
     local save_fn = function(f)
         for name,enabled in pairs(self.enabled_map) do
             if enabled then
-                f:write(('repeat --name %s %s\n'):format(name,
-                        table.concat(REPEATS[name].command, ' ')))
+                local command_str = ('repeat --name %s %s\n'):
+                        format(name, table.concat(REPEATS[name].command, ' '))
+                f:write(command_str)
+                if run_commands then
+                    dfhack.run_command(command_str) -- actually start it up too
+                end
+            elseif run_commands then
+                repeatUtil.cancel(name)
             end
         end
     end
@@ -852,7 +860,7 @@ ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
     frame={w=55, h=36},
     resizable=true,
-    resize_min={h=26},
+    resize_min={h=28},
     autoarrange_subviews=true,
     autoarrange_gap=1,
 }
@@ -878,8 +886,8 @@ function ControlPanel:init()
             subviews={
                 FortServices{},
                 FortServicesAutostart{},
-                SystemServices{},
                 RepeatAutostart{},
+                SystemServices{},
                 Overlays{},
                 Preferences{},
             },
