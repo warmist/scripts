@@ -39,6 +39,7 @@ that repo.
 - `unforbid`: does not unforbid unreachable and underwater items by default
 - `gui/create-item`: added proper corpsepiece spawning from any creature. (under "body part")
 - `gui/create-item`: added search functionality to the creature selection prompt, as well as new the body part, tissue, and creature material selection prompts.
+- `gui/overlay`: now is only used to reposition overlay widgets; enabling, disabling, and getting help for overlay widgets has moved to `gui/control-panel`
 - `prioritize`: now automatically starts boosting the default list of job types when enabled
 - `prioritize`: pushing minecarts is now included in the default priortization list
 
