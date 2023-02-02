@@ -10,7 +10,7 @@ local widgets = require('gui.widgets')
 local quickfort = reqscript('quickfort')
 local shapes = reqscript('internal/dig/shapes')
 
-reload('gui.dwarfmode')
+reload('gui.dwarfmode') -- TODO remove
 
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
@@ -58,7 +58,38 @@ function ActionPanel:get_area_text()
     local width, height, depth = get_dims(mark, other)
     local tiles = width * height * depth
     local plural = tiles > 1 and 's' or ''
-    return ('%dx%dx%d (%d tile%s) mark: %d, %d, %d'):format(width, height, depth, tiles, plural, other.x, other.y, other.z)
+    return ('%dx%dx%d (%d tile%s) mark: %d, %d, %d'):format(width, height, depth, tiles, plural, other.x, other.y,
+        other.z)
+end
+
+NamePanel = defclass(NamePanel, widgets.ResizingPanel)
+NamePanel.ATTRS {
+    name = DEFAULT_NIL,
+    autoarrange_subviews = true,
+    dig_panel = DEFAULT_NIL,
+    on_layout_change = DEFAULT_NIL,
+}
+function NamePanel:init()
+    self:addviews {
+        widgets.CycleHotkeyLabel {
+            view_id = 'shape_name',
+            key = 'CUSTOM_P',
+            label = "Shape: ",
+            active=true,
+            enabled=true,
+            options = {{label = shapes.all_shapes[1]{}.name, value = 1}, {label = shapes.all_shapes[2]{}.name, value = 2}},
+            disabled = false, -- function() return self.has_name_collision end,
+            show_tooltip = true,
+            initial_option = 1,
+            on_change = self:callback('change_shape')
+        },
+    }
+
+end
+
+function NamePanel:change_shape(new, old)
+    self.dig_panel.shape = shapes.all_shapes[new]{}
+    self:updateLayout()
 end
 
 --
@@ -74,6 +105,7 @@ Dig.ATTRS {
     autoarrange_subviews = true,
     autoarrange_gap = 1,
     presets = DEFAULT_NIL,
+    shape = DEFAULT_NIL,
 }
 
 function Dig:preinit(info)
@@ -88,9 +120,15 @@ function Dig:init()
     self:addviews {
         ActionPanel {
             get_mark_fn = function() return self.mark end,
-            is_setting_start_pos_fn = self:callback('is_setting_start_pos')
-        },
-    }
+            is_setting_start_pos_fn = self:callback('is_setting_start_pos'),
+            },
+
+            NamePanel {
+            view_id='name_panel',
+                dig_panel = self
+                -- on_layout_change=self:callback('updateLayout')
+            },
+        }
 end
 
 function Dig:onShow()
@@ -134,7 +172,7 @@ end
 
 function Dig:onRenderFrame(dc, rect)
     Dig.super.onRenderFrame(self, dc, rect)
-    if self.shape == nil then self.shape = shapes.Rectangle{} end
+    if self.shape == nil then self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()]{} end
 
     if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
         return
@@ -144,8 +182,9 @@ function Dig:onRenderFrame(dc, rect)
     if bounds and self.mark then
         local function get_overlay_pen(pos)
             if pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2 then
-                if not self.shape or (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
-                    self.shape:update( bounds.x2 - bounds.x1, bounds.y2 - bounds.y1)
+                if not self.shape or
+                    (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
+                    self.shape:update(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1)
                 end
                 return self.shape:getPen(pos.x - bounds.x1, pos.y - bounds.y1)
             else
@@ -256,7 +295,7 @@ DigScreen.ATTRS {
 function DigScreen:init()
     self.saved_pause_state = df.global.pause_state
     df.global.pause_state = true
-    self:addviews { Dig { presets = presets } }
+    self:addviews { Dig {} }
 end
 
 function DigScreen:onDismiss()

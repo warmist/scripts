@@ -166,3 +166,5 @@ Rectangle.ATTRS = {
     options = { hollow = { name = "Hollow", type = "bool", value = true },
         thickness = { name = "Thickness", type = "number", value = 2, dependson = "hollow.value" } }
 }
+
+all_shapes = {Rectangle, Ellipse}
