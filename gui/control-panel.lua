@@ -738,9 +738,9 @@ function RepeatAutostart:on_submit()
     self:refresh()
 end
 
----------
--- Tab --
----------
+--
+-- Tab
+---
 
 local to_pen = dfhack.pen.parse
 local active_tab_pens = {
