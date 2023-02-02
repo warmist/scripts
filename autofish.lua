@@ -171,16 +171,6 @@ local function print_status()
     end
 end
 
---[[function setEnabled(val)
-    load_state()
-    enabled = val
-    persist_state()
-
-    if not enabled then return end
-    event_loop()
-end]]--
-
-
 --- Handles automatic loading
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     -- unload with game
