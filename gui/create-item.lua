@@ -233,7 +233,9 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local layerMat
  local tissueID
  local liquid = false
- if not generic then -- if we have a specified body part and layer, figure all the stuff out about that
+ local isCorpse = bodypart < -2 -- in the hackWish function, the bodypart variable is initialized to -1, which isn't changed if the spawned item is a corpse, but it's passed to this function with two subtracted from it, making it -3 instead
+ print(bodypart)
+ if not generic and not isCorpse then -- if we have a specified body part and layer, figure all the stuff out about that
  -- store the tissue id of the specific layer we selected
   tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
   layerMat = {}
@@ -261,6 +263,10 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  elseif LIQUID_PIECES[layerName] then -- check if hair
   item_type = "LIQUID_MISC" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
   liquid = true
+ end
+ if isCorpse then
+  item_type = "CORPSE"
+  generic = true
  end
  local itemType = dfhack.items.findType(item_type..":NONE")
  local itemSubtype = dfhack.items.findSubtype(item_type..":NONE")
@@ -318,7 +324,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
    item.material_amount.Shell = 1
   end
   -- checking for skull
-  if not generic and creatorBody.body_parts[bodypart].token == "SKULL" then
+  if not generic and not isCorpse and creatorBody.body_parts[bodypart].token == "SKULL" then
    item.corpse_flags.skull2 = true
   end
  end
@@ -329,7 +335,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
    matType = creatorRaceRaw.tissue[i].mat_type
   end
  end
- if item_type == "CORPSEPIECE" then
+ if item_type == "CORPSEPIECE" or item_type == "CORPSE" then
   --referencing the source unit for, material, relation purposes???
   item.race = creatureID
   item.normal_race = creatureID
@@ -362,6 +368,9 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
    item.body.components.layer_status:insert(i,creator.body.components.layer_status[0]) --copy the layer status of the creator's first layer to every layer_status of the desired creature
    item.body.components.layer_status[i].gone = true
   end
+  if item_type == "CORPSE" then
+   item.corpse_flags.unbutchered = true
+  end
   if not generic then
    -- keeps the body part that the user selected to spawn the item from
    item.body.components.body_part_status[bodypart].missing = false
@@ -370,12 +379,17 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   elseif generic then
    for i in pairs(creatorBody.body_parts) do
      for n in pairs(creatorBody.body_parts[i].layers) do
-      -- search through the target creature's body parts and bring back every one which has the desired material
-      if creatorRaceRaw.tissue[creatorBody.body_parts[i].layers[n].tissue_id].tissue_material_str[1] == layerMat and creatorBody.body_parts[i].token ~= "SKULL" and not creatorBody.body_parts[i].flags.SMALL then
+      if item_type == "CORPSE" then
        item.body.components.body_part_status[i].missing = false
-       item.body.components.body_part_status[i].grime = 2
        item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
-       -- save the index of the bone layer to a variable
+      else
+       -- -- search through the target creature's body parts and bring back every one which has the desired material
+       if creatorRaceRaw.tissue[creatorBody.body_parts[i].layers[n].tissue_id].tissue_material_str[1] == layerMat and creatorBody.body_parts[i].token ~= "SKULL" and not creatorBody.body_parts[i].flags.SMALL then
+        item.body.components.body_part_status[i].missing = false
+        item.body.components.body_part_status[i].grime = 2
+        item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
+        -- -- save the index of the bone layer to a variable
+       end
       end
      end
     end
@@ -389,9 +403,9 @@ function hackWish(unit)
  script.start(function()
   local amountok, amount
   local matok,mattype,matindex,matFilter
-  local itemok,itemtype,itemsubtype=showItemPrompt('What item do you want?',function(itype) return df.item_type[itype]~='CORPSE' and df.item_type[itype]~='FOOD' end ,true)
+  local itemok,itemtype,itemsubtype=showItemPrompt('What item do you want?',function(itype) return df.item_type[itype]~='FOOD' end ,true)
   local corpsepieceGeneric
-  local bodypart
+  local bodypart = -1
   if not itemok then return end
   if not args.notRestrictive then
    matFilter=getMatFilter(itemtype)
@@ -419,7 +433,7 @@ function hackWish(unit)
     partlayerok,partlayerID=script.showListPrompt('Wish','What creature material should it be?',COLOR_LIGHTGREEN,getCreatureMaterialList(mattype,matindex),1,true)
    end
     if not partlayerok then return end
-  else
+  elseif df.item_type[itemtype]~='CORPSE' then
    local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
    if not qualityok then return end
   end
@@ -450,7 +464,7 @@ function hackWish(unit)
    return false
   else
    if mattype and itemtype then
-      if itemtype ~= df.item_type.CORPSEPIECE then
+      if itemtype ~= df.item_type.CORPSEPIECE and itemtype ~= df.item_type.CORPSE then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
        createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
