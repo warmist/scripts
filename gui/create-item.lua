@@ -317,7 +317,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   elseif layerName == "HORN" or layerName == "HOOF" then -- check if nail
    item.corpse_flags.horn = true
    item.material_amount.Horn = 1
-  elseif layerName == "SHELL" then -- check if nail
+  elseif layerName == "SHELL" then
    item.corpse_flags.shell = true
    item.material_amount.Shell = 1
   end
