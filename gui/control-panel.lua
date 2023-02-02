@@ -864,6 +864,15 @@ function TabBar:postComputeFrame(body)
     end
 end
 
+function TabBar:onInput(keys)
+    if keys.CUSTOM_CTRL_T then
+        local zero_idx = self.get_cur_page() - 1
+        local next_zero_idx = (zero_idx + 1) % #self.labels
+        self.on_select(next_zero_idx + 1)
+        return true
+    end
+end
+
 --
 -- ControlPanel
 --

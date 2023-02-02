@@ -436,6 +436,15 @@ function TabBar:postComputeFrame(body)
     end
 end
 
+function TabBar:onInput(keys)
+    if keys.CUSTOM_CTRL_T then
+        local zero_idx = self.get_cur_page() - 1
+        local next_zero_idx = (zero_idx + 1) % #self.labels
+        self.on_select(next_zero_idx + 1)
+        return true
+    end
+end
+
 HelpPanel = defclass(HelpPanel, widgets.Panel)
 HelpPanel.ATTRS{
     autoarrange_subviews=true,
@@ -550,14 +559,6 @@ function HelpPanel:postComputeFrame()
     local wrapped_help = helpdb.get_entry_long_help(self.cur_entry,
                                                     self.frame_body.width - 5)
     HelpPanel_update_label(self.subviews.help_label, wrapped_help)
-end
-
-function HelpPanel:onInput(keys)
-    if keys.CUSTOM_CTRL_T then
-        local pages = self.subviews.pages
-        pages:setSelected(((pages:getSelected() + 1) % (#pages.subviews+1)) + 1)
-        return true
-    end
 end
 
 ----------------------------------
