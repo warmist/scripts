@@ -21,6 +21,7 @@ local FORT_SERVICES = {
     'channel-safely',
     'emigration',
     'fastdwarf',
+    'fix/restore-nicks',
     'misery',
     'nestboxes',
     'prioritize',
