@@ -7,6 +7,8 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local quickfort = reqscript('quickfort')
+local shapes = reqscript('internal/dig/shapes')
 
 reload('gui.dwarfmode')
 
@@ -40,9 +42,7 @@ end
 
 function ActionPanel:get_action_text()
     local text = 'Select the '
-    if self.is_setting_start_pos_fn() then
-        text = text .. 'playback start'
-    elseif self.get_mark_fn() then
+    if self.get_mark_fn() then
         text = text .. 'second corner'
     else
         text = text .. 'first corner'
@@ -58,7 +58,7 @@ function ActionPanel:get_area_text()
     local width, height, depth = get_dims(mark, other)
     local tiles = width * height * depth
     local plural = tiles > 1 and 's' or ''
-    return ('%dx%dx%d (%d tile%s)'):format(width, height, depth, tiles, plural)
+    return ('%dx%dx%d (%d tile%s) mark: %d, %d, %d'):format(width, height, depth, tiles, plural, other.x, other.y, other.z)
 end
 
 --
@@ -132,120 +132,9 @@ function Dig:get_bounds()
     }
 end
 
-local to_pen = dfhack.pen.parse
-local PENS = {
-    CORNER = { 5, 22 },
-    INSIDE = { 1, 2 },
-    NORTH = { 1, 1 },
-    N_NUB = { 3, 2 },
-    S_NUB = { 4, 2 },
-    W_NUB = { 3, 1 },
-    E_NUB = { 5, 1 },
-    NE = { 2, 1 },
-    NW = { 0, 1 },
-    WEST = { 0, 2 },
-    EAST = { 2, 2 },
-    SW = { 0, 3 },
-    SOUTH = { 1, 3 },
-    SE = { 2, 3 },
-    VERT_NS = { 3, 3 },
-    VERT_EW = { 4, 1 }
-}
-
-function getpen(direction)
-    return to_pen { ch = 'X', fg = COLOR_GREEN,
-        tile = dfhack.screen.findGraphicsTile('CURSORS', direction[1], direction[2]) }
-end
-
-
-Shape = defclass(Shape)
-Shape.ATTRS {
-    mark_corners = true,
-    mark_center = true,
-    arr = {}
-}
-function Shape:init()
-    print("Creating shape")
-    self.arr = {}
-end
-
-function Shape:update(width, height)
-    self.width = width
-    self.height = height
-    self.arr = {}
-    for x = 0, self.width do
-        self.arr[x] = {}
-        for y = 0, self.height do
-            self.arr[x][y] = self:hasPoint(x, y)
-        end
-    end
-end
-
-function Shape:hasPoint(x, y)
-    local center_x, center_y = self.width / 2, self.height / 2
-    local point_x, point_y = x - center_x, y - center_y
-    if (point_x / (self.width / 2)) ^ 2 + (point_y / (self.height / 2)) ^ 2 <= 1 then
-        return true
-    else
-        return false
-    end
-end
-
-function Shape:getPen(x, y)
-
-        if (x == 0 and y == 0) or (x == #self.arr and y == 0) or (x == 0 and y == #self.arr[x]) or (x == #self.arr and y == #self.arr[x]) then
-            return getpen(PENS.CORNER)
-        end
-
-        if not self.arr[x][y] then
-            return nil
-        end
-
-        local n, w, e, s = false, false, false, false
-        if y == 0 or not self.arr[x][y - 1] then n = true end
-        if x == 0 or not self.arr[x - 1][y] then w = true end
-        if x == #self.arr or not self.arr[x + 1][y] then e = true end
-        if y == #self.arr[x] or not self.arr[x][y + 1] then s = true end
-
-        if not n and not w and not e and not s then
-            return getpen(PENS.INSIDE)
-        elseif n and w and not e and not s then
-            return getpen(PENS.NW)
-        elseif n and not w and not e and not s then
-            return getpen(PENS.NORTH)
-        elseif n and e and not w and not s then
-            return getpen(PENS.NE)
-        elseif not n and w and not e and not s then
-            return getpen(PENS.WEST)
-        elseif not n and not w and e and not s then
-            return getpen(PENS.EAST)
-        elseif not n and w and not e and s then
-            return getpen(PENS.SW)
-        elseif not n and not w and not e and s then
-            return getpen(PENS.SOUTH)
-        elseif not n and not w and e and s then
-            return getpen(PENS.SE)
-        elseif n and w and e and not s then
-            return getpen(PENS.N_NUB)
-        elseif n and not w and e and s then
-            return getpen(PENS.E_NUB)
-        elseif n and w and not e and s then
-            return getpen(PENS.W_NUB)
-        elseif not n and w and e and s then
-            return getpen(PENS.S_NUB)
-        elseif not n and w and e and not s then
-            return getpen(PENS.VERT_NS)
-        elseif n and not w and not e and s then
-            return getpen(PENS.VERT_EW)
-        else
-            return nil
-        end
-end
-
-
 function Dig:onRenderFrame(dc, rect)
     Dig.super.onRenderFrame(self, dc, rect)
-    if self.shape == nil then self.shape = Shape{} end
+    if self.shape == nil then self.shape = shapes.Rectangle{} end
 
     if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
         return
@@ -302,7 +191,7 @@ function Dig:onInput(keys)
             self.saved_cursor = nil
         elseif self.mark then
             self.saved_cursor = pos
-            -- self:commit(pos)
+            self:commit(pos)
         else
             self:on_mark(pos)
         end
@@ -322,70 +211,32 @@ function Dig:commit(pos)
         depth = -depth
     end
 
-    local params = { tostring(width), tostring(height), tostring(depth), name }
-
-    local phases_view = self.subviews.phases
-    if phases_view:getOptionValue() == 'Custom' then
-        local some_phase_is_set = false
-        for _, sv in pairs(self.subviews.phases_panel.subviews) do
-            if sv.options and sv:getOptionLabel() == 'On' then
-                table.insert(params, sv.label)
-                some_phase_is_set = true
-            end
-        end
-        if not some_phase_is_set then
-            dialogs.MessageBox {
-                frame_title = 'Error',
-                text = 'Ensure at least one phase is enabled or enable autodetect'
-            }:show()
-            return
-        end
-    end
-
     -- set cursor to top left corner of the *uppermost* z-level
     local bounds = self:get_bounds()
-    table.insert(params, ('--cursor=%d,%d,%d')
-        :format(bounds.x1, bounds.y1, bounds.z2))
-
-    if self.subviews.engrave:getOptionValue() then
-        table.insert(params, '--engrave')
+    local data = {}
+    local function generate_params(grid, position)
+        print(position.x, position.y, position.z)
+        for zlevel = 0, math.abs(self:get_bounds().z1 - self:get_bounds().z2) do
+            data[zlevel] = {}
+            for row = 0, math.abs(self:get_bounds().y1 - self:get_bounds().y2) do
+                data[zlevel][row] = {}
+                for col = 0, math.abs(self:get_bounds().x1 - self:get_bounds().x2) do
+                    if grid[col][row] then
+                        data[zlevel][row][col] = "d(1x1)"
+                    end
+                end
+            end
+        end
+        return { data = data, pos = position, mode = "dig" }
     end
 
-    if self.subviews.smooth:getOptionValue() then
-        table.insert(params, '--smooth')
-    end
-
-    local format = self.subviews.format:getOptionValue()
-    if format ~= 'minimal' then
-        table.insert(params, ('--format=%s'):format(format))
-    end
-
-    local meta = self.subviews.meta:getOptionValue()
-    if not meta then
-        table.insert(params, ('--nometa'))
-    end
-
-    local splitby = self.subviews.splitby:getOptionValue()
-    if splitby ~= 'none' then
-        table.insert(params, ('--splitby=%s'):format(splitby))
-    end
-
-    print('running: Dig ' .. table.concat(params, ' '))
-    -- local files = plugin.run(table.unpack(params))
-
-    -- local text = 'No files generated (see console for any error output)'
-    -- if files and #files > 0 then
-    --     text = 'Generated dig file(s):\n'
-    --     for _,fname in ipairs(files) do
-    --         text = text .. ('  %s\n'):format(fname)
-    --     end
-    -- end
-
-    dialogs.MessageBox {
-        frame_title = 'dig completed',
-        text = text,
-        on_close = function() self.parent_view:dismiss() end,
-    }:show()
+    local bounds = self:get_bounds()
+    local start = { x = bounds.x1, y = bounds.y1, z = math.min(bounds.z1, bounds.z2) }
+    local params = generate_params(self.shape.arr, start)
+    quickfort.apply_blueprint(params)
+    self.mark = nil
+    self.saved_cursor = nil
+    self:updateLayout()
 end
 
 --
