@@ -552,6 +552,14 @@ function HelpPanel:postComputeFrame()
     HelpPanel_update_label(self.subviews.help_label, wrapped_help)
 end
 
+function HelpPanel:onInput(keys)
+    if keys.CUSTOM_CTRL_T then
+        local pages = self.subviews.pages
+        pages:setSelected(((pages:getSelected() + 1) % (#pages.subviews+1)) + 1)
+        return true
+    end
+end
+
 ----------------------------------
 -- MainPanel
 --
