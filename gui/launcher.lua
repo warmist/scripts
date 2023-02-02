@@ -529,6 +529,7 @@ end
 LauncherUI = defclass(LauncherUI, gui.ZScreen)
 LauncherUI.ATTRS{
     focus_path='launcher',
+    defocusable=false,
     minimal=false,
 }
 
@@ -778,16 +779,23 @@ if view then
         -- running the launcher while it is open (e.g. from hitting the launcher
         -- hotkey a second time) should close the dialog
         view:dismiss()
+        return
     end
-else
-    local args = {...}
-    local minimal
-    if args[1] == '--minimal' or args[1] == '-m' then
-        table.remove(args, 1)
-        minimal = true
-    end
+end
+
+local args = {...}
+local minimal
+if args[1] == '--minimal' or args[1] == '-m' then
+    table.remove(args, 1)
+    minimal = true
+end
+if not view then
     view = LauncherUI{minimal=minimal}:show()
-    local initial_command = table.concat(args, ' ')
+elseif minimal and not view.minimal then
+    view.subviews.edit.on_toggle_minimal()
+end
+local initial_command = table.concat(args, ' ')
+if #initial_command > 0 then
     view.subviews.edit:set_text(initial_command)
     view:on_edit_input(initial_command)
 end
