@@ -269,7 +269,9 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  local item_id = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
  local item = df.item.find(item_id)
  if liquid then
-  local bucket = df.item.find(dfhack.items.createItem(18, -1, 420, 206, creator))
+  local bucketMat = dfhack.matinfo.find("PLANT_MAT:NETHER_CAP:WOOD")
+  local bucketType = dfhack.items.findType("BUCKET:NONE")
+  local bucket = df.item.find(dfhack.items.createItem(bucketType, -1, bucketMat.type, bucketMat.index, creator))
   dfhack.items.moveToContainer(item, bucket)
   guidm.setCursorPos(creator.pos)
   dfhack.run_command("spotclean")
