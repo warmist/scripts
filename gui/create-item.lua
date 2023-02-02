@@ -449,12 +449,12 @@ function hackWish(unit)
     if df.item_type.attrs[itemtype].is_stackable then
      createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,amount)
     else
-     local isCorpsePiece = itemtype ~= df.item_type.CORPSEPIECE or itemtype ~= df.item_type.CORPSE
+     local isCorpsePiece = itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE
      for i=1,amount do
       if not isCorpsePiece then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
-       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality) --the offsets here are cause indexes in lua are fucky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
+       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality) --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
       end
      end
     end
