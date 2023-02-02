@@ -259,7 +259,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   item_type = "GLOB"
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
   item_type = "CORPSEPIECE"
- elseif LIQUID_PIECES[layerName] then -- check if hair
+ elseif LIQUID_PIECES[layerName] then
   item_type = "LIQUID_MISC" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
   liquid = true
  end
@@ -292,7 +292,6 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   guidm.setCursorPos(prevCursorPos)
  end
 
- -- item:setQuality(quality)
  -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
  if item_type == "CORPSEPIECE" then
   if layerName == "BONE" then -- check if bones
@@ -319,7 +318,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   elseif layerName == "HORN" or layerName == "HOOF" then -- check if nail
    item.corpse_flags.horn = true
    item.material_amount.Horn = 1
-  elseif layerName == "SHELL" then -- check if nail
+  elseif layerName == "SHELL" then
    item.corpse_flags.shell = true
    item.material_amount.Shell = 1
   end
