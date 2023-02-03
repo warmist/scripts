@@ -48,6 +48,7 @@ that repo.
 - `prioritize`: pushing minecarts is now included in the default priortization list
 - `prioritize`: now automatically starts boosting the default list of job types when enabled
 - `unforbid`: avoids unforbidding unreachable and underwater items by default
+- `gui/create-item`: added whole corpse spawning alongside corpsepieces. (under "corpse")
 
 ## Removed
 - `show-unit-syndromes`: replaced by `gui/unit-syndromes`; html export is no longer supported
