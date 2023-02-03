@@ -8,7 +8,6 @@ end
 
 local to_pen = dfhack.pen.parse
 local PENS = {
-    CORNER = { 5, 22 },
     INSIDE = { 1, 2 },
     NORTH = { 1, 1 },
     N_NUB = { 3, 2 },
@@ -27,9 +26,9 @@ local PENS = {
     POINT = { 4, 3 }
 }
 
-function getpen(direction)
+function getpen(direction, is_corner)
     return to_pen { ch = 'X', fg = COLOR_GREEN,
-        tile = dfhack.screen.findGraphicsTile('CURSORS', direction[1], direction[2]) }
+        tile = dfhack.screen.findGraphicsTile('CURSORS', direction[1], direction[2] + (is_corner and 6 or 0)) }
 end
 
 Shape = defclass(Shape)
@@ -40,32 +39,38 @@ Shape.ATTRS {
     arr = {},
     has_point_fn = DEFAULT_NIL,
     apply_options_fn = DEFAULT_NIL,
+    invert = false,
 
 }
 function Shape:init()
 end
 
 function Shape:update(width, height)
+    print(self.invert)
     self.width = width
     self.height = height
     self.arr = {}
     for x = 0, self.width do
         self.arr[x] = {}
         for y = 0, self.height do
-            self.arr[x][y] = self:has_point_fn(x, y)
+            local value = self:has_point_fn(x, y)
+            if not self.invert then
+                self.arr[x][y] = value
+            else
+                self.arr[x][y] = not value
+            end
         end
     end
 end
 
 function Shape:getPen(x, y)
 
-    if (x == 0 and y == 0) or (x == #self.arr and y == 0) or (x == 0 and y == #self.arr[x]) or
-        (x == #self.arr and y == #self.arr[x]) then
-        return getpen(PENS.CORNER)
-    end
-
-    if not self.arr[x][y] then
-        return nil
+    -- Corners
+    local function is_corner(_x, _y)
+        return _x == 0 and _y == 0
+            or _x == self.width and _y == 0
+            or _x == 0 and _y == self.height
+            or _x == self.width and _y == self.height
     end
 
     local n, w, e, s = false, false, false, false
@@ -74,42 +79,47 @@ function Shape:getPen(x, y)
     if x == #self.arr or not self.arr[x + 1][y] then e = true end
     if y == #self.arr[x] or not self.arr[x][y + 1] then s = true end
 
+
     if not n and not w and not e and not s then
-        return getpen(PENS.INSIDE)
-    elseif n and w and not e and not s then
-        return getpen(PENS.NW)
-    elseif n and not w and not e and not s then
-        return getpen(PENS.NORTH)
-    elseif n and e and not w and not s then
-        return getpen(PENS.NE)
-    elseif not n and w and not e and not s then
-        return getpen(PENS.WEST)
-    elseif not n and not w and e and not s then
-        return getpen(PENS.EAST)
-    elseif not n and w and not e and s then
-        return getpen(PENS.SW)
-    elseif not n and not w and not e and s then
-        return getpen(PENS.SOUTH)
-    elseif not n and not w and e and s then
-        return getpen(PENS.SE)
-    elseif n and w and e and not s then
-        return getpen(PENS.N_NUB)
-    elseif n and not w and e and s then
-        return getpen(PENS.E_NUB)
-    elseif n and w and not e and s then
-        return getpen(PENS.W_NUB)
-    elseif not n and w and e and s then
-        return getpen(PENS.S_NUB)
-    elseif not n and w and e and not s then
-        return getpen(PENS.VERT_NS)
-    elseif n and not w and not e and s then
-        return getpen(PENS.VERT_EW)
-    elseif n and w and e and s then
-        return getpen(PENS.POINT)
+        return getpen(PENS.INSIDE, is_corner(x,y))
+    elseif self.arr[x][y] and n and w and not e and not s then
+        return getpen(PENS.NW, is_corner(x,y))
+    elseif self.arr[x][y] and n and not w and not e and not s then
+        return getpen(PENS.NORTH, is_corner(x,y))
+    elseif self.arr[x][y] and n and e and not w and not s then
+        return getpen(PENS.NE, is_corner(x,y))
+    elseif self.arr[x][y] and not n and w and not e and not s then
+        return getpen(PENS.WEST, is_corner(x,y))
+    elseif self.arr[x][y] and not n and not w and e and not s then
+        return getpen(PENS.EAST, is_corner(x,y))
+    elseif self.arr[x][y] and not n and w and not e and s then
+        return getpen(PENS.SW, is_corner(x,y))
+    elseif self.arr[x][y] and not n and not w and not e and s then
+        return getpen(PENS.SOUTH, is_corner(x,y))
+    elseif self.arr[x][y] and not n and not w and e and s then
+        return getpen(PENS.SE, is_corner(x,y))
+    elseif self.arr[x][y] and n and w and e and not s then
+        return getpen(PENS.N_NUB, is_corner(x,y))
+    elseif self.arr[x][y] and n and not w and e and s then
+        return getpen(PENS.E_NUB, is_corner(x,y))
+    elseif self.arr[x][y] and n and w and not e and s then
+        return getpen(PENS.W_NUB, is_corner(x,y))
+    elseif self.arr[x][y] and not n and w and e and s then
+        return getpen(PENS.S_NUB, is_corner(x,y))
+    elseif self.arr[x][y] and not n and w and e and not s then
+        return getpen(PENS.VERT_NS, is_corner(x,y))
+    elseif self.arr[x][y] and n and not w and not e and s then
+        return getpen(PENS.VERT_EW, is_corner(x,y))
+    elseif self.arr[x][y] and n and w and e and s then
+        return getpen(PENS.POINT, is_corner(x,y))
+    elseif is_corner(x,y) and not self.arr[x][y] then
+        return getpen(PENS.INSIDE, is_corner(x,y))
     else
         return nil
     end
 end
+
+-- Shape definitions
 
 Ellipse = defclass(Ellipse, Shape)
 Ellipse.ATTRS = {
@@ -145,7 +155,7 @@ Ellipse.ATTRS = {
         end
     end,
     options = { hollow = { name = "Hollow", type = "bool", value = false, key = 'CUSTOM_H' },
-        thickness = { name = "Thickness", type = "plusminus", value = 2, dependson = "hollow.value", min = 2,
+        thickness = { name = "Thickness", type = "plusminus", value = 2, enabled = {"hollow", true}, min = 1,
             keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
@@ -168,7 +178,7 @@ Rectangle.ATTRS = {
         return false
     end,
     options = { hollow = { name = "Hollow", type = "bool", value = false, key = 'CUSTOM_H' },
-        thickness = { name = "Thickness", type = "plusminus", value = 2, dependson = "hollow.value", min = 2,
+        thickness = { name = "Thickness", type = "plusminus", value = 2, enabled = {"hollow", true} , min = 1,
             keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
@@ -185,7 +195,7 @@ Rows.ATTRS = {
     end,
     options = { vertical = { name = "Vertical", type = "bool", value = true, key = 'CUSTOM_V' },
         horizontal = { name = "Horizontal", type = "bool", value = false, key = 'CUSTOM_H' },
-        spacing = { name = "Spacing", type = "plusminus", value = 3, dependson = "hollow.value", min = 1,
+        spacing = { name = "Spacing", type = "plusminus", value = 3, min = 1,
             keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
@@ -195,7 +205,7 @@ Diag.ATTRS = {
     has_point_fn = function(self, x, y)
 
         local mult = 1
-        if self.options.reverse.value  then
+        if self.options.reverse.value then
             mult = -1
         end
 
@@ -206,20 +216,21 @@ Diag.ATTRS = {
         end
 
     end,
-    options = { spacing = { name = "Spacing", type = "plusminus", value = 5, dependson = "hollow.value", min = 1, keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' },},
+    options = { spacing = { name = "Spacing", type = "plusminus", value = 5, min = 1,
+        keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' }, },
         reverse = { name = "Reverse", type = "bool", value = false, key = 'CUSTOM_R' },
-},
+    },
 }
 
-Line = defclass(Line, Shape)
-Diag.ATTRS = {
-    name = "Line",
-    has_point_fn = function(self, x, y)
-        local slope = (self.y2 - self.y1) / (self.x2 - self.x1)
-        local y_intercept = self.y1 - slope * self.x1
-        local y_value = slope * x + y_intercept
-        return y_value >= y and y_value <= y + 1
-    end,
-}
+-- Line = defclass(Line, Shape)
+-- Diag.ATTRS = {
+--     name = "Line",
+--     has_point_fn = function(self, x, y)
+--         local slope = (self.y2 - self.y1) / (self.x2 - self.x1)
+--         local y_intercept = self.y1 - slope * self.x1
+--         local y_value = slope * x + y_intercept
+--         return y_value >= y and y_value <= y + 1
+--     end,
+-- }
 
 all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {} }

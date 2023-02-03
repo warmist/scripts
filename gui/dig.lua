@@ -3,9 +3,17 @@
 
 -- TODO Figure out why pause/unpause doesn't work
 -- TODO grid view without slowness
--- TODO Triangle shaps
--- TODO Exploration patterns
--- TODO Conditionally show thickness
+-- TODO integrate with default mining mode for designation type, priority, etc... (possible?)
+-- TODO Triangle shapes
+-- TODO Exploration pattern ladder
+-- TODO Center dot + click and drag?
+-- TODO Add logic to set thickness.max for applicable shapes
+-- TODO Shape preview in panel
+-- TODO Shape designer aka repeatable mask
+-- TODO Investigate using single quickfort API call https://github.com/joelpt/quickfort/blob/master/README.md#area-expansion-syntax
+-- TODO smarter stairs i.e. vanilla stair placement >1 zlevel, auto designat up/down/updown
+-- TODO figure out how to remove dug stairs with mode
+
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
@@ -95,16 +103,62 @@ function GenericOptionsPanel:init()
             -- initial_option = 1,
             on_change = self:callback('change_shape')
         },
+        widgets.ToggleHotkeyLabel {
+            view_id = 'invert_designation_label',
+            key = 'CUSTOM_I',
+            label = "Invert: ",
+            active = true,
+            enabled = true,
+            disabled = false,
+            show_tooltip = true,
+            initial_option = false,
+            on_change = function(new, old)
+                self.dig_panel.shape.invert = new
+                self.dig_panel.dirty = true
+            end
+        },
         widgets.CycleHotkeyLabel {
             view_id = 'mode_name',
             key = 'CUSTOM_F',
             label = "Mode: ",
             active = true,
             enabled = true,
-            options = { { label = 'Dig', value = 'd' }, { label = 'Channel', value = 'h' } },
+            options = { { label = 'Dig', value = 'd' }, { label = 'Channel', value = 'h' },
+                        { label = 'Remove Designation', value = 'x' },
+                        { label = 'Remove Ramps', value = 'z' },
+                        { label = 'Remove Constructions', value = 'n' },
+                        { label = 'Stairs', value = 'i' },
+                        { label = 'Ramp', value = 'r' },
+                    },
             disabled = false,
             show_tooltip = true,
-        }
+        },
+
+        widgets.HotkeyLabel {
+            view_id = 'shape_option_priority_minus',
+            key = 'CUSTOM_P',
+            label = 'Increase Priority',
+            active = true,
+            enabled = function() return self.dig_panel.prio > 1 end,
+            disabled = false,
+            show_tooltip = true,
+            on_activate = function()
+                self.dig_panel.prio = self.dig_panel.prio - 1
+            end
+        },
+
+        widgets.HotkeyLabel {
+            view_id = 'shape_option_priority_plus',
+            key = 'CUSTOM_SHIFT_P',
+            label = 'Decrease Priority',
+            active = true,
+            enabled = function() return self.dig_panel.prio < 7 end,
+            disabled = false,
+            show_tooltip = true,
+            on_activate = function()
+                self.dig_panel.prio = self.dig_panel.prio + 1
+            end
+        },
     }
 end
 
@@ -128,7 +182,8 @@ Dig.ATTRS {
     autoarrange_gap = 1,
     presets = DEFAULT_NIL,
     shape = DEFAULT_NIL,
-    dirty = true
+    dirty = true,
+    prio = 4,
 }
 
 function Dig:preinit(info)
@@ -188,10 +243,16 @@ function Dig:add_shape_options()
                             key = option.key,
                             label = option.name,
                             active = true,
-                            enabled = true,
+                            enabled = function()
+                                if option.enabled == nil then
+                                    return true
+                                else
+                                    return self.shape.options[option.enabled[1]] == option.enabled[2]
+                                end
+                            end,
                             disabled = false,
                             show_tooltip = true,
-                            initial_option = 1,
+                            initial_option = option.value,
                             on_change = function(new, old)
                                 self.shape.options[key].value = new
                                 self.dirty = true
@@ -205,8 +266,14 @@ function Dig:add_shape_options()
                             key = option.keys[1],
                             label = 'Decrease ' .. option.name,
                             active = true,
-                            enabled = function() return self.shape.options[key].min == nil or
-                                    (self.shape.options[key].value >= self.shape.options[key].min)
+                            enabled = function()
+                                if option.enabled ~= nil then
+                                    if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
+                                        return false
+                                    end
+                                end
+                                 return self.shape.options[key].min == nil or
+                                    (self.shape.options[key].value > self.shape.options[key].min)
                             end,
                             disabled = false,
                             show_tooltip = true,
@@ -221,7 +288,13 @@ function Dig:add_shape_options()
                             key = option.keys[2],
                             label = 'Increase ' .. option.name,
                             active = true,
-                            enabled = function() return self.shape.options[key].max == nil or
+                            enabled = function()
+                                if option.enabled ~= nil then
+                                    if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
+                                        return false
+                                    end
+                                end
+                                return self.shape.options[key].max == nil or
                                     (self.shape.options[key].value <= self.shape.options[key].max)
                             end,
                             disabled = false,
@@ -300,7 +373,7 @@ function Dig:onRenderFrame(dc, rect)
             end
         end
 
-        guidm.renderMapOverlay(get_overlay_pen, bounds)
+        guidm.renderMapOverlay(get_overlay_pen, nil)
     end
 end
 
@@ -368,7 +441,7 @@ function Dig:commit(pos)
                 data[zlevel][row] = {}
                 for col = 0, math.abs(self:get_bounds().x1 - self:get_bounds().x2) do
                     if grid[col][row] then
-                        data[zlevel][row][col] = self.subviews.mode_name:getOptionValue() .. "(1x1)"
+                        data[zlevel][row][col] = self.subviews.mode_name:getOptionValue() .. tostring(self.prio)
                     end
                 end
             end
