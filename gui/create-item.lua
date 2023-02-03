@@ -230,7 +230,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  -- get body info for easy reference
  local creatorBody = creatorRaceRaw.caste[casteID].body_info
  local layerName
- local layerMat
+ local layerMat = "BONE"
  local tissueID
  local liquid = false
  local isCorpse = bodypart == -1 -- in the hackWish function, the bodypart variable is initialized to -1, which isn't changed if the spawned item is a corpse
@@ -244,7 +244,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   end
   layerMat = layerMat[3]
   layerName = creatorBody.body_parts[bodypart].layers[partlayer].layer_name
- else -- otherwise, figure out the mat name from the dual-use partlayer argument
+ elseif not isCorpse then -- otherwise, figure out the mat name from the dual-use partlayer argument
   layerMat = creatorRaceRaw.material[partlayer].id
   layerName = layerMat
  end
@@ -402,6 +402,8 @@ function hackWish(unit)
  script.start(function()
   local amountok, amount
   local matok,mattype,matindex,matFilter
+  local partlayerok, partlayerID = false, 0
+  local qualityok, quality = false, 0
   local itemok,itemtype,itemsubtype=showItemPrompt('What item do you want?',function(itype) return df.item_type[itype]~='FOOD' end ,true)
   local corpsepieceGeneric
   local bodypart = -1
@@ -418,7 +420,6 @@ function hackWish(unit)
    mattype,matindex=getCreatureRaceAndCaste(creatureTable[3])
   end
   if df.item_type[itemtype]=='CORPSEPIECE' then
-   quality = 0
    local bodpartok,bodypartLocal=script.showListPrompt('Wish','What body part should it be?',COLOR_LIGHTGREEN,getCreaturePartList(mattype,matindex),1,true)
    -- createCorpsePiece() references the bodypart variable so it can't be local to here
    bodypart = bodypartLocal
@@ -433,7 +434,7 @@ function hackWish(unit)
    end
     if not partlayerok then return end
   elseif df.item_type[itemtype]~='CORPSE' then
-   local qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
+   qualityok,quality=script.showListPrompt('Wish','What quality should it be?',COLOR_LIGHTGREEN,qualityTable())
    if not qualityok then return end
   end
   local description
