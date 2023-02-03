@@ -393,6 +393,7 @@ function Tab:onRenderBody(dc)
 end
 
 function Tab:onInput(keys)
+    if Tab.super.onInput(self, keys) then return true end
     if keys._MOUSE_L_DOWN and self:getMousePos() then
         self.on_select(self.id)
         return true
@@ -437,6 +438,7 @@ function TabBar:postComputeFrame(body)
 end
 
 function TabBar:onInput(keys)
+    if TabBar.super.onInput(self, keys) then return true end
     if keys.CUSTOM_CTRL_T then
         local zero_idx = self.get_cur_page() - 1
         local next_zero_idx = (zero_idx + 1) % #self.labels
