@@ -898,11 +898,11 @@ function ControlPanel:init()
             frame={t=0},
             labels={
                 'Fort',
-                'Autostart',
                 'Maintenance',
                 'System',
                 'Overlays',
                 'Preferences',
+                'Autostart',
             },
             on_select=self:callback('set_page'),
             get_cur_page=function() return self.subviews.pages:getSelected() end
@@ -912,11 +912,11 @@ function ControlPanel:init()
             frame={t=5, l=0, b=0, r=0},
             subviews={
                 FortServices{},
-                FortServicesAutostart{},
                 RepeatAutostart{},
                 SystemServices{},
                 Overlays{},
                 Preferences{},
+                FortServicesAutostart{},
             },
         },
     }
