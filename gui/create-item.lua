@@ -260,7 +260,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  elseif CORPSE_PIECES[layerName] or HAIR_PIECES[layerName] then -- check if hair
   item_type = "CORPSEPIECE"
  elseif LIQUID_PIECES[layerName] then
-  item_type = "LIQUID_MISC" -- prolly need to do more work on this (it doesn't like spawning LIQUID items), but it works for now
+  item_type = "LIQUID_MISC"
   liquid = true
  end
  if isCorpse then
@@ -382,12 +382,12 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
        item.body.components.body_part_status[i].missing = false
        item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
       else
-       -- -- search through the target creature's body parts and bring back every one which has the desired material
+       -- search through the target creature's body parts and bring back every one which has the desired material
        if creatorRaceRaw.tissue[creatorBody.body_parts[i].layers[n].tissue_id].tissue_material_str[1] == layerMat and creatorBody.body_parts[i].token ~= "SKULL" and not creatorBody.body_parts[i].flags.SMALL then
         item.body.components.body_part_status[i].missing = false
         item.body.components.body_part_status[i].grime = 2
         item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
-        -- -- save the index of the bone layer to a variable
+        -- save the index of the bone layer to a variable
        end
       end
      end
