@@ -31,7 +31,7 @@ end
 
 -- Restore all the assigned nicknames from a persistent place
 local function restore_nicks()
-    for _,entry in pairs(dfhack.persistent.get_all("nicknames", true)) do
+    for _,entry in pairs(dfhack.persistent.get_all("nicknames", true) or {}) do
         local nickname = entry.value
         local hfid = entry.ints[1]
 
