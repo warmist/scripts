@@ -21,7 +21,7 @@ local FORT_SERVICES = {
     'channel-safely',
     'emigration',
     'fastdwarf',
-    'fix/restore-nicks',
+    'fix/protect-nicks',
     'misery',
     'nestboxes',
     'prioritize',
@@ -219,7 +219,7 @@ function ConfigPanel:refresh()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.target or choice.command
-        command = command:match('^([%l]+)')
+        command = command:match('^([%l/_-]+)')
         local gui_config = 'gui/' .. command
         local want_gui_config = utils.getval(self.is_configurable)
                 and helpdb.is_entry(gui_config)
@@ -287,7 +287,7 @@ end
 function ConfigPanel:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local command = choice.target:match('^([%l]+)')
+    local command = choice.target:match('^([%l/_-]+)')
     dfhack.run_command('gui/launcher', command .. ' ')
 end
 
