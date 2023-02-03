@@ -1,5 +1,5 @@
 
-gui/autobutcher
+gui/dig
 ===============
 
 .. dfhack-tool::
