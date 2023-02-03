@@ -162,6 +162,8 @@ function ConfigPanel:init()
                     frame={t=5},
                     view_id='list',
                     on_select=self:callback('on_select'),
+                    on_double_click=self:callback('on_submit'),
+                    on_double_click2=self:callback('launch_config'),
                     row_height=2,
                 },
             },

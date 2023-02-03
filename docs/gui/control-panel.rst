@@ -18,14 +18,14 @@ Fort Services
 
 The fort services page shows tools that you can enable in fort mode. You can
 select the tool name to see a short description at the bottom of the list. Hit
-:kbd:`Enter` or click on the toggle on the far left to enable or disable that
-tool.
+:kbd:`Enter`, double click on the tool name, or click on the toggle on the far
+left to enable or disable that tool.
 
 Note that the fort services displayed on this page can only be enabled when a
 fort is loaded. They will be disabled in the list and cannot be enabled or have
 their GUI config screens shown until you have loaded a fortress. Once you do
-enable them, they will save their state with your fort and automatically
-re-enable themselves when you load your fort again.
+enable them (after you've loaded a fort), they will save their state with your
+fort and automatically re-enable themselves when you load your fort again.
 
 You can hit :kbd:`Ctrl`:kbd:`H` or click on the help icon to show the help page
 for the selected tool in `gui/launcher`. You can also use this as shortcut to
