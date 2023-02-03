@@ -21,6 +21,11 @@ that repo.
 
 ## Removed
 
+# 50.05-alpha3.1
+
+## Fixes
+- `gui/launcher`: no longer resets to the Help tab on every keystroke
+
 # 50.05-alpha3
 
 ## New Scripts
