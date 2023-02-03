@@ -121,6 +121,8 @@ end
 AutocompletePanel = defclass(AutocompletePanel, widgets.Panel)
 AutocompletePanel.ATTRS{
     on_autocomplete=DEFAULT_NIL,
+    on_double_click=DEFAULT_NIL,
+    on_double_click2=DEFAULT_NIL,
 }
 
 function AutocompletePanel:init()
@@ -148,6 +150,8 @@ function AutocompletePanel:init()
             view_id='autocomplete_list',
             scroll_keys={},
             on_select=self:callback('on_list_select'),
+            on_double_click=self.on_double_click,
+            on_double_click2=self.on_double_click2,
             frame={l=0, r=0, t=5, b=0}},
     }
 end
@@ -729,6 +733,8 @@ function LauncherUI:init(args)
             view_id='autocomplete',
             frame={t=0, r=0, w=AUTOCOMPLETE_PANEL_WIDTH},
             on_autocomplete=self:callback('on_autocomplete'),
+            on_double_click=function(_,c) self:run_command(true, c.text) end,
+            on_double_click2=function(_,c) self:run_command(false, c.text) end,
             visible=function() return not self.minimal end},
         EditPanel{
             view_id='edit',

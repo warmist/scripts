@@ -40,6 +40,7 @@ that repo.
 - `gui/launcher`: make command output scrollback separate from the help text so players can continue to see the output of the previous command as they type the next one
 - `gui/launcher`: allow double spacebar to pause/unpause the game, even while typing a command
 - `gui/launcher`: clarify what is being shown in the autocomplete list (all commands, autocompletion of partially typed command, or commands related to typed command)
+- `gui/launcher`: support running commands directly from the autocomplete list via double-clicking
 - `gui/liquids`: interface overhaul, also now allows spawning river sources, setting/adding/removing liquid levels, and cleaning water from being salty or stagnant
 - `gui/overlay`: now focuses on repositioning overlay widgets; enabling, disabling, and getting help for overlay widgets has moved to the new `gui/control-panel`
 -@ `gui/quickcmd`: now acts like a regular window instead of a modal dialog
