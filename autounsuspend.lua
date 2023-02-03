@@ -19,7 +19,7 @@ end
 
 local function event_loop()
     if enabled then
-        dfhack.run_script('unsuspend')
+        dfhack.run_script('unsuspend', '--quiet')
         dfhack.timeout(1, 'days', event_loop)
     end
 end
