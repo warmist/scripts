@@ -37,12 +37,12 @@ end
 --- Load the saved state of the script
 local function load_state()
     -- load persistent data
-    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or "")
-    enabled = (persisted_data or {enabled=false})["enabled"]
-    s_maxFish = (persisted_data or {s_maxFish=100})["s_maxFish"]
-    s_minFish = (persisted_data or {s_minFish=75})["s_minFish"]
-    s_useRaw = (persisted_data or {s_useRaw=true})["s_useRaw"]
-    isFishing = (persisted_data or {isFishing=true})["isFishing"]
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or "") or {}
+    enabled = persisted_data.enabled or false
+    s_maxFish = persisted_data.s_maxFish or 100
+    s_minFish = persisted_data.s_minFish or 75
+    s_useRaw = persisted_data.s_useRaw or (persisted_data.s_useRaw == nil)
+    isFishing = persisted_data.isFishing or (persisted_data.isFishing == nil)
 end
 
 --- Set the maximum fish threshold.
