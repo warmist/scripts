@@ -118,7 +118,7 @@ Ellipse.ATTRS = {
         local center_x, center_y = self.width / 2, self.height / 2
         local point_x, point_y = x - center_x, y - center_y
         local is_inside = (point_x / (self.width / 2)) ^ 2 + (point_y / (self.height / 2)) ^ 2 <= 1
-    
+
         if self.options.hollow.value and is_inside then
             -- Check if all the points surrounding (x, y) are inside the circle
             local all_points_inside = true
@@ -126,8 +126,10 @@ Ellipse.ATTRS = {
                 for dy = -self.options.thickness.value, self.options.thickness.value do
                     if dx ~= 0 or dy ~= 0 then
                         local surrounding_x, surrounding_y = x + dx, y + dy
-                        local surrounding_point_x, surrounding_point_y = surrounding_x - center_x, surrounding_y - center_y
-                        if (surrounding_point_x / (self.width / 2)) ^ 2 + (surrounding_point_y / (self.height / 2)) ^ 2 > 1 then
+                        local surrounding_point_x, surrounding_point_y = surrounding_x - center_x,
+                            surrounding_y - center_y
+                        if (surrounding_point_x / (self.width / 2)) ^ 2 + (surrounding_point_y / (self.height / 2)) ^ 2 >
+                            1 then
                             all_points_inside = false
                             break
                         end
@@ -170,4 +172,54 @@ Rectangle.ATTRS = {
             keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
-all_shapes = {Rectangle{}, Ellipse{}}
+Rows = defclass(Rows, Shape)
+Rows.ATTRS = {
+    name = "Expl. Rows",
+    has_point_fn = function(self, x, y)
+        if self.options.vertical.value and x % self.options.spacing.value == 0 or
+            self.options.horizontal.value and y % self.options.spacing.value == 0 then
+            return true;
+        else
+            return false
+        end
+    end,
+    options = { vertical = { name = "Vertical", type = "bool", value = true, key = 'CUSTOM_V' },
+        horizontal = { name = "Horizontal", type = "bool", value = false, key = 'CUSTOM_H' },
+        spacing = { name = "Spacing", type = "plusminus", value = 3, dependson = "hollow.value", min = 1,
+            keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
+}
+
+Diag = defclass(Diag, Shape)
+Diag.ATTRS = {
+    name = "Diagonal",
+    has_point_fn = function(self, x, y)
+
+        local mult = 1
+        if self.options.reverse.value  then
+            mult = -1
+        end
+
+        if (x + mult * y) % self.options.spacing.value == 0 then
+            return true
+        else
+            return false
+        end
+
+    end,
+    options = { spacing = { name = "Spacing", type = "plusminus", value = 5, dependson = "hollow.value", min = 1, keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' },},
+        reverse = { name = "Reverse", type = "bool", value = false, key = 'CUSTOM_R' },
+},
+}
+
+Line = defclass(Line, Shape)
+Diag.ATTRS = {
+    name = "Line",
+    has_point_fn = function(self, x, y)
+        local slope = (self.y2 - self.y1) / (self.x2 - self.x1)
+        local y_intercept = self.y1 - slope * self.x1
+        local y_value = slope * x + y_intercept
+        return y_value >= y and y_value <= y + 1
+    end,
+}
+
+all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {} }

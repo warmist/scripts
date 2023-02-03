@@ -1,10 +1,11 @@
 -- A GUI front-end for the dig plugin
---@ module = true
+--@ module = false
 
 -- TODO Figure out why pause/unpause doesn't work
 -- TODO grid view without slowness
--- Triangle shaps
--- Exploration patterns
+-- TODO Triangle shaps
+-- TODO Exploration patterns
+-- TODO Conditionally show thickness
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
