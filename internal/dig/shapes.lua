@@ -6,7 +6,6 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-
 local to_pen = dfhack.pen.parse
 local PENS = {
     CORNER = { 5, 22 },
@@ -24,7 +23,8 @@ local PENS = {
     SOUTH = { 1, 3 },
     SE = { 2, 3 },
     VERT_NS = { 3, 3 },
-    VERT_EW = { 4, 1 }
+    VERT_EW = { 4, 1 },
+    POINT = { 4, 3 }
 }
 
 function getpen(direction)
@@ -40,7 +40,6 @@ Shape.ATTRS {
     arr = {},
     has_point_fn = DEFAULT_NIL,
     apply_options_fn = DEFAULT_NIL,
-    options = {}
 
 }
 function Shape:init()
@@ -105,6 +104,8 @@ function Shape:getPen(x, y)
         return getpen(PENS.VERT_NS)
     elseif n and not w and not e and s then
         return getpen(PENS.VERT_EW)
+    elseif n and w and e and s then
+        return getpen(PENS.POINT)
     else
         return nil
     end
@@ -141,8 +142,9 @@ Ellipse.ATTRS = {
             return is_inside
         end
     end,
-    options = { hollow = { name = "Hollow", type = "bool", value = true },
-        thickness = { name = "Thickness", type = "number", value = 2, range = {1,1000}, shows_if = "hollow.value" } }
+    options = { hollow = { name = "Hollow", type = "bool", value = false, key = 'CUSTOM_H' },
+        thickness = { name = "Thickness", type = "plusminus", value = 2, dependson = "hollow.value", min = 2,
+            keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
 Rectangle = defclass(Rectangle, Shape)
@@ -163,8 +165,9 @@ Rectangle.ATTRS = {
         end
         return false
     end,
-    options = { hollow = { name = "Hollow", type = "bool", value = true },
-        thickness = { name = "Thickness", type = "number", value = 2, dependson = "hollow.value" } }
+    options = { hollow = { name = "Hollow", type = "bool", value = false, key = 'CUSTOM_H' },
+        thickness = { name = "Thickness", type = "plusminus", value = 2, dependson = "hollow.value", min = 2,
+            keys = { 'CUSTOM_T', 'CUSTOM_SHIFT_T' } } },
 }
 
-all_shapes = {Rectangle, Ellipse}
+all_shapes = {Rectangle{}, Ellipse{}}

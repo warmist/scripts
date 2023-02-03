@@ -1,7 +1,11 @@
 -- A GUI front-end for the dig plugin
 --@ module = true
 
--- local plugin = require('plugins.dig')
+-- TODO Figure out why pause/unpause doesn't work
+-- TODO grid view without slowness
+-- Triangle shaps
+-- Exploration patterns
+
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
@@ -9,8 +13,6 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 local quickfort = reqscript('quickfort')
 local shapes = reqscript('internal/dig/shapes')
-
-reload('gui.dwarfmode') -- TODO remove
 
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
@@ -62,34 +64,53 @@ function ActionPanel:get_area_text()
         other.z)
 end
 
-NamePanel = defclass(NamePanel, widgets.ResizingPanel)
-NamePanel.ATTRS {
+GenericOptionsPanel = defclass(GenericOptionsPanel, widgets.ResizingPanel)
+GenericOptionsPanel.ATTRS {
     name = DEFAULT_NIL,
     autoarrange_subviews = true,
     dig_panel = DEFAULT_NIL,
     on_layout_change = DEFAULT_NIL,
 }
-function NamePanel:init()
+function GenericOptionsPanel:init()
+    local options = {}
+    for i, shape in pairs(shapes.all_shapes) do
+        options[#options + 1] = { label = shape.name, value = i }
+    end
+
     self:addviews {
+        widgets.WrappedLabel {
+            view_id = "settings_label",
+            text_to_wrap = "General Settings:\n"
+        },
         widgets.CycleHotkeyLabel {
             view_id = 'shape_name',
-            key = 'CUSTOM_P',
+            key = 'CUSTOM_E',
             label = "Shape: ",
-            active=true,
-            enabled=true,
-            options = {{label = shapes.all_shapes[1]{}.name, value = 1}, {label = shapes.all_shapes[2]{}.name, value = 2}},
-            disabled = false, -- function() return self.has_name_collision end,
+            active = true,
+            enabled = true,
+            options = options,
+            disabled = false,
             show_tooltip = true,
-            initial_option = 1,
+            -- initial_option = 1,
             on_change = self:callback('change_shape')
         },
+        widgets.CycleHotkeyLabel {
+            view_id = 'mode_name',
+            key = 'CUSTOM_F',
+            label = "Mode: ",
+            active = true,
+            enabled = true,
+            options = { { label = 'Dig', value = 'd' }, { label = 'Channel', value = 'h' } },
+            disabled = false,
+            show_tooltip = true,
+        }
     }
-
 end
 
-function NamePanel:change_shape(new, old)
-    self.dig_panel.shape = shapes.all_shapes[new]{}
-    self:updateLayout()
+function GenericOptionsPanel:change_shape(new, old)
+    self.dig_panel.shape = shapes.all_shapes[new]
+    self.dig_panel:add_shape_options()
+    self.dig_panel:updateLayout()
 end
 
 --
@@ -106,6 +127,7 @@ Dig.ATTRS {
     autoarrange_gap = 1,
     presets = DEFAULT_NIL,
     shape = DEFAULT_NIL,
+    dirty = true
 }
 
 function Dig:preinit(info)
@@ -119,16 +141,100 @@ end
 function Dig:init()
     self:addviews {
         ActionPanel {
+            view_id = 'action_panel',
             get_mark_fn = function() return self.mark end,
             is_setting_start_pos_fn = self:callback('is_setting_start_pos'),
-            },
+        },
 
-            NamePanel {
-            view_id='name_panel',
-                dig_panel = self
-                -- on_layout_change=self:callback('updateLayout')
-            },
-        }
+        GenericOptionsPanel {
+            view_id = 'name_panel',
+            dig_panel = self
+        },
+    }
+end
+
+function Dig:postinit()
+    self.shape = shapes.all_shapes[1]
+    if self.shape then
+        self:add_shape_options()
+    end
+
+end
+
+function Dig:add_shape_options()
+    local prefix = "shape_option_"
+    if self.subviews ~= nil then
+        for i, view in ipairs(self.subviews) do
+            if string.sub(view.view_id, 1, string.len(prefix)) == prefix then
+                self.subviews[i] = nil
+            end
+        end
+    end
+    if self.shape then
+        if self.shape.options ~= nil then
+            self:addviews {
+                widgets.WrappedLabel {
+                    view_id = "shape_option_label",
+                    text_to_wrap = "Shape Settings:\n"
+                }
+            }
+
+            for key, option in pairs(self.shape.options) do
+                if option.type == "bool" then
+                    self:addviews {
+                        widgets.ToggleHotkeyLabel {
+                            view_id = 'shape_option_' .. option.name,
+                            key = option.key,
+                            label = option.name,
+                            active = true,
+                            enabled = true,
+                            disabled = false,
+                            show_tooltip = true,
+                            initial_option = 1,
+                            on_change = function(new, old)
+                                self.shape.options[key].value = new
+                                self.dirty = true
+                            end
+                        }
+                    }
+                elseif option.type == "plusminus" then
+                    self:addviews {
+                        widgets.HotkeyLabel {
+                            view_id = 'shape_option_' .. option.name .. '_minus',
+                            key = option.keys[1],
+                            label = 'Decrease ' .. option.name,
+                            active = true,
+                            enabled = function() return self.shape.options[key].min == nil or
+                                    (self.shape.options[key].value >= self.shape.options[key].min)
+                            end,
+                            disabled = false,
+                            show_tooltip = true,
+                            on_activate = function()
+                                self.shape.options[key].value = self.shape.options[key].value - 1
+                                self.dirty = true
+                            end
+                        },
+
+                        widgets.HotkeyLabel {
+                            view_id = 'shape_option_' .. option.name .. '_plus',
+                            key = option.keys[2],
+                            label = 'Increase ' .. option.name,
+                            active = true,
+                            enabled = function() return self.shape.options[key].max == nil or
+                                    (self.shape.options[key].value <= self.shape.options[key].max)
+                            end,
+                            disabled = false,
+                            show_tooltip = true,
+                            on_activate = function()
+                                self.shape.options[key].value = self.shape.options[key].value + 1
+                                self.dirty = true
+                            end
+                        },
+                    }
+                end
+            end
+        end
+    end
 end
 
 function Dig:onShow()
@@ -172,7 +278,7 @@ end
 
 function Dig:onRenderFrame(dc, rect)
     Dig.super.onRenderFrame(self, dc, rect)
-    if self.shape == nil then self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()]{} end
+    if self.shape == nil then self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()] end
 
     if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
         return
@@ -181,10 +287,11 @@ function Dig:onRenderFrame(dc, rect)
     local bounds = self:get_bounds()
     if bounds and self.mark then
         local function get_overlay_pen(pos)
-            if pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2 then
-                if not self.shape or
+            if self.dirty or (pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2) then
+                if not self.shape or self.dirty or
                     (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
                     self.shape:update(bounds.x2 - bounds.x1, bounds.y2 - bounds.y1)
+                    self.dirty = false
                 end
                 return self.shape:getPen(pos.x - bounds.x1, pos.y - bounds.y1)
             else
@@ -254,14 +361,13 @@ function Dig:commit(pos)
     local bounds = self:get_bounds()
     local data = {}
     local function generate_params(grid, position)
-        print(position.x, position.y, position.z)
         for zlevel = 0, math.abs(self:get_bounds().z1 - self:get_bounds().z2) do
             data[zlevel] = {}
             for row = 0, math.abs(self:get_bounds().y1 - self:get_bounds().y2) do
                 data[zlevel][row] = {}
                 for col = 0, math.abs(self:get_bounds().x1 - self:get_bounds().x2) do
                     if grid[col][row] then
-                        data[zlevel][row][col] = "d(1x1)"
+                        data[zlevel][row][col] = self.subviews.mode_name:getOptionValue() .. "(1x1)"
                     end
                 end
             end
@@ -285,22 +391,17 @@ end
 DigScreen = defclass(DigScreen, gui.ZScreen)
 DigScreen.ATTRS {
     focus_path = 'dig',
-    force_pause = true,
-    pass_pause = false,
+    pass_pause = true,
     pass_movement_keys = true,
-    pass_mouse_clicks = false,
     presets = DEFAULT_NIL,
 }
 
 function DigScreen:init()
-    self.saved_pause_state = df.global.pause_state
-    df.global.pause_state = true
     self:addviews { Dig {} }
 end
 
 function DigScreen:onDismiss()
     view = nil
-    df.global.pause_state = self.saved_pause_state
 end
 
 if dfhack_flags.module then
@@ -311,16 +412,4 @@ if not dfhack.isMapLoaded() then
     qerror('This script requires a fortress map to be loaded')
 end
 
--- local options, args = {}, {...}
--- local ok, err = dfhack.pcall(plugin.parse_gui_commandline, options, args)
--- if not ok then
---     dfhack.printerr(tostring(err))
---     options.help = true
--- end
-
--- if options.help then
---     print(dfhack.script_help())
---     return
--- end
-
-view = view and view:raise() or DigScreen { presets = options }:show()
+view = view and view:raise() or DigScreen {}:show()
