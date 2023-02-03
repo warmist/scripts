@@ -424,7 +424,10 @@ function hackWish(unit)
    bodypart = bodypartLocal
    if bodypart == 1 then
      corpsepieceGeneric = true
-    end
+   end
+   if bodypart ~= -1 then
+    bodypart = bodypart - 2 --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
+   end
    if not bodpartok then return end
    if not corpsepieceGeneric then -- probably a better way of doing this tbh
     partlayerok,partlayerID=script.showListPrompt('Wish','What tissue layer should it be?',COLOR_LIGHTGREEN,getCreaturePartLayerList(mattype,matindex,bodypart-2),1,true)
@@ -454,7 +457,7 @@ function hackWish(unit)
       if not isCorpsePiece then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
-       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality) --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
+       createCorpsePiece(unit,bodypart,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
       end
      end
     end
@@ -466,7 +469,7 @@ function hackWish(unit)
       if itemtype ~= df.item_type.CORPSEPIECE and itemtype ~= df.item_type.CORPSE then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
-       createCorpsePiece(unit,bodypart-2,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
+       createCorpsePiece(unit,bodypart,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
       end
     return true
    end
