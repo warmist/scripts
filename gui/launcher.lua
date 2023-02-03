@@ -211,6 +211,10 @@ function EditPanel:init()
             -- held down as the launcher appears, it will be read and be added
             -- to the commandline
             ignore_keys={'STRING_A096'},
+            on_char=function(ch, text)
+                if ch == ' ' then return text:match('%S$') end
+                return true
+            end,
             on_change=self.on_change,
             on_submit=self.on_submit,
             on_submit2=self.on_submit2},

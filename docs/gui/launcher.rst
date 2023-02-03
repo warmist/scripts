@@ -46,6 +46,11 @@ In any case, the command output will also be written to the DFHack terminal
 console (the separate window that comes up when you start DF) if you need to
 find it later.
 
+To pause or unpause the game while `gui/launcher` is open, hit the spacebar once
+or twice. If you are typing a command, the first space will go into the edit box
+for your commandline. If the commandline is empty or if it already ends in a
+space, space key will be passed through to the game to affect the pause button.
+
 If your keyboard layout makes any key impossible to type (such as :kbd:`[` and
 :kbd:`]` on German QWERTZ keyboards), use :kbd:`Ctrl`:kbd:`Shift`:kbd:`K` to
 bring up the on-screen keyboard. You can "type" the text you need by clicking
