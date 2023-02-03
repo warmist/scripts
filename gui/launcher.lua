@@ -548,7 +548,10 @@ function HelpPanel:add_output(output)
     end
 end
 
-function HelpPanel:set_entry(entry_name)
+function HelpPanel:set_entry(entry_name, show_help)
+    if show_help then
+        self.subviews.pages:setSelected('help_label')
+    end
     local label = self.subviews.help_label
     if #entry_name == 0 then
         HelpPanel_update_label(label, DEFAULT_HELP_TEXT)
@@ -759,13 +762,13 @@ function LauncherUI:init(args)
     self:on_edit_input('')
 end
 
-function LauncherUI:update_help(text, firstword)
+function LauncherUI:update_help(text, firstword, show_help)
     local firstword = firstword or get_first_word(text)
     if firstword == self.firstword then
         return
     end
     self.firstword = firstword
-    self.subviews.help:set_entry(firstword)
+    self.subviews.help:set_entry(firstword, show_help)
 end
 
 local function extract_entry(entries, firstword)
@@ -852,9 +855,9 @@ function LauncherUI:update_autocomplete(firstword)
     self.subviews.autocomplete:set_options(entries, found)
 end
 
-function LauncherUI:on_edit_input(text)
+function LauncherUI:on_edit_input(text, show_help)
     local firstword = get_first_word(text)
-    self:update_help(text, firstword)
+    self:update_help(text, firstword, show_help)
     self:update_autocomplete(firstword)
 end
 
@@ -941,5 +944,5 @@ end
 local initial_command = table.concat(args, ' ')
 if #initial_command > 0 then
     view.subviews.edit:set_text(initial_command)
-    view:on_edit_input(initial_command)
+    view:on_edit_input(initial_command, true)
 end
