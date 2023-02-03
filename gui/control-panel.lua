@@ -341,7 +341,7 @@ FortServices.ATTRS{
     intro_text='These tools can only be enabled when you have a fort loaded,'..
                 ' but once you enable them, they will stay enabled when you'..
                 ' save and reload your fort. If you want them to be'..
-                ' auto-enabled for new forts, please see the previous page.',
+                ' auto-enabled for new forts, please see the "Autostart" tab.',
     services_list=FORT_SERVICES,
 }
 
@@ -356,7 +356,7 @@ FortServicesAutostart.ATTRS{
     intro_text='Tools that are enabled on this page will be auto-enabled for'..
                 ' you when you start a new fort, using the default'..
                 ' configuration. To see tools that are enabled right now in'..
-                ' an active fort, please see the next page.',
+                ' an active fort, please see the "Fort" tab.',
     services_list=FORT_AUTOSTART,
 }
 
