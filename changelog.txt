@@ -14,6 +14,16 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.05-alpha3
+
+## New Scripts
 - `autofish`: auto-manage fishing labors to control your stock of fish
 - `gui/autofish`: GUI config and status panel interface for autofish
 - `gui/automelt`: GUI config and status panel interface for automelt
