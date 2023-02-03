@@ -10,6 +10,10 @@ local GLOBAL_KEY = 'fix-protect-nicks'
 
 enabled = enabled or false
 
+function isEnabled()
+    return enabled
+end
+
 local function persist_state()
     persist.GlobalTable[GLOBAL_KEY] = json.encode({enabled=enabled})
 end
