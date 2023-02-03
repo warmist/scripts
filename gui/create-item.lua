@@ -425,9 +425,6 @@ function hackWish(unit)
    if bodypart == 1 then
      corpsepieceGeneric = true
    end
-   if bodypart ~= -1 then
-    bodypart = bodypart - 2 --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
-   end
    if not bodpartok then return end
    if not corpsepieceGeneric then -- probably a better way of doing this tbh
     partlayerok,partlayerID=script.showListPrompt('Wish','What tissue layer should it be?',COLOR_LIGHTGREEN,getCreaturePartLayerList(mattype,matindex,bodypart-2),1,true)
@@ -444,6 +441,9 @@ function hackWish(unit)
    local descriptionok
    descriptionok,description=script.showInputPrompt('Slab','What should the slab say?',COLOR_WHITE)
    if not descriptionok then return end
+  end
+  if bodypart ~= -1 then
+   bodypart = bodypart - 2 --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
   end
   if args.multi then
    repeat amountok,amount=script.showInputPrompt('Wish','How many do you want? (numbers only!)',COLOR_LIGHTGREEN) until tonumber(amount) or not amountok
