@@ -1,6 +1,6 @@
 
 gui/dig
-===============
+=======
 
 .. dfhack-tool::
     :summary: Digging designation utility with shapes.

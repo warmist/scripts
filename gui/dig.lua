@@ -13,6 +13,7 @@
 
 -- Should Haves
 -----------------------------
+-- As the number of shapes and designations grow it might be better to have list menus for them instead of cycle
 -- 3D shapes, would allow stuff like spiral staircases/minecart tracks and other neat stuff, probably not too hard
 -- Grid view without slowness (can ignore if next TODO is done, since nrmal mining mode has grid view)
 --   Lags when drawing the full screen grid on each frame render
@@ -437,7 +438,7 @@ function Dig:onRenderFrame(dc, rect)
 
     local bounds = self:get_bounds()
     if bounds and self.mark then
-        
+
         local function get_overlay_pen(pos)
             -- Check if we need to update the shape dimensions. Either there isn't a shape, we've marked it dirty, or the bounds have changed
             if self.dirty or (pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2) then
@@ -455,7 +456,7 @@ function Dig:onRenderFrame(dc, rect)
                     mouse_pos.x = mouse_pos.x - bounds.x1
                     mouse_pos.y = mouse_pos.y - bounds.y1
                 end
-                
+
                 -- Get the pen from the base Shape class based on if the point is in the shape or not
                 -- Send mouse position for stuff like corner anchor mouse over, etc...
                 return self.shape:get_pen(
@@ -557,7 +558,7 @@ function Dig:commit()
     -- Put any special logic for designation type here
     -- Right now it's setting the stair type based on the z-level
     function getDesignation(x, y, z)
-        
+
         -- Nice stairs
         if self.subviews.mode_name:getOptionValue() == "i" then
             if math.abs(self:get_bounds().z1 - self:get_bounds().z2) == 0 then
