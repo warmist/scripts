@@ -6,8 +6,8 @@ gui/dig
     :summary: Digging designation utility with shapes.
     :tags: fort design graphics map productivity
 
-This plugin provides an interface to make designating shapes
-and patterns easier. 
+This tool provides a point and click interface to make designating shapes
+and patterns easier.
 
 Usage
 -----

@@ -56,15 +56,14 @@ end
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
 ActionPanel.ATTRS {
     get_mark_fn = DEFAULT_NIL,
-    is_setting_start_pos_fn = DEFAULT_NIL,
     autoarrange_subviews = true,
 }
 
 function ActionPanel:init()
     self:addviews { widgets.WrappedLabel {
-        view_id = "action_label",
-        text_to_wrap = self:callback("get_action_text"),
-    },
+            view_id = "action_label",
+            text_to_wrap = self:callback("get_action_text"),
+        },
         widgets.TooltipLabel {
             view_id = "selected_area",
             indent = 1,
@@ -132,7 +131,7 @@ function GenericOptionsPanel:init()
     },
         widgets.CycleHotkeyLabel {
             view_id = "shape_name",
-            key = "CUSTOM_E",
+            key = "CUSTOM_Z",
             label = "Shape: ",
             label_width = 8,
             active = true,
@@ -284,7 +283,6 @@ Dig.ATTRS {
     resize_min = { h = 10 },
     autoarrange_subviews = true,
     autoarrange_gap = 1,
-    presets = DEFAULT_NIL,
     shape = DEFAULT_NIL,
     dirty = true,
     prio = 4,
@@ -318,89 +316,86 @@ end
 -- Will need to update as needed to add more option types
 function Dig:add_shape_options()
     local prefix = "shape_option_"
-    if self.subviews ~= nil then
-        for i, view in ipairs(self.subviews) do
-            if string.sub(view.view_id, 1, string.len(prefix)) == prefix then
-                self.subviews[i] = nil
-            end
+    for i, view in ipairs(self.subviews or {}) do
+        if view.view_id:sub(1, #prefix) == prefix then
+            self.subviews[i] = nil
         end
     end
-    if self.shape then
-        if self.shape.options ~= nil then
-            self:addviews { widgets.WrappedLabel {
-                view_id = "shape_option_label",
-                text_to_wrap = "Shape Settings:\n",
-            } }
 
-            for key, option in pairs(self.shape.options) do
-                if option.type == "bool" then
-                    self:addviews { widgets.ToggleHotkeyLabel {
-                        view_id = "shape_option_" .. option.name,
-                        key = option.key,
-                        label = option.name,
-                        active = true,
-                        enabled = function()
-                            if option.enabled == nil then
-                                return true
-                            else
-                                return self.shape.options[option.enabled[1]] == option.enabled[2]
+    if not self.shape or not self.shape.options then return end
+
+    self:addviews { widgets.WrappedLabel {
+        view_id = "shape_option_label",
+        text_to_wrap = "Shape Settings:\n",
+    } }
+
+    for key, option in pairs(self.shape.options) do
+        if option.type == "bool" then
+            self:addviews { widgets.ToggleHotkeyLabel {
+                view_id = "shape_option_" .. option.name,
+                key = option.key,
+                label = option.name,
+                active = true,
+                enabled = function()
+                    if option.enabled == nil then
+                        return true
+                    else
+                        return self.shape.options[option.enabled[1]] == option.enabled[2]
+                    end
+                end,
+                disabled = false,
+                show_tooltip = true,
+                initial_option = option.value,
+                on_change = function(new, old)
+                    self.shape.options[key].value = new
+                    self.dirty = true
+                end,
+            } }
+        elseif option.type == "plusminus" then
+            self:addviews { widgets.HotkeyLabel {
+                view_id = "shape_option_" .. option.name .. "_minus",
+                key = option.keys[1],
+                label = "Decrease " .. option.name,
+                active = true,
+                enabled = function()
+                    if option.enabled ~= nil then
+                        if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
+                            return false
+                        end
+                    end
+                    return self.shape.options[key].min == nil or
+                        (self.shape.options[key].value > self.shape.options[key].min)
+                end,
+                disabled = false,
+                show_tooltip = true,
+                on_activate = function()
+                    self.shape.options[key].value =
+                    self.shape.options[key].value - 1
+                    self.dirty = true
+                end,
+            },
+                widgets.HotkeyLabel {
+                    view_id = "shape_option_" .. option.name .. "_plus",
+                    key = option.keys[2],
+                    label = "Increase " .. option.name,
+                    active = true,
+                    enabled = function()
+                        if option.enabled ~= nil then
+                            if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
+                                return false
                             end
-                        end,
-                        disabled = false,
-                        show_tooltip = true,
-                        initial_option = option.value,
-                        on_change = function(new, old)
-                            self.shape.options[key].value = new
-                            self.dirty = true
-                        end,
-                    } }
-                elseif option.type == "plusminus" then
-                    self:addviews { widgets.HotkeyLabel {
-                        view_id = "shape_option_" .. option.name .. "_minus",
-                        key = option.keys[1],
-                        label = "Decrease " .. option.name,
-                        active = true,
-                        enabled = function()
-                            if option.enabled ~= nil then
-                                if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
-                                    return false
-                                end
-                            end
-                            return self.shape.options[key].min == nil or
-                                (self.shape.options[key].value > self.shape.options[key].min)
-                        end,
-                        disabled = false,
-                        show_tooltip = true,
-                        on_activate = function()
-                            self.shape.options[key].value =
-                            self.shape.options[key].value - 1
-                            self.dirty = true
-                        end,
-                    },
-                        widgets.HotkeyLabel {
-                            view_id = "shape_option_" .. option.name .. "_plus",
-                            key = option.keys[2],
-                            label = "Increase " .. option.name,
-                            active = true,
-                            enabled = function()
-                                if option.enabled ~= nil then
-                                    if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
-                                        return false
-                                    end
-                                end
-                                return self.shape.options[key].max == nil or
-                                    (self.shape.options[key].value <= self.shape.options[key].max)
-                            end,
-                            disabled = false,
-                            show_tooltip = true,
-                            on_activate = function()
-                                self.shape.options[key].value =
-                                self.shape.options[key].value + 1
-                                self.dirty = true
-                            end,
-                        } }
-                end
-            end
+                        end
+                        return self.shape.options[key].max == nil or
+                            (self.shape.options[key].value <= self.shape.options[key].max)
+                    end,
+                    disabled = false,
+                    show_tooltip = true,
+                    on_activate = function()
+                        self.shape.options[key].value =
+                        self.shape.options[key].value + 1
+                        self.dirty = true
+                    end,
+                } }
         end
     end
 end
@@ -501,7 +496,7 @@ function Dig:onInput(keys)
     if keys._MOUSE_L_DOWN and pos then
         if self.mark and not self.saved_cursor then
             self.saved_cursor = pos
-            -- The statement after the or is to allow the 1x1 special case for easy doors
+            -- The statement after the or is to allow the 1x1 special case for easy doorways
             if self.autocommit or (self.mark.x == self.saved_cursor and self.mark.y == self.saved_cursor.y) then
                 self:commit()
             end
@@ -548,7 +543,7 @@ function Dig:onInput(keys)
     end
 
     -- send movement keys through, but otherwise we're a modal dialog
-    return not guidm.getMapKey(keys)
+    return not (keys.D_PAUSE or guidm.getMapKey(keys))
 end
 
 -- Commit the shape using quickfort API
