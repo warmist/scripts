@@ -3,13 +3,27 @@
 
 local argparse = require('argparse')
 
+function resetTemperature(position)
+  local map_block = dfhack.maps.getTileBlock(position)
+  local tile = dfhack.maps.getTileFlags(position)
+
+  if tile.liquid_type == df.tile_liquid.Water or tile.flow_size == 0 then
+    map_block.temperature_1[position.x % 16][position.y % 16] = 10015
+    map_block.temperature_2[position.x % 16][position.y % 16] = 10015
+  elseif tile.liquid_type == df.tile_liquid.Magma then
+    map_block.temperature_1[position.x % 16][position.y % 16] = 12000
+    map_block.temperature_2[position.x % 16][position.y % 16] = 12000
+  end
+end
+
 function spawnLiquid(position, liquid_level, liquid_type)
   local map_block = dfhack.maps.getTileBlock(position)
   local tile = dfhack.maps.getTileFlags(position)
 
   tile.flow_size = liquid_level or 3
-  tile.liquid_type = liquid_type or df.tile_liquid.Water
+  tile.liquid_type = liquid_type
   tile.flow_forbid = liquid_type == df.tile_liquid.Magma or liquid_level >= 4
+  tile.liquid_static = false
 
   map_block.flags.update_liquid = true
   map_block.flags.update_liquid_twice = true
@@ -18,6 +32,8 @@ function spawnLiquid(position, liquid_level, liquid_type)
   local z_level = df.global.world.map_extras.z_level_flags
   z_level.update = true
   z_level.update_twice = true
+
+  resetTemperature(position)
 end
 
 local options, args = {
@@ -32,7 +48,7 @@ local positionals = argparse.processArgsGetopt(args, {
   {'l', 'level', handler=function(arg)
     options.level = argparse.positiveInt(arg, "level")
   end, hasArg = true},
-  {'p', 'pos', 'position', handler=function(arg)
+  {'p', 'position', handler=function(arg)
     options.position = argparse.coords(arg, "position")
   end, hasArg = true},
 })
@@ -50,7 +66,7 @@ local function main()
     qerror("No liquid type specified. Use `--type <type>`")
   end
 
-  if options.level > 7 then
+  if options.level and options.level > 7 then
     qerror("Invalid liquid level specified. Minimum of 1 and maximum of 7.")
   elseif not options.level then
     qerror("No liquid level specified. Use `--level <level>`")
