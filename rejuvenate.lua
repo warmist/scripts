@@ -21,9 +21,9 @@ local utils = require('utils')
 
 function rejuvenate(unit, force, dry_run, age)
     local current_year = df.global.cur_year
-	if not age then
-		age = 20
-	end
+    if not age then
+        age = 20
+    end
     local new_birth_year = current_year - age
     local name = dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
     if unit.birth_year > new_birth_year and not force then
@@ -67,5 +67,5 @@ main(utils.processArgs({...}, utils.invert({
     'all',
     'force',
     'dry-run',
-	'age'
+    'age'
 })))
