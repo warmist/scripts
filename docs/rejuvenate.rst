@@ -2,7 +2,7 @@ rejuvenate
 ==========
 
 .. dfhack-tool::
-    :summary: Sets unit age to 20 years by default.
+    :summary: Resets unit age.
     :tags: fort armok units
 
 If your most valuable citizens are getting old, this tool can save them. It
