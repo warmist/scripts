@@ -25,7 +25,7 @@ Examples
     Set the age of all dwarves over 20 to 20.
 ``rejuvenate --all --force``
     Set the age of all dwarves (including babies) to 20.
- ``rejuvenate --age 149 --force``
+``rejuvenate --age 149 --force``
     Set the age of the selected dwarf to 149, even if they are younger.
 
 Options
