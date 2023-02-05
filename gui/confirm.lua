@@ -1,7 +1,7 @@
 -- confirm plugin options
 --[====[
 
-gui/confirm-opts
+gui/confirm
 ================
 A basic configuration interface for the `confirm` plugin.
 
@@ -12,14 +12,11 @@ confirm = require 'plugins.confirm'
 gui = require 'gui'
 widgets = require 'gui.widgets'
 
-Opts = defclass(Opts, gui.FramedScreen)
+Opts = defclass(Opts, widgets.Window)
 Opts.ATTRS = {
     frame_style = gui.GREY_LINE_FRAME,
     frame_title = 'Confirmation dialogs',
-    frame_width = 32,
-    frame_height = 12,
-    frame_inset = 1,
-    focus_path = 'confirm/opts',
+    frame={w=36, h=17},
 }
 
 function Opts:init()
@@ -31,46 +28,29 @@ function Opts:init()
             cursor_pen = COLOR_WHITE,
             choices = {},
             on_submit = self:callback('toggle'),
-            on_submit2 = self:callback('toggle_all'),
+        },
+        widgets.HotkeyLabel{
+            frame = {b=1, l=0},
+            label='Toggle all',
+            key='CUSTOM_ALT_E',
+            on_activate=function() self:toggle_all(self.subviews.list:setSelected(i)) self:refresh() end,
         },
         widgets.HotkeyLabel{
             frame = {b=2, l=0},
             label='Resume paused confirmations',
             key='CUSTOM_P',
-            on_activate=function() confirm.unpause() self:refresh() end,
-            enabled=function() return self.paused end},
+            on_activate=function() self:unpause_all() self:refresh() end,
+            enabled=function() return self.any_paused end
+        },
         widgets.Label{
             view_id = 'controls',
             frame = {b = 0, l = 0},
             text = {
-                {key = 'SELECT', text = ': Toggle, '},
-                {key = 'LEAVESCREEN', text = ': Back', on_activate = self:callback('dismiss')},
-                NEWLINE,
-                {key = 'SEC_SELECT', text = ': Toggle all'},
+                {key = 'SELECT', text = ': Toggle'},
             },
         },
-        widgets.Label{
-            view_id = 'scroll_up',
-            frame = {t = 0, l = self.frame_width - 1},
-            text = {{pen = COLOR_LIGHTCYAN, text=function()
-                return self.subviews.list.page_top ~= 1 and string.char(24) or ''
-            end}},
-        },
-        widgets.Label{
-            view_id = 'scroll_down',
-            frame = {t = 1, l = self.frame_width - 1},
-            text = {{pen = COLOR_LIGHTCYAN, text=function()
-                local list = self.subviews.list
-                return list.page_top + list.page_size < #list:getChoices() and string.char(25) or ''
-            end}},
-        }
     }
     self:refresh()
-
-    -- restrict the list to above the controls
-    self.subviews.list.frame.h = self.frame_height - self.subviews.controls.frame.h - 2
-    -- move the down arrow next to the bottom of the list
-    self.subviews.scroll_down.frame.t = self.subviews.list.frame.h - 1
 
     local active_id = confirm.get_active_id()
     for i, choice in ipairs(self.subviews.list:getChoices()) do
@@ -83,16 +63,26 @@ end
 
 function Opts:refresh()
     self.data = confirm.get_conf_data()
-    self.paused = confirm.get_paused()
+    self.any_paused = false
     local choices = {}
     for i, c in ipairs(self.data) do
+        if c.paused then
+            self.any_paused = true
+        end
+
+        local text = (c.enabled and 'Enabled' or 'Disabled')
+        if c.paused then
+            text = '[' .. text .. ']'
+        end
+
         table.insert(choices, {
             id = c.id,
             enabled = c.enabled,
+            paused = c.paused,
             text = {
                 c.id .. ': ',
                 {
-                    text = c.enabled and 'Enabled' or 'Disabled',
+                    text = text,
                     pen = self:callback('choice_pen', i, c.enabled)
                 }
             }
@@ -110,11 +100,31 @@ function Opts:toggle(_, choice)
     self:refresh()
 end
 
-function Opts:toggle_all(_, choice)
+function Opts:toggle_all(choice)
     for _, c in pairs(self.data) do
-        confirm.set_conf_state(c.id, not choice.enabled)
+        confirm.set_conf_state(c.id, not self.data[choice].enabled)
     end
     self:refresh()
 end
 
-Opts():show()
+function Opts:unpause_all(_, choice)
+    for _, c in pairs(self.data) do
+         confirm.set_conf_paused(c.id, false)
+    end
+    self:refresh()
+end
+
+OptsScreen = defclass(OptsScreen, gui.ZScreen)
+OptsScreen.ATTRS {
+    focus_path='confirm/options',
+}
+
+function OptsScreen:init()
+    self:addviews{Opts{}}
+end
+
+function OptsScreen:onDismiss()
+    view = nil
+end
+
+view = view and view:raise() or OptsScreen{}:show()

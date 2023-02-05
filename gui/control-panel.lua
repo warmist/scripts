@@ -44,6 +44,7 @@ table.sort(FORT_AUTOSTART)
 local SYSTEM_SERVICES = {
     'automelt', -- TODO needs dynamic detection of configurability
     'buildingplan',
+    'confirm',
     'overlay',
 }
 

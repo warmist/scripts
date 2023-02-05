@@ -1,4 +1,4 @@
-gui/confirm-opts
+gui/confirm
 ================
 
 .. dfhack-tool::
@@ -14,4 +14,4 @@ Usage
 
 ::
 
-    gui/confirm-opts
+    gui/confirm
