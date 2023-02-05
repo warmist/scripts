@@ -19,6 +19,8 @@ that repo.
 
 ## Misc Improvements
 
+- `rejuvenate`: now takes an --age parameter to choose a desired age.
+
 ## Removed
 
 # 50.05-alpha3.1
