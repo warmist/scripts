@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `gui/unit-syndromes`: allow the window widgets to be interacted with
 
 ## Misc Improvements
 
