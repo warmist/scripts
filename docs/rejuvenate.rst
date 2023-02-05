@@ -33,7 +33,7 @@ Options
 
 ``--all``
     Rejuvenate all citizens, not just the selected one.
-``--age``
+``--age <num>``
     Sets the target to the age specified. If this is not set, the target age is 20.
 ``--force``
     Set age for units under the specified age to the specified age. Useful if there are too
