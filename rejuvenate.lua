@@ -1,21 +1,6 @@
--- make the selected dwarf 20 years old, or the specified age with -age
+-- set age of selected unit
 -- by vjek
 --@ module = true
---[====[
-
-rejuvenate
-==========
-Sets the age of the selected dwarf to 20 years old by default. Useful if valuable citizens
-are getting old.
-
-Arguments:
-
-- ``-all``: applies to all citizens
-- ``-force``: also applies to units under 20 (or the age specified with -age) years old. Useful if there are too many babies around...
-- ``-dry-run``: only list units that would be changed; don't actually change ages
-- ``-age``: set to the specified age, rather than 20.
-
-]====]
 
 local utils = require('utils')
 
