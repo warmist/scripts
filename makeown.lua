@@ -50,7 +50,8 @@ local function entity_link(hf, eid, do_event, add, replace_idx)
     replace_idx = replace_idx or -1
 
     local link = add and df.histfig_entity_link_memberst:new() or df.histfig_entity_link_former_memberst:new()
-    link.entity_id = eid print("created entity link: "..tostring(eid))
+    link.entity_id = eid
+    print("created entity link: "..tostring(eid))
 	
     if replace_idx > -1 then
         local e = hf.entity_links[replace_idx]
