@@ -18,27 +18,26 @@ function Opts:init()
             text_pen = COLOR_GREY,
             cursor_pen = COLOR_WHITE,
             choices = {},
-            on_submit = self:callback('toggle'),
-        },
-        widgets.HotkeyLabel{
-            frame = {b=1, l=0},
-            label='Toggle all',
-            key='CUSTOM_ALT_E',
-            on_activate=function() self:toggle_all(self.subviews.list:setSelected(i)) self:refresh() end,
+            on_submit = function() self:toggle(self.subviews.list:getSelected()) self:refresh() end,
         },
         widgets.HotkeyLabel{
             frame = {b=2, l=0},
+            label='Toggle all',
+            key='CUSTOM_ALT_E',
+            on_activate=function() self:toggle_all(self.subviews.list:getSelected()) self:refresh() end,
+        },
+        widgets.HotkeyLabel{
+            frame = {b=1, l=0},
             label='Resume paused confirmations',
             key='CUSTOM_P',
             on_activate=function() self:unpause_all() self:refresh() end,
             enabled=function() return self.any_paused end
         },
-        widgets.Label{
-            view_id = 'controls',
-            frame = {b = 0, l = 0},
-            text = {
-                {key = 'SELECT', text = ': Toggle'},
-            },
+        widgets.HotkeyLabel{
+            frame = {b=0, l=0},
+            label='Toggle',
+            key='SELECT',
+            on_activate=function() self:toggle(self.subviews.list:getSelected()) self:refresh() end,
         },
     }
     self:refresh()
@@ -86,7 +85,8 @@ function Opts:choice_pen(index, enabled)
     return (enabled and COLOR_GREEN or COLOR_RED) + (index == self.subviews.list:getSelected() and 8 or 0)
 end
 
-function Opts:toggle(_, choice)
+function Opts:toggle(choice)
+    choice = self.data[choice]
     confirm.set_conf_state(choice.id, not choice.enabled)
     self:refresh()
 end
@@ -98,7 +98,7 @@ function Opts:toggle_all(choice)
     self:refresh()
 end
 
-function Opts:unpause_all(_, choice)
+function Opts:unpause_all()
     for _, c in pairs(self.data) do
          confirm.set_conf_paused(c.id, false)
     end
