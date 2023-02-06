@@ -171,7 +171,7 @@ function make_citizen(unit)
         unit.flags2.important_historical_figure = true
         unit.hist_figure_id = hf.id
         unit.hist_figure_id2 = hf.id
-        print("Makeown-citizen: created historical figure: "..tostring(hf.id))
+        print("makeown: created historical figure: "..tostring(hf.id))
     else
         -- only insert into civ/fort if not already there
         -- Migrants change previous histfig_entity_link_memberst to histfig_entity_link_former_memberst
