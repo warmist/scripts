@@ -32,7 +32,7 @@ local function fix_clothing_ownership(unit)
                     unit.military.uniforms[0]:insert('#',item.id)    --insert_into_vector(unit->military.uniforms[0], item->id);
                     fixcount = fixcount + 1    --fixcount++;
                 else
-                    print("Makeown: could not change ownership for an item!")
+                    dfhack.printerr("makeown: could not change ownership for an item!")
                 end
             end
         end
