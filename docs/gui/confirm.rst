@@ -1,5 +1,5 @@
 gui/confirm
-================
+===========
 
 .. dfhack-tool::
     :summary: Configure which confirmation dialogs are enabled.
