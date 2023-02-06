@@ -52,7 +52,7 @@ local function entity_link(hf, eid, do_event, add, replace_idx)
     local link = add and df.histfig_entity_link_memberst:new() or df.histfig_entity_link_former_memberst:new()
     link.entity_id = eid
     print("created entity link: "..tostring(eid))
-	
+
     if replace_idx > -1 then
         local e = hf.entity_links[replace_idx]
         link.link_strength = (e.link_strength > 3) and (e.link_strength - 2) or e.link_strength
@@ -63,7 +63,7 @@ local function entity_link(hf, eid, do_event, add, replace_idx)
         link.link_strength =  100
         hf.entity_links:insert('#', link)
     end
-	
+
     if do_event then
         event = add and df.history_event_add_hf_entity_linkst:new() or df.history_event_remove_hf_entity_linkst:new()
         event.year = df.global.cur_year
@@ -89,7 +89,7 @@ local function change_state(hf, site_id, pos)
     event.state = 1
     event.reason = 13 --decided to stay on a whim i guess
     event.site = site_id
-	event.region = -1
+    event.region = -1
     event.layer = -1
     event.region_pos:assign(pos)
     df.global.world.history.events:insert('#',event)
@@ -98,27 +98,27 @@ end
 
 
 function make_citizen(unit)
-    local civ_id = df.global.plotinfo.civ_id												--get civ id
-    local group_id = df.global.plotinfo.group_id											--get group id
-    local site_id = df.global.plotinfo.site_id												--get site id
-    local events = df.global.world.history.events											--get events
-	
-    local fortent = df.historical_entity.find(group_id)										--get fort's entity
+    local civ_id = df.global.plotinfo.civ_id                                                --get civ id
+    local group_id = df.global.plotinfo.group_id                                            --get group id
+    local site_id = df.global.plotinfo.site_id                                                --get site id
+    local events = df.global.world.history.events                                            --get events
+
+    local fortent = df.historical_entity.find(group_id)                                        --get fort's entity
     local civent = df.historical_entity.find(civ_id)
-	
+
     local event
     local region_pos = df.world_site.find(site_id).pos -- used with state events and hf state
 
     local hf
-    if unit.flags1.important_historical_figure or unit.flags2.important_historical_figure then	--if its a histfig
-        hf = df.historical_figure.find(unit.hist_figure_id)									    --then get the histfig
+    if unit.flags1.important_historical_figure or unit.flags2.important_historical_figure then    --if its a histfig
+        hf = df.historical_figure.find(unit.hist_figure_id)                                        --then get the histfig
     end
-	
-    if not hf then																				--if its not a histfig then make it a histfig
+
+    if not hf then                                                                                --if its not a histfig then make it a histfig
         --new_hf = true
-		hf = df.historical_figure.new()
-		hf.id = df.global.hist_figure_next_id
-		df.global.hist_figure_next_id = df.global.hist_figure_next_id+1
+        hf = df.historical_figure.new()
+        hf.id = df.global.hist_figure_next_id
+        df.global.hist_figure_next_id = df.global.hist_figure_next_id+1
         hf.profession = unit.profession
         hf.race = unit.race
         hf.caste = unit.caste
@@ -267,22 +267,22 @@ end
 
 function make_own(unit)
     --tweak makeown
-	unit.flags1.merchant = false;
-	unit.flags1.forest = false;
+    unit.flags1.merchant = false;
+    unit.flags1.forest = false;
     unit.flags2.resident = false;
-	unit.flags2.visitor = false; 
-	unit.flags2.visitor_uninvited = false; --in case you use makeown on a beast :P
-	unit.flags2.underworld = false;        --or on a demon!
-	
+    unit.flags2.visitor = false;
+    unit.flags2.visitor_uninvited = false; --in case you use makeown on a beast :P
+    unit.flags2.underworld = false;        --or on a demon!
+
     unit.civ_id = df.global.plotinfo.civ_id;
-	
+
     if  unit.profession == df.profession.MERCHANT then  unit.profession = df.profession.TRADER end
     if unit.profession2 == df.profession.MERCHANT then unit.profession2 = df.profession.TRADER end
-	
+
     fix_clothing_ownership(unit)
-	
-    if unit.hist_figure_id > -1 and unit.hist_figure_id2 > -1 then	--previously this just checked if the units race was the same as the
-        make_citizen(unit)											--player's civ, but now it checks if the creature is a histfig
+
+    if unit.hist_figure_id > -1 and unit.hist_figure_id2 > -1 then    --previously this just checked if the units race was the same as the
+        make_citizen(unit)                                            --player's civ, but now it checks if the creature is a histfig
     end
 end
 
@@ -290,6 +290,5 @@ unit = dfhack.gui.getSelectedUnit()
 if not unit then
     qerror('No unit selected!')
 else
-	make_own(unit)
+    make_own(unit)
 end
-	
