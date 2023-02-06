@@ -41,7 +41,7 @@ local function fix_clothing_ownership(unit)
     -- dirty?
     unit.military.uniform_drop:resize(0)    --unit->military.uniform_drop.clear();
     ----out << "ownership for " << fixcount << " clothes fixed" << endl;
-    print("Makeown: claimed ownership for "..tostring(fixcount).." worn items")
+    print("makeown: claimed ownership for "..tostring(fixcount).." worn items")
 end
 
 local function entity_link(hf, eid, do_event, add, replace_idx)
