@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 - `gui/unit-syndromes`: allow the window widgets to be interacted with
+- `fix/protect-nicks`: no longer fails after a new embark
 
 ## Misc Improvements
 

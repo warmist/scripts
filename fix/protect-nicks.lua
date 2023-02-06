@@ -26,9 +26,9 @@ end
 local function save_nicks()
     for _,unit in pairs(df.global.world.units.active) do
         local nickname = unit.name.nickname
-        local hfid = unit.id
+        local unit_id = unit.id
         if not nil_or_empty(nickname) then
-            dfhack.persistent.save{key="nicknames/" .. hfid, value=nickname, ints = {hfid}}
+            dfhack.persistent.save{key="nicknames/" .. unit_id, value=nickname, ints = {unit_id}}
         end
     end
 end
@@ -37,10 +37,10 @@ end
 local function restore_nicks()
     for _,entry in pairs(dfhack.persistent.get_all("nicknames", true) or {}) do
         local nickname = entry.value
-        local hfid = entry.ints[1]
+        local unit_id = entry.ints[1]
 
-        local unit = df.unit.find(hfid)
-        if nil_or_empty(unit.name.nickname) then
+        local unit = df.unit.find(unit_id)
+        if unit and nil_or_empty(unit.name.nickname) then
             print("fix/protect-nicks: Restoring removed nickname for " .. nickname)
             unit.name.nickname = nickname
         end
