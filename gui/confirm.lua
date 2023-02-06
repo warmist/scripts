@@ -85,8 +85,8 @@ function Opts:choice_pen(index, enabled)
     return (enabled and COLOR_GREEN or COLOR_RED) + (index == self.subviews.list:getSelected() and 8 or 0)
 end
 
-function Opts:toggle(choice)
-    choice = self.data[choice]
+function Opts:toggle(idx)
+    local choice = self.data[idx]
     confirm.set_conf_state(choice.id, not choice.enabled)
     self:refresh()
 end
