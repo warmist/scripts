@@ -1,12 +1,4 @@
--- confirm plugin options
---[====[
-
-gui/confirm
-================
-A basic configuration interface for the `confirm` plugin.
-
-]====]
-
+-- config ui for confirm
 
 confirm = require 'plugins.confirm'
 gui = require 'gui'
@@ -14,7 +6,6 @@ widgets = require 'gui.widgets'
 
 Opts = defclass(Opts, widgets.Window)
 Opts.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
     frame_title = 'Confirmation dialogs',
     frame={w=36, h=17},
 }
