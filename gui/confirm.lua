@@ -18,7 +18,7 @@ function Opts:init()
             text_pen = COLOR_GREY,
             cursor_pen = COLOR_WHITE,
             choices = {},
-            on_submit = function() self:toggle(self.subviews.list:getSelected()) self:refresh() end,
+            on_submit = function(idx) self:toggle(idx) self:refresh() end,
         },
         widgets.HotkeyLabel{
             frame = {b=2, l=0},
