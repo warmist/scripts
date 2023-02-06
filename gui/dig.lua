@@ -3,6 +3,10 @@
 
 -- TODOS ====================
 
+-- This PR
+-----------------------------
+-- Update the findTile code
+
 -- Must Haves
 -----------------------------
 -- Figure out why pause/unpause doesn't work
@@ -27,7 +31,6 @@
 -----------------------------
 -- Triangle shapes, more shapes in general, could even do dynamic creation of residential layouts as long as they can be mathematically represented
 -- Exploration pattern ladder https://dwarffortresswiki.org/index.php/DF2014:Exploratory_mining#Ladder_Rows
--- Add logic to set thickness.max for applicable shapes based on dimensions
 -- Investigate using single quickfort API call when commiting  https://github.com/joelpt/quickfort/blob/master/README.md#area-expansion-syntax
 
 -- Stretch Goals
@@ -42,6 +45,8 @@ local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/dig/shapes")
+
+reload('gui.widgets')
 
 local function get_dims(pos1, pos2)
     local width, height, depth =
@@ -61,9 +66,9 @@ ActionPanel.ATTRS {
 
 function ActionPanel:init()
     self:addviews { widgets.WrappedLabel {
-            view_id = "action_label",
-            text_to_wrap = self:callback("get_action_text"),
-        },
+        view_id = "action_label",
+        text_to_wrap = self:callback("get_action_text"),
+    },
         widgets.TooltipLabel {
             view_id = "selected_area",
             indent = 1,
@@ -132,6 +137,7 @@ function GenericOptionsPanel:init()
         widgets.CycleHotkeyLabel {
             view_id = "shape_name",
             key = "CUSTOM_Z",
+            key_back = "CUSTOM_SHIFT_Z",
             label = "Shape: ",
             label_width = 8,
             active = true,
@@ -159,14 +165,16 @@ function GenericOptionsPanel:init()
         widgets.CycleHotkeyLabel {
             view_id = "mode_name",
             key = "CUSTOM_F",
+            key_back = "CUSTOM_SHIFT_F",
             label = "Mode: ",
             label_width = 8,
             active = true,
             enabled = true,
-            options = { {
-                label = "Dig",
-                value = "d",
-            },
+            options = {
+                {
+                    label = "Dig",
+                    value = "d",
+                },
                 {
                     label = "Channel",
                     value = "h",
@@ -190,9 +198,39 @@ function GenericOptionsPanel:init()
                 {
                     label = "Ramp",
                     value = "r",
-                } },
+                }
+            },
             disabled = false,
             show_tooltip = true,
+            on_change = function(new, old) self.dig_panel:updateLayout() end,
+        },
+        widgets.CycleHotkeyLabel {
+            view_id = "stairs_subtype",
+            key = "CUSTOM_G",
+            key_back = "CUSTOM_SHIFT_G",
+            label = "Stair Type: ",
+            -- label_width = 0,
+            active = true,
+            enabled = true,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            options = {
+                {
+                    label = "Auto",
+                    value = "auto",
+                },
+                {
+                    label = "Up/Down",
+                    value = "i",
+                },
+                {
+                    label = "Up",
+                    value = "u",
+                },
+                {
+                    label = "Down",
+                    value = "j",
+                },
+            }
         },
         widgets.WrappedLabel {
             view_id = "shape_prio_label",
@@ -280,7 +318,7 @@ Dig.ATTRS {
         t = 18,
     },
     resizable = true,
-    resize_min = { h = 10 },
+    resize_min = { h = 30 },
     autoarrange_subviews = true,
     autoarrange_gap = 1,
     shape = DEFAULT_NIL,
@@ -352,6 +390,18 @@ function Dig:add_shape_options()
                 end,
             } }
         elseif option.type == "plusminus" then
+            local min, max = nil, nil
+            if type(option['min']) == "number" then
+                min = option['min']
+            elseif type(option['min']) == "function" then
+                min = option['min'](self.shape)
+            end
+            if type(option['max']) == "number" then
+                max = option['max']
+            elseif type(option['max']) == "function" then
+                max = option['max'](self.shape)
+            end
+
             self:addviews { widgets.HotkeyLabel {
                 view_id = "shape_option_" .. option.name .. "_minus",
                 key = option.keys[1],
@@ -363,8 +413,8 @@ function Dig:add_shape_options()
                             return false
                         end
                     end
-                    return self.shape.options[key].min == nil or
-                        (self.shape.options[key].value > self.shape.options[key].min)
+                    return min == nil or
+                        (self.shape.options[key].value > min)
                 end,
                 disabled = false,
                 show_tooltip = true,
@@ -385,8 +435,8 @@ function Dig:add_shape_options()
                                 return false
                             end
                         end
-                        return self.shape.options[key].max == nil or
-                            (self.shape.options[key].value <= self.shape.options[key].max)
+                        return max == nil or
+                            (self.shape.options[key].value <= max)
                     end,
                     disabled = false,
                     show_tooltip = true,
@@ -396,6 +446,7 @@ function Dig:add_shape_options()
                         self.dirty = true
                     end,
                 } }
+
         end
     end
 end
@@ -443,6 +494,8 @@ function Dig:onRenderFrame(dc, rect)
                         bounds.x2 - bounds.x1,
                         bounds.y2 - bounds.y1
                     )
+                    self:add_shape_options()
+                    self:updateLayout()
                     self.dirty = false
                 end
 
@@ -553,20 +606,26 @@ function Dig:commit()
     -- Put any special logic for designation type here
     -- Right now it's setting the stair type based on the z-level
     function getDesignation(x, y, z)
+        local mode = self.subviews.mode_name:getOptionValue()
+        local stairs_type = self.subviews.stairs_subtype:getOptionValue()
 
         -- Nice stairs
-        if self.subviews.mode_name:getOptionValue() == "i" then
-            if math.abs(self:get_bounds().z1 - self:get_bounds().z2) == 0 then
-                return "`" -- return nothing, they need to specify more than one z-level
-            end
-            if z == 0 then
-                return "u" -- up stair
-            elseif z == math.abs(
-                self:get_bounds().z1 - self:get_bounds().z2
-            ) then
-                return "j" -- down stair
+        if mode == "i" then
+            if stairs_type == "auto" then
+                if math.abs(self:get_bounds().z1 - self:get_bounds().z2) == 0 then
+                    return "`" -- return nothing, they need to specify more than one z-level
+                end
+                if z == 0 then
+                    return "u" -- up stair
+                elseif z == math.abs(
+                    self:get_bounds().z1 - self:get_bounds().z2
+                ) then
+                    return "j" -- down stair
+                else
+                    return "i" -- up/down stair
+                end
             else
-                return "i" -- up/down stair
+                return stairs_type
             end
         end
 
@@ -632,6 +691,7 @@ DigScreen = defclass(DigScreen, gui.ZScreen)
 DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
+    initial_pause = false,
     pass_movement_keys = true,
     presets = DEFAULT_NIL,
 }

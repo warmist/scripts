@@ -46,6 +46,8 @@ Shape.ATTRS {
     has_point_fn = DEFAULT_NIL,
     apply_options_fn = DEFAULT_NIL,
     invert = false,
+    width = 1,
+    height = 1
 }
 function Shape:update(width, height)
     self.width = width
@@ -176,6 +178,13 @@ Ellipse.ATTRS = {
             value = 2,
             enabled = { "hollow", true },
             min = 1,
+            max = function(shape) if not shape.height or not shape.width then
+                      return nil
+                  else
+                      return math.ceil(math.min(shape.height , shape.width) / 2)
+
+                  end
+            end,
             keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
         },
     },
@@ -212,6 +221,12 @@ Rectangle.ATTRS = {
             value = 2,
             enabled = { "hollow", true },
             min = 1,
+            max = function(shape) if not shape.height or not shape.width then
+                      return nil
+                  else
+                      return math.ceil(math.min(shape.height , shape.width) / 2)
+                  end
+            end,
             keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
         },
     },
