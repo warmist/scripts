@@ -57,7 +57,8 @@ local function entity_link(hf, eid, do_event, add, replace_idx)
         local e = hf.entity_links[replace_idx]
         link.link_strength = (e.link_strength > 3) and (e.link_strength - 2) or e.link_strength
         hf.entity_links[replace_idx] = link -- replace member link with former member link
-        e:delete() print("replaced entity link")
+        e:delete()
+        print("replaced entity link")
     else
         link.link_strength =  100
         hf.entity_links:insert('#', link)
