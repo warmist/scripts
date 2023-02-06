@@ -17,7 +17,7 @@ that repo.
 
 ## Fixes
 - `gui/unit-syndromes`: allow the window widgets to be interacted with
-- `fix/protect-nicks`: no longer fails after a new embark
+- `fix/protect-nicks`: now works by setting the historical figure nickname
 
 ## Misc Improvements
 
