@@ -214,7 +214,7 @@ function make_citizen(unit)
             fortent.histfig_ids:insert('#', hf.id)
             fortent.hist_figures:insert('#', hf)
         end
-        print("Makeown-citizen: migrated historical figure")
+        print("makeown: migrated historical figure")
     end    -- hf
 
     local nemesis = dfhack.units.getNemesis(unit)
@@ -242,7 +242,7 @@ function make_citizen(unit)
         fortent.nemesis:insert('#', nemesis)
         civent.nemesis_ids:insert('#', nemesis.id)
         civent.nemesis:insert('#', nemesis)
-        print("Makeown-citizen: created nemesis entry")
+        print("makeown: created nemesis entry")
     else-- only insert into civ/fort if not already there
         local found = false
         for _,v in ipairs(civent.nemesis_ids) do
@@ -260,7 +260,7 @@ function make_citizen(unit)
             fortent.nemesis_ids:insert('#', nemesis.id)
             fortent.nemesis:insert('#', nemesis)
         end
-        print("Makeown-citizen: migrated nemesis entry")
+        print("makeown: migrated nemesis entry")
     end -- nemesis
 end
 
