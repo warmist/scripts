@@ -1,12 +1,12 @@
 makeown
-===========
+=======
 
 .. dfhack-tool::
-    :summary: Adds a unit to your fortress.
-    :tags: untested fort armok units
+    :summary: Converts the selected unit to be a member of your fortress.
+    :tags: fort armok units
 
 Usage
 -----
 
 ``makeown``
-    Adds the selected unit to your fortress.
+    Converts the selected unit to be a member of your fortress.
