@@ -167,8 +167,6 @@ function GmEditorUi:verifyStack(args)
 		local status, _ = pcall(
 			function()
 				next_by_ref = obj[sel_key]
-
-
 			end
 		)
 		if not status then
@@ -176,8 +174,6 @@ function GmEditorUi:verifyStack(args)
 			last_good_level = i - 1
 			break
 		end
-
-
 		if not next_in_stack == next_by_ref then
 			failure = true
 			break
