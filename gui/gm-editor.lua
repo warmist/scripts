@@ -34,7 +34,7 @@ local keybindings_raw = {
     {name='start_filter', key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
     {name='help', key="STRING_A063",desc="Show this help"},
     {name='displace', key="STRING_A093",desc="Open reference offseted by index"},
-	{name='autoupdate', key="CUSTOM_ALT_A",desc="Automatically keep values updated"},
+    {name='autoupdate', key="CUSTOM_ALT_A",desc="Automatically keep values updated"},
     --{name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
 }
 
@@ -126,7 +126,6 @@ function GmEditorUi:init(args)
     self.stack={}
     self.item_count=0
     self.keys={}
-	self.autoupdate = false
     local helptext={{text="Help"},NEWLINE,NEWLINE}
     for _,v in ipairs(keybindings_raw) do
         table.insert(helptext,{text=v.desc,key=v.key,key_sep=': '})
@@ -140,51 +139,50 @@ function GmEditorUi:init(args)
     local mainList=widgets.List{view_id="list_main",choices={},frame = {l=1,t=3,yalign=0},on_submit=self:callback("editSelected"),
         on_submit2=self:callback("editSelectedRaw"),
         text_pen=COLOR_GREY, cursor_pen=COLOR_YELLOW}
-	self.autoupdateLabel = widgets.Label{text={{gap=1,text="Auto-Update stopped...",key=keybindings.autoupdate.key,key_sep = '()'}}, view_id = 'lbl_autoupdate',frame = {l=0,t=0,yalign=0}}
     local mainPage=widgets.Panel{
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
             widgets.EditField{frame={l=1,t=2,h=1},label_text="Search",key=keybindings.start_filter.key,key_sep='(): ',on_change=self:callback('text_input'),view_id="filter_input"},
-			self.autoupdateLabel}
+        widgets.ToggleHotkeyLabel{label="Auto-Update", key=keybindings.autoupdate.key, initial_option=false, view_id = 'lbl_autoupdate', frame={l=1,t=0,yalign=0}}}
         ,view_id='page_main'}
 
     self:addviews{widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     self:pushTarget(args.target)
 end
 function GmEditorUi:verifyStack(args)
-	local failure = false
+    local failure = false
 
-	local last_good_level = nil
+    local last_good_level = nil
 
-	for i, level in pairs(self.stack) do
-		local obj=level.target
+    for i, level in pairs(self.stack) do
+        local obj=level.target
 
-		local keys = level.keys
-		local selection = level.selected
-		local sel_key = keys[selection]
-		local next_by_ref
-		local status, _ = pcall(
-			function()
-				next_by_ref = obj[sel_key]
-			end
-		)
-		if not status then
-			failure = true
-			last_good_level = i - 1
-			break
-		end
-		if not next_in_stack == next_by_ref then
-			failure = true
-			break
-		end
-	end
-	if failure then
-		self.stack = {table.unpack(self.stack, 1, last_good_level)}
-		return false
-	else
-		return true
-	end
+        local keys = level.keys
+        local selection = level.selected
+        local sel_key = keys[selection]
+        local next_by_ref
+        local status, _ = pcall(
+        function()
+            next_by_ref = obj[sel_key]
+            end
+        )
+        if not status then
+            failure = true
+            last_good_level = i - 1
+            break
+        end
+        if not self.stack[i+1] == next_by_ref then
+            failure = true
+            break
+        end
+    end
+    if failure then
+        self.stack = {table.unpack(self.stack, 1, last_good_level)}
+        return false
+    else
+        return true
+    end
 end
 function GmEditorUi:text_input(new_text)
     self:updateTarget(true,true)
@@ -325,9 +323,6 @@ function GmEditorUi:getSelectedField()
     end
 end
 function GmEditorUi:currentTarget()
-	if #self.stack == 0 then
-		return nil
-	end
     return self.stack[#self.stack]
 end
 function GmEditorUi:getSelectedEnumType()
@@ -389,10 +384,10 @@ function GmEditorUi:editSelectedRaw(index,choice)
     self:editSelected(index, choice, {raw=true})
 end
 function GmEditorUi:editSelected(index,choice,opts)
-	if not self:verifyStack() then
-		self:updateTarget()
-		return
-	end
+    if not self:verifyStack() then
+        self:updateTarget()
+        return
+    end
     opts = opts or {}
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
@@ -499,15 +494,9 @@ function GmEditorUi:onInput(keys)
     elseif keys[keybindings.help.key] then
         self.subviews.pages:setSelected(2)
         return true
-	elseif keys[keybindings.autoupdate.key] then
-		if not self.autoupdate then
-			self.autoupdateLabel:setText({{gap=1,text="Auto-Update running... ",key=keybindings.autoupdate.key,key_sep = '()'}})
-		else
-			self.autoupdateLabel:setText({{gap=1,text="Auto-Update stopped...",key=keybindings.autoupdate.key,key_sep = '()'}})
-		end
-		self.autoupdate = not self.autoupdate
     end
 end
+
 function getStringValue(trg,field)
     local obj=trg.target
 
@@ -527,7 +516,7 @@ function getStringValue(trg,field)
     return text
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
-	self:verifyStack()
+    self:verifyStack()
     local trg=self:currentTarget()
     local filter=self.subviews.filter_input.text:lower()
 
@@ -561,7 +550,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     else
         self.subviews.list_main:setSelected(trg.selected)
     end
-	self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
+    self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
 end
 function GmEditorUi:pushTarget(target_to_push)
     local new_tbl={}
@@ -601,16 +590,10 @@ function GmEditorUi:postUpdateLayout()
 end
 
 function GmEditorUi:onRenderBody()
-    if self.next_refresh_ms <= dfhack.getTickCount() and self.autoupdate then
+    if self.subviews.lbl_autoupdate:getOptionValue() and self.next_refresh_ms <= dfhack.getTickCount()  then
         self:updateTarget()
     end
 end
-
-GmScreen = defclass(GmScreen, gui.ZScreen)
-GmScreen.ATTRS {
-    focus_path='gm-editor',
-}
-
 function GmScreen:init(args)
     local target = args.target
     if not target then
