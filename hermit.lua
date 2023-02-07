@@ -51,7 +51,7 @@ function event_loop()
 end
 
 local function print_status()
-    print(('hermit is currently %s.\n')format(enabled and 'enabled' or 'disabled'))
+    print(('hermit is currently %s.'):format(enabled and 'enabled' or 'disabled'))
 end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
