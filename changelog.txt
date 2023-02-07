@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `makeown`: adds the selected unit as a member of your fortress
 
 ## Fixes
 - `gui/unit-syndromes`: allow the window widgets to be interacted with
