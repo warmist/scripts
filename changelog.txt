@@ -15,13 +15,22 @@ that repo.
 
 ## New Scripts
 - `gui/dig`: Digging designation tool for shapes and patterns
-
+- `makeown`: adds the selected unit as a member of your fortress
 
 ## Fixes
+- `gui/unit-syndromes`: allow the window widgets to be interacted with
+- `fix/protect-nicks`: now works by setting the historical figure nickname
 
 ## Misc Improvements
 
+- `rejuvenate`: now takes an --age parameter to choose a desired age.
+
 ## Removed
+
+# 50.05-alpha3.1
+
+## Fixes
+- `gui/launcher`: no longer resets to the Help tab on every keystroke
 
 # 50.05-alpha3
 

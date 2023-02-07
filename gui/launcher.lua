@@ -742,7 +742,7 @@ function LauncherUI:init(args)
         EditPanel{
             view_id='edit',
             frame={t=0, l=0},
-            on_change=self:callback('on_edit_input'),
+            on_change=function(text) self:on_edit_input(text, false) end,
             on_submit=self:callback('run_command', true),
             on_submit2=self:callback('run_command', false),
             on_toggle_minimal=function()
