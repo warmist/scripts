@@ -46,7 +46,7 @@ local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/dig/shapes")
 
-reload('gui.widgets')
+local tile_attrs = df.tiletype.attrs
 
 local function get_dims(pos1, pos2)
     local width, height, depth =
@@ -130,6 +130,25 @@ function GenericOptionsPanel:init()
         }
     end
 
+    local stair_options = {
+        {
+            label = "Auto",
+            value = "auto",
+        },
+        {
+            label = "Up/Down",
+            value = "i",
+        },
+        {
+            label = "Up",
+            value = "u",
+        },
+        {
+            label = "Down",
+            value = "j",
+        },
+    }
+
     self:addviews { widgets.WrappedLabel {
         view_id = "settings_label",
         text_to_wrap = "General Settings:\n",
@@ -205,32 +224,31 @@ function GenericOptionsPanel:init()
             on_change = function(new, old) self.dig_panel:updateLayout() end,
         },
         widgets.CycleHotkeyLabel {
-            view_id = "stairs_subtype",
-            key = "CUSTOM_G",
-            key_back = "CUSTOM_SHIFT_G",
-            label = "Stair Type: ",
-            -- label_width = 0,
+            view_id = "stairs_top_subtype",
+            key = "CUSTOM_R",
+            label = "Top Stair Type: ",
             active = true,
             enabled = true,
             visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
-            options = {
-                {
-                    label = "Auto",
-                    value = "auto",
-                },
-                {
-                    label = "Up/Down",
-                    value = "i",
-                },
-                {
-                    label = "Up",
-                    value = "u",
-                },
-                {
-                    label = "Down",
-                    value = "j",
-                },
-            }
+            options = stair_options,
+        },
+        widgets.CycleHotkeyLabel {
+            view_id = "stairs_middle_subtype",
+            key = "CUSTOM_G",
+            label = "Middle Stair Type: ",
+            active = true,
+            enabled = true,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            options = stair_options,
+        },
+        widgets.CycleHotkeyLabel {
+            view_id = "stairs_bottom_subtype",
+            key = "CUSTOM_B",
+            label = "Bottom Stair Type: ",
+            active = true,
+            enabled = true,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            options = stair_options,
         },
         widgets.WrappedLabel {
             view_id = "shape_prio_label",
@@ -599,39 +617,37 @@ function Dig:onInput(keys)
     return not (keys.D_PAUSE or guidm.getMapKey(keys))
 end
 
+-- Put any special logic for designation type here
+-- Right now it's setting the stair type based on the z-level
+-- Fell through, pass through the option directly from the options value
+function Dig:getDesignation(x, y, z)
+    local mode = self.subviews.mode_name:getOptionValue()
+
+    -- Stairs
+    if mode == "i" then
+        local stairs_top_type = self.subviews.stairs_top_subtype:getOptionValue()
+        local stairs_middle_type = self.subviews.stairs_middle_subtype:getOptionValue()
+        local stairs_bottom_type = self.subviews.stairs_bottom_subtype:getOptionValue()
+        if z == 0 then
+            return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
+        elseif z == math.abs(self:get_bounds().z1 - self:get_bounds().z2) then
+            local tile_type = dfhack.maps.getTileType(self:get_bounds().x1 + x, self:get_bounds().y1 + y, z)
+            local tile_shape = tile_attrs[tile_type].shape
+
+            -- If top of the bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
+            return stairs_top_type == "auto" and (tile_shape == df.tiletype_shape.STAIR_DOWN and "i" or "j") or
+                stairs_top_type
+        else
+            return stairs_middle_type == "auto" and 'i' or stairs_middle_type
+        end
+    end
+
+    return self.subviews.mode_name:getOptionValue()
+end
+
 -- Commit the shape using quickfort API
 function Dig:commit()
     local data = {}
-
-    -- Put any special logic for designation type here
-    -- Right now it's setting the stair type based on the z-level
-    function getDesignation(x, y, z)
-        local mode = self.subviews.mode_name:getOptionValue()
-        local stairs_type = self.subviews.stairs_subtype:getOptionValue()
-
-        -- Nice stairs
-        if mode == "i" then
-            if stairs_type == "auto" then
-                if math.abs(self:get_bounds().z1 - self:get_bounds().z2) == 0 then
-                    return "`" -- return nothing, they need to specify more than one z-level
-                end
-                if z == 0 then
-                    return "u" -- up stair
-                elseif z == math.abs(
-                    self:get_bounds().z1 - self:get_bounds().z2
-                ) then
-                    return "j" -- down stair
-                else
-                    return "i" -- up/down stair
-                end
-            else
-                return stairs_type
-            end
-        end
-
-        -- Fell through, pass through the option directly from the options value
-        return self.subviews.mode_name:getOptionValue()
-    end
 
     -- Generates the params for quickfort API
     local function generate_params(grid, position)
@@ -645,7 +661,7 @@ function Dig:commit()
                     self:get_bounds().x1 - self:get_bounds().x2
                 ) do
                     if grid[col][row] then
-                        local desig = getDesignation(col, row, zlevel)
+                        local desig = self:getDesignation(col, row, zlevel)
                         if desig ~= "`" then
                             data[zlevel][row][col] =
                             desig .. tostring(self.prio)
@@ -691,9 +707,7 @@ DigScreen = defclass(DigScreen, gui.ZScreen)
 DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
-    initial_pause = false,
     pass_movement_keys = true,
-    presets = DEFAULT_NIL,
 }
 
 function DigScreen:init()
