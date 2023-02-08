@@ -65,7 +65,6 @@ local CURSORS = {
 
 -- return the pen, alter based on if we want to display a corner and a mouse over corner
 function make_pen(direction, is_corner, is_mouse_over, inshape)
-    print(("make_pen %s %s %s"):format(tostring(direction), tostring(is_corner),tostring(is_mouse_over)))
     return to_pen {
         ch = "X",
         fg = COLOR_GREEN,
@@ -77,6 +76,7 @@ function make_pen(direction, is_corner, is_mouse_over, inshape)
     }
 end
 
+-- Bit positions to use for keys in PENS table
 local PEN_MASK = {
     NORTH = 1,
     SOUTH = 2,
@@ -87,6 +87,7 @@ local PEN_MASK = {
     INSHAPE = 7,
 }
 
+-- Generate a bit field to store as keys in PENS
 local function gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape)
     local ret = 0
     if n then ret = ret + (1 << PEN_MASK.NORTH) end
@@ -101,6 +102,7 @@ local function gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape)
 end
 
 -- Populated dynamically as needed
+-- The pens will be stored with keys corresponding to the directions passed to gen_pen_key()
 local PENS = {}
 
 local function get_dims(pos1, pos2)
@@ -400,6 +402,11 @@ Dig.ATTRS {
     autocommit = true,
     cur_shape = 1,
 }
+
+-- Get the pen to use when drawing a type of tile based on it's position in the shape and
+-- neighboring tiles. The first time a certain tile type needs to be drawn, it's pen
+-- is generated and stored in PENS. On subsequent calls, the cached pen will be used for
+-- other tiles with the same position/direction
 function Dig:get_pen(x, y, mousePos)
     local function is_corner(_x, _y)
         return _x == 0 and _y == 0 or _x == self.shape.width and _y == 0 or _x == 0 and _y == self.shape.height or
