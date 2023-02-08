@@ -3,13 +3,8 @@
 
 -- TODOS ====================
 
--- This PR
------------------------------
--- Update the findTile code
-
 -- Must Haves
 -----------------------------
--- Figure out why pause/unpause doesn't work
 -- Line 'shape' between two points with thickness (currently tricky with how shapes are defined as within bounds rectangle)
 --   A totally vertical line with thickness of e.g. 3 would end up with tiles outside the bounds/view rectangle
 --   Could also allow 'multi-point' line that would produce curves
@@ -47,6 +42,66 @@ local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/dig/shapes")
 
 local tile_attrs = df.tiletype.attrs
+
+local to_pen = dfhack.pen.parse
+local CURSORS = {
+    INSIDE = { 1, 2 },
+    NORTH = { 1, 1 },
+    N_NUB = { 3, 2 },
+    S_NUB = { 4, 2 },
+    W_NUB = { 3, 1 },
+    E_NUB = { 5, 1 },
+    NE = { 2, 1 },
+    NW = { 0, 1 },
+    WEST = { 0, 2 },
+    EAST = { 2, 2 },
+    SW = { 0, 3 },
+    SOUTH = { 1, 3 },
+    SE = { 2, 3 },
+    VERT_NS = { 3, 3 },
+    VERT_EW = { 4, 1 },
+    POINT = { 4, 3 },
+}
+
+-- return the pen, alter based on if we want to display a corner and a mouse over corner
+function make_pen(direction, is_corner, is_mouse_over, inshape)
+    print(("make_pen %s %s %s"):format(tostring(direction), tostring(is_corner),tostring(is_mouse_over)))
+    return to_pen {
+        ch = "X",
+        fg = COLOR_GREEN,
+        tile = dfhack.screen.findGraphicsTile(
+            "CURSORS",
+            direction[1],
+            direction[2] + (is_corner and 6 + (is_mouse_over and 3 or 0) or 0)
+        ),
+    }
+end
+
+local PEN_MASK = {
+    NORTH = 1,
+    SOUTH = 2,
+    EAST = 3,
+    WEST = 4,
+    CORNER = 5,
+    MOUSEOVER = 6,
+    INSHAPE = 7,
+}
+
+local function gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape)
+    local ret = 0
+    if n then ret = ret + (1 << PEN_MASK.NORTH) end
+    if s then ret = ret + (1 << PEN_MASK.SOUTH) end
+    if e then ret = ret + (1 << PEN_MASK.EAST) end
+    if w then ret = ret + (1 << PEN_MASK.WEST) end
+    if is_corner then ret = ret + (1 << PEN_MASK.CORNER) end
+    if is_mouse_over then ret = ret + (1 << PEN_MASK.MOUSEOVER) end
+    if inshape then ret = ret + (1 << PEN_MASK.INSHAPE) end
+
+    return ret
+end
+
+-- Populated dynamically as needed
+local PENS = {}
 
 local function get_dims(pos1, pos2)
     local width, height, depth =
@@ -345,6 +400,70 @@ Dig.ATTRS {
     autocommit = true,
     cur_shape = 1,
 }
+function Dig:get_pen(x, y, mousePos)
+    local function is_corner(_x, _y)
+        return _x == 0 and _y == 0 or _x == self.shape.width and _y == 0 or _x == 0 and _y == self.shape.height or
+            _x == self.shape.width and _y == self.shape.height
+    end
+
+    local function is_mouse_over(_x, _y, mouse)
+        return mouse == nil or (_x == mouse.x and _y == mouse.y)
+    end
+
+    local n, w, e, s = false, false, false, false
+    if y == 0 or not self.shape.arr[x][y - 1] then n = true end
+    if x == 0 or not self.shape.arr[x - 1][y] then w = true end
+    if x == #self.shape.arr or not self.shape.arr[x + 1][y] then e = true end
+    if y == #self.shape.arr[x] or not self.shape.arr[x][y + 1] then s = true end
+
+    -- Get the bit field to use as a key for the PENS map
+    local pen_key = gen_pen_key(n, s, e, w, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+
+    -- If key doesn't exist in the map, set it
+    if pen_key and not PENS[pen_key] then
+        if not n and not w and not e and not s then
+            PENS[pen_key] = make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and w and not e and not s then
+            PENS[pen_key] = make_pen(CURSORS.NW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and not w and not e and not s then
+            PENS[pen_key] = make_pen(CURSORS.NORTH, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and e and not w and not s then
+            PENS[pen_key] = make_pen(CURSORS.NE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and w and not e and not s then
+            PENS[pen_key] = make_pen(CURSORS.WEST, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and not w and e and not s then
+            PENS[pen_key] = make_pen(CURSORS.EAST, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and w and not e and s then
+            PENS[pen_key] = make_pen(CURSORS.SW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and not w and not e and s then
+            PENS[pen_key] = make_pen(CURSORS.SOUTH, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and not w and e and s then
+            PENS[pen_key] = make_pen(CURSORS.SE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and w and e and not s then
+            PENS[pen_key] = make_pen(CURSORS.N_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and not w and e and s then
+            PENS[pen_key] = make_pen(CURSORS.E_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and w and not e and s then
+            PENS[pen_key] = make_pen(CURSORS.W_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and w and e and s then
+            PENS[pen_key] = make_pen(CURSORS.S_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and not n and w and e and not s then
+            PENS[pen_key] = make_pen(CURSORS.VERT_NS, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and not w and not e and s then
+            PENS[pen_key] = make_pen(CURSORS.VERT_EW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif self.shape.arr[x][y] and n and w and e and s then
+            PENS[pen_key] = make_pen(CURSORS.POINT, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        elseif is_corner(x, y) and not self.shape.arr[x][y] then
+            PENS[pen_key] = make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+        else
+            PENS[pen_key] = nil
+        end
+    end
+
+    -- Return the pen for the caller
+    return PENS[pen_key]
+end
+
 
 function Dig:init()
     self:addviews { ActionPanel {
@@ -525,7 +644,7 @@ function Dig:onRenderFrame(dc, rect)
 
                 -- Get the pen from the base Shape class based on if the point is in the shape or not
                 -- Send mouse position for stuff like corner anchor mouse over, etc...
-                return self.shape:get_pen(
+                return self:get_pen(
                     pos.x - bounds.x1,
                     pos.y - bounds.y1,
                     mouse_pos

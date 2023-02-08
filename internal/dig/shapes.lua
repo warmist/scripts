@@ -5,39 +5,6 @@ if not dfhack_flags.module then
     qerror("this script cannot be called directly")
 end
 
-local to_pen = dfhack.pen.parse
-local CURSORS = {
-    INSIDE = { 1, 2 },
-    NORTH = { 1, 1 },
-    N_NUB = { 3, 2 },
-    S_NUB = { 4, 2 },
-    W_NUB = { 3, 1 },
-    E_NUB = { 5, 1 },
-    NE = { 2, 1 },
-    NW = { 0, 1 },
-    WEST = { 0, 2 },
-    EAST = { 2, 2 },
-    SW = { 0, 3 },
-    SOUTH = { 1, 3 },
-    SE = { 2, 3 },
-    VERT_NS = { 3, 3 },
-    VERT_EW = { 4, 1 },
-    POINT = { 4, 3 },
-}
-
--- return the pen, alter based on if we want to display a corner and a mouse over corner
-function make_pen(direction, is_corner, is_mouse_over)
-    return to_pen {
-        ch = "X",
-        fg = COLOR_GREEN,
-        tile = dfhack.screen.findGraphicsTile(
-            "CURSORS",
-            direction[1],
-            direction[2] + (is_corner and 6 + (is_mouse_over and 3 or 0) or 0)
-        ),
-    }
-end
-
 -- Base shape class, should not be used directly
 Shape = defclass(Shape)
 Shape.ATTRS {
@@ -66,65 +33,6 @@ function Shape:update(width, height)
     end
 end
 
--- Return a pen object based on the position of the x,y point within the shape
--- Contains logic to determine which corner/side/etc... icon to draw to create an
--- aesthetically pleasing border for the shape. Unfortunately the code itself
--- very much not aesthetically pleasing but I'm not sure if that can be helped
-function Shape:get_pen(x, y, mousePos)
-    -- Corners
-    local function is_corner(_x, _y)
-        return _x == 0 and _y == 0 or _x == self.width and _y == 0 or _x == 0 and _y == self.height or
-            _x == self.width and _y == self.height
-    end
-
-    local function is_mouse_over(_x, _y, mouse)
-        return mouse == nil or (_x == mouse.x and _y == mouse.y)
-    end
-
-    local n, w, e, s = false, false, false, false
-    if y == 0 or not self.arr[x][y - 1] then n = true end
-    if x == 0 or not self.arr[x - 1][y] then w = true end
-    if x == #self.arr or not self.arr[x + 1][y] then e = true end
-    if y == #self.arr[x] or not self.arr[x][y + 1] then s = true end
-
-    if not n and not w and not e and not s then
-        return make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and w and not e and not s then
-        return make_pen(CURSORS.NW, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and not w and not e and not s then
-        return make_pen(CURSORS.NORTH, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and e and not w and not s then
-        return make_pen(CURSORS.NE, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and w and not e and not s then
-        return make_pen(CURSORS.WEST, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and not w and e and not s then
-        return make_pen(CURSORS.EAST, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and w and not e and s then
-        return make_pen(CURSORS.SW, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and not w and not e and s then
-        return make_pen(CURSORS.SOUTH, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and not w and e and s then
-        return make_pen(CURSORS.SE, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and w and e and not s then
-        return make_pen(CURSORS.N_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and not w and e and s then
-        return make_pen(CURSORS.E_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and w and not e and s then
-        return make_pen(CURSORS.W_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and w and e and s then
-        return make_pen(CURSORS.S_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and not n and w and e and not s then
-        return make_pen(CURSORS.VERT_NS, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and not w and not e and s then
-        return make_pen(CURSORS.VERT_EW, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif self.arr[x][y] and n and w and e and s then
-        return make_pen(CURSORS.POINT, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    elseif is_corner(x, y) and not self.arr[x][y] then
-        return make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos))
-    else
-        return nil
-    end
-end
 
 -- Shape definitions
 -- All should have a string name, and a function has_point_fn(self, x, y) which returns true or false based
