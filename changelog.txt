@@ -22,7 +22,7 @@ that repo.
 - `fix/protect-nicks`: now works by setting the historical figure nickname
 
 ## Misc Improvements
-
+- `gui/gm-editor`: now supports multiple independent data inspection windows
 - `rejuvenate`: now takes an --age parameter to choose a desired age.
 
 ## Removed
