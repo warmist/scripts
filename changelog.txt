@@ -18,9 +18,9 @@ that repo.
 - `makeown`: adds the selected unit as a member of your fortress
 
 ## Fixes
-- `gui/unit-syndromes`: allow the window widgets to be interacted with
-- `fix/protect-nicks`: now works by setting the historical figure nickname
-- `gui/liquids`: fixed issues with unit pathing after adding/removing liquids
+-@ `gui/unit-syndromes`: allow the window widgets to be interacted with
+-@ `fix/protect-nicks`: now works by setting the historical figure nickname
+-@ `gui/liquids`: fixed issues with unit pathing after adding/removing liquids
 
 ## Misc Improvements
 - `gui/gm-editor`: now supports multiple independent data inspection windows
@@ -56,8 +56,8 @@ that repo.
 - `ban-cooking`: report number of items banned.
 - `build-now`: now handles dirt roads and initializes farm plots properly
 - `devel/click-monitor`: report on middle mouse button actions
-- `gui/autochop`: hide uninteresting burrows by default
-- `gui/blueprint`: allow map movement with the keyboard while the UI is open
+-@ `gui/autochop`: hide uninteresting burrows by default
+-@ `gui/blueprint`: allow map movement with the keyboard while the UI is open
 - `gui/create-item`: support spawning corpse pieces (e.g. shells) under "body part"
 - `gui/create-item`: added search and filter capabilities to the selection lists
 - `gui/launcher`: make command output scrollback separate from the help text so players can continue to see the output of the previous command as they type the next one
