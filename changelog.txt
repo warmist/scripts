@@ -14,6 +14,16 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.07-alpha1
+
+## New Scripts
 - `gui/dig`: digging designation tool for shapes and patterns
 - `makeown`: adds the selected unit as a member of your fortress
 
@@ -26,8 +36,6 @@ that repo.
 - `gui/gm-editor`: now supports multiple independent data inspection windows
 - `gui/gm-editor`: now prints out contents of coordinate vars instead of just the type
 - `rejuvenate`: now takes an --age parameter to choose a desired age.
-
-## Removed
 
 # 50.05-alpha3.1
 
