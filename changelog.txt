@@ -24,6 +24,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/gm-editor`: now supports multiple independent data inspection windows
+- `gui/gm-editor`: now prints out contents of coordinate vars instead of just the type
 - `rejuvenate`: now takes an --age parameter to choose a desired age.
 
 ## Removed
