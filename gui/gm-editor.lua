@@ -594,6 +594,12 @@ function GmEditorUi:onRenderBody()
         self:updateTarget()
     end
 end
+
+GmScreen = defclass(GmScreen, gui.ZScreen)
+GmScreen.ATTRS {
+    focus_path='gm-editor',
+}
+
 function GmScreen:init(args)
     local target = args.target
     if not target then
