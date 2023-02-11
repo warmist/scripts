@@ -26,7 +26,8 @@ local ok, ref = pcall(function() return utils.df_expr_to_ref(args[1]) end)
 if not ok then
     qerror(ref)
 end
-if ref._kind == 'primitive' and type(ref._type) == 'string' and ref._type:endswith('*') then
+if ref._kind == 'primitive' and type(ref._type) == 'string' and ref._type:endswith('*') and ref.value ~= nil then
+    -- dereference primitive pointer fields, since we usually care more about their contents
     ref = ref.value
 end
 
