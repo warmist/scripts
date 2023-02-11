@@ -197,7 +197,7 @@ end
 function moveEmbarkStuff(selectedBlock, embarkTiles)
   local spawnPosCentre
   for _, hotkey in ipairs(df.global.plotinfo.main.hotkeys) do
-    if hotkey.name == "Gate" then -- the preset hotkey is centred around the spawn point
+    if hotkey.name == "Wagon arrival location" then -- the preset hotkey is centred around the spawn point
       spawnPosCentre = xyz2pos(hotkey.x, hotkey.y, hotkey.z)
       hotkey:assign(embarkTiles[math.random(1, #embarkTiles)]) -- set the hotkey to the new spawn point
       break
@@ -390,13 +390,10 @@ end
 
 dfhack.onStateChange.DeepEmbarkMonitor = function(event)
   if event == SC_VIEWSCREEN_CHANGED then -- I initially tried using SC_MAP_LOADED, but the map appears to be loaded too early when reclaiming sites
-    if dfhack.gui.getCurViewscreen()._type ~= df.viewscreen_textviewerst then -- embark message; map should have been loaded by the time this is presented
-      return
-    end
     if not consoleMode and not args.atReclaim and df.global.gametype == df.game_type.DWARF_RECLAIM then -- it's assumed that a player who chooses to run the script from console whilst reclaiming knows what they're doing, so there's no need to check for -atReclaim in this scenario
       dfhack.onStateChange.DeepEmbarkMonitor = nil -- stop monitoring
       return -- don't deepEmbark if running from onLoad.init and in reclaim mode without -atReclaim
-    else
+    elseif dfhack.gui.getCurViewscreen()._type == df.viewscreen_choose_start_sitest then
       deepEmbark(args.depth, args.blockDemons)
       dfhack.onStateChange.DeepEmbarkMonitor = nil
     end
