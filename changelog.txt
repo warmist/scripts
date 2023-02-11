@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 
 ## Removed
 
