@@ -391,8 +391,8 @@ dfhack.onStateChange.DeepEmbarkMonitor = function(event)
     if not consoleMode and not args.atReclaim and df.global.gametype == df.game_type.DWARF_RECLAIM then -- it's assumed that a player who chooses to run the script from console whilst reclaiming knows what they're doing, so there's no need to check for -atReclaim in this scenario
       dfhack.onStateChange.DeepEmbarkMonitor = nil -- stop monitoring
       return -- don't deepEmbark if running from onLoad.init and in reclaim mode without -atReclaim
-    elseif view._type == df.viewscreen_choose_start_sitest then -- and view.choosing_embark then
-      if view.choosing_embark or view.choosing_reclaim then
+    elseif view._type == df.viewscreen_choose_start_sitest then -- on embark screen
+      if view.choosing_embark or view.choosing_reclaim then -- on a fresh embark, or on a reclaim
         deepEmbark(args.depth, args.blockDemons)
         dfhack.onStateChange.DeepEmbarkMonitor = nil
       end
