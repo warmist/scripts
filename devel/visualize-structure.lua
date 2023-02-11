@@ -26,6 +26,9 @@ local ok, ref = pcall(function() return utils.df_expr_to_ref(args[1]) end)
 if not ok then
     qerror(ref)
 end
+if type(ref._type) == 'string' and ref._type:endswith('*') then
+    ref = ref.value
+end
 
 local size, baseaddr = ref:sizeof()
 local actual_size = -1
