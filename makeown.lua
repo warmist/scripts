@@ -268,6 +268,8 @@ end
 function make_own(unit)
     --tweak makeown
     unit.flags1.merchant = false;
+    unit.flags1.marauder = false;
+    unit.flags1.hidden_ambusher = false;
     unit.flags1.forest = false;
     unit.flags2.resident = false;
     unit.flags2.visitor = false;
