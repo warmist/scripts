@@ -3,55 +3,6 @@
 
 --@ module = true
 
-local usage = [====[
-
-deep-embark
-===========
-Moves the starting units and equipment to
-a specific underground region upon embarking.
-
-This script can be run directly from the console
-at any point whilst setting up an embark.
-
-Alternatively, create a file called "onLoad.init"
-in the DF raw folder (if one does not exist already)
-and enter the script command within it. Doing so will
-cause the script to run automatically and should hence
-be especially useful for modders who want their mod
-to include underground embarks by default.
-
-Example::
-
-    deep-embark -depth CAVERN_2
-
-Usage::
-
-    -depth X
-        (obligatory)
-        replace "X" with one of the following:
-            CAVERN_1
-            CAVERN_2
-            CAVERN_3
-            UNDERWORLD
-
-    -blockDemons
-        including this arg will prevent demon surges
-        in the context of breached underworld spires
-        (intended mainly for UNDERWORLD embarks)
-        ("wildlife" demon spawning will be unaffected)
-
-    -atReclaim
-        if the script is being run from onLoad.init,
-        including this arg will enable deep embarks
-        when reclaiming sites too
-        (there's no need to specify this if running
-        the script directly from the console)
-
-    -clear
-        re-enable normal surface embarks
-
-]====]
-
 local utils = require 'utils'
 
 function getFeatureID(cavernType)
@@ -349,7 +300,7 @@ if moduleMode then
 end
 
 if args.help then
-  print(usage)
+  print(dfhack.script_help())
   return
 end
 
@@ -360,7 +311,7 @@ if args.clear then
 end
 
 if not args.depth then
-  qerror('Depth not specified! Enter "deep-embark -help" for more information.')
+  qerror('Depth not specified! Enter "help deep-embark" for more information.')
 end
 
 local validDepths = {
@@ -378,7 +329,7 @@ local consoleMode = dfhack.is_interactive() -- true if the script has been calle
 
 if consoleMode and not inEmbarkMode() then
   -- if running from the console (not onLoad.init), abort if not currently in an embark viewscreen.
-  qerror('When run from the command line, this script should be run during the embark setup screens. Enter "deep-embark -help" for more information.')
+  qerror('When run from the command line, this script should be run during the embark setup screens. Enter "help deep-embark" for more information.')
 end
 
 if consoleMode then
