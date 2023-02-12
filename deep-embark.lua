@@ -396,7 +396,9 @@ dfhack.onStateChange.DeepEmbarkMonitor = function(event)
         deepEmbark(args.depth, args.blockDemons)
         dfhack.onStateChange.DeepEmbarkMonitor = nil
       end
-    end -- run deepEmbark if we're in choose_start_sitest and the embark has been chosen
+    elseif view._type == df.viewscreen_dwarfmodest then -- we're in game. If we got here then we never got an embark screen, so this is loading a save and we abort.
+      dfhack.onStateChange.DeepEmbarkMonitor = nil
+    end
   elseif event == SC_WORLD_UNLOADED then -- embark aborted
     dfhack.onStateChange.DeepEmbarkMonitor = nil
   end
