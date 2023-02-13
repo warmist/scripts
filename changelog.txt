@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 - `makeown`: fixes errors caused by using makeown on an invader
 - `gui/bludprint`: correctly use setting presets passed on the commandline
+- `gui/quickfort`: correctly use settings presets passed on the commandline
 
 ## Misc Improvements
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves

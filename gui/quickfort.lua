@@ -662,7 +662,7 @@ QuickfortScreen.ATTRS {
 }
 
 function QuickfortScreen:init()
-    self:addviews{Quickfort{filter=filter}}
+    self:addviews{Quickfort{filter=self.filter}}
 end
 
 function QuickfortScreen:onShow()
