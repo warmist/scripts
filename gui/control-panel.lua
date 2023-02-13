@@ -14,14 +14,18 @@ local REPEATS_FILE = 'dfhack-config/init/onMapLoad.control-panel-repeats.init'
 local FORT_SERVICES = {
     'autobutcher',
     'autochop',
+    'autoclothing',
     'autofarm',
     'autofish',
+    'autolabor',
+    'autonestbox',
     'autoslab',
     'autounsuspend',
     'channel-safely',
     'emigration',
     'fastdwarf',
     'fix/protect-nicks',
+    'hermit',
     'misery',
     'nestboxes',
     'prioritize',
@@ -44,6 +48,7 @@ table.sort(FORT_AUTOSTART)
 local SYSTEM_SERVICES = {
     'automelt', -- TODO needs dynamic detection of configurability
     'buildingplan',
+    'confirm',
     'overlay',
 }
 
