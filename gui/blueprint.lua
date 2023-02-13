@@ -600,7 +600,7 @@ BlueprintScreen.ATTRS {
 }
 
 function BlueprintScreen:init()
-    self:addviews{Blueprint{presets=presets}}
+    self:addviews{Blueprint{presets=self.presets}}
 end
 
 function BlueprintScreen:onDismiss()
