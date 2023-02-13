@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `makeown`: fixes errors caused by using makeown on an invader
 
 ## Misc Improvements
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
