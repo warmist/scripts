@@ -11,6 +11,7 @@ Displays age, birth, maxage, shearing, milking, grazing, egg laying, body size,
 and death info about a unit.
 
 ]====]
+--@ module = true
 local gui = require 'gui'
 local widgets =require 'gui.widgets'
 local utils = require 'utils'
@@ -54,19 +55,19 @@ function getUnit_byVS(silent)    -- by view screen mode
   return u
  -- else: contexts not currently supported by dfhack.gui.getSelectedUnit()
  elseif df.viewscreen_dwarfmodest:is_instance(v) then
-  tmp = df.global.ui.main.mode
+  tmp = df.global.plotinfo.main.mode
   if tmp == 17 or tmp == 42 or tmp == 43 then
    -- context: @dwarfmode/QueryBuiding/Some/Cage    -- (q)uery cage
    -- context: @dwarfmode/ZonesPenInfo/AssignUnit    -- i (zone) -> pe(N)
    -- context: @dwarfmode/ZonesPitInfo                -- i (zone) -> (P)it
    u = df.global.ui_building_assign_units[df.global.ui_building_item_cursor]
-  elseif tmp == 49 and df.global.ui.burrows.in_add_units_mode then
+  elseif tmp == 49 and df.global.plotinfo.burrows.in_add_units_mode then
    -- @dwarfmode/Burrows/AddUnits
-   u = df.global.ui.burrows.list_units[ df.global.ui.burrows.unit_cursor_pos ]
+   u = df.global.plotinfo.burrows.list_units[ df.global.plotinfo.burrows.unit_cursor_pos ]
 
-  elseif df.global.ui.follow_unit ~= -1 then
+  elseif df.global.plotinfo.follow_unit ~= -1 then
    -- context: follow unit mode
-   u = getUnit_byID(df.global.ui.follow_unit)
+   u = getUnit_byID(df.global.plotinfo.follow_unit)
   end -- end viewscreen_dwarfmodest
  elseif df.viewscreen_petst:is_instance(v) then
   -- context: @pet/List/Unit -- z (status) -> animals
@@ -79,7 +80,7 @@ function getUnit_byVS(silent)    -- by view screen mode
    u = v.trainer_unit[v.trainer_cursor]
  end
  elseif df.viewscreen_layer_workshop_profilest:is_instance(v) then
-  -- context: @layer_workshop_profile/Unit     -- (q)uery workshop -> (P)rofile -- df.global.ui.main.mode == 17
+  -- context: @layer_workshop_profile/Unit     -- (q)uery workshop -> (P)rofile -- df.global.plotinfo.main.mode == 17
   u = v.workers[v.layer_objects[0].cursor]
  elseif df.viewscreen_layer_overall_healthst:is_instance(v) then
   -- context @layer_overall_health/Units -- z -> health
@@ -136,7 +137,7 @@ function getUnit_byVS(silent)    -- by view screen mode
     u = getUnit_byID(tmp.unit_id)
    end
   elseif df.viewscreen_dwarfmodest:is_instance(v.parent) then
-   tmp = df.global.ui.main.mode
+   tmp = df.global.plotinfo.main.mode
    if tmp == 24 then -- (v)iew units {g,i,p,w} -> z (thoughts and preferences)
     -- context: @dwarfmode/ViewUnits/...
     --if df.global.ui_selected_unit > -1 then -- -1 = 'no units nearby'
@@ -286,7 +287,7 @@ local TRAINING_LEVELS = {
   '',                        -- wild/untameable
 }
 
-local DEATH_TYPES = {
+DEATH_TYPES = {
  [0] = ' died of old age',        -- OLD_AGE
   ' starved to death',            -- HUNGER
   ' died of dehydration',            -- THIRST
@@ -386,7 +387,7 @@ function Identity:init(args)
  self.race = df.global.world.raws.creatures.all[self.race_id]
  self.caste = self.race.caste[self.caste_id]
 
- self.isCivCitizen = (df.global.ui.civ_id == u.civ_id)
+ self.isCivCitizen = (df.global.plotinfo.civ_id == u.civ_id)
  self.isStray = u.flags1.tame --self.isCivCitizen and not u.flags1.merchant
  self.cur_date = Time{year = df.global.cur_year, ticks = df.global.cur_year_tick}
 
@@ -484,10 +485,10 @@ function Identity:init(args)
  local prof = self.raw_prof
  if self.undead then
   prof = str2TitleCase( self.caste_name[SINGULAR] )
-  if isBlank(u.enemy.undead.anon_7) then
+  if isBlank(u.enemy.undead.undead_name) then
    prof = prof..' Corpse'
   else
-   prof = u.enemy.undead.anon_7 -- a reanimated body part will use this string instead
+   prof = u.enemy.undead.undead_name -- a reanimated body part will use this string instead
   end
  end
  --[[
@@ -647,7 +648,7 @@ function UnitInfoViewer:chunk_Age()
   end
  end
  local blurb = i.pronoun..' is '..age_str
- if i.race_id == df.global.ui.race_id then
+ if i.race_id == df.global.plotinfo.race_id then
   blurb = blurb..', born on the '..i.birth_date:getDayStr()..' of '..i.birth_date:getMonthStr()..' in the year '..tostring(i.birth_date.year)..PERIOD
  else
   blurb = blurb..PERIOD
@@ -719,10 +720,14 @@ function UnitInfoViewer:chunk_Shearable()
   end
  end
 end
+local function get_size_in_cc(unit)
+  -- internal measure is cubic centimeters divided by 10
+  return unit.body.size_info.size_cur * 10
+end
 function UnitInfoViewer:chunk_BodySize()
  local i = self.ident
  local pat = i.unit.body.physical_attrs
- local blurb = i.pronoun..' appears to be about ' .. i.unit.body.size_info.size_cur .. ' cubic decimeters in size.'
+ local blurb = i.pronoun..' appears to be about ' .. get_size_in_cc(i.unit) .. ' cubic centimeters in size.'
  self:insert_chunk(blurb,pens.LIGHTBLUE)
 end
 function UnitInfoViewer:chunk_Ghostly()
@@ -772,13 +777,17 @@ function UnitInfoViewer:chunk_Dead()
  self:insert_chunk(blurb,pen)
 end
 
--- only show if UnitInfoViewer isn't the current focus
-if dfhack.gui.getCurFocus() ~= 'dfhack/lua/'..UnitInfoViewer.focus_path then
- local gui_no_unit = false -- show if not found?
- local unit = getUnit_byVS(gui_no_unit) -- silent? or let the gui display
- if unit or gui_no_unit then
-  local kan_viewscreen = UnitInfoViewer{unit = unit}
-  kan_viewscreen:show()
- end
+-- do nothing if being used as a module
+if dfhack_flags.module then
+    return
 end
 
+-- only show if UnitInfoViewer isn't the current focus
+if dfhack.gui.getCurFocus() ~= 'dfhack/lua/'..UnitInfoViewer.focus_path then
+    local gui_no_unit = false -- show if not found?
+    local unit = getUnit_byVS(gui_no_unit) -- silent? or let the gui display
+    if unit or gui_no_unit then
+        local kan_viewscreen = UnitInfoViewer{unit = unit}
+        kan_viewscreen:show()
+    end
+end

@@ -60,8 +60,6 @@ local function set_setting(key, value)
 end
 
 local function read_settings(reader)
-    print(string.format('reading quickfort configuration from "%s"',
-                        reader.filepath))
     local line = reader:get_next_row()
     while line do
         local _, _, key, value = string.find(line, '^%s*([%a_]+)%s*=%s*(%S.*)')

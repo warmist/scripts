@@ -67,7 +67,7 @@ build_filter.HUMANish={
 
 --economic stone fix: just disable all of them
 --[[ FIXME: maybe let player select which to disable?]]
-for k,v in ipairs(df.global.ui.economic_stone) do df.global.ui.economic_stone[k]=0 end
+for k,v in ipairs(df.global.plotinfo.economic_stone) do df.global.plotinfo.economic_stone[k]=0 end
 
 local gui = require 'gui'
 local wid=require 'gui.widgets'
@@ -77,6 +77,8 @@ local bdialog=require 'gui.buildings'
 local workshopJobs=require 'dfhack.workshops'
 local utils=require 'utils'
 local gscript=require 'gui.script'
+
+local advfort_items = reqscript('internal/advfort/advfort_items')
 
 local tile_attrs = df.tiletype.attrs
 
@@ -898,10 +900,8 @@ function AssignJobItems(args)
     end]]
 
     if settings.gui_item_select and #job.job_items>0 then
-        local item_dialog=reqscript('gui/advfort_items')
-
         if settings.quick then --TODO not so nice hack. instead of rewriting logic for job item filling i'm using one in gui dialog...
-            local item_editor=item_dialog.jobitemEditor{
+            local item_editor=advfort_items.jobitemEditor{
                 job = job,
                 items = item_suitability,
             }
@@ -913,7 +913,7 @@ function AssignJobItems(args)
                 return false, "Quick select items"
             end
         else
-            local ret=item_dialog.showItemEditor(job,item_suitability)
+            local ret=advfort_items.showItemEditor(job,item_suitability)
             if ret then
                 finish_item_assign(args)
                 return true
@@ -1099,7 +1099,7 @@ function LinkBuilding(args)
         local job_items={copyall(input_filter_defaults),copyall(input_filter_defaults)}
         local its=EnumItems_with_settings(args)
         local suitability=find_suitable_items(nil,its,job_items)
-        reqscript('gui/advfort_items').jobitemEditor{items=suitability,job_items=job_items,on_okay=dfhack.curry(fake_linking,lever_bld,bld)}:show()
+        advfort_items.jobitemEditor{items=suitability,job_items=job_items,on_okay=dfhack.curry(fake_linking,lever_bld,bld)}:show()
         lever_id=nil
     end
     --one item as LinkToTrigger role
@@ -1368,7 +1368,7 @@ end
 
 function usetool:openShopWindowButtoned(building,no_reset)
     self:setupFields()
-    local wui=df.global.ui_sidebar_menus.workshop_job
+    local wui=df.global.game.workshop_job
     if not no_reset then
         -- [[ manual reset incase the df-one does not exist?
         wui:assign{category_id=-1,mat_type=-1,mat_index=-1}
@@ -1639,7 +1639,7 @@ function find_entity_civ( raw_code )
     end
 end
 function usetool:setupFields()
-    local ui=df.global.ui
+    local ui=df.global.plotinfo
 
     local adv=df.global.world.units.active[0]
     if settings.set_civ==true then
@@ -1734,10 +1734,8 @@ function usetool:fieldInput(keys)
             end
             return code
         end
-        if code~="_STRING" and code~="_MOUSE_L" and code~="_MOUSE_R" then
-            if ALLOWED_KEYS[code] then
-                self:sendInputToParent(code)
-            end
+        if ALLOWED_KEYS[code] then
+            self:sendInputToParent(code)
         end
     end
 

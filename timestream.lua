@@ -1,4 +1,5 @@
 -- speeds up the calendar, units, or both
+-- based on https://gist.github.com/IndigoFenix/cf358b8c994caa0f93d5
 
 --[====[
 
@@ -62,7 +63,7 @@ local simulating_desired_fps = false
 local prev_frames = df.global.world.frame_counter
 local last_frame = df.global.world.frame_counter
 local prev_time = df.global.enabler.clock
-local ui_main = df.global.ui.main
+local ui_main = df.global.plotinfo.main
 local saved_game_frame = -1
 local frames_until_speeding = 0
 local speedy_frame_delta = desired_fps or DEFAULT_MAX_FPS

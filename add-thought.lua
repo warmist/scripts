@@ -17,7 +17,7 @@ function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     if not (tonumber(emotion)) then
         emotion=df.emotion_type[emotion] --luacheck: retype
     end
-    local properThought = tonumber(thought) --as:df.unit_thought_type
+    local properThought = tonumber(thought) or df.unit_thought_type[thought]
     local properSubthought = tonumber(subthought)
     if not properThought or not df.unit_thought_type[properThought] then
         for k,syn in ipairs(df.global.world.raws.syndromes.all) do
@@ -41,7 +41,7 @@ function addEmotionToUnit(unit,thought,emotion,severity,strength,subthought)
     })
     local divider=df.emotion_type.attrs[emotion].divider
     if divider~=0 then
-        unit.status.current_soul.personality.stress_level=unit.status.current_soul.personality.stress_level+math.ceil(severity/df.emotion_type.attrs[emotion].divider)
+        unit.status.current_soul.personality.stress=unit.status.current_soul.personality.stress+math.ceil(severity/df.emotion_type.attrs[emotion].divider)
     end
 end
 

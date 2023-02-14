@@ -25,8 +25,8 @@ function removeStress(unit,value)
         unit.counters.soldier_mood = df.unit.T_counters.T_soldier_mood.None
     end
     if unit.status.current_soul then
-        if unit.status.current_soul.personality.stress_level > value then
-            unit.status.current_soul.personality.stress_level = value
+        if unit.status.current_soul.personality.stress > value then
+            unit.status.current_soul.personality.stress = value
         end
     end
 end

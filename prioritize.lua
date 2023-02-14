@@ -1,94 +1,35 @@
--- Boosts the priority of jobs of the selected types
+-- Automatically boost the priority of selected job types.
 --@module = true
---[====[
-
-prioritize
-==========
-
-The prioritize script sets the ``do_now`` flag on all of the specified types of
-jobs that are ready to be picked up by a dwarf but not yet assigned to a dwarf.
-This will force them to get assigned and completed as soon as possible.
-
-This script can also continue to monitor new jobs and automatically boost the
-priority of jobs of the specified types.
-
-This is useful for ensuring important (but low-priority -- according to DF) jobs
-don't get indefinitely ignored in busy forts. The list of monitored job types is
-cleared whenever you unload a map, so you can add a section like the one below
-to your ``onMapLoad.init`` file to ensure important and time-sensitive job types
-are always completed promptly in your forts::
-
-    prioritize -a --haul-labor=Food,Body StoreItemInStockpile
-    prioritize -a --reaction-name=TAN_A_HIDE CustomReaction
-    prioritize -a PrepareRawFish ExtractFromRawFish CleanSelf
-
-It is important to automatically prioritize only the *most* important job types.
-If you add too many job types, or if there are simply too many jobs of those
-types in your fort, the other tasks in your fort can get ignored. This causes
-the same problem the ``prioritize`` script is designed to solve. See the
-`onMapLoad-dreamfort-init` file in the ``hack/examples/init`` folder for a more
-complete, playtested set of job types to automatically prioritize.
-
-If you need a bunch of jobs of a specific type prioritized *right now*, consider
-running ``prioritize`` without the ``-a`` parameter, which only affects
-currently available (but unassigned) jobs. For example::
-
-    prioritize ConstructBuilding
-
-Also see the ``do-job-now`` `tweak` for adding a hotkey to the jobs screen that
-can toggle the priority of specific individual jobs and the `do-job-now`
-script, which boosts the priority of current jobs related to the selected
-job/unit/item/building/order.
-
-Usage::
-
-    prioritize [<options>] [<job_type> ...]
-
-Examples:
-
-``prioritize``
-    Prints out which job types are being automatically prioritized and how many
-    jobs of each type we have prioritized since we started watching them.
-
-``prioritize -j``
-    Prints out the list of active job types that you can prioritize right now.
-
-``prioritize ConstructBuilding DestroyBuilding``
-    Prioritizes all current building construction and destruction jobs.
-
-``prioritize -a --haul-labor=Food,Body StoreItemInStockpile``
-    Prioritizes all current and future food and corpse hauling jobs.
-
-Options:
-
-:``-a``, ``--add``:
-    Prioritize all current and future jobs of the specified job types.
-:``-d``, ``--delete``:
-    Stop automatically prioritizing new jobs of the specified job types.
-:``-h``, ``--help``:
-    Show help text.
-:``-j``, ``--jobs``:
-    Print out how many unassigned jobs of each type there are. This is useful
-    for discovering the types of the jobs that you can prioritize right now. If
-    any job types are specified, only returns the count for those types.
-:``-l``, ``--haul-labor`` <labor>[,<labor>...]:
-    For StoreItemInStockpile jobs, match only the specified hauling labor(s).
-    Valid <labor> strings are: "Stone", "Wood", "Body", "Food", "Refuse",
-    "Item", "Furniture", and "Animals". If not specified, defaults to matching
-    all StoreItemInStockpile jobs.
-:``-n``, ``--reaction-name`` <name>[,<name>...]:
-    For CustomReaction jobs, match only the specified reaction name(s). See the
-    registry output (``-r``) for the full list of reaction names. If not
-    specified, defaults to matching all CustomReaction jobs.
-:``-q``, ``--quiet``:
-    Suppress informational output (error messages are still printed).
-:``-r``, ``--registry``:
-    Print out the full list of valid job types, hauling labors, and reaction
-    names.
-]====]
+--@enable = true
 
 local argparse = require('argparse')
+local json = require('json')
 local eventful = require('plugins.eventful')
+local persist = require('persist-table')
+
+local GLOBAL_KEY = 'prioritize' -- used for state change hooks and persistence
+
+local DEFAULT_HAUL_LABORS = {'Food', 'Body', 'Animals'}
+local DEFAULT_REACTION_NAMES = {'TAN_A_HIDE'}
+local DEFAULT_JOB_TYPES = {
+    -- take care of rottables before they rot
+    'StoreItemInStockpile', 'CustomReaction', 'PrepareRawFish',
+    -- ensure medical, hygiene, and hospice tasks get done
+    'CleanSelf', 'RecoverWounded', 'ApplyCast', 'BringCrutch', 'CleanPatient',
+    'DiagnosePatient', 'DressWound', 'GiveFood', 'GiveWater', 'ImmobilizeBreak',
+    'PlaceInTraction', 'SetBone', 'Surgery', 'Suture',
+    -- organize items efficiently so new items can be brought to the stockpiles
+    'StoreItemInVehicle', 'StoreItemInBag', 'StoreItemInBarrel',
+    'StoreItemInLocation', 'StoreItemInBin', 'PushTrackVehicle',
+    -- ensure prisoners and animals are tended to quickly
+    'TameAnimal', 'TrainAnimal', 'TrainHuntingAnimal', 'TrainWarAnimal',
+    'PenLargeAnimal', 'PitLargeAnimal', 'SlaughterAnimal',
+    -- when these things come up, get them done ASAP
+    'ManageWorkOrders', 'TradeAtDepot', 'BringItemToDepot', 'DumpItem',
+    'DestroyBuilding', 'RemoveConstruction', 'PullLever', 'FellTree',
+    'FireBallista', 'FireCatapult', 'OperatePump', 'CollectSand', 'MakeArmor',
+    'MakeWeapon',
+}
 
 -- set of job types that we are watching. maps job_type (as a number) to
 -- {num_prioritized=number,
@@ -101,6 +42,19 @@ function get_watched_job_matchers() return g_watched_job_matchers end
 
 eventful.enableEvent(eventful.eventType.UNLOAD, 1)
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 5)
+
+local function has_elements(collection)
+    for _,_ in pairs(collection) do return true end
+    return false
+end
+
+function isEnabled()
+    return has_elements(get_watched_job_matchers())
+end
+
+local function persist_state()
+    persist.GlobalTable[GLOBAL_KEY] = json.encode(get_watched_job_matchers())
+end
 
 local function make_matcher_map(keys)
     if not keys then return nil end
@@ -153,19 +107,12 @@ local function on_new_job(job)
             local rms = jm.reaction_matchers
             rms[job.reaction_name] = rms[job.reaction_name] + 1
         end
+        persist_state()
     end
-end
-
-local function has_elements(collection)
-    for _,_ in pairs(collection) do return true end
-    return false
 end
 
 local function clear_watched_job_matchers()
     local watched_job_matchers = get_watched_job_matchers()
-    if has_elements(watched_job_matchers) then
-        print('map unloaded: cleared watched job types for prioritize script')
-    end
     for job_type in pairs(watched_job_matchers) do
         watched_job_matchers[job_type] = nil
     end
@@ -198,7 +145,7 @@ end
 
 local function print_status_line(num_jobs, job_type, annotation)
     annotation = annotation or ''
-    print(('%d\t%s%s'):format(num_jobs, df.job_type[job_type], annotation))
+    print(('%6d %s%s'):format(num_jobs, df.job_type[job_type], annotation))
 end
 
 local function status()
@@ -475,12 +422,12 @@ local function print_current_jobs(job_matchers, opts)
     local first = true
     for k,v in pairs(job_counts_by_type) do
         if first then
-            print('Current job counts by type:')
+            print('Current unclaimed jobs:')
             first = false
         end
         print(('%d\t%s'):format(v, k))
     end
-    if first then print('No current jobs.') end
+    if first then print('No current unclaimed jobs.') end
 end
 
 local function print_registry_section(header, t)
@@ -547,6 +494,27 @@ local function parse_commandline(args)
 
     if positionals[1] == 'help' then opts.help = true end
     if opts.help then return opts end
+
+    -- expand defaults, if requested
+    for i,job_type_name in ipairs(positionals) do
+        if not job_type_name:lower():find('^defaults?') then
+            goto continue
+        end
+        table.remove(positionals, i)
+        unit_labors = unit_labors or {}
+        for _,ul in ipairs(DEFAULT_HAUL_LABORS) do
+            table.insert(unit_labors, ul)
+        end
+        reaction_names = reaction_names or {}
+        for _,rn in ipairs(DEFAULT_REACTION_NAMES) do
+            table.insert(reaction_names, rn)
+        end
+        for _,jt in ipairs(DEFAULT_JOB_TYPES) do
+            table.insert(positionals, jt)
+        end
+        break
+        ::continue::
+    end
 
     -- validate any specified hauler types and convert the list to ids
     if unit_labors then
@@ -615,12 +583,13 @@ local function parse_commandline(args)
     return opts
 end
 
-if not dfhack_flags.module then
-    -- main script
-    local opts = parse_commandline({...})
-    if opts.help then print(dfhack.script_help()) return end
-
-    opts.action(opts.job_matchers, opts)
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+    g_watched_job_matchers = persisted_data or {}
+    update_handlers()
 end
 
 if dfhack.internal.IN_TEST then
@@ -636,3 +605,29 @@ if dfhack.internal.IN_TEST then
         parse_commandline=parse_commandline,
     }
 end
+
+if dfhack_flags.module then
+    return
+end
+
+if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+    dfhack.printerr('prioritize needs a loaded fortress map to work')
+    return
+end
+
+local args = {...}
+
+if dfhack_flags.enable then
+    if dfhack_flags.enable_state then
+        args = {'-aq', 'defaults'}
+    else
+        clear_watched_job_matchers()
+        persist_state()
+        return
+    end
+end
+
+local opts = parse_commandline(args)
+if opts.help then print(dfhack.script_help()) return end
+opts.action(opts.job_matchers, opts)
+persist_state()

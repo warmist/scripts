@@ -10,7 +10,7 @@ A script to extend the item or unit viewscreen with additional information
 including a custom description of each item (when available), and properties
 such as material statistics, weapon attacks, armor effectiveness, and more.
 
-The associated script `item-descriptions` supplies custom descriptions
+The associated script item-descriptions supplies custom descriptions
 of items.  Individual descriptions can be added or overridden by a similar
 script :file:`raw/scripts/more-item-descriptions.lua`.  Both work as sparse lists,
 so missing items simply go undescribed if not defined in the fallback.
@@ -18,6 +18,8 @@ so missing items simply go undescribed if not defined in the fallback.
 ]====]
 
 local utils = require 'utils'
+
+local default_descriptions = reqscript('internal/view-item-info/item-descriptions').descriptions
 
 function isInList(list, item, helper)
     if not helper then
@@ -65,8 +67,9 @@ function add_lines_to_list(t1,t2)
 end
 
 function GetMatPlant (item)
-    if dfhack.matinfo.decode(item).mode == "plant" then
-        return dfhack.matinfo.decode(item).plant
+    local matinfo = dfhack.matinfo.decode(item)
+    if matinfo and matinfo.mode == "plant" then
+        return matinfo.plant
     end
 end
 
@@ -76,8 +79,12 @@ end
 
 function GetMatPropertiesStringList (item)
     local item = item --as:df.item_actual
-    local mat = dfhack.matinfo.decode(item).material
     local list = {}
+    local matinfo = dfhack.matinfo.decode(item)
+    if not matinfo then
+        return list
+    end
+    local mat = matinfo.material
     local deg_U = item.temperature.whole
     local deg_C = math.floor((deg_U-10000)*5/9)
     append(list,"Temperature: "..deg_C.."\248C ("..deg_U.."U)")
@@ -121,7 +128,6 @@ end
 
 function GetArmorPropertiesStringList (item)
     local item = item --as:df.item_armorst
-    local mat = dfhack.matinfo.decode(item).material
     local list = {}
     append(list,"Armor properties: ")
     append(list,"Thickness: "..item.subtype.props.layer_size,1)
@@ -135,7 +141,6 @@ end
 
 function GetShieldPropertiesStringList (item)
     local item = item --as:df.item_shieldst
-    local mat = dfhack.matinfo.decode(item).material
     local list = {}
     append(list,"Shield properties:")
     append(list,"Base block chance: "..item.subtype.blockchance,1)
@@ -147,7 +152,6 @@ function GetShieldPropertiesStringList (item)
 end
 
 function GetWeaponPropertiesStringList (item)
-    local mat = dfhack.matinfo.decode(item).material
     local list = {}
     if item._type == df.item_toolst and #item.subtype.attacks < 1 then --hint:df.item_toolst
         return list
@@ -199,7 +203,6 @@ function GetWeaponPropertiesStringList (item)
 end
 
 function GetAmmoPropertiesStringList (item)
-    local mat = dfhack.matinfo.decode(item).material
     local list = {}
     if item._type == df.item_toolst and #item.subtype.attacks < 1 then --hint:df.item_toolst
         return list
@@ -370,15 +373,12 @@ function get_all_uses_strings (item)
 end
 
 function get_custom_item_desc (item)
-    local desc
     local ID = df.item_type[item:getType()]
     if ID and dfhack.items.getSubtypeCount(df.item_type[ID]) ~= -1 then
         local item = item --as:df.item_armorst
         ID = item.subtype.id end
     if not ID then return nil end
-    if dfhack.findScript("item-descriptions") then
-        desc = dfhack.script_environment("item-descriptions").descriptions[ID]
-    end
+    local desc = default_descriptions[ID]
     if dfhack.findScript("more-item-descriptions") then --luacheck: skip
         desc = dfhack.script_environment("more-item-descriptions").descriptions[ID] or desc
     end

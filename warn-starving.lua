@@ -1,19 +1,6 @@
 -- Pause and warn if a unit is starving
 -- By Meneth32, PeridexisErrant, Lethosor
 --@ module = true
---[====[
-
-warn-starving
-=============
-If any (live) units are starving, very thirsty, or very drowsy, the game will
-be paused and a warning shown and logged to the console. If you only want
-to be warned about sane dwarves, use ``warn-starving sane``.
-
-Use with the `repeat` command for regular checks.
-
-Use ``warn-starving all`` to display a list of all problematic units.
-
-]====]
 
 starvingUnits = starvingUnits or {} --as:bool[]
 dehydratedUnits = dehydratedUnits or {} --as:bool[]
@@ -27,6 +14,7 @@ end
 
 local gui = require 'gui'
 local utils = require 'utils'
+local widgets = require 'gui.widgets'
 local units = df.global.world.units.active
 
 local args = utils.invert({...})
@@ -39,49 +27,32 @@ if args.sane then
     checkOnlySane = true
 end
 
-warning = defclass(warning, gui.FramedScreen)
+warning = defclass(warning, gui.ZScreen)
 warning.ATTRS = {
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = 'Warning',
-    frame_width = 20,
-    frame_height = 18,
-    frame_inset = 1,
-    focus_path = 'warn-starving',
+    focus_path='warn-starving',
+    force_pause=true,
+    pass_mouse_clicks=false,
 }
 
 function warning:init(args)
-    self.start = 1
-    self.messages = args.messages
-    self.frame_height = math.min(18, #self.messages)
-    self.max_start = #self.messages - self.frame_height + 1
-    for _, msg in pairs(self.messages) do
-        self.frame_width = math.max(self.frame_width, #msg + 2)
-    end
-    self.frame_width = math.min(df.global.gps.dimx - 2, self.frame_width)
+    local main = widgets.Window{
+        frame={w=80, h=18},
+        frame_title='Warning',
+        resizable=true,
+        autoarrange_subviews=true
+    }
+
+    main:addviews{
+        widgets.WrappedLabel{
+            text_to_wrap=table.concat(args.messages, NEWLINE),
+        }
+    }
+
+    self:addviews{main}
 end
 
-function warning:onRenderBody(p)
-    for i = self.start, math.min(self.start + self.frame_height - 1, #self.messages) do
-        p:string(self.messages[i]):newline()
-    end
-    if #self.messages > self.frame_height then
-        if self.start > 1 then
-            p:seek(self.frame_width - 1, 0):string(string.char(24), COLOR_LIGHTCYAN) -- up
-        end
-        if self.start < self.max_start then
-            p:seek(self.frame_width - 1, self.frame_height - 1):string(string.char(25), COLOR_LIGHTCYAN) -- down
-        end
-    end
-end
-
-function warning:onInput(keys)
-    if keys.LEAVESCREEN or keys.SELECT then
-        self:dismiss()
-    elseif keys.CURSOR_UP or keys.STANDARDSCROLL_UP then
-        self.start = math.max(1, self.start - 1)
-    elseif keys.CURSOR_DOWN or keys.STANDARDSCROLL_DOWN then
-        self.start = math.min(self.start + 1, self.max_start)
-    end
+function warning:onDismiss()
+    view = nil
 end
 
 local function findRaceCaste(unit)
@@ -141,9 +112,16 @@ function doCheck()
             print(dfhack.df2console(msg))
         end
         dfhack.color()
-        df.global.pause_state = true
-        warning{messages=messages}:show()
+        return warning{messages=messages}:show()
     end
 end
 
-if not moduleMode then doCheck() end
+if dfhack_flags.module then
+    return
+end
+
+if not dfhack.isMapLoaded() then
+    qerror('warn-starving requires a map to be loaded')
+end
+
+view = view and view:raise() or doCheck()

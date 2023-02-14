@@ -1,26 +1,14 @@
 -- A GUI front-end for the autobutcher plugin.
---[====[
-
-gui/autobutcher
-===============
-An in-game interface for `autobutcher`.  This script must be called
-from either the overall status screen or the animal list screen.
-
-]====]
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local dlg = require 'gui.dialogs'
 
-local plugin = require 'plugins.zone'
+local plugin = require 'plugins.autobutcher'
 
-WatchList = defclass(WatchList, gui.FramedScreen)
-
-WatchList.ATTRS {
-    frame_title = 'Autobutcher Watchlist',
-    frame_inset = 0, -- cover full DF window
-    frame_background = COLOR_BLACK,
-    frame_style = gui.BOUNDARY_FRAME,
+WatchList = defclass(WatchList, gui.ZScreen)
+WatchList.ATTRS{
+    focus_string='autobutcher',
 }
 
 -- width of the race name column in the UI
@@ -34,7 +22,7 @@ function nextAutowatchState()
 end
 
 function nextAutobutcherState()
-    if(plugin.autobutcher_isEnabled()) then
+    if(plugin.isEnabled()) then
         return 'Stop '
     end
     return 'Start'
@@ -51,9 +39,11 @@ end
 function WatchList:init(args)
     local colwidth = 7
     self:addviews{
-        widgets.Panel{
-            frame = { l = 0, r = 0 },
-            frame_inset = 1,
+        widgets.Window{
+            view_id = 'main',
+            frame_title = 'Autobutcher Watchlist',
+            frame = { w=84, h=30 },
+            resizable = true,
             subviews = {
                 widgets.Label{
                     frame = { l = 0, t = 0 },
@@ -80,9 +70,8 @@ function WatchList:init(args)
                     view_id = 'list',
                     frame = { t = 3, b = 5 },
                     not_found_label = 'Watchlist is empty.',
-                    edit_pen = COLOR_LIGHTCYAN,
                     text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-                    cursor_pen = { fg = COLOR_WHITE, bg = COLOR_GREEN },
+                    cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
                     --on_select = self:callback('onSelectEntry'),
                 },
                 widgets.Label{
@@ -272,14 +261,6 @@ function WatchList:initListChoices()
 
     local list = self.subviews.list
     list:setChoices(choices)
-end
-
-function WatchList:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-    else
-        WatchList.super.onInput(self, keys)
-    end
 end
 
 -- check the user input for target population values
@@ -624,11 +605,10 @@ function WatchList:onSetRow()
 end
 
 function WatchList:onToggleAutobutcher()
-    if(plugin.autobutcher_isEnabled()) then
-        plugin.autobutcher_setEnabled(false)
-        plugin.autobutcher_sortWatchList()
+    if(plugin.isEnabled()) then
+        plugin.setEnabled(false)
     else
-        plugin.autobutcher_setEnabled(true)
+        plugin.setEnabled(true)
     end
     self:initListChoices()
     self:updateBottom()
@@ -644,20 +624,12 @@ function WatchList:onToggleAutowatch()
     self:updateBottom()
 end
 
+function WatchList:onDismiss()
+    view = nil
+end
+
 if not dfhack.isMapLoaded() then
-    qerror('Map is not loaded.')
+    qerror('autobutcher requires a fortress map to be loaded')
 end
 
-if string.match(dfhack.gui.getCurFocus(), '^dfhack/lua') then
-    qerror("This script must not be called while other lua gui stuff is running.")
-end
-
--- maybe this is too strict, there is not really a reason why it can only be called from the status screen
--- (other than the hotkey might overlap with other scripts)
-if (not string.match(dfhack.gui.getCurFocus(), '^overallstatus') and not string.match(dfhack.gui.getCurFocus(), '^pet/List/Unit')) then
-    qerror("This script must either be called from the overall status screen or the animal list screen.")
-end
-
-
-local screen = WatchList{ }
-screen:show()
+view = view and view:raise() or WatchList{}:show()

@@ -1,25 +1,11 @@
 -- Forces an event (wrapper for modtools/force)
---[====[
-
-force
-=====
-A simpler wrapper around the `modtools/force` script.
-
-Usage:
-
-- ``force event_type``
-- ``force event_type civ_id`` - civ ID required for ``Diplomat`` and ``Caravan``
-  events
-
-See `modtools/force` for a complete list of event types.
-
-]====]
 
 local utils = require 'utils'
 local args = {...}
 if #args < 1 then qerror('missing event type') end
 if args[1]:find('help') then
-    return print(dfhack.script_help())
+    print(dfhack.script_help())
+    return
 end
 local eventType = nil
 for _, type in ipairs(df.timed_event_type) do
@@ -31,12 +17,12 @@ if not eventType then
     qerror('unknown event type: ' .. args[1])
 end
 
-local newArgs = {'-eventType', eventType}
+local newArgs = {'--eventType', eventType}
 if eventType == 'Caravan' or eventType == 'Diplomat' then
+    table.insert(newArgs, '--civ')
     if not args[2] then
-        qerror('event type ' .. eventType .. ' requires civ ID')
+        table.insert(newArgs, 'player')
     else
-        table.insert(newArgs, '-civ')
         table.insert(newArgs, args[2])
     end
 end

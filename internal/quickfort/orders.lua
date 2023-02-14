@@ -9,8 +9,13 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
-local stockflow = require('plugins.stockflow')
 local quickfort_common = reqscript('internal/quickfort/common')
+
+local ok, stockflow = pcall(require, 'plugins.stockflow')
+if not ok then
+    stockflow = nil
+end
+
 local log = quickfort_common.log
 
 local function inc_order_spec(order_specs, quantity, reactions, label)
@@ -81,6 +86,7 @@ local function process_filter(order_specs, filter, reactions)
         label = 'ballista parts'
     elseif filter.item_type == df.item_type.BAR then label = 'magnetite ore'
     elseif filter.item_type == df.item_type.BOX then label = 'coffer'
+    elseif filter.item_type == df.item_type.CAGE then label = 'wooden cage'
     elseif filter.item_type == df.item_type.CATAPULTPARTS then
         label = 'catapult parts'
     elseif filter.item_type == df.item_type.CHAIN then label = 'cloth rope'
@@ -101,7 +107,7 @@ local function process_filter(order_specs, filter, reactions)
         label = 'iron spear'
     end
     if not label then
-        print('unhandled filter:')
+        dfhack.printerr('unhandled filter:')
         printall_recurse(filter)
         error('quickfort out of sync with DFHack filters; please file a bug')
     end
@@ -123,10 +129,10 @@ function create_orders(ctx)
     for k,order_spec in pairs(ctx.order_specs or {}) do
         local quantity = math.ceil(order_spec.quantity)
         log('ordering %d %s', quantity, k)
-        if not ctx.dry_run then
+        if not ctx.dry_run and stockflow then
             stockflow.create_orders(order_spec.order, quantity)
         end
-        table.insert(ctx.stats, {label=k, value=quantity})
+        table.insert(ctx.stats, {label=k, value=quantity, is_order=true})
     end
 end
 
@@ -134,13 +140,23 @@ end
 -- care about the built-in reactions, not the mod-added ones.
 -- note that we also shouldn't reinit this because it contains allocated memory
 local function get_reactions()
-    g_reactions = g_reactions or stockflow.collect_reactions()
+    g_reactions = g_reactions or (stockflow and stockflow.collect_reactions()) or {}
     return g_reactions
 end
 
-function enqueue_building_orders(buildings, building_db, ctx)
+local function ensure_order_specs(ctx)
     local order_specs = ctx.order_specs or {}
     ctx.order_specs = order_specs
+    return order_specs
+end
+
+function enqueue_additional_order(ctx, label)
+    local order_specs = ensure_order_specs(ctx)
+    inc_order_spec(order_specs, 1, get_reactions(), label)
+end
+
+function enqueue_building_orders(buildings, building_db, ctx)
+    local order_specs = ensure_order_specs(ctx)
     local reactions = get_reactions()
     for _, b in ipairs(buildings) do
         local db_entry = building_db[b.type]
@@ -156,17 +172,13 @@ function enqueue_building_orders(buildings, building_db, ctx)
         end
         if db_entry.additional_orders then
             for _,label in ipairs(db_entry.additional_orders) do
-                local quantity = 1
-                if additional_order == df.item_type.BLOCKS then
-                    quantity = 1 / 4
-                end
-                inc_order_spec(order_specs, quantity, reactions, label)
+                inc_order_spec(order_specs, 1, reactions, label)
             end
         end
         for _,filter in ipairs(filters) do
             if filter.quantity == -1 then filter.quantity = get_num_items(b) end
             if filter.flags2 and filter.flags2.building_material then
-                -- blocks get produced at a ratio of 4:1
+                -- rock blocks get produced at a ratio of 4:1
                 filter.quantity = filter.quantity or 1
                 filter.quantity = filter.quantity / 4
             end

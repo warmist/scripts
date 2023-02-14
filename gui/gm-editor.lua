@@ -1,36 +1,13 @@
--- Interface powered item editor.
-
---[====[
-
-gui/gm-editor
-=============
-This editor allows to change and modify almost anything in df. Press :kbd:`?` for
-in-game help. There are multiple ways to open this editor:
-
-* Calling ``gui/gm-editor``  from a command or keybinding opens the editor
-  on whatever is selected or viewed (e.g. unit/item description screen)
-
-* using ``gui/gm-editor <lua command>`` - executes lua command and opens editor on
-  its results (e.g. ``gui/gm-editor "df.global.world.items.all"`` shows all items)
-
-* using ``gui/gm-editor dialog`` - shows an in game dialog to input lua command. Works
-  the same as version above.
-
-* using ``gui/gm-editor toggle`` - will hide (if shown) and show (if hidden) editor at
-  the same position you left it
-
-.. image:: /docs/images/gm-editor.png
-
-]====]
---a variable the stores persistant screen
-persist_screen=persist_screen or nil --does nothing, here just to remind everyone
+-- Interface powered memory object editor.
 
 local gui = require 'gui'
+local json = require 'json'
 local dialog = require 'gui.dialogs'
 local widgets = require 'gui.widgets'
 local guiScript = require 'gui.script'
 local utils = require 'utils'
-local args = {...}
+
+config = config or json.open('dfhack-config/gm-editor.json')
 
 find_funcs = find_funcs or (function()
     local t = {}
@@ -52,9 +29,9 @@ local keybindings_raw = {
     {name='delete', key="CUSTOM_ALT_D",desc="Delete selected entry"},
     {name='reinterpret', key="CUSTOM_ALT_R",desc="Open selected entry as something else"},
     {name='start_filter', key="CUSTOM_S",desc="Start typing filter, Enter to finish"},
-    {name='help', key="HELP",desc="Show this help"},
+    {name='help', key="STRING_A063",desc="Show this help"},
     {name='displace', key="STRING_A093",desc="Open reference offseted by index"},
-    {name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
+    --{name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
 }
 
 local keybindings = {}
@@ -109,14 +86,15 @@ function search_relevance(search, candidate)
 end
 
 
-GmEditorUi = defclass(GmEditorUi, gui.FramedScreen)
-GmEditorUi.ATTRS={
-    frame_style = gui.GREY_LINE_FRAME,
-    frame_title = "GameMaster's editor",
-    }
-function GmEditorUi:onHelp()
-    self.subviews.pages:setSelected(2)
-end
+GmEditorUi = defclass(GmEditorUi, widgets.Window)
+GmEditorUi.ATTRS{
+    frame=config.data,
+    frame_title="GameMaster's editor",
+    frame_inset=0,
+    resizable=true,
+    resize_min={w=30, h=20},
+}
+
 function burning_red(input) -- todo does not work! bug angavrilov that so that he would add this, very important!!
     local col=COLOR_LIGHTRED
     return {text=input,pen=dfhack.pen.parse{fg=COLOR_LIGHTRED,bg=0}}
@@ -137,6 +115,18 @@ function Disclaimer(tlb)
 end
 
 function GmEditorUi:init(args)
+    if not next(self.frame) then
+        self.frame = {w=80, h=50}
+    end
+
+    -- don't appear directly over the current window
+    if next(views) then
+        if self.frame.l then self.frame.l = self.frame.l + 1 end
+        if self.frame.r then self.frame.r = self.frame.r - 1 end
+        if self.frame.t then self.frame.t = self.frame.t + 1 end
+        if self.frame.b then self.frame.b = self.frame.b - 1 end
+    end
+
     self.stack={}
     self.item_count=0
     self.keys={}
@@ -157,24 +147,14 @@ function GmEditorUi:init(args)
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
-            widgets.Label{text={{text="Search",key=keybindings.start_filter.key,key_sep = '()'},{text=": "}},frame={l=1,t=2},
-                on_click=function() self:enable_input(true) end},
-            widgets.EditField{frame={l=12,t=2},active=false,on_change=self:callback('text_input'),on_submit=self:callback("enable_input",false),view_id="filter_input"},
-            --widgets.Label{text="BLAH2"}
-                }
+            widgets.EditField{frame={l=1,t=2,h=1},label_text="Search",key=keybindings.start_filter.key,key_sep='(): ',on_change=self:callback('text_input'),view_id="filter_input"}}
         ,view_id='page_main'}
 
-    local pages=widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}
-    self:addviews{
-        pages
-    }
+    self:addviews{widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     self:pushTarget(args.target)
 end
 function GmEditorUi:text_input(new_text)
     self:updateTarget(true,true)
-end
-function GmEditorUi:enable_input(enable)
-    self.subviews.filter_input.active=enable
 end
 function GmEditorUi:find(test)
     local trg=self:currentTarget()
@@ -433,28 +413,19 @@ function GmEditorUi:set(key,input)
     self:updateTarget(true)
 end
 function GmEditorUi:onInput(keys)
-    if keys.LEAVESCREEN_ALL  then
-        self:dismiss()
-    end
-    if keys.LEAVESCREEN  then
-        if self.subviews.filter_input.active then
-            self:enable_input(false)
-            return
-        end
+    if GmEditorUi.super.onInput(self, keys) then return true end
+
+    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         if self.subviews.pages:getSelected()==2 then
             self.subviews.pages:setSelected(1)
         else
             self:popTarget()
         end
+        return true
     end
 
     if self.subviews.pages:getSelected() == 2 then
-        return
-    end
-
-    if self.subviews.filter_input.active then
-        self.super.onInput(self,keys)
-        return
+        return false
     end
 
     if keys[keybindings.offset.key] then
@@ -462,28 +433,35 @@ function GmEditorUi:onInput(keys)
         local _,stoff=df.sizeof(trg.target)
         local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
         dialog.showMessage("Offset",string.format("Size hex=%x,%x dec=%d,%d\nRelative hex=%x dec=%d",size,off,size,off,off-stoff,off-stoff),COLOR_WHITE)
+        return true
     elseif keys[keybindings.displace.key] then
         self:openOffseted(self.subviews.list_main:getSelected())
+        return true
     elseif keys[keybindings.find.key] then
         self:find()
+        return true
     elseif keys[keybindings.find_id.key] then
         self:find_id()
+        return true
     elseif keys[keybindings.find_id_raw.key] then
         self:find_id(true)
+        return true
     elseif keys[keybindings.lua_set.key] then
         self:set(self:getSelectedKey())
+        return true
     elseif keys[keybindings.insert.key] then --insert
         self:insertNew()
+        return true
     elseif keys[keybindings.delete.key] then --delete
         self:deleteSelected(self:getSelectedKey())
+        return true
     elseif keys[keybindings.reinterpret.key] then
         self:openReinterpret(self:getSelectedKey())
-    elseif keys[keybindings.start_filter.key] then
-        self:enable_input(true)
-        return
+        return true
+    elseif keys[keybindings.help.key] then
+        self.subviews.pages:setSelected(2)
+        return true
     end
-
-    self.super.onInput(self,keys)
 end
 function getStringValue(trg,field)
     local obj=trg.target
@@ -491,11 +469,17 @@ function getStringValue(trg,field)
     local text=tostring(obj[field])
     pcall(function()
     if obj._field ~= nil then
-        local enum=obj:_field(field)._type
+        local f = obj:_field(field)
+        if df.coord:is_instance(f) then
+            text=('(%d, %d, %d) '):format(f.x, f.y, f.z) .. text
+        elseif df.coord2d:is_instance(f) then
+            text=('(%d, %d) '):format(f.x, f.y) .. text
+        end
+        local enum=f._type
         if enum._kind=="enum-type" then
             text=text.." ("..tostring(enum[obj[field]])..")"
         end
-        local ref_target=obj:_field(field).ref_target
+        local ref_target=f.ref_target
         if ref_target then
             text=text.. " (ref-target: "..getmetatable(ref_target)..")"
         end
@@ -553,25 +537,17 @@ function GmEditorUi:pushTarget(target_to_push)
     end
     new_tbl.item_count=#new_tbl.keys
     table.insert(self.stack,new_tbl)
-    self.subviews.filter_input.text=""
+    self.subviews.filter_input:setText("")
     self:updateTarget()
 end
 function GmEditorUi:popTarget()
     table.remove(self.stack) --removes last element
     if #self.stack==0 then
-        self:dismiss()
+        self.parent_view:dismiss()
         return
     end
-    self.subviews.filter_input.text=self.stack[#self.stack].filter --restore filter
+    self.subviews.filter_input:setText(self.stack[#self.stack].filter) --restore filter
     self:updateTarget()
-end
-function show_editor(trg)
-    if not trg then
-        qerror('Target not found')
-    end
-    local screen = GmEditorUi{target=trg}
-    persist_screen=screen
-    screen:show()
 end
 eval_env = utils.df_shortcut_env()
 function eval(s)
@@ -579,26 +555,43 @@ function eval(s)
     if err then qerror(err) end
     return f()
 end
-if #args~=0 then
-    if args[1]=="dialog" then
-        function thunk(entry)
-            show_editor(eval(entry))
-        end
-        dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY, "",thunk)
-    elseif args[1]=="free" then
-        show_editor(df.reinterpret_cast(df[args[2]],args[3]))
-    elseif args[1]=="toggle" then
-        if persist_screen then
-            if persist_screen:isActive() then
-                persist_screen:dismiss()
-            else
-                persist_screen:show()
-            end
-        end
-    else
-        show_editor(eval(args[1]))
-    end
-else
-    show_editor(getTargetFromScreens())
+function GmEditorUi:postUpdateLayout()
+    config:write(self.frame)
 end
 
+GmScreen = defclass(GmScreen, gui.ZScreen)
+GmScreen.ATTRS {
+    focus_path='gm-editor',
+}
+
+function GmScreen:init(args)
+    local target = args.target
+    if not target then
+        qerror('Target not found')
+    end
+    self:addviews{GmEditorUi{target=target}}
+end
+
+function GmScreen:onDismiss()
+    views[self] = nil
+end
+
+local function get_editor(args)
+    if #args~=0 then
+        if args[1]=="dialog" then
+            dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY,
+                    "", function(entry)
+                            view = GmScreen{target=eval(entry)}:show()
+                    end)
+        elseif args[1]=="free" then
+            return GmScreen{target=df.reinterpret_cast(df[args[2]],args[3])}:show()
+        else
+            return GmScreen{target=eval(args[1])}:show()
+        end
+    else
+        return GmScreen{target=getTargetFromScreens()}:show()
+    end
+end
+
+views = views or {}
+views[get_editor{...}] = true

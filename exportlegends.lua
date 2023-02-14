@@ -403,7 +403,7 @@ function export_more_legends_xml()
         if idV.race >= 0 then file:write("\t\t<race>"..(df.global.world.raws.creatures.all[idV.race].creature_id):lower().."</race>\n") end
         if idV.race >= 0  and idV.caste >= 0 then file:write("\t\t<caste>"..(df.global.world.raws.creatures.all[idV.race].caste[idV.caste].caste_id):lower().."</caste>\n") end
         file:write("\t\t<birth_year>"..idV.birth_year.."</birth_year>\n")
-        file:write("\t\t<birth_second>"..idV.birth_year.."</birth_second>\n")
+        file:write("\t\t<birth_second>"..idV.birth_second.."</birth_second>\n")
         if idV.profession >= 0 then file:write("\t\t<profession>"..(df_enums.profession[idV.profession]):lower().."</profession>\n") end
         file:write("\t\t<entity_id>"..idV.entity_id.."</entity_id>\n")
         file:write("\t</identity>\n")
@@ -488,13 +488,14 @@ function export_more_legends_xml()
             file:write("\t\t<child>"..link.."</child>\n")
         end
 
-        if #entityV.claims.border.x > 0 then
-            file:write("\t\t<claims>")
-            for xK, xVal in ipairs(entityV.claims.border.x) do
-                file:write(xVal..","..entityV.claims.border.y[xK].."|")
-            end
-            file:write("</claims>\n")
-        end
+        -- As of version .50, sometimes claim borders have more "x" coordinates than "y", which breaks the below.  Not sure why that would be, so commenting it out.
+        -- if #entityV.claims.border.x > 0 then
+        --     file:write("\t\t<claims>")
+        --     for xK, xVal in ipairs(entityV.claims.border.x) do
+        --         file:write(xVal..","..entityV.claims.border.y[xK].."|")
+        --     end
+        --     file:write("</claims>\n")
+        -- end
 
         if (table_containskey(entityV,"occasion_info") and entityV.occasion_info ~= nil) then
             for occasionK, occasionV in pairs(entityV.occasion_info.occasions) do

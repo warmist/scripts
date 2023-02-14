@@ -408,7 +408,7 @@ function settings_manager:onInput(keys)
                 self:commit_edit(nil, val)
             end
         end
-    elseif keys._MOUSE_L then
+    elseif keys._MOUSE_L_DOWN then
         local mouse_y = df.global.gps.mouse_y
         local list = nil
         if page == 1 then
@@ -749,7 +749,7 @@ function color_editor:onInput(keys)
     if self.current_color == -1 then
         if keys.LEAVESCREEN then
             self:dismiss()
-        elseif keys._MOUSE_L then
+        elseif keys._MOUSE_L_DOWN then
             self:edit(self:pos_to_color())
         elseif keys.SELECT then
             self:edit(self.sel_idx)
@@ -763,7 +763,7 @@ function color_editor:onInput(keys)
             self.sel_idx = (self.sel_idx + 8) % 16
         end
     else
-        if keys._MOUSE_L and self.drag_component == -1 and gps.mouse_y >= 8 and gps.mouse_y <= 16 then
+        if keys._MOUSE_L_DOWN and self.drag_component == -1 and gps.mouse_y >= 8 and gps.mouse_y <= 16 then
             self.drag_component = math.floor((gps.mouse_y - 8) / 3)
         end
         self:process_color_keys(keys)
@@ -802,7 +802,7 @@ function color_editor:onRenderBody(painter)
         local bar_width = bar_max_x - bar_min_x + 1
         local mouse_x = gps.mouse_x - 1
         local mouse_y = gps.mouse_y - 1
-        if enabler.mouse_lbut_down == 1 and self.drag_component ~= -1 then
+        if enabler.mouse_lbut == 1 and self.drag_component ~= -1 then
             local cc = enabler.ccolor[self.ui_colors.preview]
             local old_color = cc[self.drag_component]
             if mouse_x >= bar_max_x then
@@ -819,7 +819,7 @@ function color_editor:onRenderBody(painter)
             if old_color ~= cc[self.drag_component] then
                 self:update_preview_colors()
             end
-        elseif enabler.mouse_lbut_down == 0 then
+        elseif enabler.mouse_lbut == 0 then
             self.drag_component = -1
         end
         local space = (' '):rep(70)

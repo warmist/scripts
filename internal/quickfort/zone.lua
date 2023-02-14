@@ -222,14 +222,14 @@ function do_run(zlevel, grid, ctx)
     local zones = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, zones, zone_db)
+                ctx, zlevel, grid, zones, zone_db)
     stats.out_of_bounds.value =
             stats.out_of_bounds.value + quickfort_building.crop_to_bounds(
                 ctx, zones, zone_db)
     stats.zone_occupied.value =
             stats.zone_occupied.value +
             quickfort_building.check_tiles_and_extents(
-                zones, zone_db)
+                ctx, zones, zone_db)
 
     for _,zone in ipairs(zones) do
         if zone.pos then
@@ -264,7 +264,7 @@ function do_undo(zlevel, grid, ctx)
     local zones = {}
     stats.invalid_keys.value =
             stats.invalid_keys.value + quickfort_building.init_buildings(
-                zlevel, grid, zones, zone_db)
+                ctx, zlevel, grid, zones, zone_db)
 
     -- ensure a zone is not currently selected when we delete it. that causes
     -- crashes. note that we move the cursor, but we have to keep the ui mode
@@ -272,7 +272,7 @@ function do_undo(zlevel, grid, ctx)
     -- move the cursor when we're in mode Zones to avoid having the viewport
     -- jump around when it doesn't need to
     local restore_cursor = false
-    if not dry_run and df.global.ui.main.mode == df.ui_sidebar_mode.Zones then
+    if not dry_run and df.global.plotinfo.main.mode == df.ui_sidebar_mode.Zones then
         quickfort_map.move_cursor(xyz2pos(-1, -1, ctx.cursor.z))
         restore_cursor = true
     end

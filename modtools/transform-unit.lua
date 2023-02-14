@@ -63,6 +63,7 @@ end
 
 if args.clear then
  normalRace = {}
+ return
 end
 
 if not args.unit then
@@ -161,4 +162,3 @@ if args.duration and args.duration ~= 'forever' then
   end
  end)
 end
-

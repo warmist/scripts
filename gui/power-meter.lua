@@ -19,7 +19,7 @@ local guidm = require 'gui.dwarfmode'
 local dlg = require 'gui.dialogs'
 
 local plugin = require('plugins.power-meter')
-local bselector = df.global.ui_build_selector
+local bselector = df.global.buildreq
 
 PowerMeter = defclass(PowerMeter, guidm.MenuOverlay)
 
@@ -124,10 +124,9 @@ function PowerMeter:onInput(keys)
 end
 
 if dfhack.gui.getCurFocus() ~= 'dwarfmode/Build/Position/Trap'
-or bselector.building_subtype ~= df.trap_type.PressurePlate
+        or bselector.building_subtype ~= df.trap_type.PressurePlate
 then
-    qerror("This script requires the main dwarfmode view in build pressure plate mode")
+    qerror("This script requires the build pressure plate sidebar")
 end
 
-local list = PowerMeter()
-list:show()
+PowerMeter():show()

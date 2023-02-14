@@ -11,6 +11,7 @@ influences output quality.  Examples::
     autolabor-artisans disable
 
 ]====]
+
 local artisan_labors = {
     "CARPENTER",
     "DETAIL",
@@ -51,7 +52,7 @@ end
 
 function run()
     if #args == 0 or args[1] == "help" then
-        print(help)
+        print(dfhack.script_help())
         return false
     end
 

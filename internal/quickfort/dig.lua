@@ -15,6 +15,7 @@ local utils = require('utils')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
+local quickfort_preview = reqscript('internal/quickfort/preview')
 local quickfort_set = reqscript('internal/quickfort/set')
 
 local log = quickfort_common.log
@@ -175,6 +176,14 @@ local function do_mine(digctx)
     return function() digctx.flags.dig = values.dig_default end
 end
 
+local function do_chop(digctx)
+    if digctx.flags.hidden then return nil end
+    if is_tree(digctx.tileattrs) then
+        return function() digctx.flags.dig = values.dig_default end
+    end
+    return function() end -- noop, but not an error
+end
+
 local function do_channel(digctx)
     if digctx.on_map_edge then return nil end
     if not digctx.flags.hidden then -- always designate if the tile is hidden
@@ -261,7 +270,9 @@ end
 
 local function do_gather(digctx)
     if digctx.flags.hidden then return nil end
-    if not is_gatherable(digctx.tileattrs) then return nil end
+    if not is_gatherable(digctx.tileattrs) then
+        return function() end
+    end
     return function() digctx.flags.dig = values.dig_default end
 end
 
@@ -302,20 +313,7 @@ local function do_track(digctx)
             not is_hard(digctx.tileattrs) then
         return nil
     end
-    local direction = digctx.direction
-    if not direction.north and not  direction.south and
-            not direction.east and not direction.west then
-        print('ambiguous direction for track; please use T(width x height)' ..
-              ' syntax (specify both width > 1 and height > 1 for a' ..
-              ' track that extends both South and East from this corner')
-        return nil
-    end
-    if not direction.single_tile and direction.north and direction.west then
-        -- we're in the "empty" interior of a track extent - tracks can only be
-        -- built in lines along the top or left of a non-single-tile extent.
-        return nil
-    end
-    local occupancy = digctx.occupancy
+    local direction, occupancy = digctx.direction, digctx.occupancy
     return function()
         -- don't overwrite all directions, only 'or' in the new bits. we could
         -- be adding to a previously-designated track.
@@ -454,7 +452,7 @@ local dig_db = {
     i={action=do_up_down_stair, use_priority=true, can_clobber_engravings=true},
     r={action=do_ramp, use_priority=true, can_clobber_engravings=true},
     z={action=do_remove_ramps, use_priority=true},
-    t={action=do_mine, use_priority=true},
+    t={action=do_chop, use_priority=true},
     p={action=do_gather, use_priority=true},
     s={action=do_smooth, use_priority=true},
     e={action=do_engrave, use_priority=true},
@@ -595,29 +593,16 @@ local function dig_tile(digctx, db_entry)
     end
 end
 
-local function ensure_index(t, idx)
-    if not t[idx] then t[idx] = {} end
-    return t[idx]
-end
-
 local function ensure_engravings_cache(ctx)
     if ctx.engravings_cache then return end
     local engravings_cache = {}
     for _,engraving in ipairs(df.global.world.engravings) do
         local pos = engraving.pos
-        local grid = ensure_index(engravings_cache, pos.z)
-        local row = ensure_index(grid, pos.y)
+        local grid = ensure_key(engravings_cache, pos.z)
+        local row = ensure_key(grid, pos.y)
         row[pos.x] = engraving
     end
     ctx.engravings_cache = engravings_cache
-end
-
-local function get_engraving(cache, pos)
-    local grid = cache[pos.z]
-    if not grid then return nil end
-    local row = grid[pos.y]
-    if not row then return nil end
-    return row[pos.x]
 end
 
 local function init_dig_ctx(ctx, pos, direction)
@@ -627,7 +612,7 @@ local function init_dig_ctx(ctx, pos, direction)
     if is_smooth(tileattrs) then
         -- potentially has an engraving
         ensure_engravings_cache(ctx)
-        engraving = get_engraving(ctx.engravings_cache, pos)
+        engraving = safe_index(ctx.engravings_cache, pos.z, pos.y, pos.x)
     end
     return {
         pos=pos,
@@ -648,6 +633,30 @@ local function should_preserve_engraving(ctx, db_entry, engraving)
             engraving.quality >= ctx.preserve_engravings
 end
 
+-- returns a map of which track directions should be enabled
+-- width and height can be negative
+local function get_track_direction(x, y, width, height)
+    local neg_width, w = width < 0, math.abs(width)
+    local neg_height, h = height < 0, math.abs(height)
+
+    -- initialize assuming positive width and height
+    local north = x == 1 and y > 1
+    local east = x < w and y == 1
+    local south = x == 1 and y < h
+    local west = x > 1 and y == 1
+
+    if neg_width then
+        north = x == w and y > 1
+        south = x == w and y < h
+    end
+    if neg_height then
+        east = x < w and y == h
+        west = x > 1 and y == h
+    end
+
+    return {north=north, east=east, south=south, west=west}
+end
+
 local function do_run_impl(zlevel, grid, ctx)
     local stats = ctx.stats
     ctx.bounds = ctx.bounds or quickfort_map.MapBoundsChecker{}
@@ -658,16 +667,33 @@ local function do_run_impl(zlevel, grid, ctx)
             log('applying spreadsheet cell %s with text "%s" to map' ..
                 ' coordinates (%d, %d, %d)', cell, text, pos.x, pos.y, pos.z)
             local db_entry = nil
-            local keys, extent = quickfort_parse.parse_cell(text)
+            local keys, extent = quickfort_parse.parse_cell(ctx, text)
             if keys then db_entry = dig_db[keys] end
             if not db_entry then
-                print(string.format('invalid key sequence: "%s" in cell %s',
-                                    text, cell))
+                dfhack.printerr(('invalid key sequence: "%s" in cell %s')
+                                :format(text, cell))
                 stats.invalid_keys.value = stats.invalid_keys.value + 1
                 goto continue
             end
-            for extent_x=1,extent.width do
-                for extent_y=1,extent.height do
+            if db_entry.action == do_track and not db_entry.direction and
+                    math.abs(extent.width) == 1 and
+                    math.abs(extent.height) == 1 then
+                dfhack.printerr(('Warning: ambiguous direction for track:' ..
+                    ' "%s" in cell %s; please use T(width x height) syntax' ..
+                    ' (e.g. specify both width > 1 and height > 1 for a' ..
+                    ' track that extends both South and East from this corner')
+                               :format(text, cell))
+                stats.invalid_keys.value = stats.invalid_keys.value + 1
+                goto continue
+            end
+            if extent.specified then
+                -- shift pos to the upper left corner of the extent and convert
+                -- the extent dimenions to positive, simplifying the logic below
+                pos.x = math.min(pos.x, pos.x + extent.width + 1)
+                pos.y = math.min(pos.y, pos.y + extent.height + 1)
+            end
+            for extent_x=1,math.abs(extent.width) do
+                for extent_y=1,math.abs(extent.height) do
                     local extent_pos = xyz2pos(
                         pos.x+extent_x-1,
                         pos.y+extent_y-1,
@@ -679,19 +705,24 @@ local function do_run_impl(zlevel, grid, ctx)
                                 stats.out_of_bounds.value + 1
                         goto inner_continue
                     end
-                    local direction = db_entry.direction or {
-                        north=extent_y>1,
-                        east=extent_x<extent.width and extent_y == 1,
-                        south=extent_y<extent.height and extent_x == 1,
-                        west=extent_x>1,
-                    }
+                    local direction = db_entry.direction or
+                            (db_entry.action == do_track and
+                             get_track_direction(extent_x, extent_y,
+                                                 extent.width, extent.height))
                     local digctx = init_dig_ctx(ctx, extent_pos, direction)
                     -- can't dig through buildings
                     if digctx.occupancy.building ~= 0 then
                         goto inner_continue
                     end
                     local action_fn = dig_tile(digctx, db_entry)
-                    if action_fn then
+                    quickfort_preview.set_preview_tile(ctx, extent_pos,
+                                                       action_fn ~= nil)
+                    if not action_fn then
+                        log('cannot apply "%s" to coordinate (%d, %d, %d)',
+                            keys, extent_pos.x, extent_pos.y, extent_pos.z)
+                        stats.dig_invalid_tiles.value =
+                                stats.dig_invalid_tiles.value + 1
+                    else
                         if should_preserve_engraving(ctx, db_entry,
                                                      digctx.engraving) then
                             stats.dig_protected_engraving.value =
@@ -714,6 +745,8 @@ local function ensure_ctx_stats(ctx, prefix)
     local designated_label = ('Tiles %sdesignated for digging'):format(prefix)
     ctx.stats.dig_designated = ctx.stats.dig_designated or
             {label=designated_label, value=0, always=true}
+    ctx.stats.dig_invalid_tiles = ctx.stats.dig_invalid_tiles or
+            {label='Tiles that could not be designated for digging', value=0}
     ctx.stats.dig_protected_engraving = ctx.stats.dig_protected_engraving or
             {label='Engravings protected from destruction', value=0}
 end
