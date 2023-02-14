@@ -764,7 +764,7 @@ function Dig:getDesignation(x, y, z)
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
         elseif z == math.abs(self:get_bounds().z1 - self:get_bounds().z2) then
             local tile_type = dfhack.maps.getTileType(self:get_bounds().x1 + x, self:get_bounds().y1 + y, z)
-            local tile_shape = tile_attrs[tile_type].shape
+            local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
 
             -- If top of the bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
             return stairs_top_type == "auto" and (tile_shape == df.tiletype_shape.STAIR_DOWN and "i" or "j") or
