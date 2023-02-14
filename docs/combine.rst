@@ -55,15 +55,15 @@ Mode options
 
 Stockpile options
 -----------------
-Specify all stockpiles, the stockpile located at the game cursor, or a stockpile id; id's can be found in the file created by the --info option. 
-    
+Specify all stockpiles, the stockpile located at the game cursor, or a stockpile id; id's can be found in the file created by the --info option.
+
 ``-s, --stockpile=all|here|<num>``
     Valid option values are:
 
         all:   Search all stockpiles. Default is all.
 
         here:  Search the stockpile under the game cursor.
-    
+
         <num>: Search stockpile <num>.
 
 
@@ -103,4 +103,3 @@ Output options
 
 ``-d, --debug=<num>``
     Print debugging output to level <num>.
-

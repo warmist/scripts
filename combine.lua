@@ -1,4 +1,4 @@
--- Combines food and plant items across stockpiles. 
+-- Combines food and plant items across stockpiles.
 local argparse = require('argparse')
 local utils = require('utils')
 
@@ -268,7 +268,7 @@ local function populate_stacks(stacks, stockpiles, types)
         end
     end
 end
-    
+
 local function preview_stacks(stacks)
     -- calculate the stacks sizes and store in after_stack_size
     info('\nPreview phase\n')
