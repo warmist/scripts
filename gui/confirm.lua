@@ -10,7 +10,14 @@ local widgets = require('gui.widgets')
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_CORE_INITIALIZED then return end
     local ok, config = pcall(json.decode_file, CONFIRM_CONFIG_FILE)
+    local all_confirms = confirm.get_conf_data()
+    -- enable all confirms by default so new confirms are automatically enabled
+    for _, c in ipairs(all_confirms) do
+        confirm.set_conf_state(c.id, true)
+    end
+
     if not ok then return end
+    -- update confirm state based on config
     for _, c in ipairs(config) do
         confirm.set_conf_state(c.id, c.enabled)
     end
