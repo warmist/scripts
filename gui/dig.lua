@@ -397,9 +397,9 @@ function Dig:get_pen(x, y, mousePos)
     end
 
     local n, w, e, s = false, false, false, false
-    if y == 0 or not self.shape.arr[x][y - 1] then n = true end
-    if x == 0 or not self.shape.arr[x - 1][y] then w = true end
-    if x == #self.shape.arr or not self.shape.arr[x + 1][y] then e = true end
+    if y == 0 or not self.shape.arr[x] or not self.shape.arr[x][y - 1] then n = true end
+    if x == 0 or not self.shape.arr[x - 1] or not self.shape.arr[x - 1][y] then w = true end
+    if x == #self.shape.arr or not self.shape.arr[x + 1] or not self.shape.arr[x + 1][y] then e = true end
     if y == #self.shape.arr[x] or not self.shape.arr[x][y + 1] then s = true end
 
     -- Get the bit field to use as a key for the PENS map
@@ -408,39 +408,56 @@ function Dig:get_pen(x, y, mousePos)
     -- If key doesn't exist in the map, set it
     if pen_key and not PENS[pen_key] then
         if not n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.NW, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NORTH, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.NORTH, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and e and not w and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.NE, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.WEST, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.WEST, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and not w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.EAST, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.EAST, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.SW, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.SE, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and not n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif self.shape.arr[x][y] and n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.POINT, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.POINT, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         elseif is_corner(x, y) and not self.shape.arr[x][y] then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos),
+                self.shape.arr[x][y])
         else
             PENS[pen_key] = nil
         end
@@ -449,7 +466,6 @@ function Dig:get_pen(x, y, mousePos)
     -- Return the pen for the caller
     return PENS[pen_key]
 end
-
 
 function Dig:init()
     self:addviews { ActionPanel {
@@ -640,9 +656,34 @@ function Dig:onRenderFrame(dc, rect)
             if self.dirty or (pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2) then
                 if not self.shape or self.dirty or
                     (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
+                    local points = {}
+                    local second_point = dfhack.gui.getMousePos()
+                    if self.saved_cursor then
+                        second_point = self.saved_cursor
+                    end
+
+                    if self.mark.x >= second_point.x and self.mark.y >= second_point.y then
+                        print("down right")
+                        -- down right
+                        points = { { 0, 0 }, { math.abs(bounds.x2 - bounds.x1), math.abs(bounds.y2 - bounds.y1) } }
+                    elseif self.mark.x <= second_point.x and self.mark.y >= second_point.y then
+                        print("down left")
+                        -- down left
+                        points = { { math.abs(bounds.x2 - bounds.x1), 0 }, { 0, math.abs(bounds.y2 - bounds.y1) } }
+                    elseif self.mark.x >= second_point.x and self.mark.y <= second_point.y then
+                        print("up right")
+                        -- up right
+                        points = { { 0, math.abs(bounds.y2 - bounds.y1) }, { math.abs(bounds.x2 - bounds.x1), 0 } }
+                    elseif self.mark.x <= second_point.x and self.mark.y <= second_point.y then
+                        print("up left")
+                        -- up left
+                        points = { { math.abs(bounds.x2 - bounds.x1), math.abs(bounds.y2 - bounds.y1) }, { 0, 0 } }
+                    end
+
                     self.shape:update(
                         bounds.x2 - bounds.x1,
-                        bounds.y2 - bounds.y1
+                        bounds.y2 - bounds.y1,
+                        points
                     )
                     self:add_shape_options()
                     self:updateLayout()
@@ -667,7 +708,7 @@ function Dig:onRenderFrame(dc, rect)
             end
         end
 
-        guidm.renderMapOverlay(get_overlay_pen, bounds)
+        guidm.renderMapOverlay(get_overlay_pen, nil)
     end
 end
 
@@ -763,14 +804,17 @@ function Dig:getDesignation(x, y, z)
         if z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
         elseif z == math.abs(self:get_bounds().z1 - self:get_bounds().z2) then
-            local tile_type = dfhack.maps.getTileType(self:get_bounds().x1 + x, self:get_bounds().y1 + y, self:get_bounds().z1 + z)
+            local tile_type = dfhack.maps.getTileType(self:get_bounds().x1 + x, self:get_bounds().y1 + y,
+                self:get_bounds().z1 + z)
             local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
-            local designation = dfhack.maps.getTileFlags(xyz2pos(self:get_bounds().x1 + x, self:get_bounds().y1 + y, self:get_bounds().z1 + z))
+            local designation = dfhack.maps.getTileFlags(xyz2pos(self:get_bounds().x1 + x, self:get_bounds().y1 + y,
+                self:get_bounds().z1 + z))
 
             -- If top of the bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
-            local up_or_updown_dug = (tile_shape == df.tiletype_shape.STAIR_DOWN or tile_shape == df.tiletype_shape.STAIR_UPDOWN)
+            local up_or_updown_dug = (
+                tile_shape == df.tiletype_shape.STAIR_DOWN or tile_shape == df.tiletype_shape.STAIR_UPDOWN)
             local up_or_updown_desig = designation ~= nil and (designation.dig == df.tile_dig_designation.UpStair or
-                    designation.dig == df.tile_dig_designation.UpDownStair)
+                designation.dig == df.tile_dig_designation.UpDownStair)
 
             if stairs_top_type == "auto" then
                 return (up_or_updown_desig or up_or_updown_dug) and "i" or "j"

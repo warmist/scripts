@@ -13,13 +13,16 @@ Shape.ATTRS {
     options = DEFAULT_NIL,
     invert = false,
     width = 1,
-    height = 1
+    height = 1,
+    points = {}
 }
 
-function Shape:update(width, height)
+function Shape:update(width, height, points)
     self.width = width
     self.height = height
     self.arr = {}
+    self.points = points
+
     for x = 0, self.width do
         self.arr[x] = {}
         for y = 0, self.height do
@@ -229,6 +232,107 @@ function Diag:has_point(x, y)
 end
 
 -- module users can get shapes through this global, shape option values
+Line = defclass(Line, Shape)
+Line.ATTRS {
+    name = "Line Segments",
+}
+
+function Line:init()
+    self.options = {
+        complex = {
+            name = "Complex",
+            type = "const",
+            value = true,
+        },
+        thickness = {
+            name = "Thickness",
+            type = "plusminus",
+            value = 1,
+            min = 1,
+            max = function(shape) if not shape.height or not shape.width then
+                    return nil
+                else
+                    return math.max(shape.height, shape.width)
+
+                end
+            end,
+            keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
+        },
+    }
+end
+
+function Line:update(width, height, points)
+    self.width = width
+    self.height = height
+    self.points = points
+    self.arr = {}
+
+    local x0, y0 = self.points[1][1], self.points[1][2]
+    local x1, y1 = self.points[2][1], self.points[2][2]
+    local dx = math.abs(x1 - x0)
+    local sx = x0 < x1 and 1 or -1
+    local dy = -math.abs(y1 - y0)
+    local sy = y0 < y1 and 1 or -1
+    local err = dx + dy
+    local e2
+
+    while true do
+        self.arr[x0] = self.arr[x0] or {}
+        self.arr[x0][y0] = true
+        
+        -- Add line thickness
+        if (math.abs(dx) > math.abs(dy)) then
+            local i = 1
+            while i < self.options.thickness.value do
+                if y0 >= i then
+                    if not self.arr[x0] then self.arr[x0] = {} end
+                    self.arr[x0][y0 - math.ceil(i / 2)] = true
+                end
+                i = i + 1
+
+                if y0 + i - 1 <= self.height and self.options.thickness.value > i then
+                    if not self.arr[x0] then self.arr[x0] = {} end
+                    self.arr[x0][y0 + math.ceil(i / 2) ] = true
+                    i = i + 1
+                end
+            end
+        elseif (math.abs(dx) <= math.abs(dy)) then
+            local i = 1
+            while i < self.options.thickness.value do
+                if x0 >= i then
+                    if not self.arr[x0 - math.ceil(i / 2)] then self.arr[x0 - math.ceil(i / 2)] = {} end
+                    self.arr[x0 - math.ceil(i / 2)][y0] = true
+                end
+                i = i + 1
+
+                if x0 + i - 1 <= self.width and self.options.thickness.value > i then
+                    if not self.arr[x0 - math.ceil(i / 2)] then self.arr[x0 - math.ceil(i / 2)] = {} end
+                    self.arr[x0 + math.ceil(i / 2)][y0] = true
+                    i = i + 1
+                end
+            end
+        end
+
+        if x0 == x1 and y0 == y1 then
+            break
+        end
+
+        e2 = 2 * err
+
+        if e2 >= dy then
+            err = err + dy
+            x0 = x0 + sx
+        end
+
+        if e2 <= dx then
+            err = err + dx
+            y0 = y0 + sy
+        end
+    end
+end
+
+function Line:has_point(x, y) if self.arr[x] and self.arr[x][y] then return true else return false end end
+
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
-all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {} }
+all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {} }
