@@ -254,7 +254,7 @@ local function populate_stacks(stacks, stockpiles, types)
         end
     end
 
-    -- iterate across items in the stockpile and populate the food types structure
+    -- iterate across items in the stockpile and populate the stacks structure
     info(('stockpiles\n'))
     for _, stockpile in pairs(stockpiles) do
 
@@ -442,12 +442,12 @@ local function parse_commandline(opts, args)
         opts.preview = true
     end
 
-    -- if a cursor and stockpile are not specificed, then default to all stockpiles
-    if not opts.cursor and not opts.stockpile then
+    -- if stockpile option is not specificed, then default to all
+    if not opts.stockpile then
         opts.stockpile=parse_stockpile_opts(opts, 'all')
     end
 
-    -- if a type is not specified, then default to all types
+    -- if types option is not specified, then default to all
     if not opts.types then
         opts.types = valid_types_map['all']
     end
@@ -475,7 +475,7 @@ local function main()
 
     local stacks = CList:new()
 
-    populate_stacks(stacks,  opts.all or opts.cursor or opts.stockpile, opts.types)
+    populate_stacks(stacks,  opts.stockpile, opts.types)
 
     preview_stacks(stacks)
 
