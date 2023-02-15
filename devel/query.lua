@@ -214,6 +214,21 @@ function getSelectionData()
     elseif args.job then
         debugf(0,"job selection")
         selection = dfhack.gui.getSelectedJob()
+        if selection == nil and df.global.cursor.x ~= -30000 then
+            local pos = { x=df.global.cursor.x,
+                          y=df.global.cursor.y,
+                          z=df.global.cursor.z }
+            print("searching for a job at the cursor")
+            for _link, job in utils.listpairs(df.global.world.jobs.list) do
+                local jp = job.pos
+                if jp.x == pos.x and jp.y == pos.y and jp.z == pos.z then
+                    if selection == nil then
+                        selection = {}
+                    end
+                    table.insert(selection, job)
+                end
+            end
+        end
         path_info = "job"
         path_info_pattern = path_info
     elseif args.tile then
