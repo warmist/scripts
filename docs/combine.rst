@@ -2,7 +2,7 @@ combine
 =======
 
 .. dfhack-tool::
-    :summary: Combine stacks of food and plant from one or every stockpile.
+    :summary: Combine stacks of food and plants.
     :tags: fort productivity stockpiles items plants
 
 
