@@ -14,19 +14,114 @@ Shape.ATTRS {
     invert = false,
     width = 1,
     height = 1,
-    points = {}
+    points = {},
+    draw_corners = { ne = true, nw = true, se = true, sw = true },
+    offsets = { n = 0, s = 0, e = 0, w = 0 },
+    needs_update = true
 }
 
-function Shape:update(width, height, points)
-    self.width = width
-    self.height = height
-    self.arr = {}
-    self.points = points
+function Shape:transform(min_x, min_y)
+    local ret = {}
+    local dim_min, dim_max = self:get_true_dims()
 
-    for x = 0, self.width do
+    print(string.format("dim_min (%d, %d)", dim_min.x, dim_min.y))
+
+    local x_transform = min_x - dim_min.x
+    local y_transform = min_y - dim_min.y
+
+    for x = dim_min.x, dim_max.x do
+        ret[x + x_transform] = {}
+        for y = dim_min.y, dim_max.y do
+            ret[x + x_transform][y + y_transform] = self.arr[x][y]
+        end
+    end
+
+    return ret
+end
+
+function Shape:get_point_dims()
+
+    local min_x = self.points[1].x
+    local max_x = self.points[1].x
+    local min_y = self.points[1].y
+    local max_y = self.points[1].y
+
+    for _, point in ipairs(self.points) do
+        min_x = math.min(min_x, point.x)
+        max_x = math.max(max_x, point.x)
+        min_y = math.min(min_y, point.y)
+        max_y = math.max(max_y, point.y)
+    end
+
+    return { x = min_x, y = min_y }, { x = max_x, y = max_y }
+end
+
+function Shape:get_true_dims()
+    local min_x, min_y, max_x, max_y
+    for x,_ in pairs(self.arr) do
+        for y,_ in pairs(self.arr[x]) do
+            if not min_x then
+                min_x = x
+                max_x = x
+                min_y = y
+                max_y = y
+            else
+                min_x = math.min(min_x, x)
+                max_x = math.max(max_x, x)
+                min_y = math.min(min_y, y)
+                max_y = math.max(max_y, y)
+            end
+        end
+    end
+
+    return { x = min_x, y = min_y }, { x = max_x, y = max_y }
+end
+
+function Shape:to_string()
+    return string.format("height: %d, width %d, offsets {%d, %d, %d, %d}", self.height, self.width, self.offsets.n,
+        self.offsets.s, self.offsets.e, self.offsets.w)
+end
+
+function Shape:points_to_string(points)
+    local points = points == nil and self.points or points
+    local output = ""
+    local sep = ""
+    for _, point in ipairs(points) do
+        output = output .. sep .. string.format("(%d, %d)", point.x, point.y)
+        sep = ", "
+    end
+
+    return output
+end
+
+-- Basic update function that loops over a rectangle from top left to bottom right
+-- Can be overridden for more complex shapes
+function Shape:update(points)
+
+    -- If doesn't need update
+    if #self.points == #points and not self.needs_update then
+        local same = true
+        for i, point in ipairs(self.points) do
+            if points[i].x ~= point.x or points[i].y ~= point.y then
+                same = false
+                break
+            end
+        end
+
+        if same then return end -- No need to update
+    end
+
+
+    self.points = copyall(points)
+    local top_left, bot_right = self:get_point_dims()
+    self.arr = {}
+    self.height = bot_right.y - top_left.y
+    self.width = bot_right.x - top_left.x
+
+    for x = top_left.x, bot_right.x do
         self.arr[x] = {}
-        for y = 0, self.height do
-            local value = self:has_point(x, y)
+        for y = top_left.y, bot_right.y do
+            local value = self:has_point(x - top_left.x, y - top_left.y)
             if not self.invert then
                 self.arr[x][y] = value
             else
@@ -35,6 +130,8 @@ function Shape:update(width, height, points)
         end
     end
 end
+
+function Shape:get_point(x, y) if self.arr[x] and self.arr[x][y] then return true else return false end end
 
 function Shape:has_point(x, y)
     -- This class isn't meant to be used directly
@@ -235,15 +332,11 @@ end
 Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line Segments",
+    -- todo extra corners
 }
 
 function Line:init()
     self.options = {
-        complex = {
-            name = "Complex",
-            type = "const",
-            value = true,
-        },
         thickness = {
             name = "Thickness",
             type = "plusminus",
@@ -261,14 +354,29 @@ function Line:init()
     }
 end
 
-function Line:update(width, height, points)
-    self.width = width
-    self.height = height
-    self.points = points
-    self.arr = {}
+function Line:update(points)
 
-    local x0, y0 = self.points[1][1], self.points[1][2]
-    local x1, y1 = self.points[2][1], self.points[2][2]
+    if #self.points == #points and not self.needs_update then
+        local same = true
+        for i, point in ipairs(self.points) do
+            if points[i].x ~= point.x or points[i].y ~= point.y then
+                same = false
+                break
+            end
+        end
+
+        if same then return end -- No need to update
+    end
+
+    self.points = copyall(points)
+    local top_left, bot_right = self:get_point_dims()
+    self.arr = {}
+    self.height = bot_right.x - top_left.x
+    self.width = bot_right.y - top_left.y
+    self.offsets = { n = 0, s = 0, e = 0, w = 0 }
+
+    local x0, y0 = self.points[1].x, self.points[1].y
+    local x1, y1 = self.points[2].x, self.points[2].y
     local dx = math.abs(x1 - x0)
     local sx = x0 < x1 and 1 or -1
     local dy = -math.abs(y1 - y0)
@@ -276,39 +384,48 @@ function Line:update(width, height, points)
     local err = dx + dy
     local e2
 
+    -- self.offsets = {n = self.options.thickness.value - 1, s = self.options.thickness.value - 1, e = self.options.thickness.value - 1, w = self.options.thickness.value - 1}
+
     while true do
         self.arr[x0] = self.arr[x0] or {}
         self.arr[x0][y0] = true
-        
+
         -- Add line thickness
         if (math.abs(dx) > math.abs(dy)) then
             local i = 1
             while i < self.options.thickness.value do
+                local offset = math.ceil(i / 2)
                 if y0 >= i then
                     if not self.arr[x0] then self.arr[x0] = {} end
-                    self.arr[x0][y0 - math.ceil(i / 2)] = true
+                    self.arr[x0][y0 - offset] = true
                 end
                 i = i + 1
+                self.offsets.n = offset
 
                 if y0 + i - 1 <= self.height and self.options.thickness.value > i then
                     if not self.arr[x0] then self.arr[x0] = {} end
-                    self.arr[x0][y0 + math.ceil(i / 2) ] = true
+                    self.arr[x0][y0 + offset] = true
                     i = i + 1
+                    self.offsets.s = offset
                 end
             end
         elseif (math.abs(dx) <= math.abs(dy)) then
             local i = 1
             while i < self.options.thickness.value do
+                local offset = math.ceil(i / 2)
                 if x0 >= i then
-                    if not self.arr[x0 - math.ceil(i / 2)] then self.arr[x0 - math.ceil(i / 2)] = {} end
-                    self.arr[x0 - math.ceil(i / 2)][y0] = true
+                    if not self.arr[x0 - offset] then self.arr[x0 - offset] = {} end
+                    self.arr[x0 - offset][y0] = true
                 end
                 i = i + 1
+                self.offsets.w = offset
 
                 if x0 + i - 1 <= self.width and self.options.thickness.value > i then
-                    if not self.arr[x0 - math.ceil(i / 2)] then self.arr[x0 - math.ceil(i / 2)] = {} end
-                    self.arr[x0 + math.ceil(i / 2)][y0] = true
+                    if not self.arr[x0 - offset] then self.arr[x0 - offset] = {} end
+                    self.arr[x0 + offset][y0] = true
                     i = i + 1
+                    -- print(offset)
+                    self.offsets.e = offset
                 end
             end
         end
@@ -330,8 +447,6 @@ function Line:update(width, height, points)
         end
     end
 end
-
-function Line:has_point(x, y) if self.arr[x] and self.arr[x][y] then return true else return false end end
 
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not

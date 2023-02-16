@@ -94,7 +94,7 @@ function ActionPanel:get_area_text()
         y = mark.y,
         z = df.global.window_z,
     }
-    local width, height, depth = get_dims(mark, other)
+    local width, height, depth = get_dims(mark, other) -- Replace
     local tiles = width * height * depth
     local plural = tiles > 1 and "s" or ""
     return ("%dx%dx%d (%d tile%s) mark: %d, %d, %d"):format(
@@ -175,7 +175,7 @@ function GenericOptionsPanel:init()
             initial_option = false,
             on_change = function(new, old)
                 self.dig_panel.shape.invert = new
-                self.dig_panel.dirty = true
+                self.dig_panel.shape.needs_update = true
             end,
         },
         widgets.CycleHotkeyLabel {
@@ -294,7 +294,7 @@ function GenericOptionsPanel:init()
             initial_option = true,
             on_change = function(new, old)
                 self.dig_panel.autocommit = new
-                self.dig_panel.dirty = true
+                self.dig_panel.shape.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -376,88 +376,86 @@ Dig.ATTRS {
     autoarrange_subviews = true,
     autoarrange_gap = 1,
     shape = DEFAULT_NIL,
-    dirty = true,
     prio = 4,
     autocommit = true,
     cur_shape = 1,
 }
+
+function Dig:print_view_bounds()
+    local view_bounds = self:get_view_bounds()
+
+    local second_point = dfhack.gui.getMousePos()
+    if self.saved_cursor then
+        second_point = self.saved_cursor
+    end
+    if view_bounds then
+        print(string.format("view_bounds: (%d, %d) - (%d, %d) self.mark: (%d, %d) second_point: (%d, %d)", view_bounds.x1
+            , view_bounds.y1,
+            view_bounds.x2, view_bounds.y2, self.mark.x, self.mark.y, second_point.x, second_point.y))
+    end
+end
 
 -- Get the pen to use when drawing a type of tile based on it's position in the shape and
 -- neighboring tiles. The first time a certain tile type needs to be drawn, it's pen
 -- is generated and stored in PENS. On subsequent calls, the cached pen will be used for
 -- other tiles with the same position/direction
 function Dig:get_pen(x, y, mousePos)
-    local function is_corner(_x, _y)
-        return _x == 0 and _y == 0 or _x == self.shape.width and _y == 0 or _x == 0 and _y == self.shape.height or
-            _x == self.shape.width and _y == self.shape.height
-    end
 
-    local function is_mouse_over(_x, _y, mouse)
-        return mouse == nil or (_x == mouse.x and _y == mouse.y)
-    end
+    local bounds = self:get_view_bounds()
+    local get_point = self.shape:get_point(x, y)
+    local mouse_over = (mousePos) and (x == mousePos.x and y == mousePos.y) or false
+    local corner = x == bounds.x1 and y == bounds.y1 or x == bounds.x2 and y == bounds.y2 or
+        x == bounds.x1 and y == bounds.y2 or
+        x == bounds.x2 and y == bounds.y1
+
 
     local n, w, e, s = false, false, false, false
-    if y == 0 or not self.shape.arr[x] or not self.shape.arr[x][y - 1] then n = true end
-    if x == 0 or not self.shape.arr[x - 1] or not self.shape.arr[x - 1][y] then w = true end
-    if x == #self.shape.arr or not self.shape.arr[x + 1] or not self.shape.arr[x + 1][y] then e = true end
-    if y == #self.shape.arr[x] or not self.shape.arr[x][y + 1] then s = true end
+    if self.shape:get_point(x, y) then
+        if y == 0 or not self.shape:get_point(x, y - 1) then n = true end
+        if x == 0 or not self.shape:get_point(x - 1, y) then w = true end
+        if not self.shape:get_point(x + 1, y) then e = true end
+        if not self.shape:get_point(x, y + 1) then s = true end
+    end
 
     -- Get the bit field to use as a key for the PENS map
-    local pen_key = self:gen_pen_key(n, s, e, w, is_corner(x, y), is_mouse_over(x, y, mousePos), self.shape.arr[x][y])
+    local pen_key = self:gen_pen_key(n, s, e, w, corner, mouse_over, get_point)
 
     -- If key doesn't exist in the map, set it
     if pen_key and not PENS[pen_key] then
-        if not n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NW, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NORTH, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and e and not w and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NE, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.WEST, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and not w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.EAST, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SW, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SE, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and not n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif self.shape.arr[x][y] and n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.POINT, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
-        elseif is_corner(x, y) and not self.shape.arr[x][y] then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, is_corner(x, y), is_mouse_over(x, y, mousePos),
-                self.shape.arr[x][y])
+        if get_point and not n and not w and not e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, corner, mouse_over, get_point)
+        elseif get_point and n and w and not e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.NW, corner, mouse_over, get_point)
+        elseif get_point and n and not w and not e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.NORTH, corner, mouse_over, get_point)
+        elseif get_point and n and e and not w and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.NE, corner, mouse_over, get_point)
+        elseif get_point and not n and w and not e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.WEST, corner, mouse_over, get_point)
+        elseif get_point and not n and not w and e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.EAST, corner, mouse_over, get_point)
+        elseif get_point and not n and w and not e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.SW, corner, mouse_over, get_point)
+        elseif get_point and not n and not w and not e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, corner, mouse_over, get_point)
+        elseif get_point and not n and not w and e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.SE, corner, mouse_over, get_point)
+        elseif get_point and n and w and e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, corner, mouse_over, get_point)
+        elseif get_point and n and not w and e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, corner, mouse_over, get_point)
+        elseif get_point and n and w and not e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, corner, mouse_over, get_point)
+        elseif get_point and not n and w and e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, corner, mouse_over, get_point)
+        elseif get_point and not n and w and e and not s then
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, corner, mouse_over, get_point)
+        elseif get_point and n and not w and not e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, corner, mouse_over, get_point)
+        elseif get_point and n and w and e and s then
+            PENS[pen_key] = self:make_pen(CURSORS.POINT, corner, mouse_over, get_point)
+        elseif corner and not get_point then
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, corner, mouse_over, get_point)
         else
             PENS[pen_key] = nil
         end
@@ -525,7 +523,7 @@ function Dig:add_shape_options()
                 initial_option = option.value,
                 on_change = function(new, old)
                     self.shape.options[key].value = new
-                    self.dirty = true
+                    self.shape.needs_update = true
                 end,
             } }
         elseif option.type == "plusminus" then
@@ -560,7 +558,7 @@ function Dig:add_shape_options()
                 on_activate = function()
                     self.shape.options[key].value =
                     self.shape.options[key].value - 1
-                    self.dirty = true
+                    self.shape.needs_update = true
                 end,
             },
                 widgets.HotkeyLabel {
@@ -582,7 +580,7 @@ function Dig:add_shape_options()
                     on_activate = function()
                         self.shape.options[key].value =
                         self.shape.options[key].value + 1
-                        self.dirty = true
+                        self.shape.needs_update = true
                     end,
                 } }
 
@@ -599,20 +597,35 @@ function Dig:on_mark(pos)
     self:updateLayout()
 end
 
-function Dig:get_bounds()
+function Dig:get_view_bounds()
     local cur = self.saved_cursor or dfhack.gui.getMousePos()
     if not cur then return end
     local mark = self.mark or cur
 
     return {
-        x1 = math.min(cur.x, mark.x),
-        x2 = math.max(cur.x, mark.x),
-        y1 = math.min(cur.y, mark.y),
-        y2 = math.max(cur.y, mark.y),
+        x1 = math.min(cur.x, mark.x) - self.shape.offsets.w,
+        x2 = math.max(cur.x, mark.x) + self.shape.offsets.e,
+        y1 = math.min(cur.y, mark.y) - self.shape.offsets.n,
+        y2 = math.max(cur.y, mark.y) + self.shape.offsets.s,
         z1 = math.min(cur.z, mark.z),
         z2 = math.max(cur.z, mark.z),
     }
 end
+
+-- function Dig:get_shape_dims()
+--     local cur = self.saved_cursor or dfhack.gui.getMousePos()
+--     if not cur then return end
+--     local mark = self.mark or cur
+
+--     return {
+--         x1 = math.min(cur.x, mark.x),
+--         x2 = math.max(cur.x, mark.x),
+--         y1 = math.min(cur.y, mark.y),
+--         y2 = math.max(cur.y, mark.y),
+--         z1 = math.min(cur.z, mark.z),
+--         z2 = math.max(cur.z, mark.z),
+--     }
+-- end
 
 -- return the pen, alter based on if we want to display a corner and a mouse over corner
 function Dig:make_pen(direction, is_corner, is_mouse_over, inshape)
@@ -642,71 +655,49 @@ function Dig:gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape)
 end
 
 function Dig:onRenderFrame(dc, rect)
+
     Dig.super.onRenderFrame(self, dc, rect)
+
     if self.shape == nil then
         self.shape =
         shapes.all_shapes[self.subviews.shape_name:getOptionValue()]
     end
 
-    local bounds = self:get_bounds()
-    if bounds and self.mark then
+    if self.mark then
+        local second_point = dfhack.gui.getMousePos()
+
+        if self.saved_cursor then
+            second_point = self.saved_cursor
+        end
+
+        if not second_point then return end
+
+        local points = { self.mark, second_point }
+
+        self.shape:update(points)
+
+        self:add_shape_options()
+        self:updateLayout()
+        self.shape.needs_update = false
+
+        local mouse_pos = dfhack.gui.getMousePos()
 
         local function get_overlay_pen(pos)
-            -- Check if we need to update the shape dimensions. Either there isn't a shape, we've marked it dirty, or the bounds have changed
-            if self.dirty or (pos.x >= bounds.x1 and pos.x <= bounds.x2 and pos.y >= bounds.y1 and pos.y <= bounds.y2) then
-                if not self.shape or self.dirty or
-                    (bounds.x2 - bounds.x1 ~= self.shape.width or bounds.y2 - bounds.y1 ~= self.shape.height) then
-                    local points = {}
-                    local second_point = dfhack.gui.getMousePos()
-                    if self.saved_cursor then
-                        second_point = self.saved_cursor
-                    end
-
-                    if self.mark.x >= second_point.x and self.mark.y >= second_point.y then
-                        print("down right")
-                        -- down right
-                        points = { { 0, 0 }, { math.abs(bounds.x2 - bounds.x1), math.abs(bounds.y2 - bounds.y1) } }
-                    elseif self.mark.x <= second_point.x and self.mark.y >= second_point.y then
-                        print("down left")
-                        -- down left
-                        points = { { math.abs(bounds.x2 - bounds.x1), 0 }, { 0, math.abs(bounds.y2 - bounds.y1) } }
-                    elseif self.mark.x >= second_point.x and self.mark.y <= second_point.y then
-                        print("up right")
-                        -- up right
-                        points = { { 0, math.abs(bounds.y2 - bounds.y1) }, { math.abs(bounds.x2 - bounds.x1), 0 } }
-                    elseif self.mark.x <= second_point.x and self.mark.y <= second_point.y then
-                        print("up left")
-                        -- up left
-                        points = { { math.abs(bounds.x2 - bounds.x1), math.abs(bounds.y2 - bounds.y1) }, { 0, 0 } }
-                    end
-
-                    self.shape:update(
-                        bounds.x2 - bounds.x1,
-                        bounds.y2 - bounds.y1,
-                        points
-                    )
-                    self:add_shape_options()
-                    self:updateLayout()
-                    self.dirty = false
-                end
-
-                local mouse_pos = dfhack.gui.getMousePos()
-                if mouse_pos ~= nil then
-                    mouse_pos.x = mouse_pos.x - bounds.x1
-                    mouse_pos.y = mouse_pos.y - bounds.y1
-                end
-
-                -- Get the pen from the base Shape class based on if the point is in the shape or not
-                -- Send mouse position for stuff like corner anchor mouse over, etc...
-                return self:get_pen(
-                    pos.x - bounds.x1,
-                    pos.y - bounds.y1,
-                    mouse_pos
-                )
-            else
-                return nil
-            end
+            -- Check if we need to update the shape dimensions. Either there isn't a shape, we've marked it dirty, or the view_bounds have changed
+            -- Get the pen from the base Shape class based on if the point is in the shape or not
+            -- Send mouse position for stuff like corner anchor mouse over, etc...
+            return self:get_pen(
+                pos.x,
+                pos.y,
+                mouse_pos
+            )
         end
+
+        -- if dfhack.getTickCount() % 50 == 0 then
+        --     -- dfhack.console.clear()
+        --     self:print_view_bounds()
+        --     print("Shape deets: " .. self.shape:to_string())
+        -- end
 
         guidm.renderMapOverlay(get_overlay_pen, nil)
     end
@@ -750,34 +741,15 @@ function Dig:onInput(keys)
             -- These check if the user is trying to change a non-commited shape
             -- by clicking and dragging the corner anchors. Basically just flips the
             -- marks around by setting the mark to the opposite corner
-            if pos.x == self:get_bounds().x1 and pos.y == self:get_bounds().y1 then
-                self.mark =
-                xyz2pos(
-                    self:get_bounds().x2,
-                    self:get_bounds().y2,
-                    self.mark.z
-                )
-            elseif pos.x == self:get_bounds().x2 and pos.y == self:get_bounds().y1 then
-                self.mark =
-                xyz2pos(
-                    self:get_bounds().x1,
-                    self:get_bounds().y2,
-                    self.mark.z
-                )
-            elseif pos.x == self:get_bounds().x1 and pos.y == self:get_bounds().y2 then
-                self.mark =
-                xyz2pos(
-                    self:get_bounds().x2,
-                    self:get_bounds().y1,
-                    self.mark.z
-                )
-            elseif pos.x == self:get_bounds().x2 and pos.y == self:get_bounds().y2 then
-                self.mark =
-                xyz2pos(
-                    self:get_bounds().x1,
-                    self:get_bounds().y1,
-                    self.mark.z
-                )
+            local view_bounds = self:get_view_bounds()
+            if pos.x == view_bounds.x1 and pos.y == view_bounds.y1 then
+                self.mark = xyz2pos(view_bounds.x2, view_bounds.y2, self.mark.z)
+            elseif pos.x == view_bounds.x2 and pos.y == view_bounds.y1 then
+                self.mark = xyz2pos(view_bounds.x1, view_bounds.y2, self.mark.z)
+            elseif pos.x == view_bounds.x1 and pos.y == view_bounds.y2 then
+                self.mark = xyz2pos(view_bounds.x2, view_bounds.y1, self.mark.z)
+            elseif pos.x == view_bounds.x2 and pos.y == view_bounds.y2 then
+                self.mark = xyz2pos(view_bounds.x1, view_bounds.y1, self.mark.z)
             end
 
             self.saved_cursor = nil
@@ -793,8 +765,10 @@ end
 -- Put any special logic for designation type here
 -- Right now it's setting the stair type based on the z-level
 -- Fell through, pass through the option directly from the options value
-function Dig:getDesignation(x, y, z)
+function Dig:get_designation(x, y, z)
     local mode = self.subviews.mode_name:getOptionValue()
+
+    local view_bounds = self:get_view_bounds()
 
     -- Stairs
     if mode == "i" then
@@ -803,14 +777,14 @@ function Dig:getDesignation(x, y, z)
         local stairs_bottom_type = self.subviews.stairs_bottom_subtype:getOptionValue()
         if z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
-        elseif z == math.abs(self:get_bounds().z1 - self:get_bounds().z2) then
-            local tile_type = dfhack.maps.getTileType(self:get_bounds().x1 + x, self:get_bounds().y1 + y,
-                self:get_bounds().z1 + z)
+        elseif z == math.abs(view_bounds.z1 - view_bounds.z2) then
+            local tile_type = dfhack.maps.getTileType(view_bounds.x1 + x, view_bounds.y1 + y,
+                view_bounds.z1 + z)
             local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
-            local designation = dfhack.maps.getTileFlags(xyz2pos(self:get_bounds().x1 + x, self:get_bounds().y1 + y,
-                self:get_bounds().z1 + z))
+            local designation = dfhack.maps.getTileFlags(xyz2pos(view_bounds.x1 + x, view_bounds.y1 + y,
+                view_bounds.z1 + z))
 
-            -- If top of the bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
+            -- If top of the view_bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
             local up_or_updown_dug = (
                 tile_shape == df.tiletype_shape.STAIR_DOWN or tile_shape == df.tiletype_shape.STAIR_UPDOWN)
             local up_or_updown_desig = designation ~= nil and (designation.dig == df.tile_dig_designation.UpStair or
@@ -832,20 +806,21 @@ end
 -- Commit the shape using quickfort API
 function Dig:commit()
     local data = {}
+    local view_bounds = self:get_view_bounds()
 
     -- Generates the params for quickfort API
     local function generate_params(grid, position)
-        for zlevel = 0, math.abs(self:get_bounds().z1 - self:get_bounds().z2) do
+        for zlevel = 0, math.abs(view_bounds.z1 - view_bounds.z2) do
             data[zlevel] = {}
             for row = 0, math.abs(
-                self:get_bounds().y1 - self:get_bounds().y2
+                view_bounds.y1 - view_bounds.y2
             ) do
                 data[zlevel][row] = {}
                 for col = 0, math.abs(
-                    self:get_bounds().x1 - self:get_bounds().x2
+                    view_bounds.x1 - view_bounds.x2
                 ) do
-                    if grid[col][row] then
-                        local desig = self:getDesignation(col, row, zlevel)
+                    if grid[col] and grid[col][row] then
+                        local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then
                             data[zlevel][row][col] =
                             desig .. tostring(self.prio)
@@ -854,6 +829,7 @@ function Dig:commit()
                 end
             end
         end
+
         return {
             data = data,
             pos = position,
@@ -861,16 +837,15 @@ function Dig:commit()
         }
     end
 
-    local bounds = self:get_bounds()
     local start = {
-        x = bounds.x1,
-        y = bounds.y1,
-        z = math.min(bounds.z1, bounds.z2),
+        x = view_bounds.x1,
+        y = view_bounds.y1,
+        z = math.min(view_bounds.z1, view_bounds.z2),
     }
-    local grid = self.shape.arr
+    local grid = self.shape:transform(0, 0)
 
     -- Special case for 1x1 to ease doorway marking
-    if bounds.x1 == bounds.x2 and bounds.y1 == bounds.y2 then
+    if view_bounds.x1 == view_bounds.x2 and view_bounds.y1 == view_bounds.y2 then
         grid = {}
         grid[0] = {}
         grid[0][0] = true
