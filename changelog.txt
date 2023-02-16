@@ -26,6 +26,7 @@ that repo.
     - Selecting all items inside a bin, minus the bin
     - Collapsing all bins or a single bin
     - Collapsing all categories
+-@ `devel/hello-world`: updated to use ZScreen
 
 ## Removed
 
