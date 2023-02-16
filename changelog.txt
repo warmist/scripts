@@ -27,6 +27,7 @@ that repo.
     - Collapsing all bins or a single bin
     - Collapsing all categories
 -@ `devel/hello-world`: updated to use ZScreen
+-@ Update `gui/control-panel` and `gui/launcher` to use TabBar from widgets.lua
 
 ## Removed
 
