@@ -22,6 +22,10 @@ that repo.
 
 ## Misc Improvements
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
+- Add overlay to caravan.lua visible on the trade screen that enables:
+    - Selecting all items inside a bin, minus the bin
+    - Collapsing all bins or a single bin
+    - Collapsing all categories
 
 ## Removed
 
