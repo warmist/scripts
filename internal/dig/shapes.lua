@@ -355,7 +355,6 @@ function Line:init()
 end
 
 function Line:update(points)
-
     if #self.points == #points and not self.needs_update then
         local same = true
         for i, point in ipairs(self.points) do
@@ -378,75 +377,44 @@ function Line:update(points)
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
     local dx = math.abs(x1 - x0)
+    local dy = math.abs(y1 - y0)
     local sx = x0 < x1 and 1 or -1
-    local dy = -math.abs(y1 - y0)
     local sy = y0 < y1 and 1 or -1
-    local err = dx + dy
-    local e2
-
-    -- self.offsets = {n = self.options.thickness.value - 1, s = self.options.thickness.value - 1, e = self.options.thickness.value - 1, w = self.options.thickness.value - 1}
-
-    while true do
-        self.arr[x0] = self.arr[x0] or {}
-        self.arr[x0][y0] = true
-
-        -- Add line thickness
-        if (math.abs(dx) > math.abs(dy)) then
-            local i = 1
-            while i < self.options.thickness.value do
-                local offset = math.ceil(i / 2)
-                if y0 >= i then
-                    if not self.arr[x0] then self.arr[x0] = {} end
-                    self.arr[x0][y0 - offset] = true
-                end
-                i = i + 1
-                self.offsets.n = offset
-
-                if y0 + i - 1 <= self.height and self.options.thickness.value > i then
-                    if not self.arr[x0] then self.arr[x0] = {} end
-                    self.arr[x0][y0 + offset] = true
-                    i = i + 1
-                    self.offsets.s = offset
-                end
-            end
-        elseif (math.abs(dx) <= math.abs(dy)) then
-            local i = 1
-            while i < self.options.thickness.value do
-                local offset = math.ceil(i / 2)
-                if x0 >= i then
-                    if not self.arr[x0 - offset] then self.arr[x0 - offset] = {} end
-                    self.arr[x0 - offset][y0] = true
-                end
-                i = i + 1
-                self.offsets.w = offset
-
-                if x0 + i - 1 <= self.width and self.options.thickness.value > i then
-                    if not self.arr[x0 - offset] then self.arr[x0 - offset] = {} end
-                    self.arr[x0 + offset][y0] = true
-                    i = i + 1
-                    -- print(offset)
-                    self.offsets.e = offset
-                end
-            end
+    local err = dx - dy
+    local e2, x, y
+    local thickness = self.options.thickness.value or 1
+  
+    for i = 0, thickness - 1 do
+      x = x0
+      y = y0 + i
+      while true do
+        -- Plot the point at (x, y)
+        for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+          if not self.arr[x + j] then self.arr[x + j] = {} end
+          self.arr[x + j][y] = true
         end
-
-        if x0 == x1 and y0 == y1 then
-            break
+  
+        if x == x1 and y == y1 + i then
+          break
         end
-
+  
         e2 = 2 * err
-
-        if e2 >= dy then
-            err = err + dy
-            x0 = x0 + sx
+  
+        if e2 > -dy then
+          err = err - dy
+          x = x + sx
         end
 
-        if e2 <= dx then
-            err = err + dx
-            y0 = y0 + sy
+        if e2 < dx then
+          err = err + dx
+          y = y + sy
         end
+      end
     end
 end
+
+
+
 
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not

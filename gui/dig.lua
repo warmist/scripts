@@ -813,11 +813,11 @@ function Dig:commit()
         for zlevel = 0, math.abs(view_bounds.z1 - view_bounds.z2) do
             data[zlevel] = {}
             for row = 0, math.abs(
-                view_bounds.y1 - view_bounds.y2
+                view_bounds.y1 - view_bounds.y2 -- this is the prob
             ) do
                 data[zlevel][row] = {}
                 for col = 0, math.abs(
-                    view_bounds.x1 - view_bounds.x2
+                    view_bounds.x1 - view_bounds.x2 -- this is the prob
                 ) do
                     if grid[col] and grid[col][row] then
                         local desig = self:get_designation(col, row, zlevel)
