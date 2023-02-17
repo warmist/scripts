@@ -23,6 +23,11 @@ that repo.
 ## Misc Improvements
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
+- Add overlay to caravan.lua visible on the trade screen that enables:
+    - Selecting all items inside a bin, minus the bin
+    - Collapsing all bins or a single bin
+    - Collapsing all categories
+-@ `devel/hello-world`: updated to use ZScreen
 
 ## Removed
 
