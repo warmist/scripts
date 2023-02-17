@@ -19,6 +19,7 @@ that repo.
 - `makeown`: fixes errors caused by using makeown on an invader
 - `gui/blueprint`: correctly use setting presets passed on the commandline
 - `gui/quickfort`: correctly use settings presets passed on the commandline
+- `devel/query`: can now properly index vectors in the --table argument
 
 ## Misc Improvements
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
