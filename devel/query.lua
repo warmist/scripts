@@ -214,7 +214,7 @@ function getSelectionData()
     elseif args.job then
         debugf(0,"job selection")
         selection = dfhack.gui.getSelectedJob()
-        if selection == nil and df.global.cursor.x ~= -30000 then
+        if selection == nil and df.global.cursor.x >= 0 then
             local pos = { x=df.global.cursor.x,
                           y=df.global.cursor.y,
                           z=df.global.cursor.z }
