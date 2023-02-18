@@ -11,21 +11,25 @@ local opts, args = {
     verbose = false
   }, {...}
 
+  -- default max stack size of 30
+local DEF_MAX=30
+
+-- list of valid item types for merging
 local valid_types_map = {
     ['all'] = { },
-    ['drink'] = {[df.item_type.DRINK]={type_id=df.item_type.DRINK, type_name='DRINK',type_caste=false,max_stack_size=30}},
-    ['fat'] =   {[df.item_type.GLOB]={type_id=df.item_type.GLOB, type_name='GLOB',type_caste=false,max_stack_size=30},
-                [df.item_type.CHEESE]={type_id=df.item_type.CHEESE, type_name='CHEESE',type_caste=false,max_stack_size=30}},
-    ['fish'] = {[df.item_type.FISH]={type_id=df.item_type.FISH, type_name='FISH',type_caste=true,max_stack_size=30},
-                [df.item_type.FISH_RAW]={type_id=df.item_type.FISH_RAW, type_name='FISH_RAW',type_caste=true,max_stack_size=30},
-                [df.item_type.EGG]={type_id=df.item_type.EGG, type_name='EGG',type_caste=true,max_stack_size=30}},
-    ['food'] = {[df.item_type.FOOD]={type_id=df.item_type.FOOD, type_name='FOOD',type_caste=false,max_stack_size=30}},
-    ['meat'] = {[df.item_type.MEAT]={type_id=df.item_type.MEAT, type_name='MEAT',type_caste=false,max_stack_size=30}},
-    ['plant'] = {[df.item_type.PLANT]={type_id=df.item_type.PLANT, type_name='PLANT',type_caste=false,max_stack_size=30},
-                [df.item_type.PLANT_GROWTH]={type_id=df.item_type.PLANT_GROWTH, type_name='PLANT_GROWTH',type_caste=false,max_stack_size=30}}
+    ['drink'] = {[df.item_type.DRINK]={type_id=df.item_type.DRINK, type_name='DRINK',type_caste=false,max_stack_size=DEF_MAX}},
+    ['fat'] =   {[df.item_type.GLOB]={type_id=df.item_type.GLOB, type_name='GLOB',type_caste=false,max_stack_size=DEF_MAX},
+                [df.item_type.CHEESE]={type_id=df.item_type.CHEESE, type_name='CHEESE',type_caste=false,max_stack_size=DEF_MAX}},
+    ['fish'] = {[df.item_type.FISH]={type_id=df.item_type.FISH, type_name='FISH',type_caste=true,max_stack_size=DEF_MAX},
+                [df.item_type.FISH_RAW]={type_id=df.item_type.FISH_RAW, type_name='FISH_RAW',type_caste=true,max_stack_size=DEF_MAX},
+                [df.item_type.EGG]={type_id=df.item_type.EGG, type_name='EGG',type_caste=true,max_stack_size=DEF_MAX}},
+    ['food'] = {[df.item_type.FOOD]={type_id=df.item_type.FOOD, type_name='FOOD',type_caste=false,max_stack_size=DEF_MAX}},
+    ['meat'] = {[df.item_type.MEAT]={type_id=df.item_type.MEAT, type_name='MEAT',type_caste=false,max_stack_size=DEF_MAX}},
+    ['plant'] = {[df.item_type.PLANT]={type_id=df.item_type.PLANT, type_name='PLANT',type_caste=false,max_stack_size=DEF_MAX},
+                [df.item_type.PLANT_GROWTH]={type_id=df.item_type.PLANT_GROWTH, type_name='PLANT_GROWTH',type_caste=false,max_stack_size=DEF_MAX}}
 }
 
--- populate all types
+-- populate all types entry
 for k1,v1 in pairs(valid_types_map) do
     if k1 ~= 'all' then
         for k2,v2 in pairs(v1) do
@@ -38,6 +42,7 @@ for k1,v1 in pairs(valid_types_map) do
 end
 
 function log(...)
+    -- if verbose is specified, then print the arguments, or don't.
     if opts.verbose then dfhack.print(string.format(...)) end
 end
 
@@ -46,6 +51,7 @@ end
 local CList = { }
 
 function CList:new(o)
+    -- key, value pair table structure. __len allows # to be used for table count.
     o = o or { }
     setmetatable(o, self)
     self.__index = self
@@ -54,6 +60,7 @@ function CList:new(o)
 end
 
 local function comp_item_new(comp_key, max_stack_size)
+    -- create a new comp_item entry to be added to a comp_items table.
     local comp_item = {}
     if not comp_key then qerror('new_comp_item: comp_key is nil') end
     comp_item.comp_key = comp_key
@@ -69,6 +76,7 @@ local function comp_item_new(comp_key, max_stack_size)
 end
 
 local function comp_item_add_item(comp_item, item)
+    -- add an item into the comp_items table, setting the comp_item attributes.
     if not comp_item.items[item.id] then
 
         comp_item.items[item.id] = item
@@ -91,11 +99,14 @@ local function comp_item_add_item(comp_item, item)
         end
         return comp_item.items[item.id]
     else
+        -- this case should not happen, unless an item is contained by more than one container.
+        -- in which case, only allow one instance for the merge.
         return nil
     end
 end
 
 local function stack_type_new(type_vals)
+    -- create a new stack type entry to be added to the stacks table.
     local stack_type = {}
     for k,v in pairs(type_vals) do
         stack_type[k] = v
@@ -108,6 +119,7 @@ local function stack_type_new(type_vals)
 end
 
 local function stacks_type_add_item(stacks_type, item)
+    -- add an item to the matching comp_items table; based on comp_key.
     local comp_key = ''
 
     if stacks_type.type_caste then
@@ -130,8 +142,8 @@ local function stacks_type_add_item(stacks_type, item)
     end
 end
 
-local function print_stacks_log(stacks)
-    -- print stacks details to the file
+local function print_stacks_details(stacks)
+    -- print stacks details
     log(('Details #types:%5d\n'):format(#stacks))
     for _, stacks_type in pairs(stacks) do
         log(('   type: <%12s> <%d>  comp item types#:%5d  #item_qty:%5d  stack sizes: max: %5d before:%5d after:%5d\n'):format(stacks_type.type_name, stacks_type.type_id,  stacks_type.item_qty, #stacks_type.comp_items, stacks_type.max_stack_size, stacks_type.before_stacks, stacks_type.after_stacks))
@@ -162,7 +174,7 @@ end
 
 
 function stacks_add_items(stacks, items, ind)
--- loop through each item and add it to the matching stack types list
+-- loop through each item and add it to the matching stack[type_id].comp_items table
 -- recursively calls itself to add contained items
     if not ind then ind = '' end
 
@@ -178,7 +190,7 @@ function stacks_add_items(stacks, items, ind)
 
                 log(('      %sitem:%40s <%6d> is incl, type %d\n'):format(ind, utils.getItemDescription(item), item.id, type_id))
             else
-                -- restricted
+                -- restricted; such as marked for action or dump.
                 log(('      %sitem:%40s <%6d> is restricted\n'):format(ind, utils.getItemDescription(item), item.id))
             end
 
@@ -196,8 +208,13 @@ function stacks_add_items(stacks, items, ind)
 end
 
 local function populate_stacks(stacks, stockpiles, types)
-    -- loop through each stockpile and add items
+    -- 1. loop through the specified types and add them to the stacks table. stacks[type_id]
+    -- 2. loop through the table of stockpiles, get each item in the stockpile, then add them to stacks if the type_id matches
+    -- an item is stored at the bottom of the structure: stacks[type_id].comp_items[comp_key].item
+    -- comp_key is a compound key comprised of type_id+race+caste or type_id+mat_type+mat_index
     log('Populating phase\n')
+
+    -- iterate across the types
     log('stack types\n')
     for type_id, type_vals in pairs(types) do
         if not stacks[type_id] then
@@ -207,7 +224,7 @@ local function populate_stacks(stacks, stockpiles, types)
         end
     end
 
-    -- iterate across items in the stockpile and populate the stacks structure
+    -- iterate across the stockpiles, get the list of items and call the add function to check/add as needed
     log(('stockpiles\n'))
     for _, stockpile in pairs(stockpiles) do
 
@@ -224,6 +241,7 @@ end
 
 local function preview_stacks(stacks)
     -- calculate the stacks sizes and store in after_stack_size
+    -- the max stack size for each comp item is determined as the maximum stack size for it's type
     log('\nPreview phase\n')
     for _, stacks_type in pairs(stacks) do
         for comp_key, comp_item in pairs(stacks_type.comp_items) do
@@ -263,6 +281,7 @@ end
 
 local function merge_stacks(stacks)
     -- apply the stack size changes in the after_stack_size
+    -- if the after_stack_size is zero, then remove the item
     log('Merge phase\n')
     for _, stacks_type in pairs(stacks) do
         for comp_key, comp_item in pairs(stacks_type.comp_items) do
@@ -279,7 +298,8 @@ local function merge_stacks(stacks)
 end
 
 local function get_stockpile_all()
-
+    -- attempt to get all the stockpiles for the fort, or exit with error
+    -- return the stockpiles as a table
     local stockpiles = {}
     for _, building in pairs(df.global.world.buildings.all) do
         if building:getType() == df.building_type.Stockpile then
@@ -291,19 +311,21 @@ local function get_stockpile_all()
 end
 
 local function get_stockpile_here()
-
+    -- attempt to get the stockpile located at the game cursor, or exit with error
+    -- return the stockpile as a table
     local stockpiles = {}
-
     local pos = argparse.coords('here', 'here')
     local building = dfhack.buildings.findAtTile(pos)
     if not building or building:getType() ~= df.building_type.Stockpile then qerror('Stockpile not found at game cursor position.') end
     table.insert(stockpiles, building)
     local items = dfhack.buildings.getStockpileContents(building)
-    dfhack.print(('Stockpile(here): %s <%d> pos:(%d, %d, %d) #items:%d\n'):format(building.name, building.id, building.centerx, building.centery, building.z, #items))
+    dfhack.print(('Stockpile(here): %s <%d> #items:%d\n'):format(building.name, building.id, #items))
     return stockpiles
 end
 
-local function parse_types_opts(opts, arg)
+local function parse_types_opts(arg)
+    -- check the types specified on the command line, or exit with error
+    -- return the selected types as a table
     local types = {}
     local div = ''
     local types_output = ''
@@ -333,15 +355,14 @@ local function parse_types_opts(opts, arg)
         end
     end
     dfhack.print(types_output .. '\n')
-
     return types
 end
 
 local function parse_commandline(opts, args)
-
+    -- check the command line/exit on error, and set the defaults
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
-            {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(opts, optarg) end},
+            {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},
             {'d', 'dryrun', handler=function(optarg) opts.dryrun = true end},
             {'v', 'verbose', handler=function(optarg) opts.verbose = true end},
     })
@@ -387,7 +408,7 @@ local function main()
         merge_stacks(stacks)
     end
 
-    print_stacks_log(stacks)
+    print_stacks_details(stacks)
     print_stacks_summary(stacks)
 
 end
