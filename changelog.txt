@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `combine`: combines stacks of food and plant items. Merge of `combine-plant` and `combine-drink`.
 
 ## Fixes
 - `makeown`: fixes errors caused by using makeown on an invader
@@ -30,6 +31,7 @@ that repo.
 -@ `devel/hello-world`: updated to use ZScreen
 
 ## Removed
+- `combine-drinks` and `combine-plants`
 
 # 50.07-alpha1
 
