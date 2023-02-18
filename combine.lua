@@ -251,7 +251,7 @@ local function preview_stacks(stacks)
             if stacks_type.max_stack_size > comp_item.max_stack_size then
                 comp_item.max_stack_size = stacks_type.max_stack_size
             end
-            
+
             -- how many stacks are needed ?
             local max_stacks_needed = math.floor(comp_item.item_qty / comp_item.max_stack_size)
 
