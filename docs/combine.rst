@@ -55,5 +55,5 @@ Options
 
         ``plant``: PLANT and PLANT_GROWTH
 
-``--verbose``
+``-v``, ``--verbose``
     Print verbose output.
