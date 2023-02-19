@@ -26,7 +26,7 @@ Examples
     Merge stacks in stockpile located at game cursor.
 
 Commands
------------------
+--------
 ``all``
     Search all stockpiles.
 ``here``
