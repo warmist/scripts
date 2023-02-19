@@ -10,7 +10,7 @@ Usage
 
 ::
 
-    combine <all|here> [--dryrun] [--types=<comma separated list of types>]
+    combine (all|here) [<options>]
 
 Examples
 --------
