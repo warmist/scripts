@@ -14,7 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
-- `combine`: combines stacks of food and plant items. Merge of `combine-plants` and `combine-drink`.
+- `combine`: combines stacks of food and plant items. Merge of `combine-plants` and `combine-drinks`.
 
 ## Fixes
 - `makeown`: fixes errors caused by using makeown on an invader
