@@ -16,7 +16,7 @@ Examples
 --------
 ``combine``
     Displays help
-``combine all --dryrun``
+``combine all --dry-run``
     Preview stack changes for all types in all stockpiles.
 ``combine all``
     Merge stacks for all stockpile and all types
