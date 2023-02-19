@@ -36,7 +36,7 @@ Options
 -------------
 ``--help``
     Prints help text. Default if no options are specified.
-``--dryrun``
+``-d``, ``--dry-run``
     Display the stack changes without applying them.
 ``--types=<comma separated list of types>``
     Filter item types. Default is ``all``. Valid types are:
