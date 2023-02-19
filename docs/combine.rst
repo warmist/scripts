@@ -33,7 +33,7 @@ Commands
     Search the stockpile under the game cursor.
 
 Options
--------------
+-------
 ``-h``, ``--help``
     Prints help text. Default if no options are specified.
 ``-d``, ``--dry-run``
