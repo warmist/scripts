@@ -6,7 +6,7 @@ local opts, args = {
     help = false,
     all = nil,
     here = nil,
-    dryrun = false,
+    dry_run = false,
     types = nil,
     verbose = false
   }, {...}
@@ -363,7 +363,7 @@ local function parse_commandline(opts, args)
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},
-            {'d', 'dryrun', handler=function(optarg) opts.dryrun = true end},
+            {'d', 'dry-run', handler=function(optarg) opts.dry_run = true end},
             {'v', 'verbose', handler=function(optarg) opts.verbose = true end},
     })
 
@@ -404,7 +404,7 @@ local function main()
 
     preview_stacks(stacks)
 
-    if not opts.dryrun then
+    if not opts.dry_run then
         merge_stacks(stacks)
     end
 
