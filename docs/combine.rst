@@ -34,7 +34,7 @@ Commands
 
 Options
 -------------
-``--help``
+``-h``, ``--help``
     Prints help text. Default if no options are specified.
 ``-d``, ``--dry-run``
     Display the stack changes without applying them.
