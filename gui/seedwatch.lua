@@ -2,7 +2,6 @@
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local widgets = require('gui.widgets')
 local plugin = require('plugins.seedwatch')
 
 local PROPERTIES_HEADER = '   Quantity     Target   '
