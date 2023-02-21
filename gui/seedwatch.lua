@@ -15,6 +15,7 @@ SeedSettings = defclass(SeedSettings, widgets.Window)
 SeedSettings.ATTRS{
     lockable=false,
     frame={l=5, t=5, w=35, h=9},
+    data={id='', name='', quantity=0, target=0,},
 }
 
 function SeedSettings:init()
@@ -109,6 +110,7 @@ Seedwatch.ATTRS {
     resize_min={h=25},
     hide_unmonitored=DEFAULT_NIL,
     manual_hide_unmonitored_touched=DEFAULT_NIL,
+    data = {sum=0, seeds_qty=0, seeds_watched=0, seeds = {{id='', name='', quantity=0, target=0,}}},
 }
 
 function Seedwatch:init()
@@ -157,6 +159,7 @@ function Seedwatch:init()
                     target = MAX_TARGET
                 end
                 plugin.seedwatch_setTarget('all', target)
+                self.subviews.list:setFilter('')
                 self:refresh_data()
                 self:update_choices()
             end,
@@ -187,11 +190,12 @@ function Seedwatch:init()
             auto_width=true,
             visible=is_not_minimal,
         },
-        widgets.List{
+        widgets.FilteredList{
             view_id='list',
             frame={t=5, l=0, r=0, b=3},
             on_submit=self:callback('configure_seed'),
             visible=is_not_minimal,
+            edit_key = 'CUSTOM_S',
         },
         widgets.Label{
             view_id='summary',
@@ -224,12 +228,14 @@ function Seedwatch:update_choices()
     local name_width = list.frame_body.width - #PROPERTIES_HEADER
     local fmt = '%-'..tostring(name_width)..'s %10d %10d  '
     local choices = {}
+    local prior_search=self.subviews.list.edit.text
     for k, v in pairs(self.data.seeds) do
         local text = (fmt):format(v.name:sub(1,name_width), v.quantity or 0, v.target or 0)
         table.insert(choices, {text=text, data=v})
     end
 
     self.subviews.list:setChoices(choices)
+    if prior_search then self.subviews.list:setFilter(prior_search) end
     self.subviews.list:updateLayout()
 end
 
@@ -272,7 +278,10 @@ end
 
 -- refreshes data every 10 seconds or so
 function Seedwatch:onRenderBody()
-    if self.next_refresh_ms <= dfhack.getTickCount() then
+    if self.next_refresh_ms <= dfhack.getTickCount()
+    and self.subviews.seed_settings.visible == false
+    and not self.subviews.all.focus
+    and not self.subviews.list.edit.focus then
         self:refresh_data()
         self:update_choices()
     end
