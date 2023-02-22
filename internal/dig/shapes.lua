@@ -11,13 +11,13 @@ Shape.ATTRS {
     name = "",
     arr = {},
     options = DEFAULT_NIL,
+    invertable = true,
     invert = false,
     width = 1,
     height = 1,
     points = {}, -- Main points that define the shape
     extra_points = {},
-    draw_corners = { ne = true, nw = true, se = true, sw = true },
-    needs_update = true
+    drag_corners = { ne = true, nw = true, se = true, sw = true },
 }
 
 function Shape:transform(min_x, min_y)
@@ -75,6 +75,55 @@ function Shape:get_true_dims()
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
 end
 
+function Shape:get_view_dims(extra_points)
+    local min_x, min_y, max_x, max_y
+    for x, _ in pairs(self.arr) do
+        for y, _ in pairs(self.arr[x]) do
+            if not min_x then
+                min_x = x
+                max_x = x
+                min_y = y
+                max_y = y
+            else
+                min_x = math.min(min_x, x)
+                max_x = math.max(max_x, x)
+                min_y = math.min(min_y, y)
+                max_y = math.max(max_y, y)
+            end
+        end
+    end
+
+    for i, point in pairs(self.points) do
+            if not min_x then
+                min_x = point.x
+                max_x = point.x
+                min_y = point.y
+                max_y = point.y
+            else
+                min_x = math.min(min_x, point.x)
+                max_x = math.max(max_x, point.x)
+                min_y = math.min(min_y, point.y)
+                max_y = math.max(max_y, point.y)
+            end
+    end
+
+    for i, point in pairs(extra_points) do
+            if not min_x then
+                min_x = point.x
+                max_x = point.x
+                min_y = point.y
+                max_y = point.y
+            else
+                min_x = math.min(min_x, point.x)
+                max_x = math.max(max_x, point.x)
+                min_y = math.min(min_y, point.y)
+                max_y = math.max(max_y, point.y)
+            end
+    end
+
+    return { x = min_x, y = min_y }, { x = max_x, y = max_y }
+end
+
 function Shape:points_to_string(points)
     local points = points == nil and self.points or points
     local output = ""
@@ -101,8 +150,6 @@ function Shape:clear_extra_points()
     for index = 1, #self.extra_points do
         self.extra_points[index].pos = nil
     end
-
-    self.needs_update = true
 end
 
 -- Basic update function that loops over a rectangle from top left to bottom right
@@ -110,7 +157,7 @@ end
 function Shape:update(points)
 
     -- If doesn't need update
-    if #self.points == #points and not self.needs_update then
+    if #self.points == #points then
         local same = true
         for i, point in ipairs(self.points) do
             if points[i].x ~= point.x or points[i].y ~= point.y then
@@ -343,8 +390,8 @@ end
 Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line Segments",
-    -- todo extra corners
-    extra_points = {{label = "Curve"}}
+    extra_points = {{label = "Curve"}},
+    invertable = false -- Doesn't support invert
 }
 
 function Line:init()
@@ -367,37 +414,8 @@ function Line:init()
 end
 
 function Line:update(points, extra_points)
-    -- if #self.points == #points and #self.extra_points == #extra_points and not self.needs_update then
-    --     local same = true
-    --     for i, point in ipairs(self.points) do
-    --         if points[i].x ~= point.x or points[i].y ~= point.y then
-    --             same = false
-    --             break
-    --         end
-    --     end
-    --     if same == true then
-    --         for i, point in ipairs(self.extra_points) do
-    --             print("checking point " ..
-    --                 i ..
-    --                 string.format(" is %d, %d       OR     %d, %d",
-    --                     extra_points[i] ~= nil and extra_points[i].x or -1,
-    --                     extra_points[i] ~= nil and extra_points[i].y or -1,
-    --                 )
-    --                 )
-    --             if extra_points[i].x ~= point.x or extra_points[i].y ~= point.y then
-    --                 same = false
-    --                 break
-    --             end
-    --         end
-    --     end
-
-    --     if same then return end -- No need to update
-    -- end
-
-    print("updating")
 
     self.points = copyall(points)
-    -- if extra_points then self.extra_points = copyall(extra_points) end
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
     self.height = bot_right.x - top_left.x
@@ -405,8 +423,20 @@ function Line:update(points, extra_points)
 
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
+
+    if x0 < x1 and y0 < y1 then -- down right
+        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
+    elseif x0 > x1 and y0 < y1 then -- down left
+        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
+    elseif x0 < x1 and y0 > y1 then -- up right
+        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
+    elseif x0 > x1 and y0 > y1 then -- up left
+        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
+    end
+
     local thickness = self.options.thickness.value or 1
     local bezier_point = (#extra_points > 0) and {x = extra_points[1].x, y = extra_points[1].y} or nil
+
     if bezier_point then -- Use Bezier curve
         local t = 0
         local x2, y2 = bezier_point.x, bezier_point.y

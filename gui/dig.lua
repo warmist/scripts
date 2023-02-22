@@ -5,9 +5,6 @@
 
 -- Must Haves
 -----------------------------
--- Use View rectabgle based on shape dims instead of nil
--- remove extra corners for line shape
--- refactor so all 'needs update' stuff in dig.lua
 
 -- Should Haves
 -----------------------------
@@ -167,13 +164,13 @@ function GenericOptionsPanel:init()
             label = "Invert: ",
             label_width = 8,
             active = true,
-            enabled = true,
-            disabled = false,
+            enabled = function() 
+                return self.dig_panel.shape.invertable == true
+            end,
             show_tooltip = true,
             initial_option = false,
             on_change = function(new, old)
                 self.dig_panel.shape.invert = new
-                self.dig_panel.shape.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -181,7 +178,6 @@ function GenericOptionsPanel:init()
             key = "CUSTOM_V",
             label = function()
                 local msg = "Place extra point: "
-                print(string.format("comparing %d < %d", #self.dig_panel.extra_points, #self.dig_panel.shape.extra_points))
                 if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
                     return msg .. self.dig_panel.shape.extra_points[#self.dig_panel.extra_points + 1].label
                 end
@@ -233,7 +229,7 @@ function GenericOptionsPanel:init()
             active = true,
             enabled = function()
                 if self.dig_panel.shape ~= nil then
-                    if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
+                    if #self.dig_panel.extra_points > 0 then
                         return true
                     end
                 end
@@ -241,11 +237,14 @@ function GenericOptionsPanel:init()
                 return false
             end,
             disabled = false,
-            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.extra_points > 0 end,
+            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.shape.extra_points > 0 end,
             show_tooltip = true,
             on_activate = function()
                 if self.dig_panel.shape ~= nil then
                     self.dig_panel.extra_points = {}
+                    self.dig_panel.placing_extra.active = false
+                    self.dig_panel.placing_extra.index = 0
+                    self.dig_panel:updateLayout()
                 end
             end,
         },
@@ -365,7 +364,6 @@ function GenericOptionsPanel:init()
             initial_option = true,
             on_change = function(new, old)
                 self.dig_panel.autocommit = new
-                self.dig_panel.shape.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -475,12 +473,21 @@ end
 -- other tiles with the same position/direction
 function Dig:get_pen(x, y, mousePos)
 
-    local bounds = self:get_view_bounds()
     local get_point = self.shape:get_point(x, y)
     local mouse_over = (mousePos) and (x == mousePos.x and y == mousePos.y) or false
-    local corner = x == bounds.x1 and y == bounds.y1 or x == bounds.x2 and y == bounds.y2 or
-        x == bounds.x1 and y == bounds.y2 or
-        x == bounds.x2 and y == bounds.y1
+
+    local drag_corner = false
+
+    local shape_top_left, shape_bot_right = self.shape:get_point_dims()
+    if x == shape_top_left.x and y == shape_top_left.y and self.shape.drag_corners.nw then
+        drag_corner = true
+    elseif x == shape_bot_right.x and y == shape_top_left.y and self.shape.drag_corners.ne then
+        drag_corner = true
+    elseif x == shape_top_left.x and y == shape_bot_right.y and self.shape.drag_corners.sw then
+        drag_corner = true
+    elseif x == shape_bot_right.x and y == shape_bot_right.y and self.shape.drag_corners.se then
+        drag_corner = true
+    end
 
     local extra_point = false
     for i, point in ipairs(self.extra_points) do
@@ -500,46 +507,46 @@ function Dig:get_pen(x, y, mousePos)
     end
 
     -- Get the bit field to use as a key for the PENS map
-    local pen_key = self:gen_pen_key(n, s, e, w, corner, mouse_over, get_point, extra_point)
+    local pen_key = self:gen_pen_key(n, s, e, w, drag_corner, mouse_over, get_point, extra_point)
 
     -- If key doesn't exist in the map, set it
     if pen_key and not PENS[pen_key] then
         if get_point and not n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NW, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.NW, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NORTH, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.NORTH, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and e and not w and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NE, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.NE, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.WEST, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.WEST, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and not w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.EAST, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.EAST, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SW, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.SW, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SE, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.SE, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and not n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, drag_corner, mouse_over, get_point, extra_point)
         elseif get_point and n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.POINT, corner, mouse_over, get_point)
-        elseif corner and not get_point then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, corner, mouse_over, get_point)
+            PENS[pen_key] = self:make_pen(CURSORS.POINT, drag_corner, mouse_over, get_point, extra_point)
+        elseif drag_corner and not get_point then
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_corner, mouse_over, get_point, extra_point)
         elseif extra_point then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, corner, mouse_over, get_point, extra_point)
+            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_corner, mouse_over, get_point, extra_point)
         else
             PENS[pen_key] = nil
         end
@@ -607,7 +614,6 @@ function Dig:add_shape_options()
                 initial_option = option.value,
                 on_change = function(new, old)
                     self.shape.options[key].value = new
-                    self.shape.needs_update = true
                 end,
             } }
         elseif option.type == "plusminus" then
@@ -642,7 +648,6 @@ function Dig:add_shape_options()
                 on_activate = function()
                     self.shape.options[key].value =
                     self.shape.options[key].value - 1
-                    self.shape.needs_update = true
                 end,
             },
                 widgets.HotkeyLabel {
@@ -664,7 +669,6 @@ function Dig:add_shape_options()
                     on_activate = function()
                         self.shape.options[key].value =
                         self.shape.options[key].value + 1
-                        self.shape.needs_update = true
                     end,
                 } }
 
@@ -760,12 +764,7 @@ function Dig:onRenderFrame(dc, rect)
 
         if self.placing_extra.active then
             local mouse_pos = dfhack.gui.getMousePos()
-            -- if temp_marks and mouse_pos then
-                print(string.format("Setting pos for temp_mark index , previous is") .. self.placing_extra.index)
-                self.extra_points[self.placing_extra.index] = {x = mouse_pos.x, y = mouse_pos.y}
-            -- end
-
-            print(string.format("Temp marks %d, %d", self.extra_points[self.placing_extra.index].x, self.extra_points[self.placing_extra.index].y))
+            self.extra_points[self.placing_extra.index] = {x = mouse_pos.x, y = mouse_pos.y}
         end
 
         local points = { self.mark1, second_point }
@@ -775,7 +774,6 @@ function Dig:onRenderFrame(dc, rect)
 
         self:add_shape_options()
         self:updateLayout()
-        self.shape.needs_update = false
 
         local mouse_pos = dfhack.gui.getMousePos()
 
@@ -790,7 +788,16 @@ function Dig:onRenderFrame(dc, rect)
             )
         end
 
-        guidm.renderMapOverlay(get_overlay_pen, nil)
+        local bounds = self:get_view_bounds()
+        if self.shape ~= nil then
+            local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
+            bounds.x1 = top_left.x
+            bounds.x2 = bot_right.x
+            bounds.y1 = top_left.y
+            bounds.y2 = bot_right.y
+        end
+
+        guidm.renderMapOverlay(get_overlay_pen, bounds)
     end
 end
 
@@ -804,9 +811,10 @@ function Dig:onInput(keys)
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         if self.shape ~= nil then
             -- if extra points have been set
-            if #self.extra_points > 0 then
-                print("clearning extra points")
+            if #self.extra_points > 0 or self.placing_extra.active then
                 self.extra_points = {}
+                self.placing_extra.active = false
+                self.placing_extra.index = 0
                 self:updateLayout()
                 return true
             end
@@ -821,7 +829,6 @@ function Dig:onInput(keys)
             self.parent_view:dismiss()
         end
 
-        self.shape.needs_update = true
         return true
     end
 
@@ -845,26 +852,21 @@ function Dig:onInput(keys)
         elseif not self.mark1 then
             self:on_mark1(pos)
         elseif self.placing_extra.active then
-            self.shape.needs_update = true
             self.placing_extra.active = false
         else
             -- Clicking a corner
             local shape_top_left, shape_bot_right = self.shape:get_point_dims()
-            if pos.x == shape_top_left.x and pos.y == shape_top_left.y then
-                self.mark1 =
-                xyz2pos( shape_bot_right.x, shape_bot_right.y, self.mark1.z)
+            if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
+                self.mark1 = xyz2pos( shape_bot_right.x, shape_bot_right.y, self.mark1.z)
                 self.mark2 = nil
-            elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y then
-                self.mark1 =
-                xyz2pos( shape_top_left.x, shape_bot_right.y, self.mark1.z)
+            elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
+                self.mark1 = xyz2pos( shape_top_left.x, shape_bot_right.y, self.mark1.z)
                 self.mark2 = nil
-            elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y then
-                self.mark1 =
-                xyz2pos( shape_bot_right.x, shape_top_left.y, self.mark1.z)
+            elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
+                self.mark1 = xyz2pos( shape_bot_right.x, shape_top_left.y, self.mark1.z)
                 self.mark2 = nil
-            elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y then
-                self.mark1 =
-                xyz2pos( shape_top_left.x, shape_top_left.y, self.mark1.z)
+            elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
+                self.mark1 = xyz2pos( shape_top_left.x, shape_top_left.y, self.mark1.z)
                 self.mark2 = nil
             end
 
