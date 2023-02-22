@@ -205,10 +205,10 @@ local opts = utils.invert{...}
 local quiet = opts['-q'] or opts['--quiet']
 
 if flow_count > 0 then
-    print(string.format('Skipped %d underwater job(s)', flow_count))
+    print(string.format('Not unsuspending %d underwater job(s)', flow_count))
 end
 if buildingplan_count > 0 then
-    print(string.format('Skipped %d buildingplan job(s)', buildingplan_count))
+    print(string.format('Not unsuspending %d buildingplan job(s)', buildingplan_count))
 end
 if unsuspended_count > 0 or not quiet then
     print(string.format('Unsuspended %d job(s).', unsuspended_count))
