@@ -5,9 +5,9 @@
 
 -- Must Haves
 -----------------------------
--- Fix point dragging
--- Use View rectabgle based on shape dims
--- Fix placement bug
+-- Use View rectabgle based on shape dims instead of nil
+-- remove extra corners for line shape
+-- refactor so all 'needs update' stuff in dig.lua
 
 -- Should Haves
 -----------------------------
@@ -179,14 +179,11 @@ function GenericOptionsPanel:init()
         widgets.HotkeyLabel {
             view_id = "shape_place_extra_point",
             key = "CUSTOM_V",
-            label = function() local msg = "Place extra point: "
-                if self.dig_panel.shape ~= nil then
-                    for key, point in pairs(self.dig_panel.shape.extra_points) do
-                        local count = self.dig_panel.shape:get_extra_point_count()
-                        if count < #self.dig_panel.shape.extra_points then return msg ..
-                            self.dig_panel.shape.extra_points[count + 1].label
-                        end
-                    end
+            label = function()
+                local msg = "Place extra point: "
+                print(string.format("comparing %d < %d", #self.dig_panel.extra_points, #self.dig_panel.shape.extra_points))
+                if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
+                    return msg .. self.dig_panel.shape.extra_points[#self.dig_panel.extra_points + 1].label
                 end
 
                 return msg .. "N/A"
@@ -195,11 +192,7 @@ function GenericOptionsPanel:init()
             visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.shape.extra_points > 0 end,
             enabled = function()
                 if self.dig_panel.shape ~= nil then
-                    for key, point in pairs(self.dig_panel.shape.extra_points) do
-                        if point.pos == nil then
-                            return true
-                        end
-                    end
+                    return #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points
                 end
 
                 return false
@@ -207,7 +200,7 @@ function GenericOptionsPanel:init()
             show_tooltip = true,
             on_activate = function()
                 self.dig_panel.placing_extra.active = true
-                self.dig_panel.placing_extra.index = self.dig_panel.shape:get_extra_point_count() + 1
+                self.dig_panel.placing_extra.index = #self.dig_panel.extra_points + 1
             end,
         },
         widgets.HotkeyLabel {
@@ -218,10 +211,8 @@ function GenericOptionsPanel:init()
             enabled = function()
                 if self.dig_panel.mark1 or self.dig_panel.mark2 then return true
                 elseif self.dig_panel.shape ~= nil then
-                    for key, point in pairs(self.dig_panel.shape.extra_points) do
-                        if point.pos ~= nil then
-                            return true
-                        end
+                    if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
+                        return true
                     end
                 end
 
@@ -232,7 +223,7 @@ function GenericOptionsPanel:init()
             on_activate = function()
                 self.dig_panel.mark1 = nil
                 self.dig_panel.mark2 = nil
-                self.dig_panel.extra = nil
+                self.dig_panel.extra_points = {}
             end,
         },
         widgets.HotkeyLabel {
@@ -242,21 +233,19 @@ function GenericOptionsPanel:init()
             active = true,
             enabled = function()
                 if self.dig_panel.shape ~= nil then
-                    for key, point in pairs(self.dig_panel.shape.extra_points) do
-                        if point.pos ~= nil then
-                            return true
-                        end
+                    if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
+                        return true
                     end
                 end
 
                 return false
             end,
             disabled = false,
-            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.shape.extra_points > 0 end,
+            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.extra_points > 0 end,
             show_tooltip = true,
             on_activate = function()
                 if self.dig_panel.shape ~= nil then
-                    self.dig_panel.shape:clear_extra_points()
+                    self.dig_panel.extra_points = {}
                 end
             end,
         },
@@ -463,7 +452,8 @@ Dig.ATTRS {
     autocommit = true,
     cur_shape = 1,
     -- extra_marks = {},
-    placing_extra = { active = false, index = nil }
+    placing_extra = { active = false, index = nil },
+    extra_points = {}
 }
 
 function Dig:print_view_bounds()
@@ -493,7 +483,7 @@ function Dig:get_pen(x, y, mousePos)
         x == bounds.x2 and y == bounds.y1
 
     local extra_point = false
-    for i, point in ipairs(self.shape.extra_points) do
+    for i, point in ipairs(self.extra_points) do
         if x == point.x and y == point.y then
             extra_point = true
             break
@@ -766,21 +756,22 @@ function Dig:onRenderFrame(dc, rect)
 
         if not second_point then return end
 
-        local temp_marks = nil
-
-        if self.shape.extra_points ~= nil then
-            temp_marks = copyall(self.shape.extra_points)
-        end
+        -- local temp_marks = copyall(self.extra_points)
 
         if self.placing_extra.active then
             local mouse_pos = dfhack.gui.getMousePos()
-            print("placing index " .. self.placing_extra.index)
-            if temp_marks then temp_marks[self.placing_extra.index].pos = mouse_pos end
+            -- if temp_marks and mouse_pos then
+                print(string.format("Setting pos for temp_mark index , previous is") .. self.placing_extra.index)
+                self.extra_points[self.placing_extra.index] = {x = mouse_pos.x, y = mouse_pos.y}
+            -- end
+
+            print(string.format("Temp marks %d, %d", self.extra_points[self.placing_extra.index].x, self.extra_points[self.placing_extra.index].y))
         end
 
         local points = { self.mark1, second_point }
 
-        self.shape:update(points, temp_marks)
+
+        self.shape:update(points, self.extra_points)
 
         self:add_shape_options()
         self:updateLayout()
@@ -808,13 +799,14 @@ function Dig:onInput(keys)
         return true
     end
 
+    if keys.CUSTOM_M then self.parent_view:dismiss() end
+
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         if self.shape ~= nil then
-            local count = self.shape:get_extra_point_count()
             -- if extra points have been set
-            if count > 0 then
+            if #self.extra_points > 0 then
                 print("clearning extra points")
-                self.shape:clear_extra_points()
+                self.extra_points = {}
                 self:updateLayout()
                 return true
             end
@@ -856,20 +848,33 @@ function Dig:onInput(keys)
             self.shape.needs_update = true
             self.placing_extra.active = false
         else
-            if self.mark1.x == pos.x and self.mark1.y == pos.y then
-                self.mark1 = copyall(self.mark2)
+            -- Clicking a corner
+            local shape_top_left, shape_bot_right = self.shape:get_point_dims()
+            if pos.x == shape_top_left.x and pos.y == shape_top_left.y then
+                self.mark1 =
+                xyz2pos( shape_bot_right.x, shape_bot_right.y, self.mark1.z)
                 self.mark2 = nil
-                if self.dig_panel.shape ~= nil then
-                    for key, point in pairs(self.shape.extra_points) do
-                        if point.pos ~= nil then
-                            self.shape.extra_points[key].pos = nil
-                            -- continue = false
-                        end
-                    end
-                end
-            elseif self.mark2.x == pos.x and self.mark2.y == pos.y then
+            elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y then
+                self.mark1 =
+                xyz2pos( shape_top_left.x, shape_bot_right.y, self.mark1.z)
+                self.mark2 = nil
+            elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y then
+                self.mark1 =
+                xyz2pos( shape_bot_right.x, shape_top_left.y, self.mark1.z)
+                self.mark2 = nil
+            elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y then
+                self.mark1 =
+                xyz2pos( shape_top_left.x, shape_top_left.y, self.mark1.z)
                 self.mark2 = nil
             end
+
+            for i = 1, #self.extra_points do
+                if pos.x == self.extra_points[i].x and pos.y == self.extra_points[i].y then
+                    self.placing_extra.active = true
+                    self.placing_extra.index = i
+                end
+            end
+
         end
 
         return true
@@ -923,19 +928,20 @@ end
 -- Commit the shape using quickfort API
 function Dig:commit()
     local data = {}
+    local top_left, bot_right = self.shape:get_true_dims()
     local view_bounds = self:get_view_bounds()
 
     -- Generates the params for quickfort API
     local function generate_params(grid, position)
-        local top_left, bot_right = self.shape:get_true_dims()
+        -- local top_left, bot_right = self.shape:get_true_dims()
         for zlevel = 0, math.abs(view_bounds.z1 - view_bounds.z2) do
             data[zlevel] = {}
             for row = 0, math.abs(
-                bot_right.y - top_left.y-- this is the prob
+                bot_right.y - top_left.y
             ) do
                 data[zlevel][row] = {}
                 for col = 0, math.abs(
-                    bot_right.x - top_left.x-- this is the prob
+                    bot_right.x - top_left.x
                 ) do
                     if grid[col] and grid[col][row] then
                         local desig = self:get_designation(col, row, zlevel)
@@ -956,14 +962,15 @@ function Dig:commit()
     end
 
     local start = {
-        x = view_bounds.x1 - 1,
-        y = view_bounds.y1,
+        x = top_left.x,
+        y = top_left.y,
         z = math.min(view_bounds.z1, view_bounds.z2),
     }
+
     local grid = self.shape:transform(0, 0)
 
     -- Special case for 1x1 to ease doorway mark1ing
-    if view_bounds.x1 == view_bounds.x2 and view_bounds.y1 == view_bounds.y2 then
+    if top_left.x == bot_right.x and top_left.y == bot_right.y2 then
         grid = {}
         grid[0] = {}
         grid[0][0] = true
@@ -974,7 +981,7 @@ function Dig:commit()
     self.mark1 = nil
     self.mark2 = nil
     self.placing_extra = { active = false, index = nil }
-    self.shape:clear_extra_points()
+    self.extra_points = {}
     self:updateLayout()
 end
 

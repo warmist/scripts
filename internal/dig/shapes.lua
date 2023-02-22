@@ -344,7 +344,7 @@ Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line Segments",
     -- todo extra corners
-    extra_points = {{label = "Curve", name = "bezier_point", pos = nil }}
+    extra_points = {{label = "Curve"}}
 }
 
 function Line:init()
@@ -367,30 +367,37 @@ function Line:init()
 end
 
 function Line:update(points, extra_points)
-    if #self.points == #points and not self.needs_update then
-        local same = true
-        for i, point in ipairs(self.points) do
-            if points[i].x ~= point.x or points[i].y ~= point.y then
-                same = false
-                break
-            end
-        end
-        if same == true then
-            for i, point in ipairs(self.extra_points) do
-                if extra_points[i].x ~= point.x or extra_points[i].y ~= point.y then
-                    same = false
-                    break
-                end
-            end
-        end
+    -- if #self.points == #points and #self.extra_points == #extra_points and not self.needs_update then
+    --     local same = true
+    --     for i, point in ipairs(self.points) do
+    --         if points[i].x ~= point.x or points[i].y ~= point.y then
+    --             same = false
+    --             break
+    --         end
+    --     end
+    --     if same == true then
+    --         for i, point in ipairs(self.extra_points) do
+    --             print("checking point " ..
+    --                 i ..
+    --                 string.format(" is %d, %d       OR     %d, %d",
+    --                     extra_points[i] ~= nil and extra_points[i].x or -1,
+    --                     extra_points[i] ~= nil and extra_points[i].y or -1,
+    --                 )
+    --                 )
+    --             if extra_points[i].x ~= point.x or extra_points[i].y ~= point.y then
+    --                 same = false
+    --                 break
+    --             end
+    --         end
+    --     end
 
-        if same then return end -- No need to update
-    end
+    --     if same then return end -- No need to update
+    -- end
 
     print("updating")
 
     self.points = copyall(points)
-    if extra_points then self.extra_points = copyall(extra_points) end
+    -- if extra_points then self.extra_points = copyall(extra_points) end
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
     self.height = bot_right.x - top_left.x
@@ -399,7 +406,7 @@ function Line:update(points, extra_points)
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
     local thickness = self.options.thickness.value or 1
-    local bezier_point = extra_points[1].pos
+    local bezier_point = (#extra_points > 0) and {x = extra_points[1].x, y = extra_points[1].y} or nil
     if bezier_point then -- Use Bezier curve
         local t = 0
         local x2, y2 = bezier_point.x, bezier_point.y
