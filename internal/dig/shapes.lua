@@ -14,17 +14,15 @@ Shape.ATTRS {
     invert = false,
     width = 1,
     height = 1,
-    points = {},
+    points = {}, -- Main points that define the shape
+    extra_points = {},
     draw_corners = { ne = true, nw = true, se = true, sw = true },
-    offsets = { n = 0, s = 0, e = 0, w = 0 },
     needs_update = true
 }
 
 function Shape:transform(min_x, min_y)
     local ret = {}
     local dim_min, dim_max = self:get_true_dims()
-
-    print(string.format("dim_min (%d, %d)", dim_min.x, dim_min.y))
 
     local x_transform = min_x - dim_min.x
     local y_transform = min_y - dim_min.y
@@ -58,8 +56,8 @@ end
 
 function Shape:get_true_dims()
     local min_x, min_y, max_x, max_y
-    for x,_ in pairs(self.arr) do
-        for y,_ in pairs(self.arr[x]) do
+    for x, _ in pairs(self.arr) do
+        for y, _ in pairs(self.arr[x]) do
             if not min_x then
                 min_x = x
                 max_x = x
@@ -77,11 +75,6 @@ function Shape:get_true_dims()
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
 end
 
-function Shape:to_string()
-    return string.format("height: %d, width %d, offsets {%d, %d, %d, %d}", self.height, self.width, self.offsets.n,
-        self.offsets.s, self.offsets.e, self.offsets.w)
-end
-
 function Shape:points_to_string(points)
     local points = points == nil and self.points or points
     local output = ""
@@ -92,6 +85,24 @@ function Shape:points_to_string(points)
     end
 
     return output
+end
+
+function Shape:get_extra_point_count()
+    for index = 0, #self.extra_points- 1 do
+        if self.extra_points[index + 1].pos == nil then
+            return index
+        end
+    end
+
+    return #self.extra_points
+end
+
+function Shape:clear_extra_points()
+    for index = 1, #self.extra_points do
+        self.extra_points[index].pos = nil
+    end
+
+    self.needs_update = true
 end
 
 -- Basic update function that loops over a rectangle from top left to bottom right
@@ -333,6 +344,7 @@ Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line Segments",
     -- todo extra corners
+    extra_points = {{label = "Curve", name = "bezier_point", pos = nil }}
 }
 
 function Line:init()
@@ -354,7 +366,7 @@ function Line:init()
     }
 end
 
-function Line:update(points)
+function Line:update(points, extra_points)
     if #self.points == #points and not self.needs_update then
         local same = true
         for i, point in ipairs(self.points) do
@@ -363,58 +375,82 @@ function Line:update(points)
                 break
             end
         end
+        if same == true then
+            for i, point in ipairs(self.extra_points) do
+                if extra_points[i].x ~= point.x or extra_points[i].y ~= point.y then
+                    same = false
+                    break
+                end
+            end
+        end
 
         if same then return end -- No need to update
     end
 
+    print("updating")
+
     self.points = copyall(points)
+    if extra_points then self.extra_points = copyall(extra_points) end
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
-    self.offsets = { n = 0, s = 0, e = 0, w = 0 }
 
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
-    local dx = math.abs(x1 - x0)
-    local dy = math.abs(y1 - y0)
-    local sx = x0 < x1 and 1 or -1
-    local sy = y0 < y1 and 1 or -1
-    local err = dx - dy
-    local e2, x, y
     local thickness = self.options.thickness.value or 1
-  
-    for i = 0, thickness - 1 do
-      x = x0
-      y = y0 + i
-      while true do
-        -- Plot the point at (x, y)
-        for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-          if not self.arr[x + j] then self.arr[x + j] = {} end
-          self.arr[x + j][y] = true
+    local bezier_point = extra_points[1].pos
+    if bezier_point then -- Use Bezier curve
+        local t = 0
+        local x2, y2 = bezier_point.x, bezier_point.y
+        while t <= 1 do
+            local x = math.floor((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1)
+            local y = math.floor((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1)
+            for i = 0, thickness - 1 do
+                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                    if not self.arr[x + j] then self.arr[x + j] = {} end
+                    self.arr[x + j][y + i] = true
+                end
+            end
+            t = t + 0.01
         end
-  
-        if x == x1 and y == y1 + i then
-          break
-        end
-  
-        e2 = 2 * err
-  
-        if e2 > -dy then
-          err = err - dy
-          x = x + sx
-        end
+    else -- Use Bresenham's algorithm for straight line
+        local dx = math.abs(x1 - x0)
+        local dy = math.abs(y1 - y0)
+        local sx = x0 < x1 and 1 or -1
+        local sy = y0 < y1 and 1 or -1
+        local err = dx - dy
+        local e2, x, y
 
-        if e2 < dx then
-          err = err + dx
-          y = y + sy
+        for i = 0, thickness - 1 do
+            x = x0
+            y = y0 + i
+            while true do
+                -- Plot the point at (x, y)
+                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                    if not self.arr[x + j] then self.arr[x + j] = {} end
+                    self.arr[x + j][y] = true
+                end
+
+                if x == x1 and y == y1 + i then
+                    break
+                end
+
+                e2 = 2 * err
+
+                if e2 > -dy then
+                    err = err - dy
+                    x = x + sx
+                end
+
+                if e2 < dx then
+                    err = err + dx
+                    y = y + sy
+                end
+            end
         end
-      end
     end
 end
-
-
-
 
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
