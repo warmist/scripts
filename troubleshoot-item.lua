@@ -41,6 +41,7 @@ function troubleshoot_item(item, out)
     if item.flags.forbid then out('Forbidden') end
     if item.flags.melt then out('Melt-designated') end
     if item.flags.dump then out('Dump-designated') end
+    if item.flags.in_inventory then out('Is in an inventory') end
     local building_holder = dfhack.items.getGeneralRef(item, df.general_ref_type.BUILDING_HOLDER)
     if building_holder then
         if building_holder.building_id then
