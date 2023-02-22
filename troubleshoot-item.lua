@@ -41,7 +41,19 @@ function troubleshoot_item(item, out)
     if item.flags.forbid then out('Forbidden') end
     if item.flags.melt then out('Melt-designated') end
     if item.flags.dump then out('Dump-designated') end
-    if item.flags.in_chest then out('In chest') end
+    local building_holder = dfhack.items.getGeneralRef(item, df.general_ref_type.BUILDING_HOLDER)
+    if building_holder then
+        if building_holder.building_id then
+            local building = df.building.find(building_holder.building_id)
+            if building then
+                out('Inside building of type: ' .. df.building_type[building:getType()])
+            else
+                warn('Could not find building with building_id: ' .. building_holder.building_id)
+            end
+        else
+            warn('Could not find building_id in building_holder')
+        end
+    end
     if item.flags.on_fire then out('On fire') end
     if item.flags.rotten then out('Rotten') end
     if item.flags.trader then out('Trade good') end
@@ -49,8 +61,8 @@ function troubleshoot_item(item, out)
     if item.flags.foreign then out('Foreign') end
     if item.flags.encased then out('Encased in ice') end
     if item.flags.garbage_collect then warn('Marked for garbage collection') end
-    if item.flags.construction then out('In construction') end
-    if item.flags.in_building then out('In building') end
+    if item.flags.construction then out('Used for construction') end
+    if item.flags.in_building then out('Used for building') end
     if item.flags.hidden then out('Hidden') end
     if item.flags.artifact then
         out(item.flags.artifact_mood and "Artifact (from strange mood)" or "Artifact")
