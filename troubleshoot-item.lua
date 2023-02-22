@@ -41,7 +41,33 @@ function troubleshoot_item(item, out)
     if item.flags.forbid then out('Forbidden') end
     if item.flags.melt then out('Melt-designated') end
     if item.flags.dump then out('Dump-designated') end
-    if item.flags.in_inventory then out('Is in an inventory') end
+    local unit_holder = dfhack.items.getGeneralRef(item, df.general_ref_type.UNIT_HOLDER)
+    if unit_holder then
+        if unit_holder.unit_id then
+            local unit = df.unit.find(unit_holder.unit_id)
+            if unit then
+                local unit_details = string.format("%s - %s", dfhack.TranslateName(dfhack.units.getVisibleName(unit)), dfhack.units.getProfessionName(unit))
+                out('Held by unit: ' .. unit_details)
+            else
+                warn('Could not find unit with unit_id: ' .. unit_holder.unit_id)
+            end
+        else
+            warn('Could not find unit_id in unit_holder')
+        end
+    end
+    local contained_in = dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINED_IN_ITEM)
+    if contained_in then
+        if contained_in.item_id then
+            local contained_in_item = df.item.find(contained_in.item_id)
+            if contained_in_item then
+                out('Stored in item of type: ' .. df.item_type[contained_in_item:getType()])
+            else
+                warn('Could not find item with item_id: ' .. contained_in.item_id)
+            end
+        else
+            warn('Could not find item_id in contained_in_item')
+        end
+    end
     local building_holder = dfhack.items.getGeneralRef(item, df.general_ref_type.BUILDING_HOLDER)
     if building_holder then
         if building_holder.building_id then
