@@ -51,6 +51,10 @@ function troubleshoot_item(item, out)
     if item.flags.garbage_collect then warn('Marked for garbage collection') end
     if item.flags.construction then out('In construction') end
     if item.flags.in_building then out('In building') end
+    if item.flags.hidden then out('Hidden') end
+    if item.flags.artifact then
+        out(item.flags.artifact_mood and "Artifact (from strange mood)" or "Artifact")
+    end
     if item.flags.in_job then
         out('In job')
         local ref = find_specific_ref(item, df.specific_ref_type.JOB)
