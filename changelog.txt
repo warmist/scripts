@@ -26,7 +26,10 @@ that repo.
 -@ `unforbid`: fix detection of unreachable items for items in containers
 
 ## Misc Improvements
-- `troubleshoot-item`: add detection of and info for items that are hidden, artifact, held by a unit, and/or in a storage item or container.
+- `troubleshoot-item`: output as bullet point list with indenting. New item display info, regarding items that are:
+    - hidden; artifacts; held by a unit, with unit name printed
+    - in a storage item or container, displaying the type of container
+    - are containers, with the contents of the container summarised with count of each item type
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
 - Add overlay to caravan.lua visible on the trade screen that enables:
