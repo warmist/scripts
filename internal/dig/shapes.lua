@@ -152,23 +152,35 @@ function Shape:clear_extra_points()
     end
 end
 
+function Shape:get_center()
+    -- TODO revisit
+    -- local num_points = 0
+    -- local sum_x = 0
+    -- local sum_y = 0
+    
+    -- for x, row in pairs(self.arr) do
+    --   for y, value in pairs(row) do
+    --     if value then
+    --       num_points = num_points + 1
+    --       sum_x = sum_x + x
+    --       sum_y = sum_y + y
+    --     end
+    --   end
+    -- end
+    
+    -- local center_x = math.floor(sum_x / num_points)
+    -- local center_y = math.floor(sum_y / num_points)
+    
+    -- return center_x, center_y
+
+    local top_left, bot_right = self:get_point_dims()
+    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x, math.floor((bot_right.y - top_left.y) / 2) + top_left.y
+
+end
+
 -- Basic update function that loops over a rectangle from top left to bottom right
 -- Can be overridden for more complex shapes
 function Shape:update(points)
-
-    -- If doesn't need update
-    if #self.points == #points then
-        local same = true
-        for i, point in ipairs(self.points) do
-            if points[i].x ~= point.x or points[i].y ~= point.y then
-                same = false
-                break
-            end
-        end
-
-        if same then return end -- No need to update
-    end
-
 
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
