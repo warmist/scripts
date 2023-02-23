@@ -24,12 +24,18 @@ function troubleshoot_item(item, out)
     local outstr = nil --as:string
     if out == nil then
         outstr = ''
-        out = function(s, l) outstr = outstr .. s .. '\n' end
+        out = function(s, level) outstr = outstr .. s .. '\n' end
     end
     local function warn(s) out('WARNING: ' .. s) end
     assert(df.item:is_instance(item), 'not an item')
     if item.id < 0 then warn('Invalid ID: ' .. item.id) end
     if not df.item.find(item.id) then warn('Could not locate item in item lists') end
+
+    -- Print the item name, and its ID as a header
+    out("Item:")
+    out("Description: " .. dfhack.items.getDescription(item, item:getType(), false), 1)
+    out("ID: " .. item.id, 1)
+
     if item.flags.forbid then out('Forbidden') end
     if item.flags.melt then out('Melt-designated') end
     if item.flags.dump then out('Dump-designated') end
@@ -147,7 +153,7 @@ function main(args)
                 indent = indent .. '  '
             end
             -- Output log lines, heading lines (indent_amount=0) are prefixed with '-', other lines are indented
-            print(string.format("%s%s%s", indent_amount == 0 and '- ' or '', indent, out_line))
+            print(dfhack.df2console(string.format("%s%s%s", indent_amount == 0 and '- ' or '', indent, out_line)))
         end
     else
         qerror('No item found')
