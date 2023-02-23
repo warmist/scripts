@@ -81,6 +81,23 @@ function troubleshoot_item(item, out)
             warn('Could not find building_id in building_holder')
         end
     end
+    if item.flags.container then
+        local count = 0
+        local item_types = {}
+        for _, v in pairs(item.general_refs) do
+            if v:getType() == df.general_ref_type.CONTAINS_ITEM then
+                count = count + 1
+                local contained_item = df.item.find(v.item_id)
+                local item_desc = dfhack.items.getDescription(contained_item, contained_item:getType(), false)
+                item_types[item_desc] = item_types[item_desc] and item_types[item_desc] + 1 or 1
+            end
+        end
+        local item_string = count == 1 and 'item' or 'items'
+        out(string.format('Is a container, holding %s %s:', count, item_string))
+        for item_desc, item_count in pairs(item_types) do
+            out(string.format(' %s : %s', item_desc, item_count))
+        end
+    end
     if item.flags.on_fire then out('On fire') end
     if item.flags.rotten then out('Rotten') end
     if item.flags.trader then out('Trade good') end
