@@ -9,17 +9,19 @@ end
 Shape = defclass(Shape)
 Shape.ATTRS {
     name = "",
-    arr = {},
+    arr = {}, -- sparse 2D array containing points, if true then the point is in the shape, false or nil otherwise
     options = DEFAULT_NIL,
     invertable = true,
     invert = false,
     width = 1,
     height = 1,
     points = {}, -- Main points that define the shape
-    extra_points = {},
-    drag_corners = { ne = true, nw = true, se = true, sw = true },
+    extra_points = {}, -- Extra points like bezeir curve
+    drag_corners = { ne = true, nw = true, se = true, sw = true } -- which corners should show and be draggable,
 }
 
+-- Transform shape so that the top left-most point is at min_x, min_y
+-- Returns a 2D array with the shape, does not modify the existing shape
 function Shape:transform(min_x, min_y)
     local ret = {}
     local dim_min, dim_max = self:get_true_dims()
@@ -37,6 +39,7 @@ function Shape:transform(min_x, min_y)
     return ret
 end
 
+-- Dims defined by the main points of a shape
 function Shape:get_point_dims()
 
     local min_x = self.points[1].x
@@ -54,6 +57,7 @@ function Shape:get_point_dims()
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
 end
 
+-- Get dimensions as defined by the array of the shape
 function Shape:get_true_dims()
     local min_x, min_y, max_x, max_y
     for x, _ in pairs(self.arr) do
@@ -75,6 +79,9 @@ function Shape:get_true_dims()
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
 end
 
+-- Get dimensions taking into account, main points, extra points,
+-- and the shape array, anything that needs to be drawn should be
+-- within these bounds
 function Shape:get_view_dims(extra_points)
     local min_x, min_y, max_x, max_y
     for x, _ in pairs(self.arr) do
@@ -136,24 +143,11 @@ function Shape:points_to_string(points)
     return output
 end
 
-function Shape:get_extra_point_count()
-    for index = 0, #self.extra_points- 1 do
-        if self.extra_points[index + 1].pos == nil then
-            return index
-        end
-    end
-
-    return #self.extra_points
-end
-
-function Shape:clear_extra_points()
-    for index = 1, #self.extra_points do
-        self.extra_points[index].pos = nil
-    end
-end
 
 function Shape:get_center()
     -- TODO revisit
+    -- This code calculates the center based on the points of the shape
+    -- It's slower though, and maybe not needed compared to the simpler method
     -- local num_points = 0
     -- local sum_x = 0
     -- local sum_y = 0
@@ -173,6 +167,7 @@ function Shape:get_center()
     
     -- return center_x, center_y
 
+    -- Simple way to get the center defined by the point dims
     local top_left, bot_right = self:get_point_dims()
     return math.floor((bot_right.x - top_left.x) / 2) + top_left.x, math.floor((bot_right.y - top_left.y) / 2) + top_left.y
 
@@ -398,10 +393,9 @@ function Diag:has_point(x, y)
     end
 end
 
--- module users can get shapes through this global, shape option values
 Line = defclass(Line, Shape)
 Line.ATTRS {
-    name = "Line Segments",
+    name = "Line",
     extra_points = {{label = "Curve"}},
     invertable = false -- Doesn't support invert
 }
@@ -475,7 +469,6 @@ function Line:update(points, extra_points)
             x = x0
             y = y0 + i
             while true do
-                -- Plot the point at (x, y)
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
                     self.arr[x + j][y] = true
@@ -501,6 +494,7 @@ function Line:update(points, extra_points)
     end
 end
 
+-- module users can get shapes through this global, shape option values
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
 all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {} }
