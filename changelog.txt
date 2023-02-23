@@ -17,6 +17,7 @@ that repo.
 - `combine`: combines stacks of food and plant items. Merge of `combine-plants` and `combine-drinks`.
 
 ## Fixes
+- `troubleshoot-item`: fix printing of job details for chosen item
 - `makeown`: fixes errors caused by using makeown on an invader
 - `gui/blueprint`: correctly use setting presets passed on the commandline
 - `gui/quickfort`: correctly use settings presets passed on the commandline
@@ -25,6 +26,7 @@ that repo.
 -@ `unforbid`: fix detection of unreachable items for items in containers
 
 ## Misc Improvements
+- `troubleshoot-item`: add detection of and info for items that are hidden, artifact, held by a unit, and/or in a storage item or container.
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
 - Add overlay to caravan.lua visible on the trade screen that enables:
