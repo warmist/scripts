@@ -9,7 +9,7 @@ troubleshooting issues such as why dwarves won't pick up a certain item.
 
 ]====]
 
-function coord_to_str(coord)
+local function coord_to_str(coord)
     local out = {}
     for k, v in pairs(coord) do
         -- handle 2D and 3D coordinates
@@ -32,7 +32,7 @@ function troubleshoot_item(item, out)
     if not df.item.find(item.id) then warn('Could not locate item in item lists') end
 
     -- Print the item name, and its ID as a header
-    out("Item:")
+    out("Item details:")
     out("Description: " .. dfhack.items.getDescription(item, item:getType(), false), 1)
     out("ID: " .. item.id, 1)
 
@@ -139,11 +139,11 @@ function main(args)
 
     if item then
         local out_table = {}
-        local item_function = function(s, level)
+        local out_function = function(s, level)
             table.insert(out_table, {s, level and level or 0})
         end
 
-        troubleshoot_item(item, item_function)
+        troubleshoot_item(item, out_function)
 
         for _, row in pairs(out_table) do
             local out_line = row[1]
