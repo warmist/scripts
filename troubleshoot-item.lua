@@ -87,7 +87,7 @@ function troubleshoot_item(item, out)
         local item_string = count == 1 and 'item' or 'items'
         out(string.format('Is a container, holding %s %s:', count, item_string))
         for item_desc, item_count in pairs(item_types) do
-            out(string.format(' %s : %s', item_desc, item_count))
+            out(string.format('%s : %s', item_desc, item_count), 1)
         end
     end
     if item.flags.on_fire then out('On fire') end
@@ -107,8 +107,8 @@ function troubleshoot_item(item, out)
         out('In job')
         local ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
         if ref then
-            out('Job type: ' .. df.job_type[ref.data.job.job_type])
-            out('Job position: ' .. coord_to_str(ref.data.job.pos))
+            out('Job type: ' .. df.job_type[ref.data.job.job_type], 1)
+            out('Job position: ' .. coord_to_str(ref.data.job.pos), 1)
             local found_job_item = false
             for i, job_item_ref in pairs(ref.data.job.items) do
                 if item == job_item_ref.item then found_job_item = true end
@@ -128,11 +128,27 @@ function troubleshoot_item(item, out)
     if outstr then return outstr end
 end
 
-
 function main(args)
     local item = dfhack.gui.getSelectedItem(true)
+
     if item then
-        troubleshoot_item(item, print)
+        local out_table = {}
+        local item_function = function(s, level)
+            table.insert(out_table, {s, level and level or 0})
+        end
+
+        troubleshoot_item(item, item_function)
+
+        for _, row in pairs(out_table) do
+            local out_line = row[1]
+            local indent_amount = row[2]
+            local indent = ''
+            for i = 1, indent_amount do
+                indent = indent .. '  '
+            end
+            -- Output log lines, heading lines (indent_amount=0) are prefixed with '-', other lines are indented
+            print(string.format("%s%s%s", indent_amount == 0 and '- ' or '', indent, out_line))
+        end
     else
         qerror('No item found')
     end
