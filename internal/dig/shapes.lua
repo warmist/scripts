@@ -151,7 +151,7 @@ function Shape:get_center()
     -- local num_points = 0
     -- local sum_x = 0
     -- local sum_y = 0
-    
+
     -- for x, row in pairs(self.arr) do
     --   for y, value in pairs(row) do
     --     if value then
@@ -161,10 +161,10 @@ function Shape:get_center()
     --     end
     --   end
     -- end
-    
+
     -- local center_x = math.floor(sum_x / num_points)
     -- local center_y = math.floor(sum_y / num_points)
-    
+
     -- return center_x, center_y
 
     -- Simple way to get the center defined by the point dims
