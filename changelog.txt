@@ -26,7 +26,7 @@ that repo.
 -@ `unforbid`: fix detection of unreachable items for items in containers
 
 ## Misc Improvements
-- `troubleshoot-item`: output as bullet point list with indenting. New item display info, regarding items that are:
+- `troubleshoot-item`: output as bullet point list with indenting, with item description and ID at top. Now reports on more data, regarding items that are:
     - hidden; artifacts; held by a unit, with unit name printed
     - in a storage item or container, displaying the type of container
     - are containers, with the contents of the container summarised with count of each item type
