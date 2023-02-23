@@ -24,7 +24,7 @@ function troubleshoot_item(item, out)
     local outstr = nil --as:string
     if out == nil then
         outstr = ''
-        out = function(s) outstr = outstr .. s .. '\n' end
+        out = function(s, l) outstr = outstr .. s .. '\n' end
     end
     local function warn(s) out('WARNING: ' .. s) end
     assert(df.item:is_instance(item), 'not an item')
