@@ -1071,11 +1071,10 @@ function Dig:get_designation(x, y, z)
         if z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
         elseif z == math.abs(view_bounds.z1 - view_bounds.z2) then
-            local tile_type = dfhack.maps.getTileType(view_bounds.x1 + x, view_bounds.y1 + y,
-                view_bounds.z1 + z)
+            local pos = xyz2pos(view_bounds.x1 + x, view_bounds.y1 + y, view_bounds.z1 + z)
+            local tile_type = dfhack.maps.getTileType(pos)
             local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
-            local designation = dfhack.maps.getTileFlags(xyz2pos(view_bounds.x1 + x, view_bounds.y1 + y,
-                view_bounds.z1 + z))
+            local designation = dfhack.maps.getTileFlags(pos)
 
             -- If top of the view_bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
             local up_or_updown_dug = (
