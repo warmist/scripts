@@ -57,6 +57,7 @@ that repo.
 - `gui/gm-editor`: now supports multiple independent data inspection windows
 - `gui/gm-editor`: now prints out contents of coordinate vars instead of just the type
 - `rejuvenate`: now takes an --age parameter to choose a desired age.
+- `gui/dig` : Added 'Line' shape that also can draw curves, added draggable center handle
 
 # 50.05-alpha3.1
 
