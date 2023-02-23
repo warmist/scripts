@@ -33,6 +33,7 @@ function troubleshoot_item(item, out)
     if item.flags.forbid then out('Forbidden') end
     if item.flags.melt then out('Melt-designated') end
     if item.flags.dump then out('Dump-designated') end
+    if item.flags.hidden then out('Hidden') end
     local unit_holder = dfhack.items.getGeneralRef(item, df.general_ref_type.UNIT_HOLDER)
     if unit_holder then
         if unit_holder.unit_id then
@@ -99,7 +100,6 @@ function troubleshoot_item(item, out)
     if item.flags.garbage_collect then warn('Marked for garbage collection') end
     if item.flags.construction then out('Used for construction') end
     if item.flags.in_building then out('Used for building') end
-    if item.flags.hidden then out('Hidden') end
     if item.flags.artifact then
         out(item.flags.artifact_mood and "Artifact (from strange mood)" or "Artifact")
     end
