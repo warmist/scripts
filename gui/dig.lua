@@ -930,8 +930,6 @@ function Dig:onInput(keys)
         return true
     end
 
-    if keys.CUSTOM_M then self.parent_view:dismiss() end
-
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         if self.shape ~= nil then
             -- if extra points have been set
