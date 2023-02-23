@@ -9,14 +9,6 @@ troubleshooting issues such as why dwarves won't pick up a certain item.
 
 ]====]
 
-function find_specific_ref(object, type)
-    for i, ref in pairs(object.specific_refs) do
-        if ref.type == type then
-            return ref
-        end
-    end
-end
-
 function coord_to_str(coord)
     local out = {}
     for k, v in pairs(coord) do
@@ -113,7 +105,7 @@ function troubleshoot_item(item, out)
     end
     if item.flags.in_job then
         out('In job')
-        local ref = find_specific_ref(item, df.specific_ref_type.JOB)
+        local ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
         if ref then
             out('Job type: ' .. df.job_type[ref.data.job.job_type])
             out('Job position: ' .. coord_to_str(ref.data.job.pos))
