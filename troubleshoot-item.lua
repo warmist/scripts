@@ -92,6 +92,7 @@ function troubleshoot_item(item, out)
             end
         end
         local item_string = count == 1 and 'item' or 'items'
+        if count > 0 then item_string = item_string .. ':' end
         out(string.format('Is a container, holding %s %s:', count, item_string))
         for item_desc, item_count in pairs(item_types) do
             out(string.format('%s : %s', item_desc, item_count), 1)
