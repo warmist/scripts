@@ -21,7 +21,6 @@ local FORT_SERVICES = {
     'autonestbox',
     'autoslab',
     'autounsuspend',
-    'channel-safely',
     'emigration',
     'fastdwarf',
     'fix/protect-nicks',
