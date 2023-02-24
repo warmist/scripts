@@ -43,26 +43,9 @@ function getTypeName(type)
     return tostring(type):gmatch('<type: (.+)>')() or '<unknown type>'
 end
 function getTargetFromScreens()
-    local my_trg
-    if dfhack.gui.getCurFocus() == 'item' then
-        my_trg=dfhack.gui.getCurViewscreen().item
-    elseif dfhack.gui.getCurFocus() == 'joblist' then
-        local t_screen=dfhack.gui.getCurViewscreen()
-        my_trg=t_screen.jobs[t_screen.cursor_pos]
-    elseif dfhack.gui.getCurFocus() == 'createquota' then
-        local t_screen=dfhack.gui.getCurViewscreen()
-        my_trg=t_screen.orders[t_screen.sel_idx]
-    elseif dfhack.gui.getCurFocus() == 'dwarfmode/LookAround/Flow' then
-        local t_look=df.global.ui_look_list.items[df.global.ui_look_cursor]
-        my_trg=t_look.data.Flow
-
-    elseif dfhack.gui.getSelectedUnit(true) then
-        my_trg=dfhack.gui.getSelectedUnit(true)
-    elseif dfhack.gui.getSelectedItem(true) then
-        my_trg=dfhack.gui.getSelectedItem(true)
-    elseif dfhack.gui.getSelectedJob(true) then
-        my_trg=dfhack.gui.getSelectedJob(true)
-    else
+    local my_trg = dfhack.gui.getSelectedUnit(true) or dfhack.gui.getSelectedItem(true)
+            or dfhack.gui.getSelectedJob(true) or dfhack.gui.getSelectedBuilding(true)
+    if not my_trg then
         qerror("No valid target found")
     end
     return my_trg
