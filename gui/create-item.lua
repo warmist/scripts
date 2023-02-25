@@ -39,7 +39,7 @@ function getCreaturePartLayerList(creatureID, casteID, partID)
  local crplList={{"whole"}}
  for k,crpl in ipairs(df.global.world.raws.creatures.all[creatureID].caste[casteID].body_info.body_parts[partID].layers) do
   local str = crpl.layer_name
-  table.insert(crplList,{string.lower(str)}) -- lowercase string for easier searching
+  table.insert(crplList,{str})
  end
  return crplList
 end
@@ -48,7 +48,7 @@ function getCreatureMaterialList(creatureID, casteID)
  local crmList={}
  for k,crm in ipairs(df.global.world.raws.creatures.all[creatureID].material) do
   local str = crm.id
-  table.insert(crmList,{string.lower(str)}) -- same here
+  table.insert(crmList,{str})
  end
  return crmList
 end
@@ -470,7 +470,7 @@ function hackWish(unit)
       if not isCorpsePiece then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
-       createCorpsePiece(unit,bodypart,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
+       createCorpsePiece(unit,bodypart,partlayerID-2,mattype,matindex,corpsepieceGeneric,quality)
       end
      end
     end
