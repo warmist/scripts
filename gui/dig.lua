@@ -230,8 +230,13 @@ function GenericOptionsPanel:init()
             end,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.placing_extra.active = true
-                self.dig_panel.placing_extra.index = #self.dig_panel.extra_points + 1
+                if self.dig_panel.mark1 and self.dig_panel.mark2 then
+                    self.dig_panel.placing_extra.active = true
+                    self.dig_panel.placing_extra.index = #self.dig_panel.extra_points + 1
+                elseif self.dig_panel.mark1 and not self.dig_panel.mark2 then
+                    local mouse_pos = dfhack.gui.getMousePos()
+                    self.dig_panel.extra_points[#self.dig_panel.extra_points + 1] = { x = mouse_pos.x, y = mouse_pos.y }
+                end
                 self.dig_panel.needs_update = true
             end,
         },
