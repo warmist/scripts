@@ -228,7 +228,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  casteID = tonumber(casteID)
  bodypart = tonumber(bodypart)
  partlayer = tonumber(partlayer)
- if partlayer == -1 then -- somewhat similar to the bodypart variable below, a value of -1 here means that the user wants to spawn a whole body part. we set the partlayer to 0 (outermost) because the specific layer isn't important, and we're spawning them all anyway.
+ if partlayer == -1 and not generic then -- somewhat similar to the bodypart variable below, a value of -1 here means that the user wants to spawn a whole body part. we set the partlayer to 0 (outermost) because the specific layer isn't important, and we're spawning them all anyway. if it's a generic corpsepiece we ignore it, as it gets added to anyway below (we can't do it below because between here and there there's lines that reference the part layer
     partlayer = 0
     wholePart = true
  end
