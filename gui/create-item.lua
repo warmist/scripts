@@ -36,10 +36,10 @@ function getCreaturePartList(creatureID, casteID)
 end
 
 function getCreaturePartLayerList(creatureID, casteID, partID)
- local crplList={}
+ local crplList={{"whole"}}
  for k,crpl in ipairs(df.global.world.raws.creatures.all[creatureID].caste[casteID].body_info.body_parts[partID].layers) do
   local str = crpl.layer_name
-  table.insert(crplList,{str})
+  table.insert(crplList,{string.lower(str)}) -- lowercase string for easier searching
  end
  return crplList
 end
@@ -48,7 +48,7 @@ function getCreatureMaterialList(creatureID, casteID)
  local crmList={}
  for k,crm in ipairs(df.global.world.raws.creatures.all[creatureID].material) do
   local str = crm.id
-  table.insert(crmList,{str})
+  table.insert(crmList,{string.lower(str)}) -- same here
  end
  return crmList
 end
@@ -224,16 +224,21 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
  creatureID = tonumber(creatureID)
  -- get the actual raws of the target creature
  local creatorRaceRaw = df.creature_raw.find(creatureID)
+ local wholePart = false
  casteID = tonumber(casteID)
  bodypart = tonumber(bodypart)
  partlayer = tonumber(partlayer)
+ if partlayer == -1 then -- somewhat similar to the bodypart variable below, a value of -1 here means that the user wants to spawn a whole body part. we set the partlayer to 0 (outermost) because the specific layer isn't important, and we're spawning them all anyway.
+    partlayer = 0
+    wholePart = true
+ end
  -- get body info for easy reference
  local creatorBody = creatorRaceRaw.caste[casteID].body_info
  local layerName
  local layerMat = "BONE"
  local tissueID
  local liquid = false
- local isCorpse = bodypart == -1 -- in the hackWish function, the bodypart variable is initialized to -1, which isn't changed if the spawned item is a corpse
+ local isCorpse = bodypart == -1 and not generic -- in the hackWish function, the bodypart variable is initialized to -1, which isn't changed if the spawned item is a corpse
  if not generic and not isCorpse then -- if we have a specified body part and layer, figure all the stuff out about that
  -- store the tissue id of the specific layer we selected
   tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
@@ -245,6 +250,7 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
   layerMat = layerMat[3]
   layerName = creatorBody.body_parts[bodypart].layers[partlayer].layer_name
  elseif not isCorpse then -- otherwise, figure out the mat name from the dual-use partlayer argument
+  partlayer = partlayer + 1 -- no "whole" option at the start of the generic creature material selection prompt means that the value we get is actually further along than intended
   layerMat = creatorRaceRaw.material[partlayer].id
   layerName = layerMat
  end
@@ -385,12 +391,18 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
        -- search through the target creature's body parts and bring back every one which has the desired material
        if creatorRaceRaw.tissue[creatorBody.body_parts[i].layers[n].tissue_id].tissue_material_str[1] == layerMat and creatorBody.body_parts[i].token ~= "SKULL" and not creatorBody.body_parts[i].flags.SMALL then
         item.body.components.body_part_status[i].missing = false
-        item.body.components.body_part_status[i].grime = 2
         item.body.components.layer_status[creatorBody.body_parts[i].layers[n].layer_id].gone = false
         -- save the index of the bone layer to a variable
        end
       end
      end
+    end
+  end
+  if wholePart then -- brings back every tissue layer associated with a body part if we're spawning the entire thing
+    for i in pairs(creatorBody.body_parts[bodypart].layers) do
+     item.body.components.layer_status[creatorBody.body_parts[bodypart].layers[i].layer_id].gone = false
+     item.corpse_flags.separated_part = true
+     item.corpse_flags.unbutchered = true
     end
   end
   -- DO THIS LAST or else the game crashes for some reason
@@ -470,7 +482,7 @@ function hackWish(unit)
       if itemtype ~= df.item_type.CORPSEPIECE and itemtype ~= df.item_type.CORPSE then
        createItem({mattype,matindex},{itemtype,itemsubtype},quality,unit,description,1)
       else
-       createCorpsePiece(unit,bodypart,partlayerID-1,mattype,matindex,corpsepieceGeneric,quality)
+       createCorpsePiece(unit,bodypart,partlayerID-2,mattype,matindex,corpsepieceGeneric,quality)
       end
     return true
    end
