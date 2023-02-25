@@ -20,7 +20,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/create-item`: added ability to spawn 'whole' corpsepieces (every layer of a part).
-- `gui/create-item`: changed creature tissue layer and creature material prompts to have lowercase entries for ease of searching.	
+- `gui/create-item`: changed creature tissue layer and creature material prompts to have lowercase entries for ease of searching.
 
 ## Removed
 
@@ -45,7 +45,7 @@ that repo.
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
 - `caravan`: add trade screen overlay that assists with seleting groups of items and collapsing groups in the UI
-- `gui/gm-editor` will now inspect a selected building itself if the building has no current jobs.	
+- `gui/gm-editor` will now inspect a selected building itself if the building has no current jobs.
 
 ## Removed
 - `combine-drinks`: replaced by `combine`
