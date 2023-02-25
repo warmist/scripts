@@ -16,8 +16,11 @@ that repo.
 ## New Scripts
 
 ## Fixes
+-@ `gui/create-item`: adding corpse spawning broke spawning generic corpsepieces, but has now been fixed.
 
 ## Misc Improvements
+- `gui/create-item`: added ability to spawn 'whole' corpsepieces (every layer of a part).
+- `gui/create-item`: changed creature tissue layer and creature material prompts to have lowercase entries for ease of searching.	
 
 ## Removed
 
@@ -34,7 +37,6 @@ that repo.
 - `devel/query`: can now properly index vectors in the --table argument
 -@ `forbid`: fix detection of unreachable items for items in containers
 -@ `unforbid`: fix detection of unreachable items for items in containers
--@ `gui/create-item`: adding corpse spawning broke spawning generic corpsepieces, but has now been fixed.
 
 ## Misc Improvements
 - `troubleshoot-item`: output as bullet point list with indenting, with item description and ID at top
@@ -43,9 +45,7 @@ that repo.
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
 - `caravan`: add trade screen overlay that assists with seleting groups of items and collapsing groups in the UI
-- `gui/gm-editor` will now inspect a selected building itself if the building has no current jobs.
-- `gui/create-item`: added ability to spawn 'whole' corpsepieces (every layer of a part).
-- `gui/create-item`: changed creature tissue layer and creature material prompts to have lowercase entries for ease of searching.
+- `gui/gm-editor` will now inspect a selected building itself if the building has no current jobs.	
 
 ## Removed
 - `combine-drinks`: replaced by `combine`
