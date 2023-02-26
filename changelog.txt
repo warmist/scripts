@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+-@ `gui/dig`: Allow placing an extra point (curve) while still placing thesecond main point
 
 ## Misc Improvements
 
