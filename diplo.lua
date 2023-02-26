@@ -17,18 +17,6 @@ local args = {...}
 local p_civ_id = df.global.plotinfo.civ_id
 local p_civ = df.historical_entity.find(df.global.plotinfo.civ_id)
 
--- get a very rough, but readable name for a civ:
-function get_raw_name(civ)
-    local raw_name = ""
-    for _, name_word in pairs(civ.name.words) do
-        if name_word ~= -1 then
-            raw_name = raw_name .. " " .. df.global.world.raws.language.words[name_word].word
-        end
-    end
-    raw_name = string.sub(raw_name, 2)
-    return raw_name
-end
-
 -- if no civ ID is entered, just output list of civs:
 if not args[1] then
     goto outputlist
@@ -77,7 +65,7 @@ for _, entity in pairs(p_civ.relations.diplomacy) do
         cur_civ_id,
         rel_str,
         matched,
-        get_raw_name(cur_civ)
+        dfhack.TranslateName(cur_civ.name, true)
         })
     end
 end
