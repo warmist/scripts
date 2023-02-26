@@ -56,9 +56,8 @@ end
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
 ActionPanel.ATTRS {
     get_area_fn = DEFAULT_NIL,
-    get_mark1_fn = DEFAULT_NIL,
-    get_mark2_fn = DEFAULT_NIL,
     autoarrange_subviews = true,
+    dig_panel = DEFAULT_NIL
 }
 
 function ActionPanel:init()
@@ -71,22 +70,18 @@ function ActionPanel:init()
             view_id = "selected_area",
             text_to_wrap = self:callback("get_area_text"),
         },
-        widgets.WrappedLabel {
-            view_id = "mark1_label",
-            text_to_wrap = self:callback("get_mark1_text"),
-        },
-        widgets.WrappedLabel {
-            view_id = "mark2_label",
-            text_to_wrap = self:callback("get_mark2_text"),
-        }
+        self:get_mark_labels()
     }
+end
+
+function ActionPanel:get_mark_labels()
 end
 
 function ActionPanel:get_action_text()
     local text = ""
-    if self.get_mark1_fn() and not self.parent_view.mark2  then
+    if self.dig_panel.marks[1] and not #self.dig_panel.marks == self.dig_panel.shape.num_points  then
         text = "Place the next corner"
-    elseif not self.get_mark1_fn() then
+    elseif not self.dig_panel.marks[1] then
         text = "Place the first corner"
     elseif not self.parent_view.placing_extra.active and self.parent_view.prev_center == nil then
         text = "Select any draggable points"
@@ -101,57 +96,45 @@ function ActionPanel:get_action_text()
 end
 
 function ActionPanel:get_area_text()
-    local mark1 = self.get_mark1_fn()
+    if self.dig_panel.shape.num_points == 2 then
+        local mark1 = self.dig_panel.marks[1]
 
-    local label = "Area: "
+        local label = "Area: "
 
-    if not mark1 then
-        return label .. "N/A"
+        if not mark1 then
+            return label .. "N/A"
+        end
+
+        local mark2 = self.dig_panel.marks[2] ~= nil and self.dig_panel.marks[2] or dfhack.gui.getMousePos()
+
+        local width, height, depth = get_dims(mark1, mark2) -- Replace
+        local tiles = width * height * depth
+        local plural = tiles > 1 and "s" or ""
+        return label .. ("%dx%dx%d (%d tile%s)"):format(
+            width,
+            height,
+            depth,
+            tiles,
+            plural
+        )
+    else
+        return "TBD"
     end
-
-    local mark2 = self.get_mark2_fn()
-
-    local width, height, depth = get_dims(mark1, mark2) -- Replace
-    local tiles = width * height * depth
-    local plural = tiles > 1 and "s" or ""
-    return label .. ("%dx%dx%d (%d tile%s)"):format(
-        width,
-        height,
-        depth,
-        tiles,
-        plural
-    )
 end
 
-function ActionPanel:get_mark1_text()
-    local mark1 = self.get_mark1_fn()
+function ActionPanel:get_mark_text(num)
+    local mark = self.dig_panel.marks[num]
 
-    local label = "Mark 1: "
+    local label = string.format("Mark %d: ", num)
 
-    if not mark1 then
+    if not mark then
         return label .. "Not set"
     end
 
     return label .. ("%d, %d, %d"):format(
-        mark1.x,
-        mark1.y,
-        mark1.z
-    )
-end
-
-function ActionPanel:get_mark2_text()
-    local mark2 = self.get_mark2_fn()
-
-    local label = "Mark 2: "
-
-    if not mark2 then
-        return label .. "Not set"
-    end
-
-    return label .. ("%d, %d, %d"):format(
-        mark2.x,
-        mark2.y,
-        mark2.z
+        mark.x,
+        mark.y,
+        mark.z
     )
 end
 
@@ -258,7 +241,7 @@ function GenericOptionsPanel:init()
             label = "Clear all points",
             active = true,
             enabled = function()
-                if self.dig_panel.mark1 or self.dig_panel.mark2 then return true
+                if #self.dig_panel.marks > 0 then return true
                 elseif self.dig_panel.shape ~= nil then
                     if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
                         return true
@@ -270,8 +253,7 @@ function GenericOptionsPanel:init()
             disabled = false,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.mark1 = nil
-                self.dig_panel.mark2 = nil
+                self.dig_panel.marks = nil
                 self.dig_panel.extra_points = {}
                 self.dig_panel.prev_center = nil
                 self.dig_panel.needs_update = true
@@ -440,7 +422,7 @@ function GenericOptionsPanel:init()
             label = "Commit Designation",
             active = true,
             enabled = function()
-                return self.dig_panel.mark2 and self.dig_panel.mark1
+                return #self.dig_panel.marks == self.dig_panel.shape.num_points
             end,
             disabled = false,
             show_tooltip = true,
@@ -518,12 +500,12 @@ Dig.ATTRS {
     prio = 4,
     autocommit = true,
     cur_shape = 1,
-    -- extra_marks = {},
     placing_extra = { active = false, index = nil },
     prev_center = DEFAULT_NIL,
     extra_points = {},
     last_mouse_point = DEFAULT_NIL,
-    needs_update = false
+    needs_update = false,
+    marks = {}
 }
 
 -- Check to see if we're moving a point, or some change was made that implise we need to update the shape
@@ -538,7 +520,7 @@ function Dig:shape_needs_update()
             self.last_mouse_point.x ~= mouse_pos.x or self.last_mouse_point.y ~= mouse_pos.y or
                 self.last_mouse_point.z ~= mouse_pos.z)
 
-        if self.mark1 and not self.mark2 and mouse_moved then
+        if #self.marks > 0 and mouse_moved then
             return true
         end
 
@@ -550,18 +532,18 @@ function Dig:shape_needs_update()
     return false
 end
 
-function Dig:print_view_bounds()
-    local view_bounds = self:get_view_bounds()
+-- function Dig:print_view_bounds()
+--     local view_bounds = self:get_view_bounds()
 
-    local second_point = self.mark2 ~= nil and self.mark2 or dfhack.gui.getMousePos()
+--     local second_point = self.mark2 ~= nil and self.mark2 or dfhack.gui.getMousePos()
 
-    if view_bounds then
-        print(string.format("view_bounds: (%d, %d) - (%d, %d) self.mark1: (%d, %d) second_point: (%d, %d)",
-            view_bounds.x1
-            , view_bounds.y1,
-            view_bounds.x2, view_bounds.y2, self.mark1.x, self.mark1.y, second_point.x, second_point.y))
-    end
-end
+--     if view_bounds then
+--         print(string.format("view_bounds: (%d, %d) - (%d, %d) self.mark1: (%d, %d) second_point: (%d, %d)",
+--             view_bounds.x1
+--             , view_bounds.y1,
+--             view_bounds.x2, view_bounds.y2, self.mark1.x, self.mark1.y, second_point.x, second_point.y))
+--     end
+-- end
 
 -- Get the pen to use when drawing a type of tile based on it's position in the shape and
 -- neighboring tiles. The first time a certain tile type needs to be drawn, it's pen
@@ -596,7 +578,7 @@ function Dig:get_pen(x, y, mousePos)
     end
 
     -- Show center point if both marks are set
-    if self.mark1 ~= nil and self.mark2 ~= nil then
+    if #self.marks == self.shape.num_points then
         local center_x, center_y = self.shape:get_center()
 
         if x == center_x and y == center_y then
@@ -666,20 +648,11 @@ end
 function Dig:init()
     self:addviews { ActionPanel {
         view_id = "action_panel",
-        get_mark1_fn = function()
-            return self.mark1
-        end,
-        get_mark2_fn = function()
-            if self.mark1 then
-                return self.mark2 ~= nil and self.mark2 or dfhack.gui.getMousePos()
-            else
-                return nil
-            end
-        end,
+        dig_panel = self,
         get_extra_pt_count = function()
             return #self.extra_points
         end,
-    },
+        },
         GenericOptionsPanel {
             view_id = "name_panel",
             dig_panel = self,
@@ -801,29 +774,51 @@ function Dig:add_shape_options()
 end
 
 -- TODO think about if these are too redundant
-function Dig:on_mark1(pos)
-    self.mark1 = pos
-    self:updateLayout()
-end
+-- function Dig:on_mark1(pos)
+--     self.mark1 = pos
+--     self:updateLayout()
+-- end
 
-function Dig:on_mark2(pos)
-    self.mark2 = pos
-    self:updateLayout()
-end
+-- function Dig:on_mark2(pos)
+--     self.mark2 = pos
+--     self:updateLayout()
+-- end
+
+-- function Dig:get_view_bounds()
+--     local cur = self.mark2 or dfhack.gui.getMousePos()
+--     if not cur then return end
+--     local mark1 = self.mark1 or cur
+
+--     return {
+--         x1 = math.min(cur.x, mark1.x),
+--         x2 = math.max(cur.x, mark1.x),
+--         y1 = math.min(cur.y, mark1.y),
+--         y2 = math.max(cur.y, mark1.y),
+--         z1 = math.min(cur.z, mark1.z),
+--         z2 = math.max(cur.z, mark1.z),
+--     }
+-- end
 
 function Dig:get_view_bounds()
-    local cur = self.mark2 or dfhack.gui.getMousePos()
-    if not cur then return end
-    local mark1 = self.mark1 or cur
+    if #self.marks == 0 then return nil end
 
-    return {
-        x1 = math.min(cur.x, mark1.x),
-        x2 = math.max(cur.x, mark1.x),
-        y1 = math.min(cur.y, mark1.y),
-        y2 = math.max(cur.y, mark1.y),
-        z1 = math.min(cur.z, mark1.z),
-        z2 = math.max(cur.z, mark1.z),
-    }
+    local min_x = self.marks[1].x
+    local max_x = self.marks[1].x
+    local min_y = self.marks[1].y
+    local max_y = self.marks[1].y
+    local min_z = self.marks[1].z
+    local max_z = self.marks[1].z
+
+    for _, mark in ipairs(self.marks) do
+        min_x = math.min(min_x, mark.x)
+        max_x = math.max(max_x, mark.x)
+        min_y = math.min(min_y, mark.y)
+        max_y = math.max(max_y, mark.y)
+        min_z = math.min(min_z, mark.z)
+        max_z = math.max(max_z, mark.z)
+    end
+
+    return { x1 = min_x, y1 = min_y, z1 = min_z, x2 = max_x, y2 = max_y, z2 = max_z }
 end
 
 -- return the pen, alter based on if we want to display a corner and a mouse over corner
@@ -886,10 +881,14 @@ function Dig:onRenderFrame(dc, rect)
 
     local mouse_pos = dfhack.gui.getMousePos()
 
-    if self.mark1 then
-        local second_point = self.mark2 ~= nil and self.mark2 or mouse_pos
+    if #self.marks > 0 then
+        local next_point = nil -- sus
+        print(string.format("onRenderFrame %d %d", #self.marks, self.shape.num_points))
+        if #self.marks == self.shape.num_points - 1 then
+            next_point = mouse_pos -- sus
 
-        if not second_point then return end
+            if not next_point then return end
+        end
 
         -- Set the pos of the currently moving extra point
         if self.placing_extra.active then
@@ -898,23 +897,23 @@ function Dig:onRenderFrame(dc, rect)
         end
 
         -- Set main points
-        local points = { self.mark1, second_point }
+        local points = copyall(self.marks)
+        table.insert(points, next_point) -- sus
 
         -- Check if moving center, if so shift the shape by the delta between the previous and current points
-        if self.prev_center ~= nil and self.mark1 ~= nil and self.mark2 ~= nil then
+        if self.prev_center ~= nil and #self.marks == self.shape.num_points then
             if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
                 self.prev_center.z ~= mouse_pos.z then
                 self.needs_update = true
                 local transform_x = mouse_pos.x - self.prev_center.x
                 local transform_y = mouse_pos.y - self.prev_center.y
                 local transform_z = mouse_pos.z - self.prev_center.z
-
-                self.mark1.x = self.mark1.x + transform_x
-                self.mark1.y = self.mark1.y + transform_y
-                self.mark1.z = self.mark1.z + transform_z
-                self.mark2.x = self.mark2.x + transform_x
-                self.mark2.y = self.mark2.y + transform_y
-                self.mark2.z = self.mark2.z + transform_z
+                
+                for i, _ in pairs(self.marks) do
+                    self.marks[i].x = self.marks[i].x + transform_x
+                    self.marks[i].y = self.marks[i].y + transform_y
+                    self.marks[i].z = self.marks[i].z + transform_z
+                end
 
                 for i, point in pairs(self.extra_points) do
                     self.extra_points[i].x = self.extra_points[i].x + transform_x
@@ -957,6 +956,11 @@ function Dig:onInput(keys)
         return true
     end
 
+    if keys.CUSTOM_M then
+        self.parent_view:dismiss()
+        return
+    end
+
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
 
         -- If extra points, clear them and return
@@ -973,13 +977,9 @@ function Dig:onInput(keys)
             end
         end
 
-        if self.mark2 then
-            self.mark2 = nil
+        if #self.marks > 0 then
+            table.remove(self.marks, #self.marks)
             self.needs_update = true
-        elseif self.mark1 then
-            self.mark1 = nil
-            self.needs_update = true
-            self:updateLayout()
         else
             self.parent_view:dismiss()
         end
@@ -998,35 +998,37 @@ function Dig:onInput(keys)
     end
 
     if keys._MOUSE_L_DOWN and pos then
-        if self.mark1 and not self.mark2 then
-            self:on_mark2(pos)
+        print(string.format("onInput %d %d", #self.marks, self.shape.num_points))
+        -- TODO Refactor this a bit
+        if #self.marks == self.shape.num_points - 1 then
+            table.insert(self.marks, pos)
             -- The statement after the or is to allow the 1x1 special case for easy doorways
             self.needs_update = true
-            if self.autocommit or (self.mark1.x == self.mark2 and self.mark1.y == self.mark2.y) then
+            if self.autocommit or (self.marks[1].x == self.marks[2].x and self.marks[1].y == self.marks[2].y) then
                 self:commit()
             end
-        elseif not self.mark1 then
+        elseif not self.placing_extra.active and #self.marks < self.shape.num_points then
+            table.insert(self.marks, pos)
             self.needs_update = true
-            self:on_mark1(pos)
         elseif self.placing_extra.active then
             self.needs_update = true
             self.placing_extra.active = false
         else
             -- Clicking a corner
-            local shape_top_left, shape_bot_right = self.shape:get_point_dims()
-            if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
-                self.mark1 = xyz2pos(shape_bot_right.x, shape_bot_right.y, self.mark1.z)
-                self.mark2 = nil
-            elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
-                self.mark1 = xyz2pos(shape_top_left.x, shape_bot_right.y, self.mark1.z)
-                self.mark2 = nil
-            elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
-                self.mark1 = xyz2pos(shape_bot_right.x, shape_top_left.y, self.mark1.z)
-                self.mark2 = nil
-            elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
-                self.mark1 = xyz2pos(shape_top_left.x, shape_top_left.y, self.mark1.z)
-                self.mark2 = nil
-            end
+            -- local shape_top_left, shape_bot_right = self.shape:get_point_dims()
+            -- if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
+            --     self.mark1 = xyz2pos(shape_bot_right.x, shape_bot_right.y, self.mark1.z)
+            --     self.mark2 = nil
+            -- elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
+            --     self.mark1 = xyz2pos(shape_top_left.x, shape_bot_right.y, self.mark1.z)
+            --     self.mark2 = nil
+            -- elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
+            --     self.mark1 = xyz2pos(shape_bot_right.x, shape_top_left.y, self.mark1.z)
+            --     self.mark2 = nil
+            -- elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
+            --     self.mark1 = xyz2pos(shape_top_left.x, shape_top_left.y, self.mark1.z)
+            --     self.mark2 = nil
+            -- end
 
             -- Clicking an extra point
             for i = 1, #self.extra_points do
@@ -1130,6 +1132,7 @@ function Dig:commit()
             mode = "dig",
         }
     end
+    if not view_bounds then print("dammit") end
 
     local start = {
         x = top_left.x,
@@ -1139,7 +1142,7 @@ function Dig:commit()
 
     local grid = self.shape:transform(0, 0)
 
-    -- Special case for 1x1 to ease doorway mark1ing
+    -- Special case for 1x1 to ease doorway marking
     if top_left.x == bot_right.x and top_left.y == bot_right.y2 then
         grid = {}
         grid[0] = {}
@@ -1151,8 +1154,7 @@ function Dig:commit()
 
     -- Only clear points if we're autocommit
     if self.autocommit then
-        self.mark1 = nil
-        self.mark2 = nil
+        self.marks = {}
         self.placing_extra = { active = false, index = nil }
         self.extra_points = {}
         self.prev_center = nil

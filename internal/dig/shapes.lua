@@ -16,6 +16,7 @@ Shape.ATTRS {
     width = 1,
     height = 1,
     points = {}, -- Main points that define the shape
+    num_points = 2,
     extra_points = {}, -- Extra points like bezeir curve
     drag_corners = { ne = true, nw = true, se = true, sw = true } -- which corners should show and be draggable,
 }
@@ -494,7 +495,71 @@ function Line:update(points, extra_points)
     end
 end
 
+Triangle = defclass(Triangle, Shape)
+Triangle.ATTRS = {
+    name = "Triangle",
+    invertable = false, -- doesn't support invert
+    num_points = 3
+}
+
+function Triangle:init()
+    self.options = {
+        thickness = {
+            name = "Thickness",
+            type = "plusminus",
+            value = 1,
+            min = 1,
+            max = function(shape)
+                if not shape.height or not shape.width then
+                    return nil
+                else
+                    return math.max(shape.height, shape.width)
+                end
+            end,
+            keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
+        },
+    }
+end
+
+-- Update method to draw the triangle
+function Triangle:update(points, extra_points)
+    self.points = copyall(points)
+    local top_left, bot_right = self:get_point_dims()
+    self.arr = {}
+    self.height = bot_right.x - top_left.x
+    self.width = bot_right.y - top_left.y
+
+    local thickness = self.options.thickness.value or 1
+
+    -- Get the three vertices of the triangle
+    local v1, v2, v3 = self.points[1], self.points[2], self.points[3]
+
+    -- Determine the edges of the triangle
+    local edges = {
+        { v1.x, v1.y, v2.x, v2.y },
+        { v2.x, v2.y, v3.x, v3.y },
+        { v3.x, v3.y, v1.x, v1.y },
+    }
+
+    -- Iterate over each edge and draw a line
+    for _, edge in ipairs(edges) do
+        local line = { { x = edge[1], y = edge[2] }, { x = edge[3], y = edge[4] } }
+        local line_class = Line()
+        line_class:update(line, {})
+        for x, y_row in pairs(line_class.arr) do
+            for y, _ in pairs(y_row) do
+                for i = 0, thickness - 1 do
+                    for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                        if not self.arr[x + j] then self.arr[x + j] = {} end
+                        self.arr[x + j][y + i] = true
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- module users can get shapes through this global, shape option values
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
-all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {} }
+all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {}, Triangle{} }
