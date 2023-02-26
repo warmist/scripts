@@ -5,6 +5,8 @@
 
 -- Must Haves
 -----------------------------
+-- toggle placing points for freeform to allow dragging
+-- get corners/drag points working
 
 -- Should Haves
 -----------------------------
@@ -79,7 +81,7 @@ end
 
 function ActionPanel:get_action_text()
     local text = ""
-    if self.dig_panel.marks[1] and not #self.dig_panel.marks == self.dig_panel.shape.num_points  then
+    if self.dig_panel.marks[1] and not #self.dig_panel.marks == self.dig_panel.shape.max_points  then
         text = "Place the next corner"
     elseif not self.dig_panel.marks[1] then
         text = "Place the first corner"
@@ -96,7 +98,7 @@ function ActionPanel:get_action_text()
 end
 
 function ActionPanel:get_area_text()
-    if self.dig_panel.shape.num_points == 2 then
+    if self.dig_panel.shape.max_points == nil and self.dig_panel.shape.max_points == 2 then
         local mark1 = self.dig_panel.marks[1]
 
         local label = "Area: "
@@ -230,10 +232,10 @@ function GenericOptionsPanel:init()
             end,
             show_tooltip = true,
             on_activate = function()
-                if self.dig_panel.mark1 and self.dig_panel.mark2 then
+                if #self.dig_panel.marks == self.dig_panel.shape.max_points then
                     self.dig_panel.placing_extra.active = true
                     self.dig_panel.placing_extra.index = #self.dig_panel.extra_points + 1
-                elseif self.dig_panel.mark1 and not self.dig_panel.mark2 then
+                elseif #self.dig_panel.marks then
                     local mouse_pos = dfhack.gui.getMousePos()
                     if mouse_pos then table.insert(self.dig_panel.extra_points, { x = mouse_pos.x, y = mouse_pos.y }) end
                 end
@@ -412,7 +414,7 @@ function GenericOptionsPanel:init()
             key = "CUSTOM_C",
             label = "Auto-Commit: ",
             active = true,
-            enabled = true,
+            enabled = function() return self.dig_panel.shape.max_points ~= nil end,
             disabled = false,
             show_tooltip = true,
             initial_option = true,
@@ -427,7 +429,7 @@ function GenericOptionsPanel:init()
             label = "Commit Designation",
             active = true,
             enabled = function()
-                return #self.dig_panel.marks == self.dig_panel.shape.num_points
+                return #self.dig_panel.marks >= self.dig_panel.shape.min_points
             end,
             disabled = false,
             show_tooltip = true,
@@ -440,6 +442,12 @@ end
 
 function GenericOptionsPanel:change_shape(new, old)
     self.dig_panel.shape = shapes.all_shapes[new]
+    if self.dig_panel.shape.max_points and #self.dig_panel.marks > self.dig_panel.shape.max_points then
+        -- pop marks until we're down to the max
+        for i = #self.dig_panel.marks, self.dig_panel.shape.max_points, -1 do
+            table.remove(self.dig_panel.marks, i)
+        end
+    end
     self.dig_panel:add_shape_options()
     self.dig_panel.needs_update = true
     self.dig_panel:updateLayout()
@@ -583,7 +591,7 @@ function Dig:get_pen(x, y, mousePos)
     end
 
     -- Show center point if both marks are set
-    if #self.marks == self.shape.num_points then
+    if #self.marks == self.shape.max_points then
         local center_x, center_y = self.shape:get_center()
 
         if x == center_x and y == center_y then
@@ -888,8 +896,7 @@ function Dig:onRenderFrame(dc, rect)
 
     if #self.marks > 0 then
         local next_point = nil -- sus
-        print(string.format("onRenderFrame %d %d", #self.marks, self.shape.num_points))
-        if #self.marks == self.shape.num_points - 1 then
+        if (#self.marks >= self.shape.min_points - 1) and (self.shape.max_points == nil or #self.marks < self.shape.max_points) then
             next_point = mouse_pos -- sus
 
             if not next_point then return end
@@ -906,7 +913,7 @@ function Dig:onRenderFrame(dc, rect)
         table.insert(points, next_point) -- sus
 
         -- Check if moving center, if so shift the shape by the delta between the previous and current points
-        if self.prev_center ~= nil and #self.marks == self.shape.num_points then
+        if self.prev_center ~= nil and #self.marks == self.shape.max_points then
             if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
                 self.prev_center.z ~= mouse_pos.z then
                 self.needs_update = true
@@ -1003,16 +1010,15 @@ function Dig:onInput(keys)
     end
 
     if keys._MOUSE_L_DOWN and pos then
-        print(string.format("onInput %d %d", #self.marks, self.shape.num_points))
         -- TODO Refactor this a bit
-        if #self.marks == self.shape.num_points - 1 then
+        if self.shape.max_points ~= nil and #self.marks == self.shape.max_points - 1 then
             table.insert(self.marks, pos)
             -- The statement after the or is to allow the 1x1 special case for easy doorways
             self.needs_update = true
             if self.autocommit or (self.marks[1].x == self.marks[2].x and self.marks[1].y == self.marks[2].y) then
                 self:commit()
             end
-        elseif not self.placing_extra.active and #self.marks < self.shape.num_points then
+        elseif not self.placing_extra.active and (self.shape.max_points == nil or #self.marks < self.shape.max_points) then
             table.insert(self.marks, pos)
             self.needs_update = true
         elseif self.placing_extra.active then
@@ -1137,7 +1143,6 @@ function Dig:commit()
             mode = "dig",
         }
     end
-    if not view_bounds then print("dammit") end
 
     local start = {
         x = top_left.x,

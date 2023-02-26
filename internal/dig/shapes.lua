@@ -16,7 +16,8 @@ Shape.ATTRS {
     width = 1,
     height = 1,
     points = {}, -- Main points that define the shape
-    num_points = 2,
+    min_points = 2,
+    max_points = 2,
     extra_points = {}, -- Extra points like bezeir curve
     drag_corners = { ne = true, nw = true, se = true, sw = true } -- which corners should show and be draggable,
 }
@@ -102,31 +103,31 @@ function Shape:get_view_dims(extra_points)
     end
 
     for i, point in pairs(self.points) do
-            if not min_x then
-                min_x = point.x
-                max_x = point.x
-                min_y = point.y
-                max_y = point.y
-            else
-                min_x = math.min(min_x, point.x)
-                max_x = math.max(max_x, point.x)
-                min_y = math.min(min_y, point.y)
-                max_y = math.max(max_y, point.y)
-            end
+        if not min_x then
+            min_x = point.x
+            max_x = point.x
+            min_y = point.y
+            max_y = point.y
+        else
+            min_x = math.min(min_x, point.x)
+            max_x = math.max(max_x, point.x)
+            min_y = math.min(min_y, point.y)
+            max_y = math.max(max_y, point.y)
+        end
     end
 
     for i, point in pairs(extra_points) do
-            if not min_x then
-                min_x = point.x
-                max_x = point.x
-                min_y = point.y
-                max_y = point.y
-            else
-                min_x = math.min(min_x, point.x)
-                max_x = math.max(max_x, point.x)
-                min_y = math.min(min_y, point.y)
-                max_y = math.max(max_y, point.y)
-            end
+        if not min_x then
+            min_x = point.x
+            max_x = point.x
+            min_y = point.y
+            max_y = point.y
+        else
+            min_x = math.min(min_x, point.x)
+            max_x = math.max(max_x, point.x)
+            min_y = math.min(min_y, point.y)
+            max_y = math.max(max_y, point.y)
+        end
     end
 
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
@@ -143,7 +144,6 @@ function Shape:points_to_string(points)
 
     return output
 end
-
 
 function Shape:get_center()
     -- TODO revisit
@@ -170,7 +170,8 @@ function Shape:get_center()
 
     -- Simple way to get the center defined by the point dims
     local top_left, bot_right = self:get_point_dims()
-    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x, math.floor((bot_right.y - top_left.y) / 2) + top_left.y
+    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x,
+        math.floor((bot_right.y - top_left.y) / 2) + top_left.y
 
 end
 
@@ -183,6 +184,8 @@ function Shape:update(points)
     self.arr = {}
     self.height = bot_right.y - top_left.y
     self.width = bot_right.x - top_left.x
+
+    if #points < self.min_points then return end
 
     for x = top_left.x, bot_right.x do
         self.arr[x] = {}
@@ -397,7 +400,7 @@ end
 Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line",
-    extra_points = {{label = "Curve"}},
+    extra_points = { { label = "Curve" } },
     invertable = false -- Doesn't support invert
 }
 
@@ -428,6 +431,8 @@ function Line:update(points, extra_points)
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
 
+    if #points < self.min_points then return end
+
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
 
@@ -442,7 +447,7 @@ function Line:update(points, extra_points)
     end
 
     local thickness = self.options.thickness.value or 1
-    local bezier_point = (#extra_points > 0) and {x = extra_points[1].x, y = extra_points[1].y} or nil
+    local bezier_point = (#extra_points > 0) and { x = extra_points[1].x, y = extra_points[1].y } or nil
 
     if bezier_point then -- Use Bezier curve
         local t = 0
@@ -495,14 +500,15 @@ function Line:update(points, extra_points)
     end
 end
 
-Triangle = defclass(Triangle, Shape)
-Triangle.ATTRS = {
-    name = "Triangle",
+FreeForm = defclass(FreeForm, Shape)
+FreeForm.ATTRS = {
+    name = "FreeForm",
     invertable = false, -- doesn't support invert
-    num_points = 3
+    min_points = 1,
+    max_points = DEFAULT_NIL
 }
 
-function Triangle:init()
+function FreeForm:init()
     self.options = {
         thickness = {
             name = "Thickness",
@@ -518,11 +524,22 @@ function Triangle:init()
             end,
             keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
         },
+        closed = {
+            name = "Closed",
+            type = "bool",
+            value = true,
+            key = "CUSTOM_Y",
+        },
+        filled = {
+            name = "Filled",
+            type = "bool",
+            value = false,
+            key = "CUSTOM_L",
+        },
     }
 end
 
--- Update method to draw the triangle
-function Triangle:update(points, extra_points)
+function FreeForm:update(points, extra_points)
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
@@ -531,15 +548,16 @@ function Triangle:update(points, extra_points)
 
     local thickness = self.options.thickness.value or 1
 
-    -- Get the three vertices of the triangle
-    local v1, v2, v3 = self.points[1], self.points[2], self.points[3]
+    -- Determine the edges of the polygon
+    local edges = {}
+    for i = 1, #self.points - 1 do
+        table.insert(edges, { self.points[i].x, self.points[i].y, self.points[i + 1].x, self.points[i + 1].y })
+    end
 
-    -- Determine the edges of the triangle
-    local edges = {
-        { v1.x, v1.y, v2.x, v2.y },
-        { v2.x, v2.y, v3.x, v3.y },
-        { v3.x, v3.y, v1.x, v1.y },
-    }
+    if self.options.closed.value then
+        -- Connect last point to first point to close the shape
+        table.insert(edges, { self.points[#self.points].x, self.points[#self.points].y, self.points[1].x, self.points[1].y })
+    end
 
     -- Iterate over each edge and draw a line
     for _, edge in ipairs(edges) do
@@ -557,9 +575,41 @@ function Triangle:update(points, extra_points)
             end
         end
     end
+
+    if self.options.filled.value and self.options.closed.value then
+        -- Fill internal points if shape is closed and filled
+        for x = top_left.x, bot_right.x do
+            for y = top_left.y, bot_right.y do
+                if self:point_in_polygon(x, y) then
+                    if not self.arr[x] then self.arr[x] = {} end
+                    self.arr[x][y] = true
+                end
+            end
+        end
+    end
+end
+
+
+function FreeForm:point_in_polygon(x, y)
+    local vertices = {}
+    for i, point in ipairs(self.points) do
+        vertices[i] = { x = point.x, y = point.y }
+    end
+    local inside = false
+    local j = #vertices
+
+    for i = 1, #vertices do
+        if (vertices[i].y > y) ~= (vertices[j].y > y) and
+            x < (vertices[j].x - vertices[i].x) * (y - vertices[i].y) / (vertices[j].y - vertices[i].y) + vertices[i].x then
+            inside = not inside
+        end
+        j = i
+    end
+
+    return inside
 end
 
 -- module users can get shapes through this global, shape option values
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
-all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {}, Triangle{} }
+all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {}, FreeForm {} }
