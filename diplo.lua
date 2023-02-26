@@ -23,7 +23,10 @@ if not args[1] then
 end
 
 -- make sure that there is a relation to change to:
-if not args[2] then qerror("Missing relation!") end
+if not args[2] then
+    print(dfhack.script_help())
+    qerror("Missing relation!")
+end
 
 -- change relation:
 print("Changing relation with " .. args[1] .. " to " .. args[2])
