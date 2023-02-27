@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+-@ `gui/dig`: Allow placing an extra point (curve) while still placing thesecond main point
 -@ `gui/create-item`: adding corpse spawning broke spawning generic corpsepieces, but has now been fixed.
 
 ## Misc Improvements
