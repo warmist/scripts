@@ -19,7 +19,8 @@ Shape.ATTRS {
     min_points = 2,
     max_points = 2,
     extra_points = {}, -- Extra points like bezeir curve
-    drag_corners = { ne = true, nw = true, se = true, sw = true } -- which corners should show and be draggable,
+    drag_corners = { ne = true, nw = true, se = true, sw = true }, -- which corners should show and be draggable,
+    num_tiles = 0 -- count of actual num_tiles in the shape
 }
 
 -- Transform shape so that the top left-most point is at min_x, min_y
@@ -178,7 +179,7 @@ end
 -- Basic update function that loops over a rectangle from top left to bottom right
 -- Can be overridden for more complex shapes
 function Shape:update(points)
-
+    self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
@@ -196,6 +197,8 @@ function Shape:update(points)
             else
                 self.arr[x][y] = not value
             end
+
+            self.num_tiles = self.num_tiles + (self.arr[x][y] and 1 or 0)
         end
     end
 end
@@ -424,7 +427,7 @@ function Line:init()
 end
 
 function Line:update(points, extra_points)
-
+    self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
@@ -459,6 +462,7 @@ function Line:update(points, extra_points)
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
                     self.arr[x + j][y + i] = true
+                    self.num_tiles = self.num_tiles + 1
                 end
             end
             t = t + 0.01
@@ -478,6 +482,7 @@ function Line:update(points, extra_points)
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
                     self.arr[x + j][y] = true
+                    self.num_tiles = self.num_tiles + 1
                 end
 
                 if x == x1 and y == y1 + i then
@@ -540,6 +545,7 @@ function FreeForm:init()
 end
 
 function FreeForm:update(points, extra_points)
+    self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
@@ -570,6 +576,7 @@ function FreeForm:update(points, extra_points)
                     for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                         if not self.arr[x + j] then self.arr[x + j] = {} end
                         self.arr[x + j][y + i] = true
+                        self.num_tiles = self.num_tiles + 1
                     end
                 end
             end
@@ -583,6 +590,7 @@ function FreeForm:update(points, extra_points)
                 if self:point_in_polygon(x, y) then
                     if not self.arr[x] then self.arr[x] = {} end
                     self.arr[x][y] = true
+                    self.num_tiles = self.num_tiles + 1
                 end
             end
         end

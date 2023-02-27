@@ -7,6 +7,7 @@
 -----------------------------
 -- toggle placing points for freeform to allow dragging
 -- get corners/drag points working
+-- Figure out action text stuff
 
 -- Should Haves
 -----------------------------
@@ -44,17 +45,69 @@ local tile_attrs = df.tiletype.attrs
 
 local to_pen = dfhack.pen.parse
 
-local function get_dims(pos1, pos2)
-    local width, height, depth =
-    math.abs(pos1.x - pos2.x) + 1,
-        math.abs(pos1.y - pos2.y) + 1,
-        math.abs(pos1.z - pos2.z) + 1
+--Show mark point coordinates
+MarksPanel = defclass(MarksPanel, widgets.ResizingPanel)
+MarksPanel.ATTRS {
+    get_area_fn = DEFAULT_NIL,
+    autoarrange_subviews = true,
+    dig_panel = DEFAULT_NIL
+}
 
-    return width, height, depth
+function MarksPanel:init()
+    -- self:addviews {
+    --     widgets.WrappedLabel {
+    --         view_id = "action_label",
+    --         text_to_wrap = self:callback("get_action_text"),
+    --     },
+    --     widgets.WrappedLabel {
+    --         view_id = "selected_area",
+    --         text_to_wrap = self:callback("get_area_text"),
+    --     },
+    --     self:get_mark_labels()
+    -- }
 end
 
+function MarksPanel:update_mark_labels()
+    self.subviews = {}
+    local mark_labels = {}
+    local label_text = {}
+    if #self.dig_panel.marks >= 1 then
+        local first_mark = self.dig_panel.marks[1]
+        table.insert(label_text, string.format("First Mark (%d): %d, %d, %d ", 1, first_mark.x, first_mark.y, first_mark.z))
+    end
+
+    if #self.dig_panel.marks > 1 then
+        local last_mark = self.dig_panel.marks[#self.dig_panel.marks]
+        table.insert(label_text, string.format("Last Mark (%d): %d, %d, %d ", #self.dig_panel.marks, last_mark.x, last_mark.y, last_mark.z))
+    end
+
+    local mouse_pos = dfhack.gui.getMousePos()
+    if mouse_pos then
+        table.insert(label_text, string.format("Mouse: %d, %d, %d", mouse_pos.x, mouse_pos.y, mouse_pos.z))
+    end
+
+    self:addviews {
+        widgets.WrappedLabel {
+            view_id = "mark_labels",
+            text_to_wrap = label_text,
+            auto_height = true,
+            max_height = 5,
+            scroll_keys = {
+                KEYBOARD_CURSOR_UP_FAST = -1, -- Shift-Up
+                KEYBOARD_CURSOR_DOWN_FAST = 1, -- Shift-Down
+                STANDARDSCROLL_PAGEUP = '-halfpage',
+                STANDARDSCROLL_PAGEDOWN = '+halfpage',
+            },
+        }
+    }
+
+end
+
+-- function markspanel:get_mark_labels()
+-- end
+
+
 -- Panel to show the Mouse position/dimensions/etc
--- Stolen from blueprint or quickfort I forget
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
 ActionPanel.ATTRS {
     get_area_fn = DEFAULT_NIL,
@@ -81,7 +134,7 @@ end
 
 function ActionPanel:get_action_text()
     local text = ""
-    if self.dig_panel.marks[1] and not #self.dig_panel.marks == self.dig_panel.shape.max_points  then
+    if self.dig_panel.marks[1] and not #self.dig_panel.marks == self.dig_panel.shape.max_points then
         text = "Place the next corner"
     elseif not self.dig_panel.marks[1] then
         text = "Place the first corner"
@@ -98,30 +151,22 @@ function ActionPanel:get_action_text()
 end
 
 function ActionPanel:get_area_text()
-    if self.dig_panel.shape.max_points == nil and self.dig_panel.shape.max_points == 2 then
-        local mark1 = self.dig_panel.marks[1]
+    local label = "Area: "
 
-        local label = "Area: "
-
-        if not mark1 then
-            return label .. "N/A"
-        end
-
-        local mark2 = self.dig_panel.marks[2] ~= nil and self.dig_panel.marks[2] or dfhack.gui.getMousePos()
-
-        local width, height, depth = get_dims(mark1, mark2) -- Replace
-        local tiles = width * height * depth
-        local plural = tiles > 1 and "s" or ""
-        return label .. ("%dx%dx%d (%d tile%s)"):format(
-            width,
-            height,
-            depth,
-            tiles,
-            plural
-        )
-    else
-        return "TBD"
-    end
+    local bounds = self.dig_panel:get_view_bounds()
+    if not bounds then return label .. "N/A" end
+    local width = math.abs(bounds.x2 - bounds.x1) + 1
+    local height = math.abs(bounds.y2 - bounds.y1) + 1
+    local depth = math.abs(bounds.z2 - bounds.z1) + 1
+    local tiles = self.dig_panel.shape.num_tiles * depth
+    local plural = tiles > 1 and "s" or ""
+    return label .. ("%dx%dx%d (%d tile%s)"):format(
+        width,
+        height,
+        depth,
+        tiles,
+        plural
+    )
 end
 
 function ActionPanel:get_mark_text(num)
@@ -437,7 +482,8 @@ function GenericOptionsPanel:init()
                 self.dig_panel:commit()
                 self.dig_panel.needs_update = true
             end,
-        } }
+        }
+    }
 end
 
 function GenericOptionsPanel:change_shape(new, old)
@@ -458,33 +504,33 @@ end
 --
 
 local CURSORS = {
-    INSIDE =  { 1, 2 },
-    NORTH =   { 1, 1 },
-    N_NUB =   { 3, 2 },
-    S_NUB =   { 4, 2 },
-    W_NUB =   { 3, 1 },
-    E_NUB =   { 5, 1 },
-    NE =      { 2, 1 },
-    NW =      { 0, 1 },
-    WEST =    { 0, 2 },
-    EAST =    { 2, 2 },
-    SW =      { 0, 3 },
-    SOUTH =   { 1, 3 },
-    SE =      { 2, 3 },
+    INSIDE = { 1, 2 },
+    NORTH = { 1, 1 },
+    N_NUB = { 3, 2 },
+    S_NUB = { 4, 2 },
+    W_NUB = { 3, 1 },
+    E_NUB = { 5, 1 },
+    NE = { 2, 1 },
+    NW = { 0, 1 },
+    WEST = { 0, 2 },
+    EAST = { 2, 2 },
+    SW = { 0, 3 },
+    SOUTH = { 1, 3 },
+    SE = { 2, 3 },
     VERT_NS = { 3, 3 },
     VERT_EW = { 4, 1 },
-    POINT =   { 4, 3 },
+    POINT = { 4, 3 },
 }
 
 -- Bit positions to use for keys in PENS table
 local PEN_MASK = {
-    NORTH =       1,
-    SOUTH =       2,
-    EAST =        3,
-    WEST =        4,
-    CORNER =      5,
-    MOUSEOVER =   6,
-    INSHAPE =     7,
+    NORTH = 1,
+    SOUTH = 2,
+    EAST = 3,
+    WEST = 4,
+    CORNER = 5,
+    MOUSEOVER = 6,
+    INSHAPE = 7,
     EXTRA_POINT = 8,
 }
 
@@ -659,17 +705,24 @@ function Dig:get_pen(x, y, mousePos)
 end
 
 function Dig:init()
-    self:addviews { ActionPanel {
-        view_id = "action_panel",
-        dig_panel = self,
-        get_extra_pt_count = function()
-            return #self.extra_points
-        end,
+    self:addviews {
+        ActionPanel {
+            view_id = "action_panel",
+            dig_panel = self,
+            get_extra_pt_count = function()
+                return #self.extra_points
+            end,
+        },
+        MarksPanel {
+            view_id = "marks_panel",
+            dig_panel = self,
+            -- h = 5
         },
         GenericOptionsPanel {
             view_id = "name_panel",
             dig_panel = self,
-        } }
+        }
+    }
 end
 
 function Dig:postinit()
@@ -814,6 +867,7 @@ end
 
 function Dig:get_view_bounds()
     if #self.marks == 0 then return nil end
+    -- todo not counting mouse
 
     local min_x = self.marks[1].x
     local max_x = self.marks[1].x
@@ -822,7 +876,13 @@ function Dig:get_view_bounds()
     local min_z = self.marks[1].z
     local max_z = self.marks[1].z
 
-    for _, mark in ipairs(self.marks) do
+    local marks_plus_next = copyall(self.marks)
+    local mouse_pos = dfhack.gui.getMousePos()
+    if mouse_pos then
+        table.insert(marks_plus_next, mouse_pos)
+    end
+
+    for _, mark in ipairs(marks_plus_next) do
         min_x = math.min(min_x, mark.x)
         max_x = math.max(max_x, mark.x)
         min_y = math.min(min_y, mark.y)
@@ -894,9 +954,12 @@ function Dig:onRenderFrame(dc, rect)
 
     local mouse_pos = dfhack.gui.getMousePos()
 
+    self.subviews.marks_panel:update_mark_labels()
+
     if #self.marks > 0 then
         local next_point = nil -- sus
-        if (#self.marks >= self.shape.min_points - 1) and (self.shape.max_points == nil or #self.marks < self.shape.max_points) then
+        if (#self.marks >= self.shape.min_points - 1) and
+            (self.shape.max_points == nil or #self.marks < self.shape.max_points) then
             next_point = mouse_pos -- sus
 
             if not next_point then return end
@@ -920,7 +983,7 @@ function Dig:onRenderFrame(dc, rect)
                 local transform_x = mouse_pos.x - self.prev_center.x
                 local transform_y = mouse_pos.y - self.prev_center.y
                 local transform_z = mouse_pos.z - self.prev_center.z
-                
+
                 for i, _ in pairs(self.marks) do
                     self.marks[i].x = self.marks[i].x + transform_x
                     self.marks[i].y = self.marks[i].y + transform_y
@@ -943,7 +1006,6 @@ function Dig:onRenderFrame(dc, rect)
         end
 
         self:add_shape_options()
-        self:updateLayout()
 
         local function get_overlay_pen(pos)
             return self:get_pen(pos.x, pos.y, mouse_pos)
@@ -961,6 +1023,7 @@ function Dig:onRenderFrame(dc, rect)
 
         guidm.renderMapOverlay(get_overlay_pen, bounds)
     end
+    self:updateLayout()
 end
 
 function Dig:onInput(keys)
@@ -974,7 +1037,6 @@ function Dig:onInput(keys)
     end
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-
         -- If extra points, clear them and return
         if self.shape ~= nil then
             -- if extra points have been set
