@@ -90,14 +90,6 @@ function MarksPanel:update_mark_labels()
         widgets.WrappedLabel {
             view_id = "mark_labels",
             text_to_wrap = label_text,
-            auto_height = true,
-            max_height = 5,
-            scroll_keys = {
-                KEYBOARD_CURSOR_UP_FAST = -1, -- Shift-Up
-                KEYBOARD_CURSOR_DOWN_FAST = 1, -- Shift-Down
-                STANDARDSCROLL_PAGEUP = '-halfpage',
-                STANDARDSCROLL_PAGEDOWN = '+halfpage',
-            },
         }
     }
 
@@ -716,7 +708,6 @@ function Dig:init()
         MarksPanel {
             view_id = "marks_panel",
             dig_panel = self,
-            -- h = 5
         },
         GenericOptionsPanel {
             view_id = "name_panel",
