@@ -17,13 +17,10 @@
 -- Add warning to stairs if not spanning z levels like vanilla does
 -- Figure out how to remove dug stairs with mode (nothing seems to work, include 'dig ramp')
 -- 'No overwrite' mode to not overwrite existing designations
--- Smoothing and engraving
 
 -- Nice To Haves
 -----------------------------
--- Triangle shapes, more shapes in general, could even do dynamic creation of residential layouts as long as they can be mathematically represented
 -- Exploration pattern ladder https://dwarffortresswiki.org/index.php/DF2014:Exploratory_mining#Ladder_Rows
--- Investigate using single quickfort API call when commiting  https://github.com/joelpt/quickfort/blob/master/README.md#area-expansion-syntax
 
 -- Stretch Goals
 -----------------------------
