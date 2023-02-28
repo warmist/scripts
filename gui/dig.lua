@@ -263,7 +263,7 @@ function GenericOptionsPanel:init()
             end,
         },
         widgets.HotkeyLabel {
-            view_id = "shape_place_extra_point",
+            view_id = "shape_toggle_placing_marks",
             key = "CUSTOM_B",
             label = function()
                 return (self.dig_panel.placing_mark.active) and "Stop placing" or "Start placing"
