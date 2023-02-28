@@ -1205,7 +1205,9 @@ function Dig:commit()
     quickfort.apply_blueprint(params)
 
     -- Only clear points if we're autocommit, or if we're doing a complex shape and still placing
-    if (self.autocommit and self.shape.basic_shape) or (not self.shape.basic_shape and self.placing_mark.active) then
+    if (self.autocommit and self.shape.basic_shape) or
+        ( not self.shape.basic_shape and
+            (self.placing_mark.active or (self.autocommit and self.shape.max_points == #self.marks))) then
         self.marks = {}
         self.placing_mark = { active = true, index = 1, continue = true }
         self.placing_extra = { active = false, index = nil }
