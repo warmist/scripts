@@ -212,6 +212,47 @@ function GenericOptionsPanel:init()
             show_tooltip = true,
             on_change = self:callback("change_shape"),
         },
+
+        widgets.ResizingPanel { autoarrange_subviews = true, subviews = {
+            widgets.ToggleHotkeyLabel {
+                key = 'CUSTOM_T',
+                view_id = 'transform',
+                label = 'Transform',
+                active = true, --function() return self.blueprint_name end,
+                enabled = true, --function() return self.blueprint_name end,
+                initial_option = true,
+                on_change = nil
+            },
+            widgets.ResizingPanel { view_id = 'transform_panel',
+                visible = true, --function() return transform and self.blueprint_name end,
+                subviews = {
+                    widgets.HotkeyLabel {
+                        key = 'STRING_A040',
+                        frame = { t = 1, l = 2 }, key_sep = '',
+                        on_activate = nil
+                    },
+                    widgets.HotkeyLabel {
+                        key = 'STRING_A041',
+                        frame = { t = 1, l = 3 }, key_sep = '',
+                        on_activate = nil
+                    },
+                    widgets.HotkeyLabel {
+                        key = 'STRING_A095',
+                        frame = { t = 1, l = 4 }, key_sep = '',
+                        on_activate = nil
+                    },
+                    widgets.HotkeyLabel {
+                        key = 'STRING_A061',
+                        frame = { t = 1, l = 5 }, key_sep = ':',
+                        on_activate = nil
+                    },
+                    widgets.WrappedLabel {
+                        frame = { t = 1, l = 8 },
+                        text_to_wrap = function() return 'No transform' end
+                    }
+                }
+            }
+        } },
         widgets.ToggleHotkeyLabel {
             view_id = "invert_designation_label",
             key = "CUSTOM_I",
@@ -330,7 +371,7 @@ function GenericOptionsPanel:init()
                 if self.dig_panel.shape ~= nil then
                     self.dig_panel.extra_points = {}
                     self.dig_panel.prev_center = nil
-                    self.dig_panel.placing_extra = {active = false, index = 0}
+                    self.dig_panel.placing_extra = { active = false, index = 0 }
                     self.dig_panel:updateLayout()
                     self.dig_panel.needs_update = true
                 end
@@ -741,7 +782,7 @@ function Dig:add_shape_options()
     if not self.shape or not self.shape.options then return end
 
     self:addviews {
-            widgets.WrappedLabel {
+        widgets.WrappedLabel {
             view_id = "shape_option_label",
             text_to_wrap = "Shape Settings:\n",
         }
@@ -833,6 +874,19 @@ function Dig:add_shape_options()
             }
         end
     end
+end
+
+function Dig:on_transform_change(val)
+    -- transform = val
+    self:updateLayout()
+    -- self.dirty = true
+end
+
+function Dig:on_transform(val)
+    -- table.insert(transformations, val)
+    -- transformations = reduce_transform(transformations)
+    self:updateLayout()
+    -- self.dirty = true
 end
 
 function Dig:get_view_bounds()
@@ -941,10 +995,12 @@ function Dig:onRenderFrame(dc, rect)
         -- Check if moving center, if so shift the shape by the delta between the previous and current points
         if self.prev_center ~= nil and
             (self.shape.basic_shape and #self.marks == self.shape.max_points
-            or not self.shape.basic_shape and not self.placing_mark.active) then
-            if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or self.prev_center.z ~= mouse_pos.z then
+                or not self.shape.basic_shape and not self.placing_mark.active) then
+            if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
+                self.prev_center.z ~= mouse_pos.z then
                 self.needs_update = true
-                local transform = {x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y, z = mouse_pos.z - self.prev_center.z}
+                local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
+                    z = mouse_pos.z - self.prev_center.z }
 
                 for i, _ in pairs(self.marks) do
                     self.marks[i].x = self.marks[i].x + transform.x
@@ -977,7 +1033,7 @@ function Dig:onRenderFrame(dc, rect)
         local bounds = self:get_view_bounds()
         if self.shape ~= nil and bounds ~= nil then
             local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
-            if top_left ~= nil and bot_right ~= nil then return end
+            if top_left == nil or bot_right == nil then return end
             bounds.x1 = top_left.x
             bounds.x2 = bot_right.x
             bounds.y1 = top_left.y
@@ -1066,24 +1122,24 @@ function Dig:onInput(keys)
                 if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
                     self.marks[1] = xyz2pos(shape_bot_right.x, shape_bot_right.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark = {active = true, index = 2}
+                    self.placing_mark = { active = true, index = 2 }
                 elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
                     self.marks[1] = xyz2pos(shape_top_left.x, shape_bot_right.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark = {active = true, index = 2}
+                    self.placing_mark = { active = true, index = 2 }
                 elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
                     self.marks[1] = xyz2pos(shape_bot_right.x, shape_top_left.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark = {active = true, index = 2}
+                    self.placing_mark = { active = true, index = 2 }
                 elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
                     self.marks[1] = xyz2pos(shape_top_left.x, shape_top_left.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark = {active = true, index = 2}
+                    self.placing_mark = { active = true, index = 2 }
                 end
             else
                 for i, point in pairs(self.marks) do
                     if point.x == pos.x and point.y == pos.y then
-                        self.placing_mark = {active = true, index = i, continue = false}
+                        self.placing_mark = { active = true, index = i, continue = false }
                     end
                 end
             end
@@ -1091,7 +1147,7 @@ function Dig:onInput(keys)
             -- Clicking an extra point
             for i = 1, #self.extra_points do
                 if pos.x == self.extra_points[i].x and pos.y == self.extra_points[i].y then
-                    self.placing_mark = {active = true, index = i}
+                    self.placing_mark = { active = true, index = i }
                     self.needs_update = true
                     return true
                 end
@@ -1165,9 +1221,9 @@ function Dig:commit()
         -- local top_left, bot_right = self.shape:get_true_dims()
         for zlevel = 0, math.abs(view_bounds.z1 - view_bounds.z2) do
             data[zlevel] = {}
-            for row = 0, math.abs( bot_right.y - top_left.y) do
+            for row = 0, math.abs(bot_right.y - top_left.y) do
                 data[zlevel][row] = {}
-                for col = 0, math.abs( bot_right.x - top_left.x) do
+                for col = 0, math.abs(bot_right.x - top_left.x) do
                     if grid[col] and grid[col][row] then
                         local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then
@@ -1206,7 +1262,7 @@ function Dig:commit()
 
     -- Only clear points if we're autocommit, or if we're doing a complex shape and still placing
     if (self.autocommit and self.shape.basic_shape) or
-        ( not self.shape.basic_shape and
+        (not self.shape.basic_shape and
             (self.placing_mark.active or (self.autocommit and self.shape.max_points == #self.marks))) then
         self.marks = {}
         self.placing_mark = { active = true, index = 1, continue = true }
