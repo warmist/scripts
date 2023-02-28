@@ -20,7 +20,8 @@ Shape.ATTRS {
     max_points = 2,
     extra_points = {}, -- Extra points like bezeir curve
     drag_corners = { ne = true, nw = true, se = true, sw = true }, -- which corners should show and be draggable,
-    num_tiles = 0 -- count of actual num_tiles in the shape
+    num_tiles = 0, -- count of actual num_tiles in the shape
+    basic_shape = true -- true if bounded strictly by a rectangle, like the Rectangle, Ellipse, Rows, etc... set to false for complex shapes
 }
 
 -- Transform shape so that the top left-most point is at min_x, min_y
@@ -404,7 +405,8 @@ Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line",
     extra_points = { { label = "Curve" } },
-    invertable = false -- Doesn't support invert
+    invertable = false, -- Doesn't support invert
+    basic_shape = false -- Driven by points, not rectangle bounds
 }
 
 function Line:init()
@@ -438,16 +440,6 @@ function Line:update(points, extra_points)
 
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
-
-    if x0 < x1 and y0 < y1 then -- down right
-        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
-    elseif x0 > x1 and y0 < y1 then -- down left
-        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
-    elseif x0 < x1 and y0 > y1 then -- up right
-        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
-    elseif x0 > x1 and y0 > y1 then -- up left
-        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
-    end
 
     local thickness = self.options.thickness.value or 1
     local bezier_point = (#extra_points > 0) and { x = extra_points[1].x, y = extra_points[1].y } or nil
@@ -510,7 +502,8 @@ FreeForm.ATTRS = {
     name = "FreeForm",
     invertable = false, -- doesn't support invert
     min_points = 1,
-    max_points = DEFAULT_NIL
+    max_points = DEFAULT_NIL,
+    basic_shape = false
 }
 
 function FreeForm:init()
