@@ -38,7 +38,6 @@ that repo.
 - `devel/query`: can now properly index vectors in the --table argument
 -@ `forbid`: fix detection of unreachable items for items in containers
 -@ `unforbid`: fix detection of unreachable items for items in containers
-- `gui/dig`: Allow placing an extra point (curve) while still placing thesecond main point
 
 ## Misc Improvements
 - `troubleshoot-item`: output as bullet point list with indenting, with item description and ID at top
