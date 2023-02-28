@@ -1188,7 +1188,7 @@ function Dig:onInput(keys)
             -- Clicking an extra point
             for i = 1, #self.extra_points do
                 if pos.x == self.extra_points[i].x and pos.y == self.extra_points[i].y then
-                    self.placing_mark = { active = true, index = i }
+                    self.placing_extra = { active = true, index = i }
                     self.needs_update = true
                     return true
                 end
