@@ -975,8 +975,9 @@ function Dig:onRenderFrame(dc, rect)
 
         -- Generate bounds based on the shape's dimensions
         local bounds = self:get_view_bounds()
-        if self.shape ~= nil then
+        if self.shape ~= nil and bounds ~= nil then
             local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
+            if top_left ~= nil and bot_right ~= nil then return end
             bounds.x1 = top_left.x
             bounds.x2 = bot_right.x
             bounds.y1 = top_left.y

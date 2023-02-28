@@ -46,6 +46,8 @@ end
 -- Dims defined by the main points of a shape
 function Shape:get_point_dims()
 
+    if #self.points == 0 then return nil end
+
     local min_x = self.points[1].x
     local max_x = self.points[1].x
     local min_y = self.points[1].y
@@ -597,6 +599,7 @@ function FreeForm:point_in_polygon(x, y)
     for i, point in ipairs(self.points) do
         vertices[i] = { x = point.x, y = point.y }
     end
+
     local inside = false
     local j = #vertices
 
