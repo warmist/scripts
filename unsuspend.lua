@@ -153,12 +153,12 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
     end
     local color = COLOR_YELLOW
     local ch = 'x'
-    if data.suspend_count > 1 then
-        color = COLOR_RED
-        ch = 'X'
-    elseif buildingplan and buildingplan.isPlannedBuilding(bld) then
+    if buildingplan and buildingplan.isPlannedBuilding(bld) then
         color = COLOR_GREEN
         ch = 'P'
+    elseif data.suspend_count > 1 then
+        color = COLOR_RED
+        ch = 'X'
     end
     dc:seek(screen_pos.x, screen_pos.y):tile(ch, nil, color)
 end

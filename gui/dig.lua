@@ -281,6 +281,7 @@ function GenericOptionsPanel:init()
                 else
                     self.dig_panel.placing_mark.continue = true
                 end
+
                 self.dig_panel.needs_update = true
             end,
         },
