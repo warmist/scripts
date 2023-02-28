@@ -51,22 +51,10 @@ MarksPanel.ATTRS {
 }
 
 function MarksPanel:init()
-    -- self:addviews {
-    --     widgets.WrappedLabel {
-    --         view_id = "action_label",
-    --         text_to_wrap = self:callback("get_action_text"),
-    --     },
-    --     widgets.WrappedLabel {
-    --         view_id = "selected_area",
-    --         text_to_wrap = self:callback("get_area_text"),
-    --     },
-    --     self:get_mark_labels()
-    -- }
 end
 
 function MarksPanel:update_mark_labels()
     self.subviews = {}
-    local mark_labels = {}
     local label_text = {}
     if #self.dig_panel.marks >= 1 then
         local first_mark = self.dig_panel.marks[1]
@@ -93,10 +81,6 @@ function MarksPanel:update_mark_labels()
     }
 
 end
-
--- function markspanel:get_mark_labels()
--- end
-
 
 -- Panel to show the Mouse position/dimensions/etc
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
@@ -347,8 +331,7 @@ function GenericOptionsPanel:init()
                 if self.dig_panel.shape ~= nil then
                     self.dig_panel.extra_points = {}
                     self.dig_panel.prev_center = nil
-                    self.dig_panel.placing_extra.active = false
-                    self.dig_panel.placing_extra.index = 0
+                    self.dig_panel.placing_extra = {active = false, index = 0}
                     self.dig_panel:updateLayout()
                     self.dig_panel.needs_update = true
                 end
@@ -504,7 +487,7 @@ end
 function GenericOptionsPanel:change_shape(new, old)
     self.dig_panel.shape = shapes.all_shapes[new]
     if self.dig_panel.shape.max_points and #self.dig_panel.marks > self.dig_panel.shape.max_points then
-        -- pop marks until we're down to the max
+        -- pop marks until we're down to the max of the new shape
         for i = #self.dig_panel.marks, self.dig_panel.shape.max_points, -1 do
             table.remove(self.dig_panel.marks, i)
         end
@@ -757,10 +740,12 @@ function Dig:add_shape_options()
 
     if not self.shape or not self.shape.options then return end
 
-    self:addviews { widgets.WrappedLabel {
-        view_id = "shape_option_label",
-        text_to_wrap = "Shape Settings:\n",
-    } }
+    self:addviews {
+            widgets.WrappedLabel {
+            view_id = "shape_option_label",
+            text_to_wrap = "Shape Settings:\n",
+        }
+    }
 
     for key, option in pairs(self.shape.options) do
         if option.type == "bool" then
@@ -774,7 +759,7 @@ function Dig:add_shape_options()
                         if option.enabled == nil then
                             return true
                         else
-                            return self.shape.options[option.enabled[1]] == option.enabled[2]
+                            return self.shape.options[option.enabled[1]].value == option.enabled[2]
                         end
                     end,
                     disabled = false,
@@ -852,7 +837,6 @@ end
 
 function Dig:get_view_bounds()
     if #self.marks == 0 then return nil end
-    -- todo not counting mouse
 
     local min_x = self.marks[1].x
     local max_x = self.marks[1].x
@@ -951,7 +935,6 @@ function Dig:onRenderFrame(dc, rect)
 
         -- Set the pos of the currently moving extra point
         if self.placing_extra.active then
-            local mouse_pos = mouse_pos
             self.extra_points[self.placing_extra.index] = { x = mouse_pos.x, y = mouse_pos.y }
         end
 
@@ -961,19 +944,17 @@ function Dig:onRenderFrame(dc, rect)
             or not self.shape.basic_shape and not self.placing_mark.active) then
             if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or self.prev_center.z ~= mouse_pos.z then
                 self.needs_update = true
-                local transform_x = mouse_pos.x - self.prev_center.x
-                local transform_y = mouse_pos.y - self.prev_center.y
-                local transform_z = mouse_pos.z - self.prev_center.z
+                local transform = {x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y, z = mouse_pos.z - self.prev_center.z}
 
                 for i, _ in pairs(self.marks) do
-                    self.marks[i].x = self.marks[i].x + transform_x
-                    self.marks[i].y = self.marks[i].y + transform_y
-                    self.marks[i].z = self.marks[i].z + transform_z
+                    self.marks[i].x = self.marks[i].x + transform.x
+                    self.marks[i].y = self.marks[i].y + transform.y
+                    self.marks[i].z = self.marks[i].z + transform.z
                 end
 
                 for i, point in pairs(self.extra_points) do
-                    self.extra_points[i].x = self.extra_points[i].x + transform_x
-                    self.extra_points[i].y = self.extra_points[i].y + transform_y
+                    self.extra_points[i].x = self.extra_points[i].x + transform.x
+                    self.extra_points[i].y = self.extra_points[i].y + transform.y
                 end
 
                 self.prev_center = mouse_pos
@@ -1084,30 +1065,24 @@ function Dig:onInput(keys)
                 if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
                     self.marks[1] = xyz2pos(shape_bot_right.x, shape_bot_right.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark.active = true
-                    self.placing_mark.index = 2
+                    self.placing_mark = {active = true, index = 2}
                 elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
                     self.marks[1] = xyz2pos(shape_top_left.x, shape_bot_right.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark.active = true
-                    self.placing_mark.index = 2
+                    self.placing_mark = {active = true, index = 2}
                 elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
                     self.marks[1] = xyz2pos(shape_bot_right.x, shape_top_left.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark.active = true
-                    self.placing_mark.index = 2
+                    self.placing_mark = {active = true, index = 2}
                 elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
                     self.marks[1] = xyz2pos(shape_top_left.x, shape_top_left.y, self.marks[1].z)
                     table.remove(self.marks, 2)
-                    self.placing_mark.active = true
-                    self.placing_mark.index = 2
+                    self.placing_mark = {active = true, index = 2}
                 end
             else
                 for i, point in pairs(self.marks) do
                     if point.x == pos.x and point.y == pos.y then
-                        self.placing_mark.active = true
-                        self.placing_mark.index = i
-                        self.placing_mark.continue = false
+                        self.placing_mark = {active = true, index = i, continue = false}
                     end
                 end
             end
@@ -1115,8 +1090,7 @@ function Dig:onInput(keys)
             -- Clicking an extra point
             for i = 1, #self.extra_points do
                 if pos.x == self.extra_points[i].x and pos.y == self.extra_points[i].y then
-                    self.placing_extra.active = true
-                    self.placing_extra.index = i
+                    self.placing_mark = {active = true, index = i}
                     self.needs_update = true
                     return true
                 end
@@ -1190,13 +1164,9 @@ function Dig:commit()
         -- local top_left, bot_right = self.shape:get_true_dims()
         for zlevel = 0, math.abs(view_bounds.z1 - view_bounds.z2) do
             data[zlevel] = {}
-            for row = 0, math.abs(
-                bot_right.y - top_left.y
-            ) do
+            for row = 0, math.abs( bot_right.y - top_left.y) do
                 data[zlevel][row] = {}
-                for col = 0, math.abs(
-                    bot_right.x - top_left.x
-                ) do
+                for col = 0, math.abs( bot_right.x - top_left.x) do
                     if grid[col] and grid[col][row] then
                         local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then

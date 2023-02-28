@@ -533,6 +533,7 @@ function FreeForm:init()
             type = "bool",
             value = false,
             key = "CUSTOM_L",
+            enabled = { "closed", true },
         },
     }
 end
