@@ -1002,7 +1002,6 @@ function Dig:onInput(keys)
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- If extra points, clear them and return
         if self.shape ~= nil then
-            -- if extra points have been set
             if #self.extra_points > 0 or self.placing_extra.active then
                 self.extra_points = {}
                 self.placing_extra.active = false
@@ -1014,12 +1013,13 @@ function Dig:onInput(keys)
             end
         end
 
+        -- If marks are present, pop the last mark
         if #self.marks > 0 then
-            -- self.placing_mark.active = true
             self.placing_mark.index = #self.marks - 1
             self.needs_update = true
             table.remove(self.marks, #self.marks)
         else
+            -- nothing left to remove, so dismiss
             self.parent_view:dismiss()
         end
 
