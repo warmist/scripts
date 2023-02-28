@@ -601,8 +601,9 @@ function Dig:get_pen(x, y, mousePos)
 
     local drag_point = false
 
+    -- Basic shapes are bounded by rectangles and therefore can have corner drag points
+    -- even if they're not real points in the shape
     if self.shape.basic_shape then
-        -- Some shapes like Line define which points should have handles
         local shape_top_left, shape_bot_right = self.shape:get_point_dims()
         if x == shape_top_left.x and y == shape_top_left.y and self.shape.drag_corners.nw then
             drag_point = true
