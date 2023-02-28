@@ -5,6 +5,7 @@
 
 -- Must Haves
 -----------------------------
+-- Flip/mirror for shapes
 
 -- Should Haves
 -----------------------------
