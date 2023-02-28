@@ -5,7 +5,6 @@
 
 -- Must Haves
 -----------------------------
--- Flip/mirror for shapes
 
 -- Should Haves
 -----------------------------
@@ -218,37 +217,37 @@ function GenericOptionsPanel:init()
                 key = 'CUSTOM_T',
                 view_id = 'transform',
                 label = 'Transform',
-                active = true, --function() return self.blueprint_name end,
-                enabled = true, --function() return self.blueprint_name end,
-                initial_option = true,
+                active = true,
+                enabled = function() return not self.dig_panel.shape.basic_shape end,
+                initial_option = false,
                 on_change = nil
             },
             widgets.ResizingPanel { view_id = 'transform_panel',
-                visible = true, --function() return transform and self.blueprint_name end,
+                visible = function() return self.dig_panel.subviews.transform:getOptionValue() end,
                 subviews = {
                     widgets.HotkeyLabel {
                         key = 'STRING_A040',
-                        frame = { t = 1, l = 2 }, key_sep = '',
-                        on_activate = nil
+                        frame = { t = 1, l = 1 }, key_sep = '',
+                        on_activate=self.dig_panel:callback('on_transform', 'ccw'),
                     },
                     widgets.HotkeyLabel {
                         key = 'STRING_A041',
-                        frame = { t = 1, l = 3 }, key_sep = '',
-                        on_activate = nil
+                        frame = { t = 1, l = 2 }, key_sep = '',
+                        on_activate=self.dig_panel:callback('on_transform', 'cw'),
                     },
                     widgets.HotkeyLabel {
                         key = 'STRING_A095',
-                        frame = { t = 1, l = 4 }, key_sep = '',
-                        on_activate = nil
+                        frame = { t = 1, l = 3 }, key_sep = '',
+                        on_activate=self.dig_panel:callback('on_transform', 'flipv'),
                     },
                     widgets.HotkeyLabel {
                         key = 'STRING_A061',
-                        frame = { t = 1, l = 5 }, key_sep = ':',
-                        on_activate = nil
+                        frame = { t = 1, l = 4 }, key_sep = ':',
+                        on_activate=self.dig_panel:callback('on_transform', 'fliph'),
                     },
                     widgets.WrappedLabel {
-                        frame = { t = 1, l = 8 },
-                        text_to_wrap = function() return 'No transform' end
+                        frame = { t = 1, l = 7 },
+                        text_to_wrap = function() return 'Transformation directions' end
                     }
                 }
             }
@@ -754,7 +753,7 @@ function Dig:init()
             dig_panel = self,
         },
         GenericOptionsPanel {
-            view_id = "name_panel",
+            view_id = "generic_panel",
             dig_panel = self,
         }
     }
@@ -876,17 +875,59 @@ function Dig:add_shape_options()
     end
 end
 
-function Dig:on_transform_change(val)
-    -- transform = val
-    self:updateLayout()
-    -- self.dirty = true
-end
-
 function Dig:on_transform(val)
-    -- table.insert(transformations, val)
-    -- transformations = reduce_transform(transformations)
+    local center_x, center_y = self.shape:get_center()
+
+    -- Transform marks
+    for i, mark in ipairs(self.marks) do
+        local x, y = mark.x, mark.y
+        if val == 'cw' then
+            x, y = center_x - (y - center_y), center_y + (x - center_x)
+        elseif val == 'ccw' then
+            x, y = center_x + (y - center_y), center_y - (x - center_x)
+        elseif val == 'fliph' then
+            x = center_x - (x - center_x)
+        elseif val == 'flipv' then
+            y = center_y - (y - center_y)
+        end
+        self.marks[i] = {x=math.floor(x + 0.5), y=math.floor(y + 0.5), z=self.marks[i].z}
+    end
+
+    -- Transform extra points
+    for i, point in ipairs(self.extra_points) do
+        local x, y = point.x, point.y
+        if val == 'cw' then
+            x, y = center_x - (y - center_y), center_y + (x - center_x)
+        elseif val == 'ccw' then
+            x, y = center_x + (y - center_y), center_y - (x - center_x)
+        elseif val == 'fliph' then
+            x = center_x - (x - center_x)
+        elseif val == 'flipv' then
+            y = center_y - (y - center_y)
+        end
+        self.extra_points[i] = {x=math.floor(x + 0.5), y=math.floor(y + 0.5), z=self.extra_points[i].z}
+    end
+
+    -- Calculate center point after transformation
+    self.shape:update(self.marks, self.extra_points)
+    local new_center_x, new_center_y = self.shape:get_center()
+
+    -- Calculate delta between old and new center points
+    local delta_x = center_x - new_center_x
+    local delta_y = center_y - new_center_y
+
+    -- Adjust marks and extra points based on delta
+    for i, mark in ipairs(self.marks) do
+        self.marks[i].x = self.marks[i].x + delta_x
+        self.marks[i].y = self.marks[i].y + delta_y
+    end
+    for i, point in ipairs(self.extra_points) do
+        self.extra_points[i].x = self.extra_points[i].x + delta_x
+        self.extra_points[i].y = self.extra_points[i].y + delta_y
+    end
+
     self:updateLayout()
-    -- self.dirty = true
+    self.needs_update = true
 end
 
 function Dig:get_view_bounds()
