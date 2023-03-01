@@ -218,7 +218,7 @@ function GenericOptionsPanel:init()
                 view_id = 'transform',
                 label = 'Transform',
                 active = true,
-                enabled = function() return not self.dig_panel.shape.basic_shape end,
+                enabled = true,
                 initial_option = false,
                 on_change = nil
             },
