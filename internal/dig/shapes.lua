@@ -593,19 +593,15 @@ function FreeForm:update(points, extra_points)
     end
 end
 
-
+-- https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
 function FreeForm:point_in_polygon(x, y)
-    local vertices = {}
-    for i, point in ipairs(self.points) do
-        vertices[i] = { x = point.x, y = point.y }
-    end
 
     local inside = false
-    local j = #vertices
+    local j = #self.points
 
-    for i = 1, #vertices do
-        if (vertices[i].y > y) ~= (vertices[j].y > y) and
-            x < (vertices[j].x - vertices[i].x) * (y - vertices[i].y) / (vertices[j].y - vertices[i].y) + vertices[i].x then
+    for i = 1, #self.points do
+        if (self.points[i].y > y) ~= (self.points[j].y > y) and
+            x < (self.points[j].x - self.points[i].x) * (y - self.points[i].y) / (self.points[j].y - self.points[i].y) + self.points[i].x then
             inside = not inside
         end
         j = i
