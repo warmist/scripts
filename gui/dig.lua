@@ -212,46 +212,53 @@ function GenericOptionsPanel:init()
             on_change = self:callback("change_shape"),
         },
 
-        widgets.ResizingPanel { autoarrange_subviews = true, subviews = {
-            widgets.ToggleHotkeyLabel {
-                key = 'CUSTOM_T',
-                view_id = 'transform',
-                label = 'Transform',
-                active = true,
-                enabled = true,
-                initial_option = false,
-                on_change = nil
-            },
-            widgets.ResizingPanel { view_id = 'transform_panel',
-                visible = function() return self.dig_panel.subviews.transform:getOptionValue() end,
-                subviews = {
-                    widgets.HotkeyLabel {
-                        key = 'STRING_A040',
-                        frame = { t = 1, l = 1 }, key_sep = '',
-                        on_activate=self.dig_panel:callback('on_transform', 'ccw'),
-                    },
-                    widgets.HotkeyLabel {
-                        key = 'STRING_A041',
-                        frame = { t = 1, l = 2 }, key_sep = '',
-                        on_activate=self.dig_panel:callback('on_transform', 'cw'),
-                    },
-                    widgets.HotkeyLabel {
-                        key = 'STRING_A095',
-                        frame = { t = 1, l = 3 }, key_sep = '',
-                        on_activate=self.dig_panel:callback('on_transform', 'flipv'),
-                    },
-                    widgets.HotkeyLabel {
-                        key = 'STRING_A061',
-                        frame = { t = 1, l = 4 }, key_sep = ':',
-                        on_activate=self.dig_panel:callback('on_transform', 'fliph'),
-                    },
-                    widgets.WrappedLabel {
-                        frame = { t = 1, l = 7 },
-                        text_to_wrap = function() return 'Transformation directions' end
+        widgets.ResizingPanel { autoarrange_subviews = true,
+            subviews = {
+                widgets.ToggleHotkeyLabel {
+                    key = 'CUSTOM_T',
+                    view_id = 'transform',
+                    label = 'Transform',
+                    active = true,
+                    enabled = true,
+                    initial_option = false,
+                    on_change = nil
+                },
+                widgets.ResizingPanel {
+                    view_id = 'transform_panel_rotate',
+                    visible = function() return self.dig_panel.subviews.transform:getOptionValue() end,
+                    subviews = {
+                        widgets.HotkeyLabel {
+                            key = 'STRING_A040',
+                            frame = { t = 1, l = 1 }, key_sep = '',
+                            on_activate = self.dig_panel:callback('on_transform', 'ccw'),
+                        },
+                        widgets.HotkeyLabel {
+                            key = 'STRING_A041',
+                            frame = { t = 1, l = 2 }, key_sep = ':',
+                            on_activate = self.dig_panel:callback('on_transform', 'cw'),
+                        },
+                        widgets.WrappedLabel {
+                            frame = { t = 1, l = 5 },
+                            text_to_wrap = 'Rotate'
+                        },
+                        widgets.HotkeyLabel {
+                            key = 'STRING_A095',
+                            frame = { t = 2, l = 1}, key_sep = '',
+                            on_activate = self.dig_panel:callback('on_transform', 'flipv'),
+                        },
+                        widgets.HotkeyLabel {
+                            key = 'STRING_A061',
+                            frame = { t = 2, l = 2}, key_sep = ':',
+                            on_activate = self.dig_panel:callback('on_transform', 'fliph'),
+                        },
+                        widgets.WrappedLabel {
+                            frame = { t = 2, l = 5},
+                            text_to_wrap = 'Flip'
+                        }
                     }
                 }
             }
-        } },
+        },
         widgets.ToggleHotkeyLabel {
             view_id = "invert_designation_label",
             key = "CUSTOM_I",
@@ -890,7 +897,7 @@ function Dig:on_transform(val)
         elseif val == 'flipv' then
             y = center_y - (y - center_y)
         end
-        self.marks[i] = {x=math.floor(x + 0.5), y=math.floor(y + 0.5), z=self.marks[i].z}
+        self.marks[i] = { x = math.floor(x + 0.5), y = math.floor(y + 0.5), z = self.marks[i].z }
     end
 
     -- Transform extra points
@@ -905,7 +912,7 @@ function Dig:on_transform(val)
         elseif val == 'flipv' then
             y = center_y - (y - center_y)
         end
-        self.extra_points[i] = {x=math.floor(x + 0.5), y=math.floor(y + 0.5), z=self.extra_points[i].z}
+        self.extra_points[i] = { x = math.floor(x + 0.5), y = math.floor(y + 0.5), z = self.extra_points[i].z }
     end
 
     -- Calculate center point after transformation
