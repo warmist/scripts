@@ -16,8 +16,12 @@ Shape.ATTRS {
     width = 1,
     height = 1,
     points = {}, -- Main points that define the shape
+    min_points = 2,
+    max_points = 2,
     extra_points = {}, -- Extra points like bezeir curve
-    drag_corners = { ne = true, nw = true, se = true, sw = true } -- which corners should show and be draggable,
+    drag_corners = { ne = true, nw = true, se = true, sw = true }, -- which corners should show and be draggable,
+    num_tiles = 0, -- count of actual num_tiles in the shape
+    basic_shape = true -- true if bounded strictly by a rectangle, like the Rectangle, Ellipse, Rows, etc... set to false for complex shapes
 }
 
 -- Transform shape so that the top left-most point is at min_x, min_y
@@ -41,6 +45,8 @@ end
 
 -- Dims defined by the main points of a shape
 function Shape:get_point_dims()
+
+    if #self.points == 0 then return nil end
 
     local min_x = self.points[1].x
     local max_x = self.points[1].x
@@ -101,31 +107,31 @@ function Shape:get_view_dims(extra_points)
     end
 
     for i, point in pairs(self.points) do
-            if not min_x then
-                min_x = point.x
-                max_x = point.x
-                min_y = point.y
-                max_y = point.y
-            else
-                min_x = math.min(min_x, point.x)
-                max_x = math.max(max_x, point.x)
-                min_y = math.min(min_y, point.y)
-                max_y = math.max(max_y, point.y)
-            end
+        if not min_x then
+            min_x = point.x
+            max_x = point.x
+            min_y = point.y
+            max_y = point.y
+        else
+            min_x = math.min(min_x, point.x)
+            max_x = math.max(max_x, point.x)
+            min_y = math.min(min_y, point.y)
+            max_y = math.max(max_y, point.y)
+        end
     end
 
     for i, point in pairs(extra_points) do
-            if not min_x then
-                min_x = point.x
-                max_x = point.x
-                min_y = point.y
-                max_y = point.y
-            else
-                min_x = math.min(min_x, point.x)
-                max_x = math.max(max_x, point.x)
-                min_y = math.min(min_y, point.y)
-                max_y = math.max(max_y, point.y)
-            end
+        if not min_x then
+            min_x = point.x
+            max_x = point.x
+            min_y = point.y
+            max_y = point.y
+        else
+            min_x = math.min(min_x, point.x)
+            max_x = math.max(max_x, point.x)
+            min_y = math.min(min_y, point.y)
+            max_y = math.max(max_y, point.y)
+        end
     end
 
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
@@ -142,7 +148,6 @@ function Shape:points_to_string(points)
 
     return output
 end
-
 
 function Shape:get_center()
     -- TODO revisit
@@ -169,19 +174,22 @@ function Shape:get_center()
 
     -- Simple way to get the center defined by the point dims
     local top_left, bot_right = self:get_point_dims()
-    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x, math.floor((bot_right.y - top_left.y) / 2) + top_left.y
+    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x,
+        math.floor((bot_right.y - top_left.y) / 2) + top_left.y
 
 end
 
 -- Basic update function that loops over a rectangle from top left to bottom right
 -- Can be overridden for more complex shapes
 function Shape:update(points)
-
+    self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
     self.height = bot_right.y - top_left.y
     self.width = bot_right.x - top_left.x
+
+    if #points < self.min_points then return end
 
     for x = top_left.x, bot_right.x do
         self.arr[x] = {}
@@ -192,6 +200,8 @@ function Shape:update(points)
             else
                 self.arr[x][y] = not value
             end
+
+            self.num_tiles = self.num_tiles + (self.arr[x][y] and 1 or 0)
         end
     end
 end
@@ -396,8 +406,9 @@ end
 Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line",
-    extra_points = {{label = "Curve"}},
-    invertable = false -- Doesn't support invert
+    extra_points = { { label = "Curve" } },
+    invertable = false, -- Doesn't support invert
+    basic_shape = false -- Driven by points, not rectangle bounds
 }
 
 function Line:init()
@@ -420,28 +431,20 @@ function Line:init()
 end
 
 function Line:update(points, extra_points)
-
+    self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
     self.arr = {}
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
 
+    if #points < self.min_points then return end
+
     local x0, y0 = self.points[1].x, self.points[1].y
     local x1, y1 = self.points[2].x, self.points[2].y
 
-    if x0 < x1 and y0 < y1 then -- down right
-        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
-    elseif x0 > x1 and y0 < y1 then -- down left
-        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
-    elseif x0 < x1 and y0 > y1 then -- up right
-        self.drag_corners = { ne = true, nw = false, se = false, sw = true }
-    elseif x0 > x1 and y0 > y1 then -- up left
-        self.drag_corners = { ne = false, nw = true, se = true, sw = false }
-    end
-
     local thickness = self.options.thickness.value or 1
-    local bezier_point = (#extra_points > 0) and {x = extra_points[1].x, y = extra_points[1].y} or nil
+    local bezier_point = (#extra_points > 0) and { x = extra_points[1].x, y = extra_points[1].y } or nil
 
     if bezier_point then -- Use Bezier curve
         local t = 0
@@ -453,6 +456,7 @@ function Line:update(points, extra_points)
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
                     self.arr[x + j][y + i] = true
+                    self.num_tiles = self.num_tiles + 1
                 end
             end
             t = t + 0.01
@@ -472,6 +476,7 @@ function Line:update(points, extra_points)
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
                     self.arr[x + j][y] = true
+                    self.num_tiles = self.num_tiles + 1
                 end
 
                 if x == x1 and y == y1 + i then
@@ -494,7 +499,118 @@ function Line:update(points, extra_points)
     end
 end
 
+FreeForm = defclass(FreeForm, Shape)
+FreeForm.ATTRS = {
+    name = "FreeForm",
+    invertable = false, -- doesn't support invert
+    min_points = 1,
+    max_points = DEFAULT_NIL,
+    basic_shape = false
+}
+
+function FreeForm:init()
+    self.options = {
+        thickness = {
+            name = "Thickness",
+            type = "plusminus",
+            value = 1,
+            min = 1,
+            max = function(shape)
+                if not shape.height or not shape.width then
+                    return nil
+                else
+                    return math.max(shape.height, shape.width)
+                end
+            end,
+            keys = { "CUSTOM_T", "CUSTOM_SHIFT_T" },
+        },
+        closed = {
+            name = "Closed",
+            type = "bool",
+            value = true,
+            key = "CUSTOM_Y",
+        },
+        filled = {
+            name = "Filled",
+            type = "bool",
+            value = false,
+            key = "CUSTOM_L",
+            enabled = { "closed", true },
+        },
+    }
+end
+
+function FreeForm:update(points, extra_points)
+    self.num_tiles = 0
+    self.points = copyall(points)
+    local top_left, bot_right = self:get_point_dims()
+    self.arr = {}
+    self.height = bot_right.x - top_left.x
+    self.width = bot_right.y - top_left.y
+
+    local thickness = self.options.thickness.value or 1
+
+    -- Determine the edges of the polygon
+    local edges = {}
+    for i = 1, #self.points - 1 do
+        table.insert(edges, { self.points[i].x, self.points[i].y, self.points[i + 1].x, self.points[i + 1].y })
+    end
+
+    if self.options.closed.value then
+        -- Connect last point to first point to close the shape
+        table.insert(edges, { self.points[#self.points].x, self.points[#self.points].y, self.points[1].x, self.points[1].y })
+    end
+
+    -- Iterate over each edge and draw a line
+    for _, edge in ipairs(edges) do
+        local line = { { x = edge[1], y = edge[2] }, { x = edge[3], y = edge[4] } }
+        local line_class = Line()
+        line_class:update(line, {})
+        for x, y_row in pairs(line_class.arr) do
+            for y, _ in pairs(y_row) do
+                for i = 0, thickness - 1 do
+                    for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                        if not self.arr[x + j] then self.arr[x + j] = {} end
+                        self.arr[x + j][y + i] = true
+                        self.num_tiles = self.num_tiles + 1
+                    end
+                end
+            end
+        end
+    end
+
+    if self.options.filled.value and self.options.closed.value then
+        -- Fill internal points if shape is closed and filled
+        for x = top_left.x, bot_right.x do
+            for y = top_left.y, bot_right.y do
+                if self:point_in_polygon(x, y) then
+                    if not self.arr[x] then self.arr[x] = {} end
+                    self.arr[x][y] = true
+                    self.num_tiles = self.num_tiles + 1
+                end
+            end
+        end
+    end
+end
+
+-- https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule
+function FreeForm:point_in_polygon(x, y)
+
+    local inside = false
+    local j = #self.points
+
+    for i = 1, #self.points do
+        if (self.points[i].y > y) ~= (self.points[j].y > y) and
+            x < (self.points[j].x - self.points[i].x) * (y - self.points[i].y) / (self.points[j].y - self.points[i].y) + self.points[i].x then
+            inside = not inside
+        end
+        j = i
+    end
+
+    return inside
+end
+
 -- module users can get shapes through this global, shape option values
 -- persist in these as long as the module is loaded
 -- idk enough lua to know if this is okay to do or not
-all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {} }
+all_shapes = { Rectangle {}, Ellipse {}, Rows {}, Diag {}, Line {}, FreeForm {} }
