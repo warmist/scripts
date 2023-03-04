@@ -39,6 +39,93 @@ local tile_attrs = df.tiletype.attrs
 
 local to_pen = dfhack.pen.parse
 
+SHOW_DEBUG_WINDOW = true
+
+function tableToString(tbl, indent)
+    indent = indent or ""
+    local result = {}
+    for k, v in pairs(tbl) do
+        local key = type(k) == "number" and "[" .. tostring(k) .. "]" or tostring(k)
+        if type(v) == "table" then
+            table.insert(result, indent .. key .. " = {")
+            local subTable = tableToString(v, indent .. "  ")
+            for _, line in ipairs(subTable) do
+                table.insert(result, line)
+            end
+            table.insert(result, indent .. "},")
+        elseif type(v) == "function" then
+            local res = v()
+            local value = type(res) == "number" and tostring(res) or "\"" .. tostring(res) .. "\""
+            table.insert(result, indent .. key .. " = " .. value .. ",")
+        else
+            local value = type(v) == "number" and tostring(v) or "\"" .. tostring(v) .. "\""
+            table.insert(result, indent .. key .. " = " .. value .. ",")
+        end
+    end
+    return result
+end
+
+DigDebugWindow = defclass(DigDebugWindow, widgets.Window)
+DigDebugWindow.ATTRS {
+    frame_title = "Debug",
+    frame = {
+        w = 47,
+        h = 40,
+        l = 10,
+        t = 8,
+    },
+    resizable = true,
+    resize_min = { h = 30 },
+    autoarrange_subviews = true,
+    autoarrange_gap = 1,
+    dig_window = DEFAULT_NIL
+}
+function DigDebugWindow:init()
+
+    local attrs = {
+        -- "shape", -- prints a lot of lines due to the self.arr, best to disable unless needed, TODO add a 'get debug string' function
+        "prio",
+        "autocommit",
+        "cur_shape",
+        "placing_extra",
+        "placing_mark",
+        "prev_center",
+        "extra_points",
+        "last_mouse_point",
+        "needs_update",
+        "#marks",
+        "placing_mirror",
+        "mirror_point",
+        "mirror",
+    }
+
+    if self.dig_window ~= nil then
+        for i, a in pairs(attrs) do
+            local attr = a
+            local sizeOnly = string.sub(attr, 1, 1) == "#"
+            if (sizeOnly) then
+                attr = string.sub(attr, 2)
+            end
+            self:addviews {
+                widgets.WrappedLabel {
+                    view_id = "debug_label_" .. attr,
+                    text_to_wrap = function()
+                        if type(self.dig_window[attr]) ~= "table" then
+                            return tostring(attr) .. ": " .. tostring(self.dig_window[attr])
+                        else
+                            if sizeOnly then
+                                return '#' .. tostring(attr) .. ": " .. tostring(#self.dig_window[attr])
+                            else
+                                return { tostring(attr) .. ": ", table.unpack(tableToString(self.dig_window[attr], "  ")) }
+                            end
+                        end
+                    end,
+                }
+            }
+        end
+    end
+end
+
 --Show mark point coordinates
 MarksPanel = defclass(MarksPanel, widgets.ResizingPanel)
 MarksPanel.ATTRS {
@@ -55,19 +142,28 @@ function MarksPanel:update_mark_labels()
     local label_text = {}
     if #self.dig_panel.marks >= 1 then
         local first_mark = self.dig_panel.marks[1]
-        table.insert(label_text,
-            string.format("First Mark (%d): %d, %d, %d ", 1, first_mark.x, first_mark.y, first_mark.z))
+        if first_mark then
+            table.insert(label_text,
+                string.format("First Mark (%d): %d, %d, %d ", 1, first_mark.x, first_mark.y, first_mark.z))
+        end
     end
 
     if #self.dig_panel.marks > 1 then
         local last_mark = self.dig_panel.marks[#self.dig_panel.marks]
-        table.insert(label_text,
-            string.format("Last Mark (%d): %d, %d, %d ", #self.dig_panel.marks, last_mark.x, last_mark.y, last_mark.z))
+        if last_mark then
+            table.insert(label_text,
+                string.format("Last Mark (%d): %d, %d, %d ", #self.dig_panel.marks, last_mark.x, last_mark.y, last_mark.z))
+        end
     end
 
     local mouse_pos = dfhack.gui.getMousePos()
     if mouse_pos then
         table.insert(label_text, string.format("Mouse: %d, %d, %d", mouse_pos.x, mouse_pos.y, mouse_pos.z))
+    end
+
+    local mirror = self.dig_panel.mirror_point
+    if mirror ~= nil then
+        table.insert(label_text, string.format("Mirror Point: %d, %d, %d", mirror.x, mirror.y, mirror.z))
     end
 
     self:addviews {
@@ -243,17 +339,67 @@ function GenericOptionsPanel:init()
                         },
                         widgets.HotkeyLabel {
                             key = 'STRING_A095',
-                            frame = { t = 2, l = 1}, key_sep = '',
+                            frame = { t = 2, l = 1 }, key_sep = '',
                             on_activate = self.dig_panel:callback('on_transform', 'flipv'),
                         },
                         widgets.HotkeyLabel {
                             key = 'STRING_A061',
-                            frame = { t = 2, l = 2}, key_sep = ':',
+                            frame = { t = 2, l = 2 }, key_sep = ':',
                             on_activate = self.dig_panel:callback('on_transform', 'fliph'),
                         },
                         widgets.WrappedLabel {
-                            frame = { t = 2, l = 5},
+                            frame = { t = 2, l = 5 },
                             text_to_wrap = 'Flip'
+                        }
+                    }
+                }
+            }
+        },
+        widgets.ResizingPanel { autoarrange_subviews = true,
+            subviews = {
+                widgets.HotkeyLabel {
+                    key = 'CUSTOM_M',
+                    view_id = 'mirror_point_panel',
+                    label = function() if self.dig_panel.mirror_point == nil then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
+                    active = true,
+                    enabled = function() return not self.dig_panel.mirror_point ~= nil end,
+                    on_activate = function()
+                        if self.dig_panel.mirror_point == nil then
+                            self.dig_panel.placing_mark.active = false
+                            self.dig_panel.placing_extra.active = false
+                            self.dig_panel.placing_extra.active = false
+                            self.dig_panel.placing_mirror = true
+                        else
+                            self.dig_panel.placing_mirror = false
+                            self.dig_panel.mirror_point = nil
+                        end
+                    end
+                },
+                widgets.ResizingPanel {
+                    view_id = 'transform_panel_rotate',
+                    visible = function() return self.dig_panel.mirror_point ~= nil end,
+                    subviews = {
+                        widgets.HotkeyLabel {
+                            key = 'CUSTOM_J',
+                            frame = { t = 1, l = 1 }, key_sep = '',
+                            on_activate = function()
+                                self.dig_panel.mirror.horizonal = true
+                            end,
+                        },
+                        widgets.WrappedLabel {
+                            frame = { t = 1, l = 4 },
+                            text_to_wrap = 'Mirror Horizontal'
+                        },
+                        widgets.HotkeyLabel {
+                            key = 'CUSTOM_K',
+                            frame = { t = 2, l = 1 }, key_sep = '',
+                            on_activate = function()
+                                self.dig_panel.mirror.vertical = true
+                            end,
+                        },
+                        widgets.WrappedLabel {
+                            frame = { t = 2, l = 4 },
+                            text_to_wrap = 'Mirror Vertical'
                         }
                     }
                 }
@@ -314,8 +460,17 @@ function GenericOptionsPanel:init()
                 return (self.dig_panel.placing_mark.active) and "Stop placing" or "Start placing"
             end,
             active = true,
-            visible = function() return not self.dig_panel.shape.basic_shape end,
-            enabled = function() return #self.dig_panel.marks > self.dig_panel.shape.min_points end,
+            visible = true,
+            enabled = function()
+                if not self.dig_panel.placing_mark.active and self.dig_panel.prev_center == nil then
+                    return self.dig_panel.shape.max_points == nil or
+                        #self.dig_panel.marks < self.dig_panel.shape.max_points
+                elseif not self.dig_panel.placing_extra.active and self.dig_panel.prev_center == nil then
+                    return true
+                end
+
+                return false
+            end,
             show_tooltip = true,
             on_activate = function()
                 self.dig_panel.placing_mark.active = not self.dig_panel.placing_mark.active
@@ -526,7 +681,7 @@ function GenericOptionsPanel:init()
                 self.dig_panel:commit()
                 self.dig_panel.needs_update = true
             end,
-        }
+        },
     }
 end
 
@@ -588,6 +743,7 @@ local PENS = {}
 
 Dig = defclass(Dig, widgets.Window)
 Dig.ATTRS {
+    name = "dig_window",
     frame_title = "Dig",
     frame = {
         w = 47,
@@ -609,12 +765,17 @@ Dig.ATTRS {
     extra_points = {},
     last_mouse_point = DEFAULT_NIL,
     needs_update = false,
-    marks = {}
+    marks = {},
+    placing_mirror = false,
+    mirror_point = DEFAULT_NIL,
+    mirror = { horizontal = false, vertical = false }
 }
 
 -- Check to see if we're moving a point, or some change was made that implise we need to update the shape
 -- This stop us needing to update the shape geometery every frame which can tank FPS
 function Dig:shape_needs_update()
+    -- if #self.marks < self.shape.min_points then return false end
+
     if self.needs_update then return true end
 
     local mouse_pos = dfhack.gui.getMousePos()
@@ -649,7 +810,7 @@ function Dig:get_pen(x, y, mousePos)
 
     -- Basic shapes are bounded by rectangles and therefore can have corner drag points
     -- even if they're not real points in the shape
-    if self.shape.basic_shape then
+    if #self.marks >= self.shape.min_points and self.shape.basic_shape then
         local shape_top_left, shape_bot_right = self.shape:get_point_dims()
         if x == shape_top_left.x and y == shape_top_left.y and self.shape.drag_corners.nw then
             drag_point = true
@@ -668,6 +829,10 @@ function Dig:get_pen(x, y, mousePos)
         end
     end
 
+    if self.mirror_point ~= nil and self.mirror_point.x == x and self.mirror_point.y == y then
+        drag_point = true
+    end
+
     -- Is there an extra point
     local extra_point = false
     for i, point in ipairs(self.extra_points) do
@@ -679,7 +844,7 @@ function Dig:get_pen(x, y, mousePos)
 
     -- Show center point if both marks are set
     if (self.shape.basic_shape and #self.marks == self.shape.max_points) or
-        (not self.shape.basic_shape and not self.placing_mark.active) then
+        (not self.shape.basic_shape and not self.placing_mark.active and #self.marks > 0) then
         local center_x, center_y = self.shape:get_center()
 
         if x == center_x and y == center_y then
@@ -1017,6 +1182,10 @@ end
 
 function Dig:onRenderFrame(dc, rect)
 
+    if (SHOW_DEBUG_WINDOW) then
+        self.parent_view.debug_window:updateLayout()
+    end
+
     Dig.super.onRenderFrame(self, dc, rect)
 
     if self.shape == nil then
@@ -1027,68 +1196,73 @@ function Dig:onRenderFrame(dc, rect)
 
     self.subviews.marks_panel:update_mark_labels()
 
-    if #self.marks > 0 then
-        if self.placing_mark.active and self.placing_mark.index ~= nil then
-            self.marks[self.placing_mark.index] = mouse_pos
-        end
+    local function get_overlay_pen(pos)
+        return self:get_pen(pos.x, pos.y, mouse_pos)
+    end
 
-        -- Set main points
-        local points = copyall(self.marks)
+    -- if self.placing_mark.active then
+    if self.placing_mark.active and self.placing_mark.index ~= nil then
+        self.marks[self.placing_mark.index] = mouse_pos
+    end
 
-        -- Set the pos of the currently moving extra point
-        if self.placing_extra.active then
-            self.extra_points[self.placing_extra.index] = { x = mouse_pos.x, y = mouse_pos.y }
-        end
+    -- Set main points
+    local points = copyall(self.marks)
 
-        -- Check if moving center, if so shift the shape by the delta between the previous and current points
-        if self.prev_center ~= nil and
-            (self.shape.basic_shape and #self.marks == self.shape.max_points
-                or not self.shape.basic_shape and not self.placing_mark.active) then
-            if self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
-                self.prev_center.z ~= mouse_pos.z then
-                self.needs_update = true
-                local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
-                    z = mouse_pos.z - self.prev_center.z }
+    -- Set the pos of the currently moving extra point
+    if self.placing_extra.active then
+        self.extra_points[self.placing_extra.index] = { x = mouse_pos.x, y = mouse_pos.y }
+    end
 
-                for i, _ in pairs(self.marks) do
-                    self.marks[i].x = self.marks[i].x + transform.x
-                    self.marks[i].y = self.marks[i].y + transform.y
-                    self.marks[i].z = self.marks[i].z + transform.z
-                end
+    -- Check if moving center, if so shift the shape by the delta between the previous and current points
+    if self.prev_center ~= nil and
+        (self.shape.basic_shape and #self.marks == self.shape.max_points
+            or not self.shape.basic_shape and not self.placing_mark.active) then
+        if mouse_pos ~= nil and (self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
+            self.prev_center.z ~= mouse_pos.z) then
+            self.needs_update = true
+            local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
+                z = mouse_pos.z - self.prev_center.z }
 
-                for i, point in pairs(self.extra_points) do
-                    self.extra_points[i].x = self.extra_points[i].x + transform.x
-                    self.extra_points[i].y = self.extra_points[i].y + transform.y
-                end
-
-                self.prev_center = mouse_pos
+            for i, _ in pairs(self.marks) do
+                self.marks[i].x = self.marks[i].x + transform.x
+                self.marks[i].y = self.marks[i].y + transform.y
+                self.marks[i].z = self.marks[i].z + transform.z
             end
+
+            for i, point in pairs(self.extra_points) do
+                self.extra_points[i].x = self.extra_points[i].x + transform.x
+                self.extra_points[i].y = self.extra_points[i].y + transform.y
+            end
+
+            self.prev_center = mouse_pos
         end
+    end
 
-        if self:shape_needs_update() then
-            self.shape:update(points, self.extra_points)
-            self.last_mouse_point = mouse_pos
-            self.needs_update = false
-        end
+    if self:shape_needs_update() then
+        self.shape:update(points, self.extra_points)
+        self.last_mouse_point = mouse_pos
+        self.needs_update = false
+    end
 
-        self:add_shape_options()
+    self:add_shape_options()
 
-        local function get_overlay_pen(pos)
-            return self:get_pen(pos.x, pos.y, mouse_pos)
-        end
+    -- Generate bounds based on the shape's dimensions
+    local bounds = self:get_view_bounds()
+    if self.shape ~= nil and bounds ~= nil then
+        local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
+        if top_left == nil or bot_right == nil then return end
+        bounds.x1 = top_left.x
+        bounds.x2 = bot_right.x
+        bounds.y1 = top_left.y
+        bounds.y2 = bot_right.y
+    end
 
-        -- Generate bounds based on the shape's dimensions
-        local bounds = self:get_view_bounds()
-        if self.shape ~= nil and bounds ~= nil then
-            local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
-            if top_left == nil or bot_right == nil then return end
-            bounds.x1 = top_left.x
-            bounds.x2 = bot_right.x
-            bounds.y1 = top_left.y
-            bounds.y2 = bot_right.y
-        end
-
-        guidm.renderMapOverlay(get_overlay_pen, bounds)
+    guidm.renderMapOverlay(get_overlay_pen, bounds)
+    -- end
+    if self.mirror_point ~= nil then
+        guidm.renderMapOverlay(get_overlay_pen,
+            { x1 = self.mirror_point.x, y1 = self.mirror_point.y, z1 = self.mirror_point.z, x2 = self.mirror_point.x,
+                y2 = self.mirror_point.y, z2 = self.mirror_point.z })
     end
     self:updateLayout()
 end
@@ -1105,6 +1279,8 @@ function Dig:onInput(keys)
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- If extra points, clear them and return
+        if self.prev_center ~= nil then return true end -- TODO
+
         if self.shape ~= nil then
             if #self.extra_points > 0 or self.placing_extra.active then
                 self.extra_points = {}
@@ -1118,8 +1294,9 @@ function Dig:onInput(keys)
         end
 
         -- If marks are present, pop the last mark
-        if #self.marks > 0 then
-            self.placing_mark.index = #self.marks - 1
+        if #self.marks > 1 then
+            self.placing_mark.index = #self.marks - ((self.placing_mark.active) and 1 or 0)
+            self.placing_mark.active = true
             self.needs_update = true
             table.remove(self.marks, #self.marks)
         else
@@ -1163,6 +1340,10 @@ function Dig:onInput(keys)
         elseif self.placing_extra.active then
             self.needs_update = true
             self.placing_extra.active = false
+        elseif self.placing_mirror then
+            self.mirror_point = pos
+            self.placing_mirror = false
+            self.needs_update = true
         else
             if self.shape.basic_shape and #self.marks == self.shape.max_points then
                 -- Clicking a corner of a basic shape
@@ -1202,11 +1383,13 @@ function Dig:onInput(keys)
             end
 
             -- Clicking center point
-            local center_x, center_y = self.shape:get_center()
-            if pos.x == center_x and pos.y == center_y and self.prev_center == nil then
-                self.prev_center = pos
-            elseif self.prev_center ~= nil then
-                self.prev_center = nil
+            if #self.marks > 0 then
+                local center_x, center_y = self.shape:get_center()
+                if pos.x == center_x and pos.y == center_y and self.prev_center == nil then
+                    self.prev_center = pos
+                elseif self.prev_center ~= nil then
+                    self.prev_center = nil
+                end
             end
         end
 
@@ -1330,10 +1513,19 @@ DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
     pass_movement_keys = true,
+    dig_window = DEFAULT_NIL,
+    debug_window = DEFAULT_NIL
 }
 
 function DigScreen:init()
-    self:addviews { Dig {} }
+
+    self.dig_window = Dig {}
+    self:addviews { self.dig_window }
+    if SHOW_DEBUG_WINDOW then
+        self.debug_window = DigDebugWindow { dig_window = self.dig_window }
+        self:addviews { self.debug_window }
+    end
+    -- self:addviews { Dig {} }
 end
 
 function DigScreen:onDismiss()

@@ -173,6 +173,7 @@ function Shape:get_center()
     -- return center_x, center_y
 
     -- Simple way to get the center defined by the point dims
+    if #self.points == 0 then return nil, nil end
     local top_left, bot_right = self:get_point_dims()
     return math.floor((bot_right.x - top_left.x) / 2) + top_left.x,
         math.floor((bot_right.y - top_left.y) / 2) + top_left.y
@@ -184,8 +185,9 @@ end
 function Shape:update(points)
     self.num_tiles = 0
     self.points = copyall(points)
-    local top_left, bot_right = self:get_point_dims()
     self.arr = {}
+    if #points < self.min_points then return end
+    local top_left, bot_right = self:get_point_dims()
     self.height = bot_right.y - top_left.y
     self.width = bot_right.x - top_left.x
 
@@ -543,8 +545,9 @@ end
 function FreeForm:update(points, extra_points)
     self.num_tiles = 0
     self.points = copyall(points)
-    local top_left, bot_right = self:get_point_dims()
     self.arr = {}
+    if #points < self.min_points then return end
+    local top_left, bot_right = self:get_point_dims()
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
 
