@@ -5,12 +5,11 @@
 
 -- Must Haves
 -----------------------------
--- Cubic bezier algo
 -- freeform mirror shape
--- Guidelines
 
 -- Should Haves
 -----------------------------
+-- Refactor common code into functions
 -- Keyboard support
 -- As the number of shapes and designations grow it might be better to have list menus for them instead of cycle
 -- 3D shapes, would allow stuff like spiral staircases/minecart tracks and other neat stuff, probably not too hard
@@ -41,6 +40,15 @@ local shapes = reqscript("internal/dig/shapes")
 local tile_attrs = df.tiletype.attrs
 
 local to_pen = dfhack.pen.parse
+local guide_tile_pen = to_pen {
+        ch = "",
+        fg = COLOR_BLUE,
+        tile = dfhack.screen.findGraphicsTile(
+            "CURSORS",
+            0,
+            22
+        ),
+    }
 
 SHOW_DEBUG_WINDOW = true
 
@@ -93,6 +101,7 @@ function DigDebugWindow:init()
         "placing_extra",
         "placing_mark",
         "prev_center",
+        "start_center",
         "extra_points",
         "last_mouse_point",
         "needs_update",
@@ -100,6 +109,7 @@ function DigDebugWindow:init()
         "placing_mirror",
         "mirror_point",
         "mirror",
+        "show_guides"
     }
 
     if self.dig_window ~= nil then
@@ -314,7 +324,7 @@ function GenericOptionsPanel:init()
         widgets.ResizingPanel { autoarrange_subviews = true,
             subviews = {
                 widgets.ToggleHotkeyLabel {
-                    key = 'CUSTOM_T',
+                    key = 'CUSTOM_SHIFT_Y',
                     view_id = 'transform',
                     label = 'Transform',
                     active = true,
@@ -363,9 +373,10 @@ function GenericOptionsPanel:init()
                 widgets.HotkeyLabel {
                     key = 'CUSTOM_M',
                     view_id = 'mirror_point_panel',
+                    visible = function() return self.dig_panel.shape.can_mirror end,
                     label = function() if self.dig_panel.mirror_point == nil then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
                     active = true,
-                    enabled = function() return not self.dig_panel.mirror_point ~= nil end,
+                    enabled = function() return not self.dig_panel.placing_extra.active and not self.dig_panel.placing_mark.active and self.prev_center == nil end,
                     on_activate = function()
                         if self.dig_panel.mirror_point == nil then
                             self.dig_panel.placing_mark.active = false
@@ -382,28 +393,32 @@ function GenericOptionsPanel:init()
                     view_id = 'transform_panel_rotate',
                     visible = function() return self.dig_panel.mirror_point ~= nil end,
                     subviews = {
-                        widgets.HotkeyLabel {
-                            key = 'CUSTOM_J',
+                        widgets.ToggleHotkeyLabel {
+                            view_id = "mirror_horiz_label",
+                            key = "CUSTOM_SHIFT_J",
+                            label = "Mirror Horizontal: ",
+                            active = true,
+                            enabled = true,
+                            show_tooltip = true,
+                            initial_option = false,
                             frame = { t = 1, l = 1 }, key_sep = '',
                             on_activate = function()
                                 self.dig_panel.mirror.horizonal = true
                             end,
                         },
-                        widgets.WrappedLabel {
-                            frame = { t = 1, l = 4 },
-                            text_to_wrap = 'Mirror Horizontal'
-                        },
-                        widgets.HotkeyLabel {
-                            key = 'CUSTOM_K',
+                        widgets.ToggleHotkeyLabel {
+                            view_id = "mirror_vert_label",
+                            key = "CUSTOM_SHIFT_K",
+                            label = "Mirror Vertical: ",
+                            active = true,
+                            enabled = true,
+                            show_tooltip = true,
+                            initial_option = false,
                             frame = { t = 2, l = 1 }, key_sep = '',
                             on_activate = function()
-                                self.dig_panel.mirror.vertical = true
+                                self.dig_panel.mirror.horizonal = true
                             end,
                         },
-                        widgets.WrappedLabel {
-                            frame = { t = 2, l = 4 },
-                            text_to_wrap = 'Mirror Vertical'
-                        }
                     }
                 }
             }
@@ -511,6 +526,7 @@ function GenericOptionsPanel:init()
                 self.dig_panel.placing_mark.index = 1
                 self.dig_panel.extra_points = {}
                 self.dig_panel.prev_center = nil
+                self.dig_panel.start_center = nil
                 self.dig_panel.needs_update = true
             end,
         },
@@ -535,10 +551,24 @@ function GenericOptionsPanel:init()
                 if self.dig_panel.shape ~= nil then
                     self.dig_panel.extra_points = {}
                     self.dig_panel.prev_center = nil
+                    self.dig_panel.start_center = nil
                     self.dig_panel.placing_extra = { active = false, index = 0 }
                     self.dig_panel:updateLayout()
                     self.dig_panel.needs_update = true
                 end
+            end,
+        },
+        widgets.ToggleHotkeyLabel {
+            view_id = "shape_show_guides",
+            key = "CUSTOM_SHIFT_G",
+            label = "Show Cursor Guides",
+            active = true,
+            enabled = true,
+            visible = true,
+            show_tooltip = true,
+            initial_option = true,
+            on_change = function(new, old)
+                self.dig_panel.show_guides = new
             end,
         },
         widgets.CycleHotkeyLabel {
@@ -765,13 +795,15 @@ Dig.ATTRS {
     placing_extra = { active = false, index = nil },
     placing_mark = { active = true, index = 1, continue = true },
     prev_center = DEFAULT_NIL,
+    start_center = DEFAULT_NIL,
     extra_points = {},
     last_mouse_point = DEFAULT_NIL,
     needs_update = false,
     marks = {},
     placing_mirror = false,
     mirror_point = DEFAULT_NIL,
-    mirror = { horizontal = false, vertical = false }
+    mirror = { horizontal = false, vertical = false },
+    show_guides = true
 }
 
 -- Check to see if we're moving a point, or some change was made that implise we need to update the shape
@@ -1259,13 +1291,16 @@ function Dig:onRenderFrame(dc, rect)
         bounds.y2 = bot_right.y
     end
 
-    guidm.renderMapOverlay(get_overlay_pen, bounds)
-    -- end
-    if self.mirror_point ~= nil then
-        guidm.renderMapOverlay(get_overlay_pen,
-            { x1 = self.mirror_point.x, y1 = self.mirror_point.y, z1 = self.mirror_point.z, x2 = self.mirror_point.x,
-                y2 = self.mirror_point.y, z2 = self.mirror_point.z })
+    if self.show_guides and mouse_pos then
+        local map_x, map_y, map_z = dfhack.maps.getTileSize()
+        local horiz_bounds = {x1 = 0, x2 = map_x, y1 = mouse_pos.y, y2 = mouse_pos.y, z1 = mouse_pos.z, z2 = mouse_pos.z}
+        guidm.renderMapOverlay(function() return guide_tile_pen end, horiz_bounds)
+        local vert_bounds = {x1 = mouse_pos.x, x2 = mouse_pos.x, y1 = 0, y2 = map_y, z1 = mouse_pos.z, z2 = mouse_pos.z}
+        guidm.renderMapOverlay(function() return guide_tile_pen end, vert_bounds)
     end
+
+    guidm.renderMapOverlay(get_overlay_pen, bounds)
+
     self:updateLayout()
 end
 
@@ -1280,14 +1315,35 @@ function Dig:onInput(keys)
     end
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-        -- If extra points, clear them and return
-        if self.prev_center ~= nil then return true end -- TODO
+        -- If center draggin, put the shape back to the original center
+        if self.prev_center ~= nil then
+            local transform = { x = self.start_center.x - self.prev_center.x, y = self.start_center.y - self.prev_center.y,
+                z = self.start_center.z - self.prev_center.z }
 
+            for i, _ in pairs(self.marks) do
+                self.marks[i].x = self.marks[i].x + transform.x
+                self.marks[i].y = self.marks[i].y + transform.y
+                self.marks[i].z = self.marks[i].z + transform.z
+            end
+
+            for i, point in pairs(self.extra_points) do
+                self.extra_points[i].x = self.extra_points[i].x + transform.x
+                self.extra_points[i].y = self.extra_points[i].y + transform.y
+            end
+
+            self.prev_center = nil
+            self.start_center = nil
+            self.needs_update = true
+            return true
+        end -- TODO
+
+        -- If extra points, clear them and return
         if self.shape ~= nil then
             if #self.extra_points > 0 or self.placing_extra.active then
                 self.extra_points = {}
                 self.placing_extra.active = false
                 self.prev_center = nil
+                self.start_center = nil
                 self.placing_extra.index = 0
                 self.needs_update = true
                 self:updateLayout()
@@ -1308,6 +1364,7 @@ function Dig:onInput(keys)
 
         return true
     end
+
 
     local pos = nil
     if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
@@ -1388,8 +1445,10 @@ function Dig:onInput(keys)
             if #self.marks > 0 then
                 local center_x, center_y = self.shape:get_center()
                 if pos.x == center_x and pos.y == center_y and self.prev_center == nil then
+                    self.start_center = pos
                     self.prev_center = pos
                 elseif self.prev_center ~= nil then
+                    self.start_center = nil
                     self.prev_center = nil
                 end
             end
@@ -1502,6 +1561,7 @@ function Dig:commit()
         self.placing_extra = { active = false, index = nil }
         self.extra_points = {}
         self.prev_center = nil
+        self.start_center = nil
     end
 
     self:updateLayout()

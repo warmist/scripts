@@ -408,7 +408,7 @@ end
 Line = defclass(Line, Shape)
 Line.ATTRS {
     name = "Line",
-    extra_points = { { label = "Curve" } },
+    extra_points = { { label = "Curve Point" }, { label = "Second Curve Point" } },
     invertable = false, -- Doesn't support invert
     basic_shape = false -- Driven by points, not rectangle bounds
 }
@@ -446,11 +446,43 @@ function Line:update(points, extra_points)
     local x1, y1 = self.points[2].x, self.points[2].y
 
     local thickness = self.options.thickness.value or 1
-    local bezier_point = (#extra_points > 0) and { x = extra_points[1].x, y = extra_points[1].y } or nil
+    local bezier_point1 = (#extra_points > 0) and { x = extra_points[1].x, y = extra_points[1].y } or nil
+    local bezier_point2 = (#extra_points > 1) and { x = extra_points[2].x, y = extra_points[2].y } or nil
 
-    if bezier_point then -- Use Bezier curve
+    if bezier_point1 and bezier_point2 then -- Use Cubic Bezier curve
         local t = 0
-        local x2, y2 = bezier_point.x, bezier_point.y
+        local x2, y2 = bezier_point1.x, bezier_point1.y
+        local x3, y3 = bezier_point2.x, bezier_point2.y
+        while t <= 1 do
+            local x = math.floor(((1 - t) ^ 3 * x0 + 3 * (1 - t) ^ 2 * t * x2 + 3 * (1 - t) * t ^ 2 * x3 + t ^ 3 * x1) + 0.5)
+            local y = math.floor(((1 - t) ^ 3 * y0 + 3 * (1 - t) ^ 2 * t * y2 + 3 * (1 - t) * t ^ 2 * y3 + t ^ 3 * y1) + 0.5)
+            for i = 0, thickness - 1 do
+                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                    if not self.arr[x + j] then self.arr[x + j] = {} end
+                    if not self.arr[x + j][y + i] then
+                        self.arr[x + j][y + i] = true
+                        self.num_tiles = self.num_tiles + 1
+                    end
+                end
+            end
+            t = t + 0.01
+        end
+
+        -- Get the last point
+        local x_end = math.floor(((1 - 1) ^ 3 * x0 + 3 * (1 - 1) ^ 2 * 1 * x2 + 3 * (1 - 1) * 1 ^ 2 * x3 + 1 ^ 3 * x1) + 0.5)
+        local y_end = math.floor(((1 - 1) ^ 3 * y0 + 3 * (1 - 1) ^ 2 * 1 * y2 + 3 * (1 - 1) * 1 ^ 2 * y3 + 1 ^ 3 * y1) + 0.5)
+        for i = 0, thickness - 1 do
+            for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                if not self.arr[x_end + j] then self.arr[x_end + j] = {} end
+                if not self.arr[x_end + j][y_end + i] then
+                    self.arr[x_end + j][y_end + i] = true
+                    self.num_tiles = self.num_tiles + 1
+                end
+            end
+        end
+    elseif bezier_point1 then
+        local t = 0
+        local x2, y2 = bezier_point1.x, bezier_point1.y
         while t <= 1 do
             local x = math.floor(((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1) + 0.5)
             local y = math.floor(((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1) + 0.5)
@@ -509,7 +541,8 @@ FreeForm.ATTRS = {
     invertable = false, -- doesn't support invert
     min_points = 1,
     max_points = DEFAULT_NIL,
-    basic_shape = false
+    basic_shape = false,
+    can_mirror = true
 }
 
 function FreeForm:init()
