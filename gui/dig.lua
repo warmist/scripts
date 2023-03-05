@@ -5,6 +5,9 @@
 
 -- Must Haves
 -----------------------------
+-- Cubic bezier algo
+-- freeform mirror shape
+-- Guidelines
 
 -- Should Haves
 -----------------------------
@@ -1200,7 +1203,6 @@ function Dig:onRenderFrame(dc, rect)
         return self:get_pen(pos.x, pos.y, mouse_pos)
     end
 
-    -- if self.placing_mark.active then
     if self.placing_mark.active and self.placing_mark.index ~= nil then
         self.marks[self.placing_mark.index] = mouse_pos
     end
@@ -1501,6 +1503,7 @@ function Dig:commit()
         self.extra_points = {}
         self.prev_center = nil
     end
+
     self:updateLayout()
 end
 

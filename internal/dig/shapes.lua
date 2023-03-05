@@ -452,13 +452,15 @@ function Line:update(points, extra_points)
         local t = 0
         local x2, y2 = bezier_point.x, bezier_point.y
         while t <= 1 do
-            local x = math.floor((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1)
-            local y = math.floor((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1)
+            local x = math.floor(((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1) + 0.5)
+            local y = math.floor(((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1) + 0.5)
             for i = 0, thickness - 1 do
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
-                    self.arr[x + j][y + i] = true
-                    self.num_tiles = self.num_tiles + 1
+                    if not self.arr[x + j][y + i] then
+                        self.arr[x + j][y + i] = true
+                        self.num_tiles = self.num_tiles + 1
+                    end
                 end
             end
             t = t + 0.01
