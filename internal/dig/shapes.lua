@@ -88,7 +88,7 @@ end
 -- Get dimensions taking into account, main points, extra points,
 -- and the shape array, anything that needs to be drawn should be
 -- within these bounds
-function Shape:get_view_dims(extra_points)
+function Shape:get_view_dims(extra_points, mirror_point)
     local min_x, min_y, max_x, max_y
     for x, _ in pairs(self.arr) do
         for y, _ in pairs(self.arr[x]) do
@@ -132,6 +132,13 @@ function Shape:get_view_dims(extra_points)
             min_y = math.min(min_y, point.y)
             max_y = math.max(max_y, point.y)
         end
+    end
+
+    if mirror_point then
+        min_x = math.min(min_x, mirror_point.x)
+        max_x = math.max(max_x, mirror_point.x)
+        min_y = math.min(min_y, mirror_point.y)
+        max_y = math.max(max_y, mirror_point.y)
     end
 
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }

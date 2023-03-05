@@ -5,11 +5,14 @@
 
 -- Must Haves
 -----------------------------
--- freeform mirror shape
+-- fix mirror point disappearing
+-- draggable mirror point
+-- mirror guidelines
+-- double mirror 'point'
 
 -- Should Haves
 -----------------------------
--- Refactor common code into functions
+-- Refactor duplicated code into functions
 -- Keyboard support
 -- As the number of shapes and designations grow it might be better to have list menus for them instead of cycle
 -- 3D shapes, would allow stuff like spiral staircases/minecart tracks and other neat stuff, probably not too hard
@@ -41,14 +44,14 @@ local tile_attrs = df.tiletype.attrs
 
 local to_pen = dfhack.pen.parse
 local guide_tile_pen = to_pen {
-        ch = "",
-        fg = COLOR_BLUE,
-        tile = dfhack.screen.findGraphicsTile(
-            "CURSORS",
-            0,
-            22
-        ),
-    }
+    ch = "",
+    fg = COLOR_BLUE,
+    tile = dfhack.screen.findGraphicsTile(
+        "CURSORS",
+        0,
+        22
+    ),
+}
 
 SHOW_DEBUG_WINDOW = true
 
@@ -376,7 +379,9 @@ function GenericOptionsPanel:init()
                     visible = function() return self.dig_panel.shape.can_mirror end,
                     label = function() if self.dig_panel.mirror_point == nil then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
                     active = true,
-                    enabled = function() return not self.dig_panel.placing_extra.active and not self.dig_panel.placing_mark.active and self.prev_center == nil end,
+                    enabled = function() return not self.dig_panel.placing_extra.active and
+                            not self.dig_panel.placing_mark.active and self.prev_center == nil
+                    end,
                     on_activate = function()
                         if self.dig_panel.mirror_point == nil then
                             self.dig_panel.placing_mark.active = false
@@ -407,6 +412,19 @@ function GenericOptionsPanel:init()
                             end,
                         },
                         widgets.ToggleHotkeyLabel {
+                            view_id = "mirror_diag_label",
+                            key = "CUSTOM_SHIFT_O",
+                            label = "Mirror Diagonal: ",
+                            active = true,
+                            enabled = true,
+                            show_tooltip = true,
+                            initial_option = false,
+                            frame = { t = 2, l = 1 }, key_sep = '',
+                            on_activate = function()
+                                self.dig_panel.mirror.diagonal = true
+                            end,
+                        },
+                        widgets.ToggleHotkeyLabel {
                             view_id = "mirror_vert_label",
                             key = "CUSTOM_SHIFT_K",
                             label = "Mirror Vertical: ",
@@ -414,9 +432,9 @@ function GenericOptionsPanel:init()
                             enabled = true,
                             show_tooltip = true,
                             initial_option = false,
-                            frame = { t = 2, l = 1 }, key_sep = '',
+                            frame = { t = 3, l = 1 }, key_sep = '',
                             on_activate = function()
-                                self.dig_panel.mirror.horizonal = true
+                                self.dig_panel.mirror.vertical = true
                             end,
                         },
                     }
@@ -1272,6 +1290,46 @@ function Dig:onRenderFrame(dc, rect)
         end
     end
 
+    local mirrored_points = {}
+    if self.mirror_point then
+        for i, point in pairs(points) do
+            if self.subviews.mirror_horiz_label:getOptionValue() then
+                table.insert(mirrored_points,
+                    { z = point.z, x = point.x,
+                        y = self.mirror_point.y - math.abs(self.mirror_point.y - point.y) })
+            end
+            if self.subviews.mirror_diag_label:getOptionValue() then
+                table.insert(mirrored_points,
+                    { z = point.z, x = self.mirror_point.x - math.abs(self.mirror_point.x - point.x),
+                        y = self.mirror_point.y - math.abs(self.mirror_point.y - point.y) })
+            end
+            if self.subviews.mirror_vert_label:getOptionValue() then
+                table.insert(mirrored_points,
+                    { z = point.z, x = self.mirror_point.x - math.abs(self.mirror_point.x - point.x),
+                        y = point.y })
+            end
+        end
+    end
+
+    for i, point in pairs(mirrored_points) do
+        table.insert(points, mirrored_points[i])
+    end
+
+    local center_x, center_y = 0, 0
+    for i = 1, #points do
+        center_x = center_x + points[i].x
+        center_y = center_y + points[i].y
+    end
+    center_x = center_x / #points
+    center_y = center_y / #points
+    
+    table.sort(points, function(a, b)
+        local atan_a = math.atan(a.y - center_y, a.x - center_x)
+        local atan_b = math.atan(b.y - center_y, b.x - center_x)
+        return atan_a < atan_b
+    end)
+
+
     if self:shape_needs_update() then
         self.shape:update(points, self.extra_points)
         self.last_mouse_point = mouse_pos
@@ -1283,7 +1341,7 @@ function Dig:onRenderFrame(dc, rect)
     -- Generate bounds based on the shape's dimensions
     local bounds = self:get_view_bounds()
     if self.shape ~= nil and bounds ~= nil then
-        local top_left, bot_right = self.shape:get_view_dims(self.extra_points)
+        local top_left, bot_right = self.shape:get_view_dims(self.extra_points, self.mirror_point)
         if top_left == nil or bot_right == nil then return end
         bounds.x1 = top_left.x
         bounds.x2 = bot_right.x
@@ -1293,9 +1351,9 @@ function Dig:onRenderFrame(dc, rect)
 
     if self.show_guides and mouse_pos then
         local map_x, map_y, map_z = dfhack.maps.getTileSize()
-        local horiz_bounds = {x1 = 0, x2 = map_x, y1 = mouse_pos.y, y2 = mouse_pos.y, z1 = mouse_pos.z, z2 = mouse_pos.z}
+        local horiz_bounds = { x1 = 0, x2 = map_x, y1 = mouse_pos.y, y2 = mouse_pos.y, z1 = mouse_pos.z, z2 = mouse_pos.z }
         guidm.renderMapOverlay(function() return guide_tile_pen end, horiz_bounds)
-        local vert_bounds = {x1 = mouse_pos.x, x2 = mouse_pos.x, y1 = 0, y2 = map_y, z1 = mouse_pos.z, z2 = mouse_pos.z}
+        local vert_bounds = { x1 = mouse_pos.x, x2 = mouse_pos.x, y1 = 0, y2 = map_y, z1 = mouse_pos.z, z2 = mouse_pos.z }
         guidm.renderMapOverlay(function() return guide_tile_pen end, vert_bounds)
     end
 
@@ -1309,15 +1367,18 @@ function Dig:onInput(keys)
         return true
     end
 
-    if keys.CUSTOM_M then
-        self.parent_view:dismiss()
-        return
-    end
+    -- Secret shortcut to kill the panel if it becomes
+    -- unresponsive during development, should not release
+    -- if keys.CUSTOM_M then
+    --     self.parent_view:dismiss()
+    --     return
+    -- end
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- If center draggin, put the shape back to the original center
         if self.prev_center ~= nil then
-            local transform = { x = self.start_center.x - self.prev_center.x, y = self.start_center.y - self.prev_center.y,
+            local transform = { x = self.start_center.x - self.prev_center.x,
+                y = self.start_center.y - self.prev_center.y,
                 z = self.start_center.z - self.prev_center.z }
 
             for i, _ in pairs(self.marks) do
