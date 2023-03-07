@@ -22,6 +22,7 @@ function SuspendmanagerWindow:init()
             key="CUSTOM_CTRL_E",
             options={{value=true, label="Enabled", pen=COLOR_GREEN},
                      {value=false, label="Disabled", pen=COLOR_RED}},
+            initial_option = suspendmanager.isEnabled(),
             on_change=function(val) dfhack.run_command{val and "enable" or "disable", "suspendmanager"} end
         },
         widgets.ToggleHotkeyLabel{
@@ -30,6 +31,7 @@ function SuspendmanagerWindow:init()
             key="CUSTOM_ALT_B",
             options={{value=true, label="Yes", pen=COLOR_GREEN},
                      {value=false, label="No", pen=COLOR_RED}},
+            initial_option = suspendmanager.preventBlockingEnabled(),
             on_change=function(val)
                 suspendmanager.set_prevent_blocking(val)
             end
