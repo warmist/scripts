@@ -5,10 +5,9 @@
 
 -- Must Haves
 -----------------------------
--- fix mirror point disappearing
--- draggable mirror point
--- mirror guidelines
--- double mirror 'point'
+-- Clean up double line draw
+-- Fix rotation of mirror shapes
+-- Better UI, it's starting to get really crowded
 
 -- Should Haves
 -----------------------------
@@ -22,6 +21,7 @@
 -- Add warning to stairs if not spanning z levels like vanilla does
 -- Figure out how to remove dug stairs with mode (nothing seems to work, include 'dig ramp')
 -- 'No overwrite' mode to not overwrite existing designations
+-- Snap to grid, or angle, like 45 degrees, or some kind of tools to assist with symmetrical designs
 
 -- Nice To Haves
 -----------------------------
@@ -49,6 +49,16 @@ local guide_tile_pen = to_pen {
     tile = dfhack.screen.findGraphicsTile(
         "CURSORS",
         0,
+        22
+    ),
+}
+
+local mirror_guide_pen = to_pen {
+    ch = "",
+    fg = COLOR_BLUE,
+    tile = dfhack.screen.findGraphicsTile(
+        "CURSORS",
+        1,
         22
     ),
 }
@@ -398,44 +408,44 @@ function GenericOptionsPanel:init()
                     view_id = 'transform_panel_rotate',
                     visible = function() return self.dig_panel.mirror_point ~= nil end,
                     subviews = {
-                        widgets.ToggleHotkeyLabel {
+                        widgets.CycleHotkeyLabel {
                             view_id = "mirror_horiz_label",
                             key = "CUSTOM_SHIFT_J",
                             label = "Mirror Horizontal: ",
                             active = true,
                             enabled = true,
                             show_tooltip = true,
-                            initial_option = false,
+                            initial_option = 1,
+                            options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
+                                { label = "On (even)", value = 3 } },
                             frame = { t = 1, l = 1 }, key_sep = '',
-                            on_activate = function()
-                                self.dig_panel.mirror.horizonal = true
-                            end,
+                            on_change = function() self.dig_panel.needs_update = true end
                         },
-                        widgets.ToggleHotkeyLabel {
+                        widgets.CycleHotkeyLabel {
                             view_id = "mirror_diag_label",
                             key = "CUSTOM_SHIFT_O",
                             label = "Mirror Diagonal: ",
                             active = true,
                             enabled = true,
                             show_tooltip = true,
-                            initial_option = false,
+                            initial_option = 1,
+                            options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
+                                { label = "On (even)", value = 3 } },
                             frame = { t = 2, l = 1 }, key_sep = '',
-                            on_activate = function()
-                                self.dig_panel.mirror.diagonal = true
-                            end,
+                            on_change = function() self.dig_panel.needs_update = true end
                         },
-                        widgets.ToggleHotkeyLabel {
+                        widgets.CycleHotkeyLabel {
                             view_id = "mirror_vert_label",
                             key = "CUSTOM_SHIFT_K",
                             label = "Mirror Vertical: ",
                             active = true,
                             enabled = true,
                             show_tooltip = true,
-                            initial_option = false,
+                            initial_option = 1,
+                            options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
+                                { label = "On (even)", value = 3 } },
                             frame = { t = 3, l = 1 }, key_sep = '',
-                            on_activate = function()
-                                self.dig_panel.mirror.vertical = true
-                            end,
+                            on_change = function() self.dig_panel.needs_update = true end
                         },
                     }
                 }
@@ -1102,6 +1112,9 @@ end
 
 function Dig:on_transform(val)
     local center_x, center_y = self.shape:get_center()
+    -- if self.mirror_point then 
+    --     center_x, center_y = self.mirror_point.x, self.mirror_point.y
+    -- end
 
     -- Transform marks
     for i, mark in ipairs(self.marks) do
@@ -1233,6 +1246,7 @@ function Dig:gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape, extra_po
     return ret
 end
 
+-- TODO Function is too long
 function Dig:onRenderFrame(dc, rect)
 
     if (SHOW_DEBUG_WINDOW) then
@@ -1265,6 +1279,13 @@ function Dig:onRenderFrame(dc, rect)
         self.extra_points[self.placing_extra.index] = { x = mouse_pos.x, y = mouse_pos.y }
     end
 
+    if self.placing_mirror and mouse_pos then
+        if not self.mirror_point or (mouse_pos.x ~= self.mirror_point.x or mouse_pos.y ~= self.mirror_point.y) then
+            self.needs_update = true
+        end
+        self.mirror_point = mouse_pos
+    end
+
     -- Check if moving center, if so shift the shape by the delta between the previous and current points
     if self.prev_center ~= nil and
         (self.shape.basic_shape and #self.marks == self.shape.max_points
@@ -1286,6 +1307,11 @@ function Dig:onRenderFrame(dc, rect)
                 self.extra_points[i].y = self.extra_points[i].y + transform.y
             end
 
+            if self.mirror_point then
+                self.mirror_point.x = self.mirror_point.x + transform.x
+                self.mirror_point.y = self.mirror_point.y + transform.y
+            end
+
             self.prev_center = mouse_pos
         end
     end
@@ -1293,41 +1319,73 @@ function Dig:onRenderFrame(dc, rect)
     local mirrored_points = {}
     if self.mirror_point then
         for i, point in pairs(points) do
-            if self.subviews.mirror_horiz_label:getOptionValue() then
-                table.insert(mirrored_points,
-                    { z = point.z, x = point.x,
-                        y = self.mirror_point.y - math.abs(self.mirror_point.y - point.y) })
+            local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
+            local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
+            local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
+
+            -- 1 maps to "Off"
+            if mirror_horiz_value ~= 1 then
+                local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
+
+                -- if Mirror (even), then increase mirror amount by 1
+                if mirror_horiz_value == 3 then
+                    if mirrored_y > self.mirror_point.y then
+                        mirrored_y = mirrored_y + 1
+                    else
+                        mirrored_y = mirrored_y - 1
+                    end
+                end
+                table.insert(mirrored_points, { z = point.z, x = point.x, y = mirrored_y })
             end
-            if self.subviews.mirror_diag_label:getOptionValue() then
-                table.insert(mirrored_points,
-                    { z = point.z, x = self.mirror_point.x - math.abs(self.mirror_point.x - point.x),
-                        y = self.mirror_point.y - math.abs(self.mirror_point.y - point.y) })
+            if mirror_diag_value ~= 1 then
+                local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
+                local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
+
+                -- if Mirror (even), then increase mirror amount by 1
+                if mirror_diag_value == 3 then
+                    if mirrored_y > self.mirror_point.y then
+                        mirrored_y = mirrored_y + 1
+                        mirrored_x = mirrored_x + 1
+                    else
+                        mirrored_y = mirrored_y - 1
+                        mirrored_x = mirrored_x - 1
+                    end
+                end
+                table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = mirrored_y })
             end
-            if self.subviews.mirror_vert_label:getOptionValue() then
-                table.insert(mirrored_points,
-                    { z = point.z, x = self.mirror_point.x - math.abs(self.mirror_point.x - point.x),
-                        y = point.y })
+            if mirror_vert_value ~= 1 then
+                local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
+
+                -- if Mirror (even), then increase mirror amount by 1
+                if mirror_vert_value == 3 then
+                    if mirrored_x > self.mirror_point.x then
+                        mirrored_x = mirrored_x + 1
+                    else
+                        mirrored_x = mirrored_x - 1
+                    end
+                end
+                table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = point.y })
             end
         end
-    end
 
-    for i, point in pairs(mirrored_points) do
-        table.insert(points, mirrored_points[i])
-    end
+        for i, point in pairs(mirrored_points) do
+            table.insert(points, mirrored_points[i])
+        end
 
-    local center_x, center_y = 0, 0
-    for i = 1, #points do
-        center_x = center_x + points[i].x
-        center_y = center_y + points[i].y
+        -- local center_x, center_y = 0, 0
+        -- for i = 1, #points do
+        --     center_x = center_x + points[i].x
+        --     center_y = center_y + points[i].y
+        -- end
+        -- center_x = center_x / #points
+        -- center_y = center_y / #points
+
+        table.sort(points, function(a, b)
+            local atan_a = math.atan(a.y - self.mirror_point.y, a.x - self.mirror_point.x)
+            local atan_b = math.atan(b.y - self.mirror_point.y, b.x - self.mirror_point.x)
+            return atan_a < atan_b
+        end)
     end
-    center_x = center_x / #points
-    center_y = center_y / #points
-    
-    table.sort(points, function(a, b)
-        local atan_a = math.atan(a.y - center_y, a.x - center_x)
-        local atan_b = math.atan(b.y - center_y, b.x - center_x)
-        return atan_a < atan_b
-    end)
 
 
     if self:shape_needs_update() then
@@ -1357,11 +1415,38 @@ function Dig:onRenderFrame(dc, rect)
         guidm.renderMapOverlay(function() return guide_tile_pen end, vert_bounds)
     end
 
+    if self.mirror_point then
+        local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
+        local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
+        local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
+
+        local map_x, map_y, map_z = dfhack.maps.getTileSize()
+
+        if mirror_horiz_value ~= 1 or mirror_diag_value ~= 1 then
+            local horiz_bounds = {
+                x1 = 0, x2 = map_x,
+                y1 = self.mirror_point.y, y2 = self.mirror_point.y + ((mirror_horiz_value == 3 or mirror_diag_value == 3) and 1 or 0),
+                z1 = self.mirror_point.z, z2 = self.mirror_point.z
+            }
+            guidm.renderMapOverlay(function() return mirror_guide_pen end, horiz_bounds)
+        end
+
+        if mirror_vert_value ~= 1 or mirror_diag_value ~= 1 then
+            local vert_bounds = {
+                x1 = self.mirror_point.x, x2 = self.mirror_point.x + ((mirror_vert_value == 3 or mirror_diag_value == 3) and 1 or 0),
+                y1 = 0, y2 = map_y,
+                z1 = self.mirror_point.z, z2 = self.mirror_point.z
+            }
+            guidm.renderMapOverlay(function() return mirror_guide_pen end, vert_bounds)
+        end
+    end
+
     guidm.renderMapOverlay(get_overlay_pen, bounds)
 
     self:updateLayout()
 end
 
+-- TODO function too long
 function Dig:onInput(keys)
     if Dig.super.onInput(self, keys) then
         return true
@@ -1508,10 +1593,16 @@ function Dig:onInput(keys)
                 if pos.x == center_x and pos.y == center_y and self.prev_center == nil then
                     self.start_center = pos
                     self.prev_center = pos
+                    return true
                 elseif self.prev_center ~= nil then
                     self.start_center = nil
                     self.prev_center = nil
+                    return true
                 end
+            end
+
+            if self.mirror_point and pos.x == self.mirror_point.x and self.mirror_point and pos.y == self.mirror_point.y then
+                self.placing_mirror = true
             end
         end
 

@@ -88,6 +88,7 @@ end
 -- Get dimensions taking into account, main points, extra points,
 -- and the shape array, anything that needs to be drawn should be
 -- within these bounds
+-- TODO this probably belongs in dig.lua at this point
 function Shape:get_view_dims(extra_points, mirror_point)
     local min_x, min_y, max_x, max_y
     for x, _ in pairs(self.arr) do
@@ -461,8 +462,10 @@ function Line:update(points, extra_points)
         local x2, y2 = bezier_point1.x, bezier_point1.y
         local x3, y3 = bezier_point2.x, bezier_point2.y
         while t <= 1 do
-            local x = math.floor(((1 - t) ^ 3 * x0 + 3 * (1 - t) ^ 2 * t * x2 + 3 * (1 - t) * t ^ 2 * x3 + t ^ 3 * x1) + 0.5)
-            local y = math.floor(((1 - t) ^ 3 * y0 + 3 * (1 - t) ^ 2 * t * y2 + 3 * (1 - t) * t ^ 2 * y3 + t ^ 3 * y1) + 0.5)
+            local x = math.floor(((1 - t) ^ 3 * x0 + 3 * (1 - t) ^ 2 * t * x2 + 3 * (1 - t) * t ^ 2 * x3 + t ^ 3 * x1) +
+                0.5)
+            local y = math.floor(((1 - t) ^ 3 * y0 + 3 * (1 - t) ^ 2 * t * y2 + 3 * (1 - t) * t ^ 2 * y3 + t ^ 3 * y1) +
+                0.5)
             for i = 0, thickness - 1 do
                 for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                     if not self.arr[x + j] then self.arr[x + j] = {} end
@@ -476,8 +479,10 @@ function Line:update(points, extra_points)
         end
 
         -- Get the last point
-        local x_end = math.floor(((1 - 1) ^ 3 * x0 + 3 * (1 - 1) ^ 2 * 1 * x2 + 3 * (1 - 1) * 1 ^ 2 * x3 + 1 ^ 3 * x1) + 0.5)
-        local y_end = math.floor(((1 - 1) ^ 3 * y0 + 3 * (1 - 1) ^ 2 * 1 * y2 + 3 * (1 - 1) * 1 ^ 2 * y3 + 1 ^ 3 * y1) + 0.5)
+        local x_end = math.floor(((1 - 1) ^ 3 * x0 + 3 * (1 - 1) ^ 2 * 1 * x2 + 3 * (1 - 1) * 1 ^ 2 * x3 + 1 ^ 3 * x1) +
+            0.5)
+        local y_end = math.floor(((1 - 1) ^ 3 * y0 + 3 * (1 - 1) ^ 2 * 1 * y2 + 3 * (1 - 1) * 1 ^ 2 * y3 + 1 ^ 3 * y1) +
+            0.5)
         for i = 0, thickness - 1 do
             for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
                 if not self.arr[x_end + j] then self.arr[x_end + j] = {} end
@@ -511,6 +516,45 @@ function Line:update(points, extra_points)
         local sy = y0 < y1 and 1 or -1
         local err = dx - dy
         local e2, x, y
+
+        for i = 0, thickness - 1 do
+            x = x0
+            y = y0 + i
+            while true do
+                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                    if not self.arr[x + j] then self.arr[x + j] = {} end
+                    self.arr[x + j][y] = true
+                    self.num_tiles = self.num_tiles + 1
+                end
+
+                if x == x1 and y == y1 + i then
+                    break
+                end
+
+                e2 = 2 * err
+
+                if e2 > -dy then
+                    err = err - dy
+                    x = x + sx
+                end
+
+                if e2 < dx then
+                    err = err + dx
+                    y = y + sy
+                end
+            end
+        end
+
+        local tx, ty = x0, y0
+        x0, y0 = x1, y1
+        x1, y1 = tx, ty
+
+        dx = math.abs(x1 - x0)
+        dy = math.abs(y1 - y0)
+        sx = x0 < x1 and 1 or -1
+        sy = y0 < y1 and 1 or -1
+        err = dx - dy
+        e2, x, y = nil, nil , nil
 
         for i = 0, thickness - 1 do
             x = x0
@@ -603,23 +647,21 @@ function FreeForm:update(points, extra_points)
 
     if self.options.closed.value then
         -- Connect last point to first point to close the shape
-        table.insert(edges, { self.points[#self.points].x, self.points[#self.points].y, self.points[1].x, self.points[1].y })
+        table.insert(edges,
+            { self.points[#self.points].x, self.points[#self.points].y, self.points[1].x, self.points[1].y })
     end
 
     -- Iterate over each edge and draw a line
     for _, edge in ipairs(edges) do
         local line = { { x = edge[1], y = edge[2] }, { x = edge[3], y = edge[4] } }
         local line_class = Line()
+        line_class.options.thickness.value = thickness
         line_class:update(line, {})
         for x, y_row in pairs(line_class.arr) do
             for y, _ in pairs(y_row) do
-                for i = 0, thickness - 1 do
-                    for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                        if not self.arr[x + j] then self.arr[x + j] = {} end
-                        self.arr[x + j][y + i] = true
-                        self.num_tiles = self.num_tiles + 1
-                    end
-                end
+                if not self.arr[x] then self.arr[x] = {} end
+                self.arr[x][y] = true
+                self.num_tiles = self.num_tiles + 1
             end
         end
     end
@@ -646,7 +688,9 @@ function FreeForm:point_in_polygon(x, y)
 
     for i = 1, #self.points do
         if (self.points[i].y > y) ~= (self.points[j].y > y) and
-            x < (self.points[j].x - self.points[i].x) * (y - self.points[i].y) / (self.points[j].y - self.points[i].y) + self.points[i].x then
+            x <
+            (self.points[j].x - self.points[i].x) * (y - self.points[i].y) / (self.points[j].y - self.points[i].y) +
+            self.points[i].x then
             inside = not inside
         end
         j = i
