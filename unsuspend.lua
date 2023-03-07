@@ -3,6 +3,8 @@
 
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
+local argparse = require('argparse')
+local suspend = reqscript('suspend')
 
 local overlay = require('plugins.overlay')
 
@@ -184,7 +186,13 @@ if dfhack_flags.module then
     return
 end
 
-local unsuspended_count, flow_count, buildingplan_count = 0, 0, 0
+local quiet, skipblocking = false, false
+argparse.processArgsGetopt({...}, {
+    {'q', 'quiet', handler=function() quiet = true end},
+    {'s', 'skipblocking', handler=function() skipblocking = true end},
+})
+
+local unsuspended_count, flow_count, buildingplan_count, blocking_count = 0, 0, 0, 0
 
 foreach_construction_job(function(job)
     if not job.flags.suspend then return end
@@ -197,19 +205,23 @@ foreach_construction_job(function(job)
         buildingplan_count = buildingplan_count + 1
         return
     end
+    if skipblocking and suspend.isBlocking(job) then
+        blocking_count = blocking_count + 1
+        return
+    end
     job.flags.suspend = false
     unsuspended_count = unsuspended_count + 1
 end)
 
-local opts = utils.invert{...}
-local quiet = opts['-q'] or opts['--quiet']
-
-if flow_count > 0 then
+if not quiet and flow_count > 0 then
     print(string.format('Not unsuspending %d underwater job(s)', flow_count))
 end
-if buildingplan_count > 0 then
+if not quiet and buildingplan_count > 0 then
     print(string.format('Not unsuspending %d buildingplan job(s)', buildingplan_count))
 end
-if unsuspended_count > 0 or not quiet then
+if not quiet and blocking_count > 0 then
+    print(string.format('Not unsuspending %d blocking job(s)', blocking_count))
+end
+if not quiet and unsuspended_count > 0 then
     print(string.format('Unsuspended %d job(s).', unsuspended_count))
 end

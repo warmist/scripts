@@ -4,6 +4,7 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local suspend = reqscript('suspend')
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
@@ -36,12 +37,6 @@ local function unremove_construction(pos, grid)
     dfhack.maps.getTileBlock(pos).flags.designated = true
     local job = safe_index(grid, pos.z, pos.y, pos.x)
     if job then dfhack.job.removeJob(job) end
-end
-
-local function suspend(job)
-    job.flags.suspend = true
-    job.flags.working = false
-    dfhack.job.removeWorker(job, 0)
 end
 
 local function unsuspend(job)
@@ -146,7 +141,7 @@ function MassRemove:init()
             key_back='CUSTOM_SHIFT_X',
             options={
                 {label='Leave alone', value=function() end},
-                {label='Suspend', value=suspend},
+                {label='Suspend', value=suspend.suspend},
                 {label='Unsuspend', value=unsuspend},
             },
         },

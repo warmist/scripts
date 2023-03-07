@@ -19,6 +19,15 @@ Usage
 
     unsuspend
 
+Options
+-------
+
+``-q``, ``--quiet``
+    Disable text output
+
+``-s``, ``--skipblocking``
+    Don't unsuspend construction jobs that risk blocking other jobs
+
 Overlay
 -------
 
