@@ -5,7 +5,6 @@
 
 -- Must Haves
 -----------------------------
--- Fix rotation of mirror shapes
 -- Reconsider sorting of mirrored points
 -- Better UI, it's starting to get really crowded
 
@@ -139,7 +138,7 @@ function DigDebugWindow:init()
         "show_guides"
     }
 
-    if self.dig_window == nil then
+    if not self.dig_window then
         return
     end
     for i, a in pairs(attrs) do
@@ -163,7 +162,7 @@ function DigDebugWindow:init()
                     return { tostring(attr) .. ": ", table.unpack(table_to_string(self.dig_window[attr], "  ")) }
                 end
             end,
-        }}
+        } }
     end
 end
 
@@ -203,7 +202,7 @@ function MarksPanel:update_mark_labels()
     end
 
     local mirror = self.dig_panel.mirror_point
-    if mirror ~= nil then
+    if mirror then
         table.insert(label_text, string.format("Mirror Point: %d, %d, %d", mirror.x, mirror.y, mirror.z))
     end
 
@@ -247,11 +246,11 @@ function ActionPanel:get_action_text()
         text = "Place the next point"
     elseif not self.dig_panel.marks[1] then
         text = "Place the first point"
-    elseif not self.parent_view.placing_extra.active and self.parent_view.prev_center == nil then
+    elseif not self.parent_view.placing_extra.active and not self.parent_view.prev_center then
         text = "Select any draggable points"
     elseif self.parent_view.placing_extra.active then
         text = "Place any extra points"
-    elseif self.parent_view.prev_center ~= nil then
+    elseif self.parent_view.prev_center then
         text = "Place the center point"
     else
         text = "Select any draggable points"
@@ -305,7 +304,7 @@ GenericOptionsPanel.ATTRS {
 
 function GenericOptionsPanel:init()
     local options = {}
-    for i, shape in pairs(shapes.all_shapes) do
+    for i, shape in ipairs(shapes.all_shapes) do
         options[#options + 1] = {
             label = shape.name,
             value = i,
@@ -402,13 +401,13 @@ function GenericOptionsPanel:init()
                     key = 'CUSTOM_M',
                     view_id = 'mirror_point_panel',
                     visible = function() return self.dig_panel.shape.can_mirror end,
-                    label = function() if self.dig_panel.mirror_point == nil then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
+                    label = function() if not self.dig_panel.mirror_point then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
                     active = true,
                     enabled = function() return not self.dig_panel.placing_extra.active and
-                            not self.dig_panel.placing_mark.active and self.prev_center == nil
+                            not self.dig_panel.placing_mark.active and not self.prev_center
                     end,
                     on_activate = function()
-                        if self.dig_panel.mirror_point == nil then
+                        if not self.dig_panel.mirror_point then
                             self.dig_panel.placing_mark.active = false
                             self.dig_panel.placing_extra.active = false
                             self.dig_panel.placing_extra.active = false
@@ -421,7 +420,7 @@ function GenericOptionsPanel:init()
                 },
                 widgets.ResizingPanel {
                     view_id = 'transform_panel_rotate',
-                    visible = function() return self.dig_panel.mirror_point ~= nil end,
+                    visible = function() return self.dig_panel.mirror_point end,
                     subviews = {
                         widgets.CycleHotkeyLabel {
                             view_id = "mirror_horiz_label",
@@ -462,6 +461,21 @@ function GenericOptionsPanel:init()
                             frame = { t = 3, l = 1 }, key_sep = '',
                             on_change = function() self.dig_panel.needs_update = true end
                         },
+                        widgets.HotkeyLabel {
+                            view_id = "mirror_vert_label",
+                            key = "CUSTOM_SHIFT_M",
+                            label = "Save Mirrored Points",
+                            active = true,
+                            enabled = true,
+                            show_tooltip = true,
+                            initial_option = 1,
+                            frame = { t = 4, l = 1 }, key_sep = ': ',
+                            on_activate = function()
+                                local points = self.dig_panel:get_mirrored_points(self.dig_panel.marks)
+                                self.dig_panel.marks = points
+                                self.dig_panel.mirror_point = nil
+                            end
+                        },
                     }
                 }
             }
@@ -494,9 +508,9 @@ function GenericOptionsPanel:init()
                 return msg .. "N/A"
             end,
             active = true,
-            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.shape.extra_points > 0 end,
+            visible = function() return self.dig_panel.shape and #self.dig_panel.shape.extra_points > 0 end,
             enabled = function()
-                if self.dig_panel.shape ~= nil then
+                if self.dig_panel.shape then
                     return #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points
                 end
 
@@ -523,10 +537,10 @@ function GenericOptionsPanel:init()
             active = true,
             visible = true,
             enabled = function()
-                if not self.dig_panel.placing_mark.active and self.dig_panel.prev_center == nil then
-                    return self.dig_panel.shape.max_points == nil or
+                if not self.dig_panel.placing_mark.active and not self.dig_panel.prev_center then
+                    return not self.dig_panel.shape.max_points or
                         #self.dig_panel.marks < self.dig_panel.shape.max_points
-                elseif not self.dig_panel.placing_extra.active and self.dig_panel.prev_center == nil then
+                elseif not self.dig_panel.placing_extra.active and not self.dig_panel.prev_centerl then
                     return true
                 end
 
@@ -553,7 +567,7 @@ function GenericOptionsPanel:init()
             active = true,
             enabled = function()
                 if #self.dig_panel.marks > 0 then return true
-                elseif self.dig_panel.shape ~= nil then
+                elseif self.dig_panel.shape then
                     if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
                         return true
                     end
@@ -579,7 +593,7 @@ function GenericOptionsPanel:init()
             label = "Clear extra points",
             active = true,
             enabled = function()
-                if self.dig_panel.shape ~= nil then
+                if self.dig_panel.shape then
                     if #self.dig_panel.extra_points > 0 then
                         return true
                     end
@@ -588,10 +602,10 @@ function GenericOptionsPanel:init()
                 return false
             end,
             disabled = false,
-            visible = function() return self.dig_panel.shape ~= nil and #self.dig_panel.shape.extra_points > 0 end,
+            visible = function() return self.dig_panel.shape and #self.dig_panel.shape.extra_points > 0 end,
             show_tooltip = true,
             on_activate = function()
-                if self.dig_panel.shape ~= nil then
+                if self.dig_panel.shape then
                     self.dig_panel.extra_points = {}
                     self.dig_panel.prev_center = nil
                     self.dig_panel.start_center = nil
@@ -734,7 +748,7 @@ function GenericOptionsPanel:init()
             key = "CUSTOM_C",
             label = "Auto-Commit: ",
             active = true,
-            enabled = function() return self.dig_panel.shape.max_points ~= nil end,
+            enabled = function() return self.dig_panel.shape.max_points end,
             disabled = false,
             show_tooltip = true,
             initial_option = true,
@@ -901,13 +915,13 @@ function Dig:get_pen(x, y, mousePos)
         end
     end
 
-    for i, mark in pairs(self.marks) do
+    for i, mark in ipairs(self.marks) do
         if same_xy(mark, xy2pos(x, y)) then
             drag_point = true
         end
     end
 
-    if self.mirror_point ~= nil and same_xy(self.mirror_point, xy2pos(x, y)) then
+    if self.mirror_point and same_xy(self.mirror_point, xy2pos(x, y)) then
         drag_point = true
     end
 
@@ -967,7 +981,7 @@ function Dig:get_pen(x, y, mousePos)
         else cursor = nil
         end
     end
-    
+
     -- Create the pen if the cursor is set
     if cursor then PENS[pen_key] = self:make_pen(cursor, drag_point, mouse_over, get_point, extra_point) end
 
@@ -1032,7 +1046,7 @@ function Dig:add_shape_options()
                     label = option.name,
                     active = true,
                     enabled = function()
-                        if option.enabled == nil then
+                        if not option.enabled then
                             return true
                         else
                             return self.shape.options[option.enabled[1]].value == option.enabled[2]
@@ -1068,12 +1082,12 @@ function Dig:add_shape_options()
                     label = "Decrease " .. option.name,
                     active = true,
                     enabled = function()
-                        if option.enabled ~= nil then
+                        if option.enabled then
                             if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
                                 return false
                             end
                         end
-                        return min == nil or
+                        return not min or
                             (self.shape.options[key].value > min)
                     end,
                     disabled = false,
@@ -1090,12 +1104,12 @@ function Dig:add_shape_options()
                     label = "Increase " .. option.name,
                     active = true,
                     enabled = function()
-                        if option.enabled ~= nil then
+                        if option.enabled then
                             if self.shape.options[option.enabled[1]].value ~= option.enabled[2] then
                                 return false
                             end
                         end
-                        return max == nil or
+                        return not max or
                             (self.shape.options[key].value <= max)
                     end,
                     disabled = false,
@@ -1116,6 +1130,13 @@ function Dig:on_transform(val)
     -- if self.mirror_point then
     --     center_x, center_y = self.mirror_point.x, self.mirror_point.y
     -- end
+
+    -- Save mirrored points first
+    if self.mirror_point then
+        local points = self:get_mirrored_points(self.marks)
+        self.marks = points
+        self.mirror_point = nil
+    end
 
     -- Transform marks
     for i, mark in ipairs(self.marks) do
@@ -1256,7 +1277,7 @@ function Dig:onRenderFrame(dc, rect)
 
     Dig.super.onRenderFrame(self, dc, rect)
 
-    if self.shape == nil then
+    if not self.shape then
         self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()]
     end
 
@@ -1268,7 +1289,7 @@ function Dig:onRenderFrame(dc, rect)
         return self:get_pen(pos.x, pos.y, mouse_pos)
     end
 
-    if self.placing_mark.active and self.placing_mark.index ~= nil then
+    if self.placing_mark.active and self.placing_mark.index then
         self.marks[self.placing_mark.index] = mouse_pos
     end
 
@@ -1288,22 +1309,22 @@ function Dig:onRenderFrame(dc, rect)
     end
 
     -- Check if moving center, if so shift the shape by the delta between the previous and current points
-    if self.prev_center ~= nil and
+    if self.prev_center and
         (self.shape.basic_shape and #self.marks == self.shape.max_points
             or not self.shape.basic_shape and not self.placing_mark.active) then
-        if mouse_pos ~= nil and (self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
+        if mouse_pos and (self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
             self.prev_center.z ~= mouse_pos.z) then
             self.needs_update = true
             local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
                 z = mouse_pos.z - self.prev_center.z }
 
-            for i, _ in pairs(self.marks) do
+            for i, _ in ipairs(self.marks) do
                 self.marks[i].x = self.marks[i].x + transform.x
                 self.marks[i].y = self.marks[i].y + transform.y
                 self.marks[i].z = self.marks[i].z + transform.z
             end
 
-            for i, point in pairs(self.extra_points) do
+            for i, point in ipairs(self.extra_points) do
                 self.extra_points[i].x = self.extra_points[i].x + transform.x
                 self.extra_points[i].y = self.extra_points[i].y + transform.y
             end
@@ -1317,79 +1338,9 @@ function Dig:onRenderFrame(dc, rect)
         end
     end
 
-    local mirrored_points = {}
     if self.mirror_point then
-        for i, point in pairs(points) do
-            local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
-            local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
-            local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
-
-            -- 1 maps to "Off"
-            if mirror_horiz_value ~= 1 then
-                local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
-
-                -- if Mirror (even), then increase mirror amount by 1
-                if mirror_horiz_value == 3 then
-                    if mirrored_y > self.mirror_point.y then
-                        mirrored_y = mirrored_y + 1
-                    else
-                        mirrored_y = mirrored_y - 1
-                    end
-                end
-                table.insert(mirrored_points, { z = point.z, x = point.x, y = mirrored_y })
-            end
-            if mirror_diag_value ~= 1 then
-                local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
-                local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
-
-                -- if Mirror (even), then increase mirror amount by 1
-                if mirror_diag_value == 3 then
-                    if mirrored_y > self.mirror_point.y then
-                        mirrored_y = mirrored_y + 1
-                        mirrored_x = mirrored_x + 1
-                    else
-                        mirrored_y = mirrored_y - 1
-                        mirrored_x = mirrored_x - 1
-                    end
-                end
-                table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = mirrored_y })
-            end
-            if mirror_vert_value ~= 1 then
-                local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
-
-                -- if Mirror (even), then increase mirror amount by 1
-                if mirror_vert_value == 3 then
-                    if mirrored_x > self.mirror_point.x then
-                        mirrored_x = mirrored_x + 1
-                    else
-                        mirrored_x = mirrored_x - 1
-                    end
-                end
-                table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = point.y })
-            end
-        end
-
-        for i, point in pairs(mirrored_points) do
-            table.insert(points, mirrored_points[i])
-        end
-
-        -- local center_x, center_y = 0, 0
-        -- for i = 1, #points do
-        --     center_x = center_x + points[i].x
-        --     center_y = center_y + points[i].y
-        -- end
-        -- center_x = center_x / #points
-        -- center_y = center_y / #points
-
-        -- Sorts the points by angle relative to the mirror point to connect points sequentially
-        -- TODO, this whole thing can probably be avoided by connecting the points better beforehand
-        table.sort(points, function(a, b)
-            local atan_a = math.atan(a.y - self.mirror_point.y, a.x - self.mirror_point.x)
-            local atan_b = math.atan(b.y - self.mirror_point.y, b.x - self.mirror_point.x)
-            return atan_a < atan_b
-        end)
+        points = self:get_mirrored_points(points)
     end
-
 
     if self:shape_needs_update() then
         self.shape:update(points, self.extra_points)
@@ -1401,15 +1352,16 @@ function Dig:onRenderFrame(dc, rect)
 
     -- Generate bounds based on the shape's dimensions
     local bounds = self:get_view_bounds()
-    if self.shape ~= nil and bounds ~= nil then
+    if self.shape and bounds then
         local top_left, bot_right = self.shape:get_view_dims(self.extra_points, self.mirror_point)
-        if top_left == nil or bot_right == nil then return end
+        if not top_left or not bot_right then return end
         bounds.x1 = top_left.x
         bounds.x2 = bot_right.x
         bounds.y1 = top_left.y
         bounds.y2 = bot_right.y
     end
 
+    -- Show mouse guidelines
     if self.show_guides and mouse_pos then
         local map_x, map_y, map_z = dfhack.maps.getTileSize()
         local horiz_bounds = { x1 = 0, x2 = map_x, y1 = mouse_pos.y, y2 = mouse_pos.y, z1 = mouse_pos.z, z2 = mouse_pos.z }
@@ -1418,6 +1370,7 @@ function Dig:onRenderFrame(dc, rect)
         guidm.renderMapOverlay(function() return guide_tile_pen end, vert_bounds)
     end
 
+    -- Show Mirror guidelines
     if self.mirror_point then
         local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
         local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
@@ -1464,18 +1417,18 @@ function Dig:onInput(keys)
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- If center draggin, put the shape back to the original center
-        if self.prev_center ~= nil then
+        if self.prev_center then
             local transform = { x = self.start_center.x - self.prev_center.x,
                 y = self.start_center.y - self.prev_center.y,
                 z = self.start_center.z - self.prev_center.z }
 
-            for i, _ in pairs(self.marks) do
+            for i, _ in ipairs(self.marks) do
                 self.marks[i].x = self.marks[i].x + transform.x
                 self.marks[i].y = self.marks[i].y + transform.y
                 self.marks[i].z = self.marks[i].z + transform.z
             end
 
-            for i, point in pairs(self.extra_points) do
+            for i, point in ipairs(self.extra_points) do
                 self.extra_points[i].x = self.extra_points[i].x + transform.x
                 self.extra_points[i].y = self.extra_points[i].y + transform.y
             end
@@ -1487,7 +1440,7 @@ function Dig:onInput(keys)
         end -- TODO
 
         -- If extra points, clear them and return
-        if self.shape ~= nil then
+        if self.shape then
             if #self.extra_points > 0 or self.placing_extra.active then
                 self.extra_points = {}
                 self.placing_extra.active = false
@@ -1527,7 +1480,7 @@ function Dig:onInput(keys)
 
     if keys._MOUSE_L_DOWN and pos then
         -- TODO Refactor this a bit
-        if self.shape.max_points ~= nil and #self.marks == self.shape.max_points and self.placing_mark.active then
+        if self.shape.max_points and #self.marks == self.shape.max_points and self.placing_mark.active then
             self.marks[self.placing_mark.index] = pos
             self.placing_mark.index = self.placing_mark.index + 1
             self.placing_mark.active = false
@@ -1574,7 +1527,7 @@ function Dig:onInput(keys)
                     end
                 end
             else
-                for i, point in pairs(self.marks) do
+                for i, point in ipairs(self.marks) do
                     if same_xy(pos, point) then
                         self.placing_mark = { active = true, index = i, continue = false }
                     end
@@ -1593,11 +1546,11 @@ function Dig:onInput(keys)
             -- Clicking center point
             if #self.marks > 0 then
                 local center_x, center_y = self.shape:get_center()
-                if same_xy(pos, xy2pos(center_x, center_y)) and self.prev_center == nil then
+                if same_xy(pos, xy2pos(center_x, center_y)) and not self.prev_center then
                     self.start_center = pos
                     self.prev_center = pos
                     return true
-                elseif self.prev_center ~= nil then
+                elseif self.prev_center then
                     self.start_center = nil
                     self.prev_center = nil
                     return true
@@ -1635,13 +1588,13 @@ function Dig:get_designation(x, y, z)
         elseif view_bounds and z == math.abs(view_bounds.z1 - view_bounds.z2) then
             local pos = xyz2pos(view_bounds.x1 + x, view_bounds.y1 + y, view_bounds.z1 + z)
             local tile_type = dfhack.maps.getTileType(pos)
-            local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
+            local tile_shape = tile_type and tile_attrs[tile_type].shape or nil
             local designation = dfhack.maps.getTileFlags(pos)
 
             -- If top of the view_bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
             local up_or_updown_dug = (
                 tile_shape == df.tiletype_shape.STAIR_DOWN or tile_shape == df.tiletype_shape.STAIR_UPDOWN)
-            local up_or_updown_desig = designation ~= nil and (designation.dig == df.tile_dig_designation.UpStair or
+            local up_or_updown_desig = designation and (designation.dig == df.tile_dig_designation.UpStair or
                 designation.dig == df.tile_dig_designation.UpDownStair)
 
             if stairs_top_type == "auto" then
@@ -1725,8 +1678,78 @@ function Dig:commit()
     self:updateLayout()
 end
 
+function Dig:get_mirrored_points(points)
+    local mirrored_points = {}
+    for i, point in ipairs(points) do
+        local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
+        local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
+        local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
+
+        -- 1 maps to "Off"
+        if mirror_horiz_value ~= 1 then
+            local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
+
+            -- if Mirror (even), then increase mirror amount by 1
+            if mirror_horiz_value == 3 then
+                if mirrored_y > self.mirror_point.y then
+                    mirrored_y = mirrored_y + 1
+                else
+                    mirrored_y = mirrored_y - 1
+                end
+            end
+
+            table.insert(mirrored_points, { z = point.z, x = point.x, y = mirrored_y })
+        end
+        if mirror_diag_value ~= 1 then
+            local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
+            local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
+
+            -- if Mirror (even), then increase mirror amount by 1
+            if mirror_diag_value == 3 then
+                if mirrored_y > self.mirror_point.y then
+                    mirrored_y = mirrored_y + 1
+                    mirrored_x = mirrored_x + 1
+                else
+                    mirrored_y = mirrored_y - 1
+                    mirrored_x = mirrored_x - 1
+                end
+            end
+
+            table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = mirrored_y })
+        end
+        if mirror_vert_value ~= 1 then
+            local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
+
+            -- if Mirror (even), then increase mirror amount by 1
+            if mirror_vert_value == 3 then
+                if mirrored_x > self.mirror_point.x then
+                    mirrored_x = mirrored_x + 1
+                else
+                    mirrored_x = mirrored_x - 1
+                end
+            end
+
+            table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = point.y })
+        end
+    end
+
+    for i, point in ipairs(mirrored_points) do
+        table.insert(points, mirrored_points[i])
+    end
+
+    -- Sorts the points by angle relative to the mirror point to connect points sequentially
+    -- TODO, this whole thing can probably be avoided by connecting the points better beforehand
+    table.sort(points, function(a, b)
+        local atan_a = math.atan(a.y - self.mirror_point.y, a.x - self.mirror_point.x)
+        local atan_b = math.atan(b.y - self.mirror_point.y, b.x - self.mirror_point.x)
+        return atan_a < atan_b
+    end)
+
+    return points
+end
+
 --
--- Dig
+-- DigScreen
 --
 
 DigScreen = defclass(DigScreen, gui.ZScreen)
