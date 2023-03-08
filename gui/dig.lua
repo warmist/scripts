@@ -5,20 +5,21 @@
 
 -- Must Haves
 -----------------------------
--- Clean up double line draw
 -- Fix rotation of mirror shapes
+-- Reconsider sorting of mirrored points
 -- Better UI, it's starting to get really crowded
 
 -- Should Haves
 -----------------------------
 -- Refactor duplicated code into functions
+--  File is getting long... might be time to consider creating additional modules
+-- All the various states are getting hard to keep track of, e.g. placing extra/mirror/mark/etc...
+--   Should consolidate the states into a single attribute with enum values
 -- Keyboard support
 -- As the number of shapes and designations grow it might be better to have list menus for them instead of cycle
--- 3D shapes, would allow stuff like spiral staircases/minecart tracks and other neat stuff, probably not too hard
 -- Grid view without slowness (can ignore if next TODO is done, since nrmal mining mode has grid view)
 --   Lags when drawing the full screen grid on each frame render
 -- Integrate with default mining mode for designation type, priority, etc... (possible?)
--- Add warning to stairs if not spanning z levels like vanilla does
 -- Figure out how to remove dug stairs with mode (nothing seems to work, include 'dig ramp')
 -- 'No overwrite' mode to not overwrite existing designations
 -- Snap to grid, or angle, like 45 degrees, or some kind of tools to assist with symmetrical designs
@@ -31,6 +32,7 @@
 -----------------------------
 -- Shape preview in panel
 -- Shape designer in preview panel to draw repeatable shapes i'e' 2x3 room with door
+-- 3D shapes, would allow stuff like spiral staircases/minecart tracks and other neat stuff, probably not too hard
 
 -- END TODOS ================
 
@@ -44,8 +46,8 @@ local tile_attrs = df.tiletype.attrs
 
 local to_pen = dfhack.pen.parse
 local guide_tile_pen = to_pen {
-    ch = "",
-    fg = COLOR_BLUE,
+    ch = "+",
+    fg = COLOR_YELLOW,
     tile = dfhack.screen.findGraphicsTile(
         "CURSORS",
         0,
@@ -54,8 +56,8 @@ local guide_tile_pen = to_pen {
 }
 
 local mirror_guide_pen = to_pen {
-    ch = "",
-    fg = COLOR_BLUE,
+    ch = "+",
+    fg = COLOR_YELLOW,
     tile = dfhack.screen.findGraphicsTile(
         "CURSORS",
         1,
@@ -63,16 +65,28 @@ local mirror_guide_pen = to_pen {
     ),
 }
 
+-- Utilities
+
+local function same_xy(pos1, pos2)
+    return pos1.x == pos2.x and pos1.y == pos2.y
+end
+
+local function same_xyz(pos1, pos2)
+    return same_xy(pos1, pos2) and pos1.z == pos2.z
+end
+
+-- Debug window
+
 SHOW_DEBUG_WINDOW = true
 
-function tableToString(tbl, indent)
+local function table_to_string(tbl, indent)
     indent = indent or ""
     local result = {}
     for k, v in pairs(tbl) do
         local key = type(k) == "number" and "[" .. tostring(k) .. "]" or tostring(k)
         if type(v) == "table" then
             table.insert(result, indent .. key .. " = {")
-            local subTable = tableToString(v, indent .. "  ")
+            local subTable = table_to_string(v, indent .. "  ")
             for _, line in ipairs(subTable) do
                 table.insert(result, line)
             end
@@ -125,30 +139,31 @@ function DigDebugWindow:init()
         "show_guides"
     }
 
-    if self.dig_window ~= nil then
-        for i, a in pairs(attrs) do
-            local attr = a
-            local sizeOnly = string.sub(attr, 1, 1) == "#"
-            if (sizeOnly) then
-                attr = string.sub(attr, 2)
-            end
-            self:addviews {
-                widgets.WrappedLabel {
-                    view_id = "debug_label_" .. attr,
-                    text_to_wrap = function()
-                        if type(self.dig_window[attr]) ~= "table" then
-                            return tostring(attr) .. ": " .. tostring(self.dig_window[attr])
-                        else
-                            if sizeOnly then
-                                return '#' .. tostring(attr) .. ": " .. tostring(#self.dig_window[attr])
-                            else
-                                return { tostring(attr) .. ": ", table.unpack(tableToString(self.dig_window[attr], "  ")) }
-                            end
-                        end
-                    end,
-                }
-            }
+    if self.dig_window == nil then
+        return
+    end
+    for i, a in pairs(attrs) do
+        local attr = a
+        local sizeOnly = string.sub(attr, 1, 1) == "#"
+
+        if (sizeOnly) then
+            attr = string.sub(attr, 2)
         end
+
+        self:addviews { widgets.WrappedLabel {
+            view_id = "debug_label_" .. attr,
+            text_to_wrap = function()
+                if type(self.dig_window[attr]) ~= "table" then
+                    return tostring(attr) .. ": " .. tostring(self.dig_window[attr])
+                end
+
+                if sizeOnly then
+                    return '#' .. tostring(attr) .. ": " .. tostring(#self.dig_window[attr])
+                else
+                    return { tostring(attr) .. ": ", table.unpack(table_to_string(self.dig_window[attr], "  ")) }
+                end
+            end,
+        }}
     end
 end
 
@@ -887,12 +902,12 @@ function Dig:get_pen(x, y, mousePos)
     end
 
     for i, mark in pairs(self.marks) do
-        if mark.x == x and mark.y == y then
+        if same_xy(mark, xy2pos(x, y)) then
             drag_point = true
         end
     end
 
-    if self.mirror_point ~= nil and self.mirror_point.x == x and self.mirror_point.y == y then
+    if self.mirror_point ~= nil and same_xy(self.mirror_point, xy2pos(x, y)) then
         drag_point = true
     end
 
@@ -927,48 +942,34 @@ function Dig:get_pen(x, y, mousePos)
     -- Get the bit field to use as a key for the PENS map
     local pen_key = self:gen_pen_key(n, s, e, w, drag_point, mouse_over, get_point, extra_point)
 
-    -- If key doesn't exist in the map, set it
+
+    -- Determine the cursor to use based on the input parameters
+    local cursor = nil
     if pen_key and not PENS[pen_key] then
-        if get_point and not n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NW, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and not w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NORTH, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and e and not w and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.NE, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and w and not e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.WEST, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and not w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.EAST, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SW, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SOUTH, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.SE, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.N_NUB, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and not w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.E_NUB, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.W_NUB, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.S_NUB, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and not n and w and e and not s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_NS, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and not w and not e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.VERT_EW, drag_point, mouse_over, get_point, extra_point)
-        elseif get_point and n and w and e and s then
-            PENS[pen_key] = self:make_pen(CURSORS.POINT, drag_point, mouse_over, get_point, extra_point)
-        elseif drag_point and not get_point then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_point, mouse_over, get_point, extra_point)
-        elseif extra_point then
-            PENS[pen_key] = self:make_pen(CURSORS.INSIDE, drag_point, mouse_over, get_point, extra_point)
-        else
-            PENS[pen_key] = nil
+        if get_point and not n and not w and not e and not s then cursor = CURSORS.INSIDE
+        elseif get_point and n and w and not e and not s then cursor = CURSORS.NW
+        elseif get_point and n and not w and not e and not s then cursor = CURSORS.NORTH
+        elseif get_point and n and e and not w and not s then cursor = CURSORS.NE
+        elseif get_point and not n and w and not e and not s then cursor = CURSORS.WEST
+        elseif get_point and not n and not w and e and not s then cursor = CURSORS.EAST
+        elseif get_point and not n and w and not e and s then cursor = CURSORS.SW
+        elseif get_point and not n and not w and not e and s then cursor = CURSORS.SOUTH
+        elseif get_point and not n and not w and e and s then cursor = CURSORS.SE
+        elseif get_point and n and w and e and not s then cursor = CURSORS.N_NUB
+        elseif get_point and n and not w and e and s then cursor = CURSORS.E_NUB
+        elseif get_point and n and w and not e and s then cursor = CURSORS.W_NUB
+        elseif get_point and not n and w and e and s then cursor = CURSORS.S_NUB
+        elseif get_point and not n and w and e and not s then cursor = CURSORS.VERT_NS
+        elseif get_point and n and not w and not e and s then cursor = CURSORS.VERT_EW
+        elseif get_point and n and w and e and s then cursor = CURSORS.POINT
+        elseif drag_point and not get_point then cursor = CURSORS.INSIDE
+        elseif extra_point then cursor = CURSORS.INSIDE
+        else cursor = nil
         end
     end
+    
+    -- Create the pen if the cursor is set
+    if cursor then PENS[pen_key] = self:make_pen(cursor, drag_point, mouse_over, get_point, extra_point) end
 
     -- Return the pen for the caller
     return PENS[pen_key]
@@ -1112,7 +1113,7 @@ end
 
 function Dig:on_transform(val)
     local center_x, center_y = self.shape:get_center()
-    -- if self.mirror_point then 
+    -- if self.mirror_point then
     --     center_x, center_y = self.mirror_point.x, self.mirror_point.y
     -- end
 
@@ -1380,6 +1381,8 @@ function Dig:onRenderFrame(dc, rect)
         -- center_x = center_x / #points
         -- center_y = center_y / #points
 
+        -- Sorts the points by angle relative to the mirror point to connect points sequentially
+        -- TODO, this whole thing can probably be avoided by connecting the points better beforehand
         table.sort(points, function(a, b)
             local atan_a = math.atan(a.y - self.mirror_point.y, a.x - self.mirror_point.x)
             local atan_b = math.atan(b.y - self.mirror_point.y, b.x - self.mirror_point.x)
@@ -1420,12 +1423,12 @@ function Dig:onRenderFrame(dc, rect)
         local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
         local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
 
-        local map_x, map_y, map_z = dfhack.maps.getTileSize()
+        local map_x, map_y, _ = dfhack.maps.getTileSize()
 
         if mirror_horiz_value ~= 1 or mirror_diag_value ~= 1 then
             local horiz_bounds = {
                 x1 = 0, x2 = map_x,
-                y1 = self.mirror_point.y, y2 = self.mirror_point.y + ((mirror_horiz_value == 3 or mirror_diag_value == 3) and 1 or 0),
+                y1 = self.mirror_point.y, y2 = self.mirror_point.y,
                 z1 = self.mirror_point.z, z2 = self.mirror_point.z
             }
             guidm.renderMapOverlay(function() return mirror_guide_pen end, horiz_bounds)
@@ -1433,7 +1436,7 @@ function Dig:onRenderFrame(dc, rect)
 
         if mirror_vert_value ~= 1 or mirror_diag_value ~= 1 then
             local vert_bounds = {
-                x1 = self.mirror_point.x, x2 = self.mirror_point.x + ((mirror_vert_value == 3 or mirror_diag_value == 3) and 1 or 0),
+                x1 = self.mirror_point.x, x2 = self.mirror_point.x,
                 y1 = 0, y2 = map_y,
                 z1 = self.mirror_point.z, z2 = self.mirror_point.z
             }
@@ -1530,7 +1533,7 @@ function Dig:onInput(keys)
             self.placing_mark.active = false
             -- The statement after the or is to allow the 1x1 special case for easy doorways
             self.needs_update = true
-            if self.autocommit or (self.marks[1].x == self.marks[2].x and self.marks[1].y == self.marks[2].y) then
+            if self.autocommit or (same_xy(self.marks[1], self.marks[2])) then
                 self:commit()
             end
         elseif not self.placing_extra.active and self.placing_mark.active then
@@ -1553,26 +1556,26 @@ function Dig:onInput(keys)
             if self.shape.basic_shape and #self.marks == self.shape.max_points then
                 -- Clicking a corner of a basic shape
                 local shape_top_left, shape_bot_right = self.shape:get_point_dims()
-                if pos.x == shape_top_left.x and pos.y == shape_top_left.y and self.shape.drag_corners.nw then
-                    self.marks[1] = xyz2pos(shape_bot_right.x, shape_bot_right.y, self.marks[1].z)
-                    table.remove(self.marks, 2)
-                    self.placing_mark = { active = true, index = 2 }
-                elseif pos.x == shape_bot_right.x and pos.y == shape_top_left.y and self.shape.drag_corners.ne then
-                    self.marks[1] = xyz2pos(shape_top_left.x, shape_bot_right.y, self.marks[1].z)
-                    table.remove(self.marks, 2)
-                    self.placing_mark = { active = true, index = 2 }
-                elseif pos.x == shape_top_left.x and pos.y == shape_bot_right.y and self.shape.drag_corners.sw then
-                    self.marks[1] = xyz2pos(shape_bot_right.x, shape_top_left.y, self.marks[1].z)
-                    table.remove(self.marks, 2)
-                    self.placing_mark = { active = true, index = 2 }
-                elseif pos.x == shape_bot_right.x and pos.y == shape_bot_right.y and self.shape.drag_corners.se then
-                    self.marks[1] = xyz2pos(shape_top_left.x, shape_top_left.y, self.marks[1].z)
-                    table.remove(self.marks, 2)
-                    self.placing_mark = { active = true, index = 2 }
+                local corner_drag_info = {
+                    { pos = shape_top_left, opposite_x = shape_bot_right.x, opposite_y = shape_bot_right.y, corner = "nw" },
+                    { pos = xy2pos(shape_bot_right.x, shape_top_left.y), opposite_x = shape_top_left.x,
+                        opposite_y = shape_bot_right.y, corner = "ne" },
+                    { pos = xy2pos(shape_top_left.x, shape_bot_right.y), opposite_x = shape_bot_right.x,
+                        opposite_y = shape_top_left.y, corner = "sw" },
+                    { pos = shape_bot_right, opposite_x = shape_top_left.x, opposite_y = shape_top_left.y, corner = "se" }
+                }
+
+                for _, info in ipairs(corner_drag_info) do
+                    if same_xy(pos, info.pos) and self.shape.drag_corners[info.corner] then
+                        self.marks[1] = xyz2pos(info.opposite_x, info.opposite_y, self.marks[1].z)
+                        table.remove(self.marks, 2)
+                        self.placing_mark = { active = true, index = 2 }
+                        break
+                    end
                 end
             else
                 for i, point in pairs(self.marks) do
-                    if point.x == pos.x and point.y == pos.y then
+                    if same_xy(pos, point) then
                         self.placing_mark = { active = true, index = i, continue = false }
                     end
                 end
@@ -1580,7 +1583,7 @@ function Dig:onInput(keys)
 
             -- Clicking an extra point
             for i = 1, #self.extra_points do
-                if pos.x == self.extra_points[i].x and pos.y == self.extra_points[i].y then
+                if same_xy(pos, self.extra_points[i]) then
                     self.placing_extra = { active = true, index = i }
                     self.needs_update = true
                     return true
@@ -1590,7 +1593,7 @@ function Dig:onInput(keys)
             -- Clicking center point
             if #self.marks > 0 then
                 local center_x, center_y = self.shape:get_center()
-                if pos.x == center_x and pos.y == center_y and self.prev_center == nil then
+                if same_xy(pos, xy2pos(center_x, center_y)) and self.prev_center == nil then
                     self.start_center = pos
                     self.prev_center = pos
                     return true
@@ -1601,7 +1604,7 @@ function Dig:onInput(keys)
                 end
             end
 
-            if self.mirror_point and pos.x == self.mirror_point.x and self.mirror_point and pos.y == self.mirror_point.y then
+            if same_xy(self.mirror_point, pos) then
                 self.placing_mirror = true
             end
         end
@@ -1629,7 +1632,7 @@ function Dig:get_designation(x, y, z)
         local stairs_bottom_type = self.subviews.stairs_bottom_subtype:getOptionValue()
         if z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
-        elseif z == math.abs(view_bounds.z1 - view_bounds.z2) then
+        elseif view_bounds and z == math.abs(view_bounds.z1 - view_bounds.z2) then
             local pos = xyz2pos(view_bounds.x1 + x, view_bounds.y1 + y, view_bounds.z1 + z)
             local tile_type = dfhack.maps.getTileType(pos)
             local tile_shape = tile_type ~= nil and tile_attrs[tile_type].shape or nil
@@ -1659,6 +1662,9 @@ function Dig:commit()
     local data = {}
     local top_left, bot_right = self.shape:get_true_dims()
     local view_bounds = self:get_view_bounds()
+
+    -- Means mo marks set
+    if not view_bounds then return end
 
     -- Generates the params for quickfort API
     local function generate_params(grid, position)
@@ -1695,7 +1701,7 @@ function Dig:commit()
     local grid = self.shape:transform(0, 0)
 
     -- Special case for 1x1 to ease doorway marking
-    if top_left.x == bot_right.x and top_left.y == bot_right.y2 then
+    if same_xy(top_left, bot_right) then
         grid = {}
         grid[0] = {}
         grid[0][0] = true

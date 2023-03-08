@@ -89,6 +89,7 @@ end
 -- and the shape array, anything that needs to be drawn should be
 -- within these bounds
 -- TODO this probably belongs in dig.lua at this point
+-- TODO also this needs to be cleaned up before seeing the light of day
 function Shape:get_view_dims(extra_points, mirror_point)
     local min_x, min_y, max_x, max_y
     for x, _ in pairs(self.arr) do
@@ -440,6 +441,100 @@ function Line:init()
     }
 end
 
+function Line:plot_bresenham(x0, y0, x1, y1, thickness)
+    local dx = math.abs(x1 - x0)
+    local dy = math.abs(y1 - y0)
+    local sx = x0 < x1 and 1 or -1
+    local sy = y0 < y1 and 1 or -1
+    local err = dx - dy
+    local e2, x, y
+
+    for i = 0, thickness - 1 do
+        x = x0
+        y = y0 + i
+        while true do
+            for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                if not self.arr[x + j] then self.arr[x + j] = {} end
+                self.arr[x + j][y] = true
+                self.num_tiles = self.num_tiles + 1
+            end
+
+            if x == x1 and y == y1 + i then
+                break
+            end
+
+            e2 = 2 * err
+
+            if e2 > -dy then
+                err = err - dy
+                x = x + sx
+            end
+
+            if e2 < dx then
+                err = err + dx
+                y = y + sy
+            end
+        end
+    end
+
+end
+
+function Line:cubic_bezier(x0, y0, x1, y1, bezier_point1, bezier_point2, thickness)
+    local t = 0
+    local x2, y2 = bezier_point1.x, bezier_point1.y
+    local x3, y3 = bezier_point2.x, bezier_point2.y
+    while t <= 1 do
+        local x = math.floor(((1 - t) ^ 3 * x0 + 3 * (1 - t) ^ 2 * t * x2 + 3 * (1 - t) * t ^ 2 * x3 + t ^ 3 * x1) +
+            0.5)
+        local y = math.floor(((1 - t) ^ 3 * y0 + 3 * (1 - t) ^ 2 * t * y2 + 3 * (1 - t) * t ^ 2 * y3 + t ^ 3 * y1) +
+            0.5)
+        for i = 0, thickness - 1 do
+            for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                if not self.arr[x + j] then self.arr[x + j] = {} end
+                if not self.arr[x + j][y + i] then
+                    self.arr[x + j][y + i] = true
+                    self.num_tiles = self.num_tiles + 1
+                end
+            end
+        end
+        t = t + 0.01
+    end
+
+    -- Get the last point
+    local x_end = math.floor(((1 - 1) ^ 3 * x0 + 3 * (1 - 1) ^ 2 * 1 * x2 + 3 * (1 - 1) * 1 ^ 2 * x3 + 1 ^ 3 * x1) +
+        0.5)
+    local y_end = math.floor(((1 - 1) ^ 3 * y0 + 3 * (1 - 1) ^ 2 * 1 * y2 + 3 * (1 - 1) * 1 ^ 2 * y3 + 1 ^ 3 * y1) +
+        0.5)
+    for i = 0, thickness - 1 do
+        for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+            if not self.arr[x_end + j] then self.arr[x_end + j] = {} end
+            if not self.arr[x_end + j][y_end + i] then
+                self.arr[x_end + j][y_end + i] = true
+                self.num_tiles = self.num_tiles + 1
+            end
+        end
+    end
+end
+
+function Line:quadratic_bezier(x0, y0, x1, y1, bezier_point1, thickness)
+    local t = 0
+    local x2, y2 = bezier_point1.x, bezier_point1.y
+    while t <= 1 do
+        local x = math.floor(((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1) + 0.5)
+        local y = math.floor(((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1) + 0.5)
+        for i = 0, thickness - 1 do
+            for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
+                if not self.arr[x + j] then self.arr[x + j] = {} end
+                if not self.arr[x + j][y + i] then
+                    self.arr[x + j][y + i] = true
+                    self.num_tiles = self.num_tiles + 1
+                end
+            end
+        end
+        t = t + 0.01
+    end
+end
+
 function Line:update(points, extra_points)
     self.num_tiles = 0
     self.points = copyall(points)
@@ -458,131 +553,14 @@ function Line:update(points, extra_points)
     local bezier_point2 = (#extra_points > 1) and { x = extra_points[2].x, y = extra_points[2].y } or nil
 
     if bezier_point1 and bezier_point2 then -- Use Cubic Bezier curve
-        local t = 0
-        local x2, y2 = bezier_point1.x, bezier_point1.y
-        local x3, y3 = bezier_point2.x, bezier_point2.y
-        while t <= 1 do
-            local x = math.floor(((1 - t) ^ 3 * x0 + 3 * (1 - t) ^ 2 * t * x2 + 3 * (1 - t) * t ^ 2 * x3 + t ^ 3 * x1) +
-                0.5)
-            local y = math.floor(((1 - t) ^ 3 * y0 + 3 * (1 - t) ^ 2 * t * y2 + 3 * (1 - t) * t ^ 2 * y3 + t ^ 3 * y1) +
-                0.5)
-            for i = 0, thickness - 1 do
-                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                    if not self.arr[x + j] then self.arr[x + j] = {} end
-                    if not self.arr[x + j][y + i] then
-                        self.arr[x + j][y + i] = true
-                        self.num_tiles = self.num_tiles + 1
-                    end
-                end
-            end
-            t = t + 0.01
-        end
-
-        -- Get the last point
-        local x_end = math.floor(((1 - 1) ^ 3 * x0 + 3 * (1 - 1) ^ 2 * 1 * x2 + 3 * (1 - 1) * 1 ^ 2 * x3 + 1 ^ 3 * x1) +
-            0.5)
-        local y_end = math.floor(((1 - 1) ^ 3 * y0 + 3 * (1 - 1) ^ 2 * 1 * y2 + 3 * (1 - 1) * 1 ^ 2 * y3 + 1 ^ 3 * y1) +
-            0.5)
-        for i = 0, thickness - 1 do
-            for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                if not self.arr[x_end + j] then self.arr[x_end + j] = {} end
-                if not self.arr[x_end + j][y_end + i] then
-                    self.arr[x_end + j][y_end + i] = true
-                    self.num_tiles = self.num_tiles + 1
-                end
-            end
-        end
+        self:cubic_bezier(x0, y0, x1, y1, bezier_point1, bezier_point2, thickness)
     elseif bezier_point1 then
-        local t = 0
-        local x2, y2 = bezier_point1.x, bezier_point1.y
-        while t <= 1 do
-            local x = math.floor(((1 - t) ^ 2 * x0 + 2 * (1 - t) * t * x2 + t ^ 2 * x1) + 0.5)
-            local y = math.floor(((1 - t) ^ 2 * y0 + 2 * (1 - t) * t * y2 + t ^ 2 * y1) + 0.5)
-            for i = 0, thickness - 1 do
-                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                    if not self.arr[x + j] then self.arr[x + j] = {} end
-                    if not self.arr[x + j][y + i] then
-                        self.arr[x + j][y + i] = true
-                        self.num_tiles = self.num_tiles + 1
-                    end
-                end
-            end
-            t = t + 0.01
-        end
-    else -- Use Bresenham's algorithm for straight line
-        local dx = math.abs(x1 - x0)
-        local dy = math.abs(y1 - y0)
-        local sx = x0 < x1 and 1 or -1
-        local sy = y0 < y1 and 1 or -1
-        local err = dx - dy
-        local e2, x, y
-
-        for i = 0, thickness - 1 do
-            x = x0
-            y = y0 + i
-            while true do
-                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                    if not self.arr[x + j] then self.arr[x + j] = {} end
-                    self.arr[x + j][y] = true
-                    self.num_tiles = self.num_tiles + 1
-                end
-
-                if x == x1 and y == y1 + i then
-                    break
-                end
-
-                e2 = 2 * err
-
-                if e2 > -dy then
-                    err = err - dy
-                    x = x + sx
-                end
-
-                if e2 < dx then
-                    err = err + dx
-                    y = y + sy
-                end
-            end
-        end
-
-        local tx, ty = x0, y0
-        x0, y0 = x1, y1
-        x1, y1 = tx, ty
-
-        dx = math.abs(x1 - x0)
-        dy = math.abs(y1 - y0)
-        sx = x0 < x1 and 1 or -1
-        sy = y0 < y1 and 1 or -1
-        err = dx - dy
-        e2, x, y = nil, nil , nil
-
-        for i = 0, thickness - 1 do
-            x = x0
-            y = y0 + i
-            while true do
-                for j = -math.floor(thickness / 2), math.ceil(thickness / 2) - 1 do
-                    if not self.arr[x + j] then self.arr[x + j] = {} end
-                    self.arr[x + j][y] = true
-                    self.num_tiles = self.num_tiles + 1
-                end
-
-                if x == x1 and y == y1 + i then
-                    break
-                end
-
-                e2 = 2 * err
-
-                if e2 > -dy then
-                    err = err - dy
-                    x = x + sx
-                end
-
-                if e2 < dx then
-                    err = err + dx
-                    y = y + sy
-                end
-            end
-        end
+        self:quadratic_bezier(x0, y0, x1, y1, bezier_point1, thickness)
+    else
+        -- Due to how bresenham's breaks ties sometimes lines won't be exactly symmetrical
+        -- as a user might expect. By plotting the line both ways, we can ensure symmetry
+        self:plot_bresenham(x0, y0, x1, y1, thickness)
+        self:plot_bresenham(x1, y1, x0, y0, thickness)
     end
 end
 
