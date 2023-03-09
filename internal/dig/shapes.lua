@@ -151,7 +151,7 @@ function Shape:points_to_string(points)
     local output = ""
     local sep = ""
     for _, point in ipairs(points) do
-        output = output .. sep .. string.format("(%d, %d)", point.x, point.y)
+        output = output..sep..string.format("(%d, %d)", point.x, point.y)
         sep = ", "
     end
 

@@ -12,7 +12,7 @@
 -- Refactor duplicated code into functions
 --  File is getting long... might be time to consider creating additional modules
 -- All the various states are getting hard to keep track of, e.g. placing extra/mirror/mark/etc...
---   Should consolidate the states into a single attribute with enum values
+--   Should consolidate the states into a single state attribute with enum values
 -- Keyboard support
 -- As the number of shapes and designations grow it might be better to have list menus for them instead of cycle
 -- Grid view without slowness (can ignore if next TODO is done, since nrmal mining mode has grid view)
@@ -82,21 +82,21 @@ local function table_to_string(tbl, indent)
     indent = indent or ""
     local result = {}
     for k, v in pairs(tbl) do
-        local key = type(k) == "number" and "[" .. tostring(k) .. "]" or tostring(k)
+        local key = type(k) == "number" and "["..tostring(k).."]" or tostring(k)
         if type(v) == "table" then
-            table.insert(result, indent .. key .. " = {")
-            local subTable = table_to_string(v, indent .. "  ")
+            table.insert(result, indent..key.." = {")
+            local subTable = table_to_string(v, indent.."  ")
             for _, line in ipairs(subTable) do
                 table.insert(result, line)
             end
-            table.insert(result, indent .. "},")
+            table.insert(result, indent.."},")
         elseif type(v) == "function" then
             local res = v()
-            local value = type(res) == "number" and tostring(res) or "\"" .. tostring(res) .. "\""
-            table.insert(result, indent .. key .. " = " .. value .. ",")
+            local value = type(res) == "number" and tostring(res) or "\""..tostring(res).."\""
+            table.insert(result, indent..key.." = "..value..",")
         else
-            local value = type(v) == "number" and tostring(v) or "\"" .. tostring(v) .. "\""
-            table.insert(result, indent .. key .. " = " .. value .. ",")
+            local value = type(v) == "number" and tostring(v) or "\""..tostring(v).."\""
+            table.insert(result, indent..key.." = "..value..",")
         end
     end
     return result
@@ -141,6 +141,7 @@ function DigDebugWindow:init()
     if not self.dig_window then
         return
     end
+
     for i, a in pairs(attrs) do
         local attr = a
         local sizeOnly = string.sub(attr, 1, 1) == "#"
@@ -150,16 +151,16 @@ function DigDebugWindow:init()
         end
 
         self:addviews { widgets.WrappedLabel {
-            view_id = "debug_label_" .. attr,
+            view_id = "debug_label_"..attr,
             text_to_wrap = function()
                 if type(self.dig_window[attr]) ~= "table" then
-                    return tostring(attr) .. ": " .. tostring(self.dig_window[attr])
+                    return tostring(attr)..": "..tostring(self.dig_window[attr])
                 end
 
                 if sizeOnly then
-                    return '#' .. tostring(attr) .. ": " .. tostring(#self.dig_window[attr])
+                    return '#'..tostring(attr)..": "..tostring(#self.dig_window[attr])
                 else
-                    return { tostring(attr) .. ": ", table.unpack(table_to_string(self.dig_window[attr], "  ")) }
+                    return { tostring(attr)..": ", table.unpack(table_to_string(self.dig_window[attr], "  ")) }
                 end
             end,
         } }
@@ -255,20 +256,20 @@ function ActionPanel:get_action_text()
     else
         text = "Select any draggable points"
     end
-    return text .. " with the mouse. Use right-click to dismiss points in order."
+    return text.." with the mouse. Use right-click to dismiss points in order."
 end
 
 function ActionPanel:get_area_text()
     local label = "Area: "
 
     local bounds = self.dig_panel:get_view_bounds()
-    if not bounds then return label .. "N/A" end
+    if not bounds then return label.."N/A" end
     local width = math.abs(bounds.x2 - bounds.x1) + 1
     local height = math.abs(bounds.y2 - bounds.y1) + 1
     local depth = math.abs(bounds.z2 - bounds.z1) + 1
     local tiles = self.dig_panel.shape.num_tiles * depth
     local plural = tiles > 1 and "s" or ""
-    return label .. ("%dx%dx%d (%d tile%s)"):format(
+    return label..("%dx%dx%d (%d tile%s)"):format(
         width,
         height,
         depth,
@@ -283,10 +284,10 @@ function ActionPanel:get_mark_text(num)
     local label = string.format("Mark %d: ", num)
 
     if not mark then
-        return label .. "Not set"
+        return label.."Not set"
     end
 
-    return label .. ("%d, %d, %d"):format(
+    return label..("%d, %d, %d"):format(
         mark.x,
         mark.y,
         mark.z
@@ -502,10 +503,10 @@ function GenericOptionsPanel:init()
             label = function()
                 local msg = "Place extra point: "
                 if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
-                    return msg .. self.dig_panel.shape.extra_points[#self.dig_panel.extra_points + 1].label
+                    return msg..self.dig_panel.shape.extra_points[#self.dig_panel.extra_points + 1].label
                 end
 
-                return msg .. "N/A"
+                return msg.."N/A"
             end,
             active = true,
             visible = function() return self.dig_panel.shape and #self.dig_panel.shape.extra_points > 0 end,
@@ -708,7 +709,7 @@ function GenericOptionsPanel:init()
         widgets.WrappedLabel {
             view_id = "shape_prio_label",
             text_to_wrap = function()
-                return "Priority: " .. tostring(self.dig_panel.prio)
+                return "Priority: "..tostring(self.dig_panel.prio)
             end,
         },
         widgets.HotkeyLabel {
@@ -1041,7 +1042,7 @@ function Dig:add_shape_options()
         if option.type == "bool" then
             self:addviews {
                 widgets.ToggleHotkeyLabel {
-                    view_id = "shape_option_" .. option.name,
+                    view_id = "shape_option_"..option.name,
                     key = option.key,
                     label = option.name,
                     active = true,
@@ -1077,9 +1078,9 @@ function Dig:add_shape_options()
 
             self:addviews {
                 widgets.HotkeyLabel {
-                    view_id = "shape_option_" .. option.name .. "_minus",
+                    view_id = "shape_option_"..option.name.."_minus",
                     key = option.keys[1],
-                    label = "Decrease " .. option.name,
+                    label = "Decrease "..option.name,
                     active = true,
                     enabled = function()
                         if option.enabled then
@@ -1099,9 +1100,9 @@ function Dig:add_shape_options()
                     end,
                 },
                 widgets.HotkeyLabel {
-                    view_id = "shape_option_" .. option.name .. "_plus",
+                    view_id = "shape_option_"..option.name.."_plus",
                     key = option.keys[2],
-                    label = "Increase " .. option.name,
+                    label = "Increase "..option.name,
                     active = true,
                     enabled = function()
                         if option.enabled then
@@ -1631,7 +1632,7 @@ function Dig:commit()
                         local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then
                             data[zlevel][row][col] =
-                            desig .. tostring(self.prio)
+                            desig..tostring(self.prio)
                         end
                     end
                 end
