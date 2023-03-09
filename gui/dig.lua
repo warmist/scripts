@@ -5,7 +5,6 @@
 
 -- Must Haves
 -----------------------------
--- Reconsider sorting of mirrored points
 -- Better UI, it's starting to get really crowded
 
 -- Should Haves
@@ -67,6 +66,7 @@ local mirror_guide_pen = to_pen {
 -- Utilities
 
 local function same_xy(pos1, pos2)
+    if not pos1 or not pos2 then return false end
     return pos1.x == pos2.x and pos1.y == pos2.y
 end
 
@@ -76,7 +76,7 @@ end
 
 -- Debug window
 
-SHOW_DEBUG_WINDOW = true
+SHOW_DEBUG_WINDOW = false
 
 local function table_to_string(tbl, indent)
     indent = indent or ""
@@ -836,8 +836,8 @@ Dig.ATTRS {
     name = "dig_window",
     frame_title = "Dig",
     frame = {
-        w = 47,
-        h = 40,
+        w = 40,
+        h = 45,
         r = 2,
         t = 18,
     },
@@ -1679,12 +1679,13 @@ function Dig:commit()
 end
 
 function Dig:get_mirrored_points(points)
-    local mirrored_points = {}
-    for i, point in ipairs(points) do
-        local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
-        local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
-        local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
+    local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
+    local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
+    local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
 
+    local mirrored_points = {}
+    for i = #points, 1, -1 do
+        local point = points[i]
         -- 1 maps to "Off"
         if mirror_horiz_value ~= 1 then
             local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
@@ -1700,6 +1701,9 @@ function Dig:get_mirrored_points(points)
 
             table.insert(mirrored_points, { z = point.z, x = point.x, y = mirrored_y })
         end
+    end
+
+    for i, point in ipairs(points) do
         if mirror_diag_value ~= 1 then
             local mirrored_y = self.mirror_point.y + ((self.mirror_point.y - point.y))
             local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
@@ -1717,6 +1721,10 @@ function Dig:get_mirrored_points(points)
 
             table.insert(mirrored_points, { z = point.z, x = mirrored_x, y = mirrored_y })
         end
+    end
+
+    for i = #points, 1, -1 do
+        local point = points[i]
         if mirror_vert_value ~= 1 then
             local mirrored_x = self.mirror_point.x + ((self.mirror_point.x - point.x))
 
@@ -1736,14 +1744,6 @@ function Dig:get_mirrored_points(points)
     for i, point in ipairs(mirrored_points) do
         table.insert(points, mirrored_points[i])
     end
-
-    -- Sorts the points by angle relative to the mirror point to connect points sequentially
-    -- TODO, this whole thing can probably be avoided by connecting the points better beforehand
-    table.sort(points, function(a, b)
-        local atan_a = math.atan(a.y - self.mirror_point.y, a.x - self.mirror_point.x)
-        local atan_b = math.atan(b.y - self.mirror_point.y, b.x - self.mirror_point.x)
-        return atan_a < atan_b
-    end)
 
     return points
 end
