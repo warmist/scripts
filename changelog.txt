@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 -@ `gui/dig`: Allow placing an extra point (curve) while still placing the second main point
 -@ `gui/dig`: Allow placing n-point shapes, shape rotation/mirroring, various code refactorings
+-@ `gui/dig`: Allow second bezier point, mirror-mode for freeform shapes, fix symmetry issues
 -@ `gui/create-item`: fix generic corpsepiece spawning
 
 ## Misc Improvements
