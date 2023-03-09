@@ -1128,9 +1128,6 @@ end
 
 function Dig:on_transform(val)
     local center_x, center_y = self.shape:get_center()
-    -- if self.mirror_point then
-    --     center_x, center_y = self.mirror_point.x, self.mirror_point.y
-    -- end
 
     -- Save mirrored points first
     if self.mirror_point then
@@ -1182,6 +1179,7 @@ function Dig:on_transform(val)
         self.marks[i].x = self.marks[i].x + delta_x
         self.marks[i].y = self.marks[i].y + delta_y
     end
+
     for i, point in ipairs(self.extra_points) do
         self.extra_points[i].x = self.extra_points[i].x + delta_x
         self.extra_points[i].y = self.extra_points[i].y + delta_y
@@ -1310,33 +1308,38 @@ function Dig:onRenderFrame(dc, rect)
     end
 
     -- Check if moving center, if so shift the shape by the delta between the previous and current points
+    -- TODO clean this up
     if self.prev_center and
-        (self.shape.basic_shape and #self.marks == self.shape.max_points
-            or not self.shape.basic_shape and not self.placing_mark.active) then
-        if mouse_pos and (self.prev_center.x ~= mouse_pos.x or self.prev_center.y ~= mouse_pos.y or
-            self.prev_center.z ~= mouse_pos.z) then
-            self.needs_update = true
-            local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
-                z = mouse_pos.z - self.prev_center.z }
+        (
+        (self.shape.basic_shape and #self.marks == self.shape.max_points)
+            or (not self.shape.basic_shape and not self.placing_mark.active)
+        )
+        and mouse_pos and (
+        (self.prev_center.x ~= mouse_pos.x)
+            or (self.prev_center.y ~= mouse_pos.y)
+            or (self.prev_center.z ~= mouse_pos.z)
+        ) then
+        self.needs_update = true
+        local transform = { x = mouse_pos.x - self.prev_center.x, y = mouse_pos.y - self.prev_center.y,
+            z = mouse_pos.z - self.prev_center.z }
 
-            for i, _ in ipairs(self.marks) do
-                self.marks[i].x = self.marks[i].x + transform.x
-                self.marks[i].y = self.marks[i].y + transform.y
-                self.marks[i].z = self.marks[i].z + transform.z
-            end
-
-            for i, point in ipairs(self.extra_points) do
-                self.extra_points[i].x = self.extra_points[i].x + transform.x
-                self.extra_points[i].y = self.extra_points[i].y + transform.y
-            end
-
-            if self.mirror_point then
-                self.mirror_point.x = self.mirror_point.x + transform.x
-                self.mirror_point.y = self.mirror_point.y + transform.y
-            end
-
-            self.prev_center = mouse_pos
+        for i, _ in ipairs(self.marks) do
+            self.marks[i].x = self.marks[i].x + transform.x
+            self.marks[i].y = self.marks[i].y + transform.y
+            self.marks[i].z = self.marks[i].z + transform.z
         end
+
+        for i, point in ipairs(self.extra_points) do
+            self.extra_points[i].x = self.extra_points[i].x + transform.x
+            self.extra_points[i].y = self.extra_points[i].y + transform.y
+        end
+
+        if self.mirror_point then
+            self.mirror_point.x = self.mirror_point.x + transform.x
+            self.mirror_point.y = self.mirror_point.y + transform.y
+        end
+
+        self.prev_center = mouse_pos
     end
 
     if self.mirror_point then
@@ -1632,7 +1635,7 @@ function Dig:commit()
                         local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then
                             data[zlevel][row][col] =
-                            desig..tostring(self.prio)
+                            desig .. tostring(self.prio)
                         end
                     end
                 end

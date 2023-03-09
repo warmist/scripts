@@ -89,58 +89,35 @@ end
 -- and the shape array, anything that needs to be drawn should be
 -- within these bounds
 -- TODO this probably belongs in dig.lua at this point
--- TODO also this needs to be cleaned up before seeing the light of day
 function Shape:get_view_dims(extra_points, mirror_point)
+    local function update_minmax(point, min_x, min_y, max_x, max_y)
+        if not min_x then
+            min_x, max_x, min_y, max_y = point.x, point.x, point.y, point.y
+        else
+            min_x, max_x = math.min(min_x, point.x), math.max(max_x, point.x)
+            min_y, max_y = math.min(min_y, point.y), math.max(max_y, point.y)
+        end
+        return min_x, min_y, max_x, max_y
+    end
+
     local min_x, min_y, max_x, max_y
-    for x, _ in pairs(self.arr) do
-        for y, _ in pairs(self.arr[x]) do
-            if not min_x then
-                min_x = x
-                max_x = x
-                min_y = y
-                max_y = y
-            else
-                min_x = math.min(min_x, x)
-                max_x = math.max(max_x, x)
-                min_y = math.min(min_y, y)
-                max_y = math.max(max_y, y)
-            end
+
+    for x, y_vals in pairs(self.arr) do
+        for y, _ in pairs(y_vals) do
+            min_x, min_y, max_x, max_y = update_minmax({ x = x, y = y }, min_x, min_y, max_x, max_y)
         end
     end
 
-    for i, point in pairs(self.points) do
-        if not min_x then
-            min_x = point.x
-            max_x = point.x
-            min_y = point.y
-            max_y = point.y
-        else
-            min_x = math.min(min_x, point.x)
-            max_x = math.max(max_x, point.x)
-            min_y = math.min(min_y, point.y)
-            max_y = math.max(max_y, point.y)
-        end
+    for _, point in pairs(self.points) do
+        min_x, min_y, max_x, max_y = update_minmax(point, min_x, min_y, max_x, max_y)
     end
 
-    for i, point in pairs(extra_points) do
-        if not min_x then
-            min_x = point.x
-            max_x = point.x
-            min_y = point.y
-            max_y = point.y
-        else
-            min_x = math.min(min_x, point.x)
-            max_x = math.max(max_x, point.x)
-            min_y = math.min(min_y, point.y)
-            max_y = math.max(max_y, point.y)
-        end
+    for _, point in pairs(extra_points) do
+        min_x, min_y, max_x, max_y = update_minmax(point, min_x, min_y, max_x, max_y)
     end
 
     if mirror_point then
-        min_x = math.min(min_x, mirror_point.x)
-        max_x = math.max(max_x, mirror_point.x)
-        min_y = math.min(min_y, mirror_point.y)
-        max_y = math.max(max_y, mirror_point.y)
+        min_x, min_y, max_x, max_y = update_minmax(mirror_point, min_x, min_y, max_x, max_y)
     end
 
     return { x = min_x, y = min_y }, { x = max_x, y = max_y }
@@ -151,7 +128,7 @@ function Shape:points_to_string(points)
     local output = ""
     local sep = ""
     for _, point in ipairs(points) do
-        output = output..sep..string.format("(%d, %d)", point.x, point.y)
+        output = output .. sep .. string.format("(%d, %d)", point.x, point.y)
         sep = ", "
     end
 
