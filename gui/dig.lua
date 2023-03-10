@@ -1761,8 +1761,6 @@ DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
     pass_movement_keys = true,
-    dig_window = DEFAULT_NIL,
-    debug_window = DEFAULT_NIL
 }
 
 function DigScreen:init()

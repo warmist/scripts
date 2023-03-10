@@ -124,7 +124,7 @@ function Shape:get_view_dims(extra_points, mirror_point)
 end
 
 function Shape:points_to_string(points)
-    local points = (not points) and self.points or points
+    local points = points or self.points
     local output = ""
     local sep = ""
     for _, point in ipairs(points) do
