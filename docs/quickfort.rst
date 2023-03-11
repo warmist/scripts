@@ -5,8 +5,7 @@ quickfort
     :summary: Apply pre-designed blueprints to your fort.
     :tags: fort design productivity buildings map stockpiles
 
-Quickfort reads blueprint files stored in the ``blueprints`` subfolder under the
-main DF game folder and applies the blueprint of your choice to the game map.
+Quickfort reads stored blueprint files and applies them to the game map.
 You can apply blueprints that designate digging, build buildings, place
 stockpiles, mark zones, and/or configure settings. If you find yourself spending
 time doing similar or repetitive things in your forts, this tool can be an
@@ -67,8 +66,7 @@ Usage
     ``quickfort set`` to show current settings. See the Configuration_ section
     below for available keys and values.
 ``quickfort reset``
-    Resets quickfort configuration to the defaults in
-    :file:`dfhack-config/quickfort/quickfort.txt`.
+    Resets quickfort configuration to defaults.
 
 ``<command>`` is one of:
 
@@ -170,46 +168,30 @@ cursor, regardless of how the blueprint is rotated or flipped.
 Configuration
 -------------
 
-The quickfort script reads its global configuration from the
-:file:`dfhack-config/quickfort/quickfort.txt` file, which you can customize. The
-settings may be dynamically modified by the ``quickfort set`` command for the
-current session, but settings changed with the ``quickfort set`` command will
-not change the configuration stored in the file:
+The quickfort script has a few global configuration options that you can
+customize with the ``quickfort set`` command. Modified settings are only kept
+for the current session and will be reset when you restart DF.
 
-``blueprints_dir`` (default: ``blueprints``)
-    Directory tree to search for blueprints. Can be set to an absolute or
-    relative path. If set to a relative path, resolves to a directory under the
-    DF folder. Note that if you change this directory, you will not see
-    blueprints written by the DFHack `blueprint` plugin (which always writes to
-    the ``blueprints`` dir) or blueprints in the quickfort blueprint library.
+``blueprints_user_dir`` (default: ``dfhack-config/blueprints``)
+    Directory tree to search for player-created blueprints. It can be set to an
+    absolute or relative path. If set to a relative path, it resolves to a
+    directory under the DF folder. Note that if you change this directory, you
+    will not see blueprints written by the DFHack `blueprint` plugin (which
+    always writes to the ``dfhack-config/blueprints`` dir).
+``blueprints_library_dir`` (default: ``hack/data/blueprints``)
+    Directory tree to search for library blueprints.
 ``force_marker_mode`` (default: ``false``)
     If true, will designate all dig blueprints in marker mode. If false, only
     cells with dig codes explicitly prefixed with ``m`` will be designated in
     marker mode.
-``query_unsafe`` (default: ``false``)
-    Skip ``query`` blueprint sanity checks that detect common blueprint errors
-    and halt or skip keycode playback. Checks include ensuring a configurable
-    building exists at the designated cursor position and verifying the active
-    UI screen is the same before and after sending keys for the cursor
-    position. If you find you need to enable this for one of your own
-    blueprints, you should probably be using a
-    `config blueprint <quickfort-config-blueprints>`, not a ``query`` blueprint.
-    Most players will never need to enable this setting.
 ``stockpiles_max_barrels``, ``stockpiles_max_bins``, and ``stockpiles_max_wheelbarrows`` (defaults: ``-1``, ``-1``, ``0``)
     Set to the maximum number of resources you want assigned to stockpiles of
     the relevant types. Set to ``-1`` for DF defaults (number of stockpile tiles
     for stockpiles that take barrels and bins, and 1 wheelbarrow for stone
     stockpiles). The default here for wheelbarrows is ``0`` since using
-    wheelbarrows can *decrease* the efficiency of your fort unless you know how
-    to use them properly. Blueprints can `override <quickfort-place-containers>`
-    this value for specific stockpiles.
-
-There is one other configuration file in the ``dfhack-config/quickfort`` folder:
-:source:`aliases.txt <dfhack-config/quickfort/aliases.txt>`. It defines keycode
-shortcuts for query blueprints. The format for this file is described in the
-`quickfort-alias-guide`, and default aliases that all players can use and build
-on are available in the `quickfort-alias-library`. Some quickfort library
-aliases require the `search-plugin` plugin to be enabled.
+    wheelbarrows can *decrease* the efficiency of your fort unless you assign
+    an appropriate number of wheelbarrows to the stockpile. Blueprints can
+    `override <quickfort-place-containers>` this value for specific stockpiles.
 
 API
 ---
