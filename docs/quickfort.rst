@@ -38,7 +38,7 @@ Usage
     Lists blueprints in the ``blueprints`` folder. Blueprints are ``.csv`` files
     or sheets within ``.xlsx`` files that contain a ``#<mode>`` comment in the
     upper-left cell (please see `quickfort-blueprint-guide` for more information
-    on modes). By default, blueprints in the ``blueprints/library/`` subfolder
+    on modes). By default, library blueprints in the ``hack/data/blueprints/`` subfolder
     are included and blueprints that contain a ``hidden()`` marker in their
     modeline are excluded from the returned list. Specify ``-u`` or ``-h`` to
     exclude library or include hidden blueprints, respectively. The list can
