@@ -12,9 +12,13 @@ local quickfort_set = reqscript('internal/quickfort/set')
 
 -- blueprint_name is relative to the blueprints dir
 function get_blueprint_filepath(blueprint_name)
-    return string.format("%s/%s",
-                         quickfort_set.get_setting('blueprints_dir'),
-                         blueprint_name)
+    local is_library = blueprint_name:startswith('library/')
+    if is_library then blueprint_name = blueprint_name:sub(9) end
+    return ('%s/%s'):format(
+            is_library and
+                quickfort_set.get_setting('blueprints_library_dir') or
+                quickfort_set.get_setting('blueprints_user_dir'),
+            blueprint_name)
 end
 
 local blueprint_cache = {}
@@ -88,60 +92,55 @@ end
 local blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
 local num_library_blueprints = 0
 
-local function scan_blueprints()
-    local bp_dir = quickfort_set.get_setting('blueprints_dir')
+local function scan_blueprint_dir(bp_dir, is_library)
     local paths = dfhack.filesystem.listdir_recursive(bp_dir, nil, false)
     if not paths then
-        qerror(('Cannot find blueprints directory: "%s". If you have moved' ..
-                ' your blueprints to another directory, please update' ..
-                ' "dfhack-config/quickfort/quickfort.txt" with the new' ..
-                ' location and run "quickfort reset".'):format(bp_dir))
+        dfhack.printerr(('Cannot find blueprints directory: "%s"'):format(bp_dir))
+        return
     end
-    blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
-    local library_blueprints = {}
     for _, v in ipairs(paths) do
-        local is_library = string.find(v.path, '^library/') ~= nil
-        local target_list = blueprints
-        if is_library then target_list = library_blueprints end
         local file_aliases = {}
-        if not v.isdir and string.find(v.path:lower(), '[.]csv$') then
-            local modelines, aliases = scan_csv_blueprint(v.path)
+        local path = (is_library and 'library/' or '') .. v.path
+        if not v.isdir and v.path:lower():endswith('.csv') then
+            local modelines, aliases = scan_csv_blueprint(path)
             file_aliases = aliases
             local first = true
             for _,modeline in ipairs(modelines) do
-                table.insert(target_list,
-                        {path=v.path, modeline=modeline, is_library=is_library})
+                table.insert(blueprints,
+                        {path=path, modeline=modeline, is_library=is_library})
+                if is_library then num_library_blueprints = num_library_blueprints + 1 end
                 local key = make_blueprint_modes_key(
-                        v.path, get_section_name(nil, modeline.label))
+                        path, get_section_name(nil, modeline.label))
                 blueprint_modes[key] = modeline.mode
                 if first then
                     -- first blueprint is also accessible via blank name
-                    key = make_blueprint_modes_key(v.path)
+                    key = make_blueprint_modes_key(path)
                     blueprint_modes[key] = modeline.mode
                     first = false
                 end
             end
-        elseif not v.isdir and string.find(v.path:lower(), '[.]xlsx$') then
-            local sheet_infos = scan_xlsx_blueprint(v.path)
+        elseif not v.isdir and v.path:lower():endswith('.xlsx') then
+            local sheet_infos = scan_xlsx_blueprint(path)
             file_aliases = sheet_infos.aliases
             local first = true
             if #sheet_infos > 0 then
                 for _,sheet_info in ipairs(sheet_infos) do
                     local sheet_first = true
                     for _,modeline in ipairs(sheet_info.modelines) do
-                        table.insert(target_list,
-                                     {path=v.path,
+                        table.insert(blueprints,
+                                     {path=path,
                                       sheet_name=sheet_info.name,
                                       modeline=modeline,
                                       is_library=is_library})
+                        if is_library then num_library_blueprints = num_library_blueprints + 1 end
                         local key = make_blueprint_modes_key(
-                            v.path,
+                            path,
                             get_section_name(sheet_info.name, modeline.label))
                         blueprint_modes[key] = modeline.mode
                         if first then
                             -- first blueprint in first sheet is also accessible
                             -- via blank name
-                            key = make_blueprint_modes_key(v.path)
+                            key = make_blueprint_modes_key(path)
                             blueprint_modes[key] = modeline.mode
                             first = false
                         end
@@ -149,7 +148,7 @@ local function scan_blueprints()
                             -- first blueprint in each sheet is also accessible
                             -- via blank label
                             key = make_blueprint_modes_key(
-                                    v.path, get_section_name(sheet_info.name))
+                                    path, get_section_name(sheet_info.name))
                             blueprint_modes[key] = modeline.mode
                             sheet_first = false
                         end
@@ -157,13 +156,15 @@ local function scan_blueprints()
                 end
             end
         end
-        file_scope_aliases[normalize_path(v.path)] = file_aliases
+        file_scope_aliases[normalize_path(path)] = file_aliases
     end
-    -- tack library files on to the end so user files are contiguous
-    num_library_blueprints = #library_blueprints
-    for i=1, num_library_blueprints do
-        blueprints[#blueprints + 1] = library_blueprints[i]
-    end
+end
+
+local function scan_blueprints()
+    blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
+    num_library_blueprints = 0
+    scan_blueprint_dir(quickfort_set.get_setting('blueprints_user_dir'), false)
+    scan_blueprint_dir(quickfort_set.get_setting('blueprints_library_dir'), true)
 end
 
 function get_blueprint_by_number(list_num)
