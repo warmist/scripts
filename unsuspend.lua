@@ -2,7 +2,6 @@
 --@module = true
 
 local guidm = require('gui.dwarfmode')
-local utils = require('utils')
 local argparse = require('argparse')
 local suspendmanagerUtils = reqscript('internal/suspendmanager/suspendmanager-utils')
 

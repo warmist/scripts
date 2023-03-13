@@ -33,7 +33,7 @@ function SuspendmanagerWindow:init()
                      {value=false, label="No", pen=COLOR_RED}},
             initial_option = suspendmanager.preventBlockingEnabled(),
             on_change=function(val)
-                suspendmanager.set_prevent_blocking(val)
+                suspendmanager.update_setting("preventblocking", val)
             end
         },
 
