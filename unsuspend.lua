@@ -4,21 +4,13 @@
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local argparse = require('argparse')
-local suspend = reqscript('suspend')
+local suspendmanagerUtils = reqscript('internal/suspendmanager/suspendmanager-utils')
 
 local overlay = require('plugins.overlay')
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
     buildingplan = nil
-end
-
-local function foreach_construction_job(fn)
-    for _,job in utils.listpairs(df.global.world.jobs.list) do
-        if job.job_type == df.job_type.ConstructBuilding then
-            fn(job)
-        end
-    end
 end
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
@@ -62,7 +54,7 @@ end
 function SuspendOverlay:overlay_onupdate()
     local added = false
     self.data_version = self.data_version + 1
-    foreach_construction_job(function(job)
+    suspendmanagerUtils.foreach_construction_job(function(job)
         self:update_building(dfhack.job.getHolder(job).id, job)
         added = true
     end)
@@ -180,6 +172,8 @@ function SuspendOverlay:onRenderFrame(dc)
     dc:map(false)
 end
 
+
+
 OVERLAY_WIDGETS = {overlay=SuspendOverlay}
 
 if dfhack_flags.module then
@@ -192,36 +186,27 @@ argparse.processArgsGetopt({...}, {
     {'s', 'skipblocking', handler=function() skipblocking = true end},
 })
 
-local unsuspended_count, flow_count, buildingplan_count, blocking_count = 0, 0, 0, 0
+local skipped_counts = {}
+local unsuspended_count = 0
 
-foreach_construction_job(function(job)
+suspendmanagerUtils.foreach_construction_job(function(job)
     if not job.flags.suspend then return end
-    if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
-        flow_count = flow_count + 1
+
+    local skip,reason=suspendmanagerUtils.shouldBeSuspended(job, skipblocking)
+    if skip then
+        skipped_counts[reason] = (skipped_counts[reason] or 0) + 1
         return
     end
-    local bld = dfhack.buildings.findAtTile(job.pos)
-    if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
-        buildingplan_count = buildingplan_count + 1
-        return
-    end
-    if skipblocking and suspend.isBlocking(job) then
-        blocking_count = blocking_count + 1
-        return
-    end
-    job.flags.suspend = false
+    suspendmanagerUtils.unsuspend(job)
     unsuspended_count = unsuspended_count + 1
 end)
 
-if not quiet and flow_count > 0 then
-    print(string.format('Not unsuspending %d underwater job(s)', flow_count))
-end
-if not quiet and buildingplan_count > 0 then
-    print(string.format('Not unsuspending %d buildingplan job(s)', buildingplan_count))
-end
-if not quiet and blocking_count > 0 then
-    print(string.format('Not unsuspending %d blocking job(s)', blocking_count))
-end
-if not quiet and unsuspended_count > 0 then
-    print(string.format('Unsuspended %d job(s).', unsuspended_count))
+if not quiet then
+    for reason,count in pairs(skipped_counts) do
+        print(string.format('Not unsuspending %d %s job(s)', count, reason))
+    end
+
+    if unsuspended_count > 0 then
+        print(string.format('Unsuspended %d job(s).', unsuspended_count))
+    end
 end

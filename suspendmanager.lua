@@ -7,6 +7,7 @@ local persist = require('persist-table')
 local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 local repeatUtil = require('repeat-util')
+local suspendmanagerUtils = reqscript('internal/suspendmanager/suspendmanager-utils')
 
 local GLOBAL_KEY = 'suspendmanager' -- used for state change hooks and persistence
 
@@ -37,19 +38,21 @@ function set_prevent_blocking(enable)
 end
 
 local function run_now()
-    if prevent_blocking then
-        dfhack.run_script('suspend', '--onlyblocking')
-        dfhack.run_script('unsuspend', '--quiet', '--skipblocking')
-    else
-        dfhack.run_script('unsuspend', '--quiet')
-    end
+    suspendmanagerUtils.foreach_construction_job(function(job)
+        local shouldBeSuspended, _ = suspendmanagerUtils.shouldBeSuspended(job, prevent_blocking)
+        if shouldBeSuspended and not job.flags.suspend then
+            suspendmanagerUtils.suspend(job)
+        elseif not shouldBeSuspended and job.flags.suspend then
+            suspendmanagerUtils.unsuspend(job)
+        end
+    end)
 end
 
 --- @param job job
 local function on_job_change(job)
     if prevent_blocking then
-        -- Note: this method could be made more efficient by running a single loop
-        -- on the jobs, or even take in account the changed job
+        -- Note: This method could be made incremental by taking in account the
+        -- changed job
         run_now()
     end
 end
