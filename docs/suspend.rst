@@ -5,11 +5,14 @@ suspend
     :summary: Suspends building construction jobs.
     :tags: fort productivity jobs
 
-This tool will suspend jobs. It can either suspend all the current jobs,
-or only construction jobs that are likely to block other jobs. When building walls,
-it's common that wall corners get stuck because dwarves build the two adjacent
-walls before the corner. The ``--onlyblocking`` option will only suspend jobs
-that can potentially lead to this situation.
+This tool will suspend jobs. It can either suspend all the current jobs, or only
+construction jobs that are likely to block other jobs. When building walls, it's
+common that wall corners get stuck because dwarves build the two adjacent walls
+before the corner. The ``--onlyblocking`` option will only suspend jobs that can
+potentially lead to this situation.
+
+See `suspendmanager` in `gui/control-panel` to automatically suspend and
+unsuspend jobs.
 
 Usage
 -----

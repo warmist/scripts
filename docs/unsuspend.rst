@@ -10,7 +10,8 @@ and those where water flow is greater than 1. This allows you to quickly recover
 if a bunch of jobs were suspended due to the workers getting scared off by
 wildlife or items temporarily blocking building sites.
 
-See `autounsuspend` for periodic automatic unsuspending of suspended jobs.
+See `suspendmanager` in `gui/control-panel` to automatically suspend and
+unsuspend jobs.
 
 Usage
 -----
