@@ -4,7 +4,7 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-local suspendmanagerUtils = reqscript('internal/suspendmanager/suspendmanager-utils')
+local suspendmanager = reqscript('suspendmanager')
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
@@ -141,8 +141,8 @@ function MassRemove:init()
             key_back='CUSTOM_SHIFT_X',
             options={
                 {label='Leave alone', value=function() end},
-                {label='Suspend', value=suspendmanagerUtils.suspend},
-                {label='Unsuspend', value=suspendmanagerUtils.unsuspend},
+                {label='Suspend', value=suspendmanager.suspend},
+                {label='Unsuspend', value=suspendmanager.unsuspend},
             },
         },
     }

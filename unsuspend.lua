@@ -3,7 +3,7 @@
 
 local guidm = require('gui.dwarfmode')
 local argparse = require('argparse')
-local suspendmanagerUtils = reqscript('internal/suspendmanager/suspendmanager-utils')
+local suspendmanager = reqscript('suspendmanager')
 
 local overlay = require('plugins.overlay')
 
@@ -53,7 +53,7 @@ end
 function SuspendOverlay:overlay_onupdate()
     local added = false
     self.data_version = self.data_version + 1
-    suspendmanagerUtils.foreach_construction_job(function(job)
+    suspendmanager.foreach_construction_job(function(job)
         self:update_building(dfhack.job.getHolder(job).id, job)
         added = true
     end)
@@ -171,8 +171,6 @@ function SuspendOverlay:onRenderFrame(dc)
     dc:map(false)
 end
 
-
-
 OVERLAY_WIDGETS = {overlay=SuspendOverlay}
 
 if dfhack_flags.module then
@@ -188,15 +186,15 @@ argparse.processArgsGetopt({...}, {
 local skipped_counts = {}
 local unsuspended_count = 0
 
-suspendmanagerUtils.foreach_construction_job(function(job)
+suspendmanager.foreach_construction_job(function(job)
     if not job.flags.suspend then return end
 
-    local skip,reason=suspendmanagerUtils.shouldBeSuspended(job, skipblocking)
+    local skip,reason=suspendmanager.shouldBeSuspended(job, skipblocking)
     if skip then
         skipped_counts[reason] = (skipped_counts[reason] or 0) + 1
         return
     end
-    suspendmanagerUtils.unsuspend(job)
+    suspendmanager.unsuspend(job)
     unsuspended_count = unsuspended_count + 1
 end)
 
