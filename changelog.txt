@@ -16,7 +16,7 @@ that repo.
 ## New Scripts
 - `suspendmanager`: Automatic job suspension management (replaces `autounsuspend`)
 - `gui/suspendmanager`: Graphical configuration interface for `suspendmanager`
-- `suspend`: uspends building construction jobs
+- `suspend`: suspends building construction jobs
 
 ## Fixes
 
