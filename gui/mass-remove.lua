@@ -39,10 +39,6 @@ local function unremove_construction(pos, grid)
     if job then dfhack.job.removeJob(job) end
 end
 
-local function unsuspend(job)
-    job.flags.suspend = false
-end
-
 --
 -- ActionPanel
 --
