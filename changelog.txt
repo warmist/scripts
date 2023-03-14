@@ -14,6 +14,9 @@ that repo.
 # Future
 
 ## New Scripts
+- `suspendmanager`: Automatic job suspension management (replaces `autounsuspend`)
+- `gui/suspendmanager`: Graphical configuration interface for `suspendmanager`
+- `suspend`: suspends building construction jobs
 
 ## Fixes
 - `quicksave`: now reliably triggers an autosave, even if one has been performed recently
