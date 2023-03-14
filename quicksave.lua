@@ -36,15 +36,15 @@ end
 function save()
     -- Request auto-save (preparation steps below discovered from rev eng)
     ui_main.autosave_request = true
-    ui_main.autosave_unk = 5
+    ui_main.autosave_timer = 5
     ui_main.save_progress.substage = 0
     ui_main.save_progress.stage = 0
-    ui_main.save_progress.unk_v50_6.nemesis_save_file_id:resize(0)
-    ui_main.save_progress.unk_v50_6.nemesis_member_idx:resize(0)
-    ui_main.save_progress.unk_v50_6.units:resize(0)
-    ui_main.save_progress.unk_v50_6.cur_unit_chunk = nil
-    ui_main.save_progress.unk_v50_6.cur_unit_chunk_num = -1
-    ui_main.save_progress.unk_v50_6.units_offloaded = -1
+    ui_main.save_progress.info.nemesis_save_file_id:resize(0)
+    ui_main.save_progress.info.nemesis_member_idx:resize(0)
+    ui_main.save_progress.info.units:resize(0)
+    ui_main.save_progress.info.cur_unit_chunk = nil
+    ui_main.save_progress.info.cur_unit_chunk_num = -1
+    ui_main.save_progress.info.units_offloaded = -1
 
     -- And since it will overwrite the backup, disable it temporarily
     if flags4.AUTOBACKUP then
