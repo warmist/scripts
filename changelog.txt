@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `quicksave`: now reliably triggers an autosave, even if one has been performed recently
 
 ## Misc Improvements
 - `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your blueprints to the new directory!
