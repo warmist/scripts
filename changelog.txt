@@ -20,6 +20,7 @@ that repo.
 
 ## Fixes
 - `quicksave`: now reliably triggers an autosave, even if one has been performed recently
+- `gui/launcher`: tab characters in command output now appear as a space instead of a code page 437 "blob"
 
 ## Misc Improvements
 - `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your blueprints to the new directory!
