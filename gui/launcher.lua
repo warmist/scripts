@@ -357,7 +357,7 @@ local inactive_tab_pens = {
     rb=to_pen{tile=1014, write_to_lower=true},
 }
 
-Tab = defclass(Tabs, widgets.Widget)
+Tab = defclass(Tab, widgets.Widget)
 Tab.ATTRS{
     id=DEFAULT_NIL,
     label=DEFAULT_NIL,
