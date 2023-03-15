@@ -23,6 +23,7 @@ that repo.
 
 ## Misc Improvements
 - `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your blueprints to the new directory!
+- `gui/gm-editor`: can now open the selected stockpile if run without parameters
 
 ## Removed
 

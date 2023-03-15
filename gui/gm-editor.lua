@@ -45,6 +45,7 @@ end
 function getTargetFromScreens()
     local my_trg = dfhack.gui.getSelectedUnit(true) or dfhack.gui.getSelectedItem(true)
             or dfhack.gui.getSelectedJob(true) or dfhack.gui.getSelectedBuilding(true)
+            or dfhack.gui.getSelectedStockpile(true)
     if not my_trg then
         qerror("No valid target found")
     end
