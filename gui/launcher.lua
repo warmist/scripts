@@ -907,6 +907,8 @@ function LauncherUI:run_command(reappear, command)
     self:on_edit_input('')
     if #output == 0 then
         output = 'Command finished successfully'
+    else
+        output = output:gsub('\t', ' ')
     end
     self.subviews.help:add_output(('> %s\n\n%s'):format(command, output))
 end
