@@ -39,6 +39,7 @@ local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/dig/shapes")
+local filterselection = require('plugins.buildingplan.filterselection')
 
 local tile_attrs = df.tiletype.attrs
 
@@ -72,6 +73,26 @@ end
 
 local function same_xyz(pos1, pos2)
     return same_xy(pos1, pos2) and pos1.z == pos2.z
+end
+
+local function get_configure_button_pen()
+    local start = dfhack.textures.getControlPanelTexposStart()
+    local valid = start > 0
+    print(valid)
+    start = start + 10
+
+    return dfhack.pen.parse {
+        tile = valid and (start + 9) or nil, ch = 15
+    } -- gear/masterwork symbol
+end
+
+local CONFIGURE_PEN = get_configure_button_pen()
+
+local uibs = df.global.buildreq
+
+local function get_cur_filters()
+    return dfhack.buildings.getFiltersByType({}, uibs.building_type,
+            uibs.building_subtype, uibs.custom_type)
 end
 
 -- Debug window
@@ -330,6 +351,30 @@ function GenericOptionsPanel:init()
             value = "j",
         },
     }
+
+    local build_options = {
+        {
+            label = "Walls",
+            value = "Cw",
+        },
+        {
+            label = "Floor",
+            value = "Cf",
+        },
+        {
+            label = "Fortification",
+            value = "CF",
+        },
+        {
+            label = "Ramps",
+            value = "Cr",
+        },
+        {
+            label = "None",
+            value = "`",
+        },
+    }
+
     self:addviews {
         widgets.WrappedLabel {
             view_id = "settings_label",
@@ -640,39 +685,43 @@ function GenericOptionsPanel:init()
             options = {
                 {
                     label = "Dig",
-                    value = "d",
+                    value = { desig = "d", mode = "dig" },
                 },
                 {
                     label = "Channel",
-                    value = "h",
+                    value = { desig = "h", mode = "dig" },
                 },
                 {
                     label = "Remove Designation",
-                    value = "x",
+                    value = { desig = "x", mode = "dig" },
                 },
                 {
                     label = "Remove Ramps",
-                    value = "z",
+                    value = { desig = "z", mode = "dig" },
                 },
                 {
                     label = "Remove Constructions",
-                    value = "n",
+                    value = { desig = "n", mode = "dig" },
                 },
                 {
                     label = "Stairs",
-                    value = "i",
+                    value = { desig = "i", mode = "dig" },
                 },
                 {
                     label = "Ramp",
-                    value = "r",
+                    value = { desig = "r", mode = "dig" },
                 },
                 {
                     label = "Smooth",
-                    value = "s",
+                    value = { desig = "s", mode = "dig" },
                 },
                 {
                     label = "Engrave",
-                    value = "e",
+                    value = { desig = "e", mode = "dig" },
+                },
+                {
+                    label = "Building",
+                    value = { desig = "b", mode = "build" },
                 }
             },
             disabled = false,
@@ -683,28 +732,81 @@ function GenericOptionsPanel:init()
             view_id = "stairs_top_subtype",
             key = "CUSTOM_R",
             label = "Top Stair Type: ",
+            frame = { l = 1 },
             active = true,
             enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
             options = stair_options,
         },
         widgets.CycleHotkeyLabel {
             view_id = "stairs_middle_subtype",
             key = "CUSTOM_G",
             label = "Middle Stair Type: ",
+            frame = { l = 1 },
             active = true,
             enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
             options = stair_options,
         },
         widgets.CycleHotkeyLabel {
             view_id = "stairs_bottom_subtype",
-            key = "CUSTOM_B",
+            key = "CUSTOM_N",
             label = "Bottom Stair Type: ",
+            frame = { l = 1 },
             active = true,
             enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue() == "i" end,
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
             options = stair_options,
+        },
+        widgets.ResizingPanel {
+            view_id = 'transform_panel_rotate',
+            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
+            subviews = {
+                widgets.Label {
+                    view_id = "building_outer_config",
+                    frame = { t = 0, l = 1 },
+                    text = { { tile = CONFIGURE_PEN } },
+                    on_click = function()
+                        uibs.building_type = df.building_type.Construction
+                        uibs.building_subtype = df.construction_type.Wall -- TODO
+                        filterselection.FilterSelectionScreen { index = 1,
+                            desc = require('plugins.buildingplan').get_desc(get_cur_filters()[1])}:show()
+                    end
+                },
+                widgets.CycleHotkeyLabel {
+                    view_id = "building_outer_tiles",
+                    key = "CUSTOM_R",
+                    label = "Outer Tiles: ",
+                    frame = { t = 0, l = 3 },
+                    active = true,
+                    enabled = true,
+                    initial_option = 1,
+                    visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
+                    options = build_options,
+                },
+                widgets.Label {
+                    view_id = "building_inner_config",
+                    frame = { t = 1, l = 1},
+                    text = { { tile = CONFIGURE_PEN } },
+                    on_click = function()
+                        uibs.building_type = df.building_type.Construction
+                        uibs.building_subtype = df.construction_type.Floor -- TODO
+                        filterselection.FilterSelectionScreen { index = 1,
+                            desc = require('plugins.buildingplan').get_desc(get_cur_filters()[1])}:show()
+                    end
+                },
+                widgets.CycleHotkeyLabel {
+                    view_id = "building_inner_tiles",
+                    key = "CUSTOM_G",
+                    label = "Inner Tiles: ",
+                    frame = { t = 1, l = 3 },
+                    active = true,
+                    enabled = true,
+                    initial_option = 2,
+                    visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
+                    options = build_options,
+                },
+            },
         },
         widgets.WrappedLabel {
             view_id = "shape_prio_label",
@@ -1581,9 +1683,10 @@ function Dig:get_designation(x, y, z)
     local mode = self.subviews.mode_name:getOptionValue()
 
     local view_bounds = self:get_view_bounds()
+    local top_left, bot_right = self.shape:get_true_dims()
 
     -- Stairs
-    if mode == "i" then
+    if mode.desig == "i" then
         local stairs_top_type = self.subviews.stairs_top_subtype:getOptionValue()
         local stairs_middle_type = self.subviews.stairs_middle_subtype:getOptionValue()
         local stairs_bottom_type = self.subviews.stairs_bottom_subtype:getOptionValue()
@@ -1609,9 +1712,25 @@ function Dig:get_designation(x, y, z)
         else
             return stairs_middle_type == "auto" and 'i' or stairs_middle_type
         end
+    elseif mode.desig == "b" then
+        local building_outer_tiles = self.subviews.building_outer_tiles:getOptionValue()
+        local building_inner_tiles = self.subviews.building_inner_tiles:getOptionValue()
+        local darr = { { 1, 1 }, { 1, 0 }, { 0, 1 }, { 0, 0 }, { -1, 0 }, { -1, -1 }, { 0, -1 }, { 1, -1 }, { -1, 1 } }
+
+        -- If not completed surrounded, then use outer tile
+        for i, d in ipairs(darr) do
+            -- print(view_bounds.x + x + d[1], view_bounds.y + y + d[2])
+            if not (self.shape:get_point(top_left.x + x + d[1], top_left.y + y + d[2])) then
+
+                return building_outer_tiles
+            end
+        end
+
+        -- Is inner tile
+        return building_inner_tiles
     end
 
-    return self.subviews.mode_name:getOptionValue()
+    return mode.desig
 end
 
 -- Commit the shape using quickfort API
@@ -1623,6 +1742,7 @@ function Dig:commit()
     -- Means mo marks set
     if not view_bounds then return end
 
+    local mode = self.subviews.mode_name:getOptionValue().mode
     -- Generates the params for quickfort API
     local function generate_params(grid, position)
         -- local top_left, bot_right = self.shape:get_true_dims()
@@ -1635,7 +1755,7 @@ function Dig:commit()
                         local desig = self:get_designation(col, row, zlevel)
                         if desig ~= "`" then
                             data[zlevel][row][col] =
-                            desig .. tostring(self.prio)
+                            desig..(mode ~= "build" and tostring(self.prio) or "")
                         end
                     end
                 end
@@ -1645,7 +1765,7 @@ function Dig:commit()
         return {
             data = data,
             pos = position,
-            mode = "dig",
+            mode = mode,
         }
     end
 
@@ -1760,6 +1880,7 @@ DigScreen = defclass(DigScreen, gui.ZScreen)
 DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
+    initial_pause = false,
     pass_movement_keys = true,
 }
 
