@@ -14,8 +14,18 @@ that repo.
 # Future
 
 ## New Scripts
-- `suspendmanager`: Automatic job suspension management (replaces `autounsuspend`)
-- `gui/suspendmanager`: Graphical configuration interface for `suspendmanager`
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.07-beta1
+
+## New Scripts
+- `suspendmanager`: automatic job suspension management (replaces `autounsuspend`)
+- `gui/suspendmanager`: graphical configuration interface for `suspendmanager`
 - `suspend`: suspends building construction jobs
 
 ## Fixes
@@ -23,10 +33,9 @@ that repo.
 - `gui/launcher`: tab characters in command output now appear as a space instead of a code page 437 "blob"
 
 ## Misc Improvements
-- `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your blueprints to the new directory!
+- `quickfort`: now reads player-created blueprints from
+``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your personal blueprints to the new directory!
 - `gui/gm-editor`: can now open the selected stockpile if run without parameters
-
-## Removed
 
 # 50.07-alpha3
 
