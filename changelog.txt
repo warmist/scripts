@@ -34,6 +34,7 @@ that repo.
 
 ## Misc Improvements
 - `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your personal blueprints to the new directory!
+- `gui/dig`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
 - `gui/gm-editor`: can now open the selected stockpile if run without parameters
 
 # 50.07-alpha3
