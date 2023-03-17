@@ -39,7 +39,6 @@ local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/dig/shapes")
-local filterselection = require('plugins.buildingplan.filterselection')
 
 local tile_attrs = df.tiletype.attrs
 
@@ -1787,9 +1786,7 @@ function Dig:get_designation(x, y, z)
 
         -- If not completed surrounded, then use outer tile
         for i, d in ipairs(darr) do
-            -- print(view_bounds.x + x + d[1], view_bounds.y + y + d[2])
             if not (self.shape:get_point(top_left.x + x + d[1], top_left.y + y + d[2])) then
-
                 return building_outer_tiles
             end
         end
