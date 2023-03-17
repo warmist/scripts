@@ -64,6 +64,50 @@ local mirror_guide_pen = to_pen {
     ),
 }
 
+---
+--- HelpWindow
+---
+
+DIG_HELP_DEFAULT = {
+    "gui/dig Help",
+    "============",
+    NEWLINE,
+    "This is a default help text."
+}
+
+CONSTRUCTION_HELP = {
+    "gui/dig Help: Building Filters",
+    "===============================",
+    NEWLINE,
+    "Adding material filters to this tool is planned but not implemented at this time.",
+    NEWLINE,
+    "Use `buildingplan` to configure filters for the desired construction types. This tool will use the current buildingplan filters for an building type."
+}
+
+HelpWindow = defclass(HelpWindow, widgets.Window)
+HelpWindow.ATTRS {
+    frame_title = 'gui/dig Help',
+    frame = { w = 43, h = 20, t = 10, l = 10 },
+    resizable = true,
+    resize_min = { w = 43, h = 20 },
+    message = DIG_HELP_DEFAULT
+}
+
+function HelpWindow:init()
+    self:addviews {
+        widgets.ResizingPanel { autoarrange_subviews = true,
+            frame = { t = 0, l = 0},
+            subviews = {
+                widgets.WrappedLabel {
+                    view_id = 'help_text',
+                    frame = { t = 0, l = 0},
+                    text_to_wrap = function() return self.message end,
+                }
+            }
+        }
+    }
+end
+
 -- Utilities
 
 local function same_xy(pos1, pos2)
@@ -75,24 +119,49 @@ local function same_xyz(pos1, pos2)
     return same_xy(pos1, pos2) and pos1.z == pos2.z
 end
 
-local function get_configure_button_pen()
+local function get_icon_pens()
     local start = dfhack.textures.getControlPanelTexposStart()
     local valid = start > 0
-    print(valid)
     start = start + 10
 
-    return dfhack.pen.parse {
+    local enabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 0) or nil, ch = string.byte('[') }
+    local enabled_pen_center = dfhack.pen.parse { fg = COLOR_LIGHTGREEN,
+        tile = valid and (start + 1) or nil, ch = 251 } -- check
+    local enabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 2) or nil, ch = string.byte(']') }
+    local disabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 3) or nil, ch = string.byte('[') }
+    local disabled_pen_center = dfhack.pen.parse { fg = COLOR_RED,
+        tile = valid and (start + 4) or nil, ch = string.byte('x') }
+    local disabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 5) or nil, ch = string.byte(']') }
+    local button_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 6) or nil, ch = string.byte('[') }
+    local button_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
+        tile = valid and (start + 7) or nil, ch = string.byte(']') }
+    local help_pen_center = dfhack.pen.parse {
+        tile = valid and (start + 8) or nil, ch = string.byte('?')
+    }
+    local configure_pen_center = dfhack.pen.parse {
         tile = valid and (start + 9) or nil, ch = 15
     } -- gear/masterwork symbol
+    return enabled_pen_left, enabled_pen_center, enabled_pen_right,
+        disabled_pen_left, disabled_pen_center, disabled_pen_right,
+        button_pen_left, button_pen_right,
+        help_pen_center, configure_pen_center
 end
 
-local CONFIGURE_PEN = get_configure_button_pen()
+local ENABLED_PEN_LEFT, ENABLED_PEN_CENTER, ENABLED_PEN_RIGHT,
+DISABLED_PEN_LEFT, DISABLED_PEN_CENTER, DISABLED_PEN_RIGHT,
+BUTTON_PEN_LEFT, BUTTON_PEN_RIGHT,
+HELP_PEN_CENTER, CONFIGURE_PEN_CENTER = get_icon_pens()
 
 local uibs = df.global.buildreq
 
 local function get_cur_filters()
     return dfhack.buildings.getFiltersByType({}, uibs.building_type,
-            uibs.building_subtype, uibs.custom_type)
+        uibs.building_subtype, uibs.custom_type)
 end
 
 -- Debug window
@@ -191,7 +260,6 @@ end
 --Show mark point coordinates
 MarksPanel = defclass(MarksPanel, widgets.ResizingPanel)
 MarksPanel.ATTRS {
-    get_area_fn = DEFAULT_NIL,
     autoarrange_subviews = true,
     dig_panel = DEFAULT_NIL
 }
@@ -240,7 +308,6 @@ end
 -- Panel to show the Mouse position/dimensions/etc
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
 ActionPanel.ATTRS {
-    get_area_fn = DEFAULT_NIL,
     autoarrange_subviews = true,
     dig_panel = DEFAULT_NIL
 }
@@ -765,19 +832,18 @@ function GenericOptionsPanel:init()
                 widgets.Label {
                     view_id = "building_outer_config",
                     frame = { t = 0, l = 1 },
-                    text = { { tile = CONFIGURE_PEN } },
+                    text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
                     on_click = function()
-                        uibs.building_type = df.building_type.Construction
-                        uibs.building_subtype = df.construction_type.Wall -- TODO
-                        filterselection.FilterSelectionScreen { index = 1,
-                            desc = require('plugins.buildingplan').get_desc(get_cur_filters()[1])}:show()
+                        view.help_window.message = CONSTRUCTION_HELP
+                        view.help_window.visible = true
+                        view:updateLayout()
                     end
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_outer_tiles",
                     key = "CUSTOM_R",
                     label = "Outer Tiles: ",
-                    frame = { t = 0, l = 3 },
+                    frame = { t = 0, l = 5 },
                     active = true,
                     enabled = true,
                     initial_option = 1,
@@ -786,20 +852,19 @@ function GenericOptionsPanel:init()
                 },
                 widgets.Label {
                     view_id = "building_inner_config",
-                    frame = { t = 1, l = 1},
-                    text = { { tile = CONFIGURE_PEN } },
+                    frame = { t = 1, l = 1 },
+                    text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
                     on_click = function()
-                        uibs.building_type = df.building_type.Construction
-                        uibs.building_subtype = df.construction_type.Floor -- TODO
-                        filterselection.FilterSelectionScreen { index = 1,
-                            desc = require('plugins.buildingplan').get_desc(get_cur_filters()[1])}:show()
+                        view.help_window.message = CONSTRUCTION_HELP
+                        view.help_window.visible = true
+                        view:updateLayout()
                     end
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_inner_tiles",
                     key = "CUSTOM_G",
                     label = "Inner Tiles: ",
-                    frame = { t = 1, l = 3 },
+                    frame = { t = 1, l = 5 },
                     active = true,
                     enabled = true,
                     initial_option = 2,
@@ -1522,6 +1587,9 @@ function Dig:onInput(keys)
     -- end
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        -- Close help window if open
+        if view.help_window.visible then view.help_window.visible = false return true end
+
         -- If center draggin, put the shape back to the original center
         if self.prev_center then
             local transform = { x = self.start_center.x - self.prev_center.x,
@@ -1887,7 +1955,9 @@ DigScreen.ATTRS {
 function DigScreen:init()
 
     self.dig_window = Dig {}
-    self:addviews { self.dig_window }
+    self.help_window = HelpWindow {}
+    self.help_window.visible = false
+    self:addviews { self.dig_window, self.help_window }
     if SHOW_DEBUG_WINDOW then
         self.debug_window = DigDebugWindow { dig_window = self.dig_window }
         self:addviews { self.debug_window }
