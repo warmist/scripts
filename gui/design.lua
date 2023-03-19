@@ -67,15 +67,15 @@ local mirror_guide_pen = to_pen {
 --- HelpWindow
 ---
 
-DIG_HELP_DEFAULT = {
-    "gui/dig Help",
+DESIGN_HELP_DEFAULT = {
+    "gui/design Help",
     "============",
     NEWLINE,
     "This is a default help text."
 }
 
 CONSTRUCTION_HELP = {
-    "gui/dig Help: Building Filters",
+    "gui/design Help: Building Filters",
     "===============================",
     NEWLINE,
     "Adding material filters to this tool is planned but not implemented at this time.",
@@ -85,11 +85,11 @@ CONSTRUCTION_HELP = {
 
 HelpWindow = defclass(HelpWindow, widgets.Window)
 HelpWindow.ATTRS {
-    frame_title = 'gui/dig Help',
+    frame_title = 'gui/design Help',
     frame = { w = 43, h = 20, t = 10, l = 10 },
     resizable = true,
     resize_min = { w = 43, h = 20 },
-    message = DIG_HELP_DEFAULT
+    message = DESIGN_HELP_DEFAULT
 }
 
 function HelpWindow:init()
@@ -204,7 +204,7 @@ DesignDebugWindow.ATTRS {
     resize_min = { h = 30 },
     autoarrange_subviews = true,
     autoarrange_gap = 1,
-    dig_window = DEFAULT_NIL
+    design_window = DEFAULT_NIL
 }
 function DesignDebugWindow:init()
 
@@ -227,7 +227,7 @@ function DesignDebugWindow:init()
         "show_guides"
     }
 
-    if not self.dig_window then
+    if not self.design_window then
         return
     end
 
@@ -242,14 +242,14 @@ function DesignDebugWindow:init()
         self:addviews { widgets.WrappedLabel {
             view_id = "debug_label_"..attr,
             text_to_wrap = function()
-                if type(self.dig_window[attr]) ~= "table" then
-                    return tostring(attr)..": "..tostring(self.dig_window[attr])
+                if type(self.design_window[attr]) ~= "table" then
+                    return tostring(attr)..": "..tostring(self.design_window[attr])
                 end
 
                 if sizeOnly then
-                    return '#'..tostring(attr)..": "..tostring(#self.dig_window[attr])
+                    return '#'..tostring(attr)..": "..tostring(#self.design_window[attr])
                 else
-                    return { tostring(attr)..": ", table.unpack(table_to_string(self.dig_window[attr], "  ")) }
+                    return { tostring(attr)..": ", table.unpack(table_to_string(self.design_window[attr], "  ")) }
                 end
             end,
         } }
@@ -260,7 +260,7 @@ end
 MarksPanel = defclass(MarksPanel, widgets.ResizingPanel)
 MarksPanel.ATTRS {
     autoarrange_subviews = true,
-    dig_panel = DEFAULT_NIL
+    design_panel = DEFAULT_NIL
 }
 
 function MarksPanel:init()
@@ -269,19 +269,19 @@ end
 function MarksPanel:update_mark_labels()
     self.subviews = {}
     local label_text = {}
-    if #self.dig_panel.marks >= 1 then
-        local first_mark = self.dig_panel.marks[1]
+    if #self.design_panel.marks >= 1 then
+        local first_mark = self.design_panel.marks[1]
         if first_mark then
             table.insert(label_text,
                 string.format("First Mark (%d): %d, %d, %d ", 1, first_mark.x, first_mark.y, first_mark.z))
         end
     end
 
-    if #self.dig_panel.marks > 1 then
-        local last_mark = self.dig_panel.marks[#self.dig_panel.marks]
+    if #self.design_panel.marks > 1 then
+        local last_mark = self.design_panel.marks[#self.design_panel.marks]
         if last_mark then
             table.insert(label_text,
-                string.format("Last Mark (%d): %d, %d, %d ", #self.dig_panel.marks, last_mark.x, last_mark.y, last_mark.z))
+                string.format("Last Mark (%d): %d, %d, %d ", #self.design_panel.marks, last_mark.x, last_mark.y, last_mark.z))
         end
     end
 
@@ -290,7 +290,7 @@ function MarksPanel:update_mark_labels()
         table.insert(label_text, string.format("Mouse: %d, %d, %d", mouse_pos.x, mouse_pos.y, mouse_pos.z))
     end
 
-    local mirror = self.dig_panel.mirror_point
+    local mirror = self.design_panel.mirror_point
     if mirror then
         table.insert(label_text, string.format("Mirror Point: %d, %d, %d", mirror.x, mirror.y, mirror.z))
     end
@@ -308,7 +308,7 @@ end
 ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
 ActionPanel.ATTRS {
     autoarrange_subviews = true,
-    dig_panel = DEFAULT_NIL
+    design_panel = DEFAULT_NIL
 }
 
 function ActionPanel:init()
@@ -330,9 +330,9 @@ end
 
 function ActionPanel:get_action_text()
     local text = ""
-    if self.dig_panel.marks[1] and self.dig_panel.placing_mark.active then
+    if self.design_panel.marks[1] and self.design_panel.placing_mark.active then
         text = "Place the next point"
-    elseif not self.dig_panel.marks[1] then
+    elseif not self.design_panel.marks[1] then
         text = "Place the first point"
     elseif not self.parent_view.placing_extra.active and not self.parent_view.prev_center then
         text = "Select any draggable points"
@@ -349,12 +349,12 @@ end
 function ActionPanel:get_area_text()
     local label = "Area: "
 
-    local bounds = self.dig_panel:get_view_bounds()
+    local bounds = self.design_panel:get_view_bounds()
     if not bounds then return label.."N/A" end
     local width = math.abs(bounds.x2 - bounds.x1) + 1
     local height = math.abs(bounds.y2 - bounds.y1) + 1
     local depth = math.abs(bounds.z2 - bounds.z1) + 1
-    local tiles = self.dig_panel.shape.num_tiles * depth
+    local tiles = self.design_panel.shape.num_tiles * depth
     local plural = tiles > 1 and "s" or ""
     return label..("%dx%dx%d (%d tile%s)"):format(
         width,
@@ -366,7 +366,7 @@ function ActionPanel:get_area_text()
 end
 
 function ActionPanel:get_mark_text(num)
-    local mark = self.dig_panel.marks[num]
+    local mark = self.design_panel.marks[num]
 
     local label = string.format("Mark %d: ", num)
 
@@ -386,7 +386,7 @@ GenericOptionsPanel = defclass(GenericOptionsPanel, widgets.ResizingPanel)
 GenericOptionsPanel.ATTRS {
     name = DEFAULT_NIL,
     autoarrange_subviews = true,
-    dig_panel = DEFAULT_NIL,
+    design_panel = DEFAULT_NIL,
     on_layout_change = DEFAULT_NIL,
 }
 
@@ -473,17 +473,17 @@ function GenericOptionsPanel:init()
                 },
                 widgets.ResizingPanel {
                     view_id = 'transform_panel_rotate',
-                    visible = function() return self.dig_panel.subviews.transform:getOptionValue() end,
+                    visible = function() return self.design_panel.subviews.transform:getOptionValue() end,
                     subviews = {
                         widgets.HotkeyLabel {
                             key = 'STRING_A040',
                             frame = { t = 1, l = 1 }, key_sep = '',
-                            on_activate = self.dig_panel:callback('on_transform', 'ccw'),
+                            on_activate = self.design_panel:callback('on_transform', 'ccw'),
                         },
                         widgets.HotkeyLabel {
                             key = 'STRING_A041',
                             frame = { t = 1, l = 2 }, key_sep = ':',
-                            on_activate = self.dig_panel:callback('on_transform', 'cw'),
+                            on_activate = self.design_panel:callback('on_transform', 'cw'),
                         },
                         widgets.WrappedLabel {
                             frame = { t = 1, l = 5 },
@@ -492,12 +492,12 @@ function GenericOptionsPanel:init()
                         widgets.HotkeyLabel {
                             key = 'STRING_A095',
                             frame = { t = 2, l = 1 }, key_sep = '',
-                            on_activate = self.dig_panel:callback('on_transform', 'flipv'),
+                            on_activate = self.design_panel:callback('on_transform', 'flipv'),
                         },
                         widgets.HotkeyLabel {
                             key = 'STRING_A061',
                             frame = { t = 2, l = 2 }, key_sep = ':',
-                            on_activate = self.dig_panel:callback('on_transform', 'fliph'),
+                            on_activate = self.design_panel:callback('on_transform', 'fliph'),
                         },
                         widgets.WrappedLabel {
                             frame = { t = 2, l = 5 },
@@ -512,27 +512,27 @@ function GenericOptionsPanel:init()
                 widgets.HotkeyLabel {
                     key = 'CUSTOM_M',
                     view_id = 'mirror_point_panel',
-                    visible = function() return self.dig_panel.shape.can_mirror end,
-                    label = function() if not self.dig_panel.mirror_point then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
+                    visible = function() return self.design_panel.shape.can_mirror end,
+                    label = function() if not self.design_panel.mirror_point then return 'Place Mirror Point' else return 'Delete Mirror Point' end end,
                     active = true,
-                    enabled = function() return not self.dig_panel.placing_extra.active and
-                            not self.dig_panel.placing_mark.active and not self.prev_center
+                    enabled = function() return not self.design_panel.placing_extra.active and
+                            not self.design_panel.placing_mark.active and not self.prev_center
                     end,
                     on_activate = function()
-                        if not self.dig_panel.mirror_point then
-                            self.dig_panel.placing_mark.active = false
-                            self.dig_panel.placing_extra.active = false
-                            self.dig_panel.placing_extra.active = false
-                            self.dig_panel.placing_mirror = true
+                        if not self.design_panel.mirror_point then
+                            self.design_panel.placing_mark.active = false
+                            self.design_panel.placing_extra.active = false
+                            self.design_panel.placing_extra.active = false
+                            self.design_panel.placing_mirror = true
                         else
-                            self.dig_panel.placing_mirror = false
-                            self.dig_panel.mirror_point = nil
+                            self.design_panel.placing_mirror = false
+                            self.design_panel.mirror_point = nil
                         end
                     end
                 },
                 widgets.ResizingPanel {
                     view_id = 'transform_panel_rotate',
-                    visible = function() return self.dig_panel.mirror_point end,
+                    visible = function() return self.design_panel.mirror_point end,
                     subviews = {
                         widgets.CycleHotkeyLabel {
                             view_id = "mirror_horiz_label",
@@ -545,7 +545,7 @@ function GenericOptionsPanel:init()
                             options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
                                 { label = "On (even)", value = 3 } },
                             frame = { t = 1, l = 1 }, key_sep = '',
-                            on_change = function() self.dig_panel.needs_update = true end
+                            on_change = function() self.design_panel.needs_update = true end
                         },
                         widgets.CycleHotkeyLabel {
                             view_id = "mirror_diag_label",
@@ -558,7 +558,7 @@ function GenericOptionsPanel:init()
                             options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
                                 { label = "On (even)", value = 3 } },
                             frame = { t = 2, l = 1 }, key_sep = '',
-                            on_change = function() self.dig_panel.needs_update = true end
+                            on_change = function() self.design_panel.needs_update = true end
                         },
                         widgets.CycleHotkeyLabel {
                             view_id = "mirror_vert_label",
@@ -571,7 +571,7 @@ function GenericOptionsPanel:init()
                             options = { { label = "Off", value = 1 }, { label = "On (odd)", value = 2 },
                                 { label = "On (even)", value = 3 } },
                             frame = { t = 3, l = 1 }, key_sep = '',
-                            on_change = function() self.dig_panel.needs_update = true end
+                            on_change = function() self.design_panel.needs_update = true end
                         },
                         widgets.HotkeyLabel {
                             view_id = "mirror_vert_label",
@@ -583,9 +583,9 @@ function GenericOptionsPanel:init()
                             initial_option = 1,
                             frame = { t = 4, l = 1 }, key_sep = ': ',
                             on_activate = function()
-                                local points = self.dig_panel:get_mirrored_points(self.dig_panel.marks)
-                                self.dig_panel.marks = points
-                                self.dig_panel.mirror_point = nil
+                                local points = self.design_panel:get_mirrored_points(self.design_panel.marks)
+                                self.design_panel.marks = points
+                                self.design_panel.mirror_point = nil
                             end
                         },
                     }
@@ -599,13 +599,13 @@ function GenericOptionsPanel:init()
             label_width = 8,
             active = true,
             enabled = function()
-                return self.dig_panel.shape.invertable == true
+                return self.design_panel.shape.invertable == true
             end,
             show_tooltip = true,
             initial_option = false,
             on_change = function(new, old)
-                self.dig_panel.shape.invert = new
-                self.dig_panel.needs_update = true
+                self.design_panel.shape.invert = new
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -613,46 +613,46 @@ function GenericOptionsPanel:init()
             key = "CUSTOM_V",
             label = function()
                 local msg = "Place extra point: "
-                if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
-                    return msg..self.dig_panel.shape.extra_points[#self.dig_panel.extra_points + 1].label
+                if #self.design_panel.extra_points < #self.design_panel.shape.extra_points then
+                    return msg..self.design_panel.shape.extra_points[#self.design_panel.extra_points + 1].label
                 end
 
                 return msg.."N/A"
             end,
             active = true,
-            visible = function() return self.dig_panel.shape and #self.dig_panel.shape.extra_points > 0 end,
+            visible = function() return self.design_panel.shape and #self.design_panel.shape.extra_points > 0 end,
             enabled = function()
-                if self.dig_panel.shape then
-                    return #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points
+                if self.design_panel.shape then
+                    return #self.design_panel.extra_points < #self.design_panel.shape.extra_points
                 end
 
                 return false
             end,
             show_tooltip = true,
             on_activate = function()
-                if not self.dig_panel.placing_mark.active then
-                    self.dig_panel.placing_extra.active = true
-                    self.dig_panel.placing_extra.index = #self.dig_panel.extra_points + 1
-                elseif #self.dig_panel.marks then
+                if not self.design_panel.placing_mark.active then
+                    self.design_panel.placing_extra.active = true
+                    self.design_panel.placing_extra.index = #self.design_panel.extra_points + 1
+                elseif #self.design_panel.marks then
                     local mouse_pos = dfhack.gui.getMousePos()
-                    if mouse_pos then table.insert(self.dig_panel.extra_points, { x = mouse_pos.x, y = mouse_pos.y }) end
+                    if mouse_pos then table.insert(self.design_panel.extra_points, { x = mouse_pos.x, y = mouse_pos.y }) end
                 end
-                self.dig_panel.needs_update = true
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
             view_id = "shape_toggle_placing_marks",
             key = "CUSTOM_B",
             label = function()
-                return (self.dig_panel.placing_mark.active) and "Stop placing" or "Start placing"
+                return (self.design_panel.placing_mark.active) and "Stop placing" or "Start placing"
             end,
             active = true,
             visible = true,
             enabled = function()
-                if not self.dig_panel.placing_mark.active and not self.dig_panel.prev_center then
-                    return not self.dig_panel.shape.max_points or
-                        #self.dig_panel.marks < self.dig_panel.shape.max_points
-                elseif not self.dig_panel.placing_extra.active and not self.dig_panel.prev_centerl then
+                if not self.design_panel.placing_mark.active and not self.design_panel.prev_center then
+                    return not self.design_panel.shape.max_points or
+                        #self.design_panel.marks < self.design_panel.shape.max_points
+                elseif not self.design_panel.placing_extra.active and not self.design_panel.prev_centerl then
                     return true
                 end
 
@@ -660,16 +660,16 @@ function GenericOptionsPanel:init()
             end,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.placing_mark.active = not self.dig_panel.placing_mark.active
-                self.dig_panel.placing_mark.index = (self.dig_panel.placing_mark.active) and #self.dig_panel.marks + 1 or
+                self.design_panel.placing_mark.active = not self.design_panel.placing_mark.active
+                self.design_panel.placing_mark.index = (self.design_panel.placing_mark.active) and #self.design_panel.marks + 1 or
                     nil
-                if not self.dig_panel.placing_mark.active then
-                    table.remove(self.dig_panel.marks, #self.dig_panel.marks)
+                if not self.design_panel.placing_mark.active then
+                    table.remove(self.design_panel.marks, #self.design_panel.marks)
                 else
-                    self.dig_panel.placing_mark.continue = true
+                    self.design_panel.placing_mark.continue = true
                 end
 
-                self.dig_panel.needs_update = true
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -678,9 +678,9 @@ function GenericOptionsPanel:init()
             label = "Clear all points",
             active = true,
             enabled = function()
-                if #self.dig_panel.marks > 0 then return true
-                elseif self.dig_panel.shape then
-                    if #self.dig_panel.extra_points < #self.dig_panel.shape.extra_points then
+                if #self.design_panel.marks > 0 then return true
+                elseif self.design_panel.shape then
+                    if #self.design_panel.extra_points < #self.design_panel.shape.extra_points then
                         return true
                     end
                 end
@@ -690,13 +690,13 @@ function GenericOptionsPanel:init()
             disabled = false,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.marks = {}
-                self.dig_panel.placing_mark.active = true
-                self.dig_panel.placing_mark.index = 1
-                self.dig_panel.extra_points = {}
-                self.dig_panel.prev_center = nil
-                self.dig_panel.start_center = nil
-                self.dig_panel.needs_update = true
+                self.design_panel.marks = {}
+                self.design_panel.placing_mark.active = true
+                self.design_panel.placing_mark.index = 1
+                self.design_panel.extra_points = {}
+                self.design_panel.prev_center = nil
+                self.design_panel.start_center = nil
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -705,8 +705,8 @@ function GenericOptionsPanel:init()
             label = "Clear extra points",
             active = true,
             enabled = function()
-                if self.dig_panel.shape then
-                    if #self.dig_panel.extra_points > 0 then
+                if self.design_panel.shape then
+                    if #self.design_panel.extra_points > 0 then
                         return true
                     end
                 end
@@ -714,16 +714,16 @@ function GenericOptionsPanel:init()
                 return false
             end,
             disabled = false,
-            visible = function() return self.dig_panel.shape and #self.dig_panel.shape.extra_points > 0 end,
+            visible = function() return self.design_panel.shape and #self.design_panel.shape.extra_points > 0 end,
             show_tooltip = true,
             on_activate = function()
-                if self.dig_panel.shape then
-                    self.dig_panel.extra_points = {}
-                    self.dig_panel.prev_center = nil
-                    self.dig_panel.start_center = nil
-                    self.dig_panel.placing_extra = { active = false, index = 0 }
-                    self.dig_panel:updateLayout()
-                    self.dig_panel.needs_update = true
+                if self.design_panel.shape then
+                    self.design_panel.extra_points = {}
+                    self.design_panel.prev_center = nil
+                    self.design_panel.start_center = nil
+                    self.design_panel.placing_extra = { active = false, index = 0 }
+                    self.design_panel:updateLayout()
+                    self.design_panel.needs_update = true
                 end
             end,
         },
@@ -737,7 +737,7 @@ function GenericOptionsPanel:init()
             show_tooltip = true,
             initial_option = true,
             on_change = function(new, old)
-                self.dig_panel.show_guides = new
+                self.design_panel.show_guides = new
             end,
         },
         widgets.CycleHotkeyLabel {
@@ -792,7 +792,7 @@ function GenericOptionsPanel:init()
             },
             disabled = false,
             show_tooltip = true,
-            on_change = function(new, old) self.dig_panel:updateLayout() end,
+            on_change = function(new, old) self.design_panel:updateLayout() end,
         },
         widgets.ResizingPanel {
             view_id = 'stairs_type_panel',
@@ -835,7 +835,7 @@ function GenericOptionsPanel:init()
                     view_id = "building_outer_config",
                     frame = { t = 0, l = 1 },
                     text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
-                    on_click = self.dig_panel:callback("show_help", CONSTRUCTION_HELP)
+                    on_click = self.design_panel:callback("show_help", CONSTRUCTION_HELP)
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_outer_tiles",
@@ -851,7 +851,7 @@ function GenericOptionsPanel:init()
                     view_id = "building_inner_config",
                     frame = { t = 1, l = 1 },
                     text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
-                    on_click = self.dig_panel:callback("show_help", CONSTRUCTION_HELP)
+                    on_click = self.design_panel:callback("show_help", CONSTRUCTION_HELP)
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_inner_tiles",
@@ -868,7 +868,7 @@ function GenericOptionsPanel:init()
         widgets.WrappedLabel {
             view_id = "shape_prio_label",
             text_to_wrap = function()
-                return "Priority: "..tostring(self.dig_panel.prio)
+                return "Priority: "..tostring(self.design_panel.prio)
             end,
         },
         widgets.HotkeyLabel {
@@ -877,14 +877,14 @@ function GenericOptionsPanel:init()
             label = "Increase Priority",
             active = true,
             enabled = function()
-                return self.dig_panel.prio > 1
+                return self.design_panel.prio > 1
             end,
             disabled = false,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.prio = self.dig_panel.prio - 1
-                self.dig_panel:updateLayout()
-                self.dig_panel.needs_update = true
+                self.design_panel.prio = self.design_panel.prio - 1
+                self.design_panel:updateLayout()
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -893,14 +893,14 @@ function GenericOptionsPanel:init()
             label = "Decrease Priority",
             active = true,
             enabled = function()
-                return self.dig_panel.prio < 7
+                return self.design_panel.prio < 7
             end,
             disabled = false,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel.prio = self.dig_panel.prio + 1
-                self.dig_panel:updateLayout()
-                self.dig_panel.needs_update = true
+                self.design_panel.prio = self.design_panel.prio + 1
+                self.design_panel:updateLayout()
+                self.design_panel.needs_update = true
             end,
         },
         widgets.ToggleHotkeyLabel {
@@ -908,13 +908,13 @@ function GenericOptionsPanel:init()
             key = "CUSTOM_C",
             label = "Auto-Commit: ",
             active = true,
-            enabled = function() return self.dig_panel.shape.max_points end,
+            enabled = function() return self.design_panel.shape.max_points end,
             disabled = false,
             show_tooltip = true,
             initial_option = true,
             on_change = function(new, old)
-                self.dig_panel.autocommit = new
-                self.dig_panel.needs_update = true
+                self.design_panel.autocommit = new
+                self.design_panel.needs_update = true
             end,
         },
         widgets.HotkeyLabel {
@@ -923,33 +923,33 @@ function GenericOptionsPanel:init()
             label = "Commit Designation",
             active = true,
             enabled = function()
-                return #self.dig_panel.marks >= self.dig_panel.shape.min_points
+                return #self.design_panel.marks >= self.design_panel.shape.min_points
             end,
             disabled = false,
             show_tooltip = true,
             on_activate = function()
-                self.dig_panel:commit()
-                self.dig_panel.needs_update = true
+                self.design_panel:commit()
+                self.design_panel.needs_update = true
             end,
         },
     }
 end
 
 function GenericOptionsPanel:is_mode_selected(mode)
-    return self.dig_panel.subviews.mode_name:getOptionValue().desig == mode
+    return self.design_panel.subviews.mode_name:getOptionValue().desig == mode
 end
 
 function GenericOptionsPanel:change_shape(new, old)
-    self.dig_panel.shape = shapes.all_shapes[new]
-    if self.dig_panel.shape.max_points and #self.dig_panel.marks > self.dig_panel.shape.max_points then
+    self.design_panel.shape = shapes.all_shapes[new]
+    if self.design_panel.shape.max_points and #self.design_panel.marks > self.design_panel.shape.max_points then
         -- pop marks until we're down to the max of the new shape
-        for i = #self.dig_panel.marks, self.dig_panel.shape.max_points, -1 do
-            table.remove(self.dig_panel.marks, i)
+        for i = #self.design_panel.marks, self.design_panel.shape.max_points, -1 do
+            table.remove(self.design_panel.marks, i)
         end
     end
-    self.dig_panel:add_shape_options()
-    self.dig_panel.needs_update = true
-    self.dig_panel:updateLayout()
+    self.design_panel:add_shape_options()
+    self.design_panel.needs_update = true
+    self.design_panel:updateLayout()
 end
 
 --
@@ -997,7 +997,7 @@ local PENS = {}
 
 Design = defclass(Design, widgets.Window)
 Design.ATTRS {
-    name = "dig_window",
+    name = "design_window",
     frame_title = "Design",
     frame = {
         w = 40,
@@ -1157,18 +1157,18 @@ function Design:init()
     self:addviews {
         ActionPanel {
             view_id = "action_panel",
-            dig_panel = self,
+            design_panel = self,
             get_extra_pt_count = function()
                 return #self.extra_points
             end,
         },
         MarksPanel {
             view_id = "marks_panel",
-            dig_panel = self,
+            design_panel = self,
         },
         GenericOptionsPanel {
             view_id = "generic_panel",
-            dig_panel = self,
+            design_panel = self,
         }
     }
 end
@@ -1934,13 +1934,13 @@ function Design:get_mirrored_points(points)
     return points
 end
 
-function Dig:show_help(text)
+function Design:show_help(text)
     self.parent_view.help_window.message = text
     self.parent_view.help_window.visible = true
     self.parent_view:updateLayout()
 end
 
-function Dig:dismiss_help()
+function Design:dismiss_help()
     self.parent_view.help_window.visible = false
 end
 
@@ -1950,19 +1950,19 @@ end
 
 DesignScreen = defclass(DesignScreen, gui.ZScreen)
 DesignScreen.ATTRS {
-    focus_path = "dig",
+    focus_path = "design",
     pass_pause = true,
     pass_movement_keys = true,
 }
 
 function DesignScreen:init()
 
-    self.dig_window = Dig {}
+    self.design_window = Design {}
     self.help_window = HelpWindow {}
     self.help_window.visible = false
-    self:addviews { self.dig_window, self.help_window }
+    self:addviews { self.design_window, self.help_window }
     if SHOW_DEBUG_WINDOW then
-        self.debug_window = DesignDebugWindow { dig_window = self.dig_window }
+        self.debug_window = DesignDebugWindow { design_window = self.design_window }
         self:addviews { self.debug_window }
     end
 end
