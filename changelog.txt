@@ -16,15 +16,37 @@ that repo.
 ## New Scripts
 
 ## Fixes
--@ `gui/dig`: Allow placing an extra point (curve) while still placing the second main point
--@ `gui/dig`: Allow placing n-point shapes, shape rotation/mirroring, various code refactorings
--@ `gui/dig`: Allow second bezier point, mirror-mode for freeform shapes, fix symmetry issues
+
+## Misc Improvements
+
+## Removed
+
+# 50.07-beta1
+
+## New Scripts
+- `suspendmanager`: automatic job suspension management (replaces `autounsuspend`)
+- `gui/suspendmanager`: graphical configuration interface for `suspendmanager`
+- `suspend`: suspends building construction jobs
+
+## Fixes
+- `quicksave`: now reliably triggers an autosave, even if one has been performed recently
+- `gui/launcher`: tab characters in command output now appear as a space instead of a code page 437 "blob"
+
+## Misc Improvements
+- `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your personal blueprints to the new directory!
+- `gui/dig`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
+- `gui/gm-editor`: can now open the selected stockpile if run without parameters
+
+# 50.07-alpha3
+
+## Fixes
 -@ `gui/create-item`: fix generic corpsepiece spawning
 
 ## Misc Improvements
 - `gui/create-item`: added ability to spawn 'whole' corpsepieces (every layer of a part)
-
-## Removed
+-@ `gui/dig`: Allow placing an extra point (curve) while still placing the second main point
+-@ `gui/dig`: Allow placing n-point shapes, shape rotation/mirroring
+-@ `gui/dig`: Allow second bezier point, mirror-mode for freeform shapes, symmetry mode
 
 # 50.07-alpha2
 

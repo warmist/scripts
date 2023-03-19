@@ -20,7 +20,6 @@ local FORT_SERVICES = {
     'autolabor',
     'autonestbox',
     'autoslab',
-    'autounsuspend',
     'emigration',
     'fastdwarf',
     'fix/protect-nicks',
@@ -30,6 +29,7 @@ local FORT_SERVICES = {
     'prioritize',
     'seedwatch',
     'starvingdead',
+    'suspendmanager',
     'tailor',
 }
 
