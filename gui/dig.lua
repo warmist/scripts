@@ -95,11 +95,11 @@ HelpWindow.ATTRS {
 function HelpWindow:init()
     self:addviews {
         widgets.ResizingPanel { autoarrange_subviews = true,
-            frame = { t = 0, l = 0},
+            frame = { t = 0, l = 0 },
             subviews = {
                 widgets.WrappedLabel {
                     view_id = 'help_text',
-                    frame = { t = 0, l = 0},
+                    frame = { t = 0, l = 0 },
                     text_to_wrap = function() return self.message end,
                 }
             }
@@ -794,49 +794,48 @@ function GenericOptionsPanel:init()
             show_tooltip = true,
             on_change = function(new, old) self.dig_panel:updateLayout() end,
         },
-        widgets.CycleHotkeyLabel {
-            view_id = "stairs_top_subtype",
-            key = "CUSTOM_R",
-            label = "Top Stair Type: ",
-            frame = { l = 1 },
-            active = true,
-            enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
-            options = stair_options,
-        },
-        widgets.CycleHotkeyLabel {
-            view_id = "stairs_middle_subtype",
-            key = "CUSTOM_G",
-            label = "Middle Stair Type: ",
-            frame = { l = 1 },
-            active = true,
-            enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
-            options = stair_options,
-        },
-        widgets.CycleHotkeyLabel {
-            view_id = "stairs_bottom_subtype",
-            key = "CUSTOM_N",
-            label = "Bottom Stair Type: ",
-            frame = { l = 1 },
-            active = true,
-            enabled = true,
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "i" end,
-            options = stair_options,
+        widgets.ResizingPanel {
+            view_id = 'stairs_type_panel',
+            visible = self:callback("is_mode_selected", "i"),
+            subviews = {
+                widgets.CycleHotkeyLabel {
+                    view_id = "stairs_top_subtype",
+                    key = "CUSTOM_R",
+                    label = "Top Stair Type: ",
+                    frame = { t = 0, l = 1 },
+                    active = true,
+                    enabled = true,
+                    options = stair_options,
+                },
+                widgets.CycleHotkeyLabel {
+                    view_id = "stairs_middle_subtype",
+                    key = "CUSTOM_G",
+                    label = "Middle Stair Type: ",
+                    frame = { t = 1, l = 1 },
+                    active = true,
+                    enabled = true,
+                    options = stair_options,
+                },
+                widgets.CycleHotkeyLabel {
+                    view_id = "stairs_bottom_subtype",
+                    key = "CUSTOM_N",
+                    label = "Bottom Stair Type: ",
+                    frame = { t = 2, l = 1 },
+                    active = true,
+                    enabled = true,
+                    options = stair_options,
+                }
+            }
         },
         widgets.ResizingPanel {
-            view_id = 'transform_panel_rotate',
-            visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
+            view_id = 'building_types_panel',
+            visible = self:callback("is_mode_selected", "b"),
             subviews = {
                 widgets.Label {
                     view_id = "building_outer_config",
                     frame = { t = 0, l = 1 },
                     text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
-                    on_click = function()
-                        view.help_window.message = CONSTRUCTION_HELP
-                        view.help_window.visible = true
-                        view:updateLayout()
-                    end
+                    on_click = self.dig_panel:callback("show_help", CONSTRUCTION_HELP)
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_outer_tiles",
@@ -846,18 +845,13 @@ function GenericOptionsPanel:init()
                     active = true,
                     enabled = true,
                     initial_option = 1,
-                    visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
                     options = build_options,
                 },
                 widgets.Label {
                     view_id = "building_inner_config",
                     frame = { t = 1, l = 1 },
                     text = { { tile = BUTTON_PEN_LEFT }, { tile = HELP_PEN_CENTER }, { tile = BUTTON_PEN_RIGHT } },
-                    on_click = function()
-                        view.help_window.message = CONSTRUCTION_HELP
-                        view.help_window.visible = true
-                        view:updateLayout()
-                    end
+                    on_click = self.dig_panel:callback("show_help", CONSTRUCTION_HELP)
                 },
                 widgets.CycleHotkeyLabel {
                     view_id = "building_inner_tiles",
@@ -867,7 +861,6 @@ function GenericOptionsPanel:init()
                     active = true,
                     enabled = true,
                     initial_option = 2,
-                    visible = function() return self.dig_panel.subviews.mode_name:getOptionValue().desig == "b" end,
                     options = build_options,
                 },
             },
@@ -940,6 +933,10 @@ function GenericOptionsPanel:init()
             end,
         },
     }
+end
+
+function GenericOptionsPanel:is_mode_selected(mode)
+    return self.dig_panel.subviews.mode_name:getOptionValue().desig == mode
 end
 
 function GenericOptionsPanel:change_shape(new, old)
@@ -1587,7 +1584,7 @@ function Dig:onInput(keys)
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- Close help window if open
-        if view.help_window.visible then view.help_window.visible = false return true end
+        if view.help_window.visible then view:dismiss_help() return true end
 
         -- If center draggin, put the shape back to the original center
         if self.prev_center then
@@ -1937,6 +1934,16 @@ function Dig:get_mirrored_points(points)
     return points
 end
 
+function Dig:show_help(text)
+    self.parent_view.help_window.message = text
+    self.parent_view.help_window.visible = true
+    self.parent_view:updateLayout()
+end
+
+function Dig:dismiss_help()
+    self.parent_view.help_window.visible = false
+end
+
 --
 -- DigScreen
 --
@@ -1945,7 +1952,6 @@ DigScreen = defclass(DigScreen, gui.ZScreen)
 DigScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
-    initial_pause = false,
     pass_movement_keys = true,
 }
 
