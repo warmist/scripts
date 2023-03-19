@@ -1,4 +1,4 @@
--- A GUI front-end for the digging designations
+-- A GUI front-end for creating designs
 --@ module = false
 
 -- TODOS ====================
@@ -38,7 +38,7 @@ local gui = require("gui")
 local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
-local shapes = reqscript("internal/dig/shapes")
+local shapes = reqscript("internal/design/shapes")
 
 local tile_attrs = df.tiletype.attrs
 
@@ -102,8 +102,8 @@ local function table_to_string(tbl, indent)
     return result
 end
 
-DigDebugWindow = defclass(DigDebugWindow, widgets.Window)
-DigDebugWindow.ATTRS {
+DesignDebugWindow = defclass(DesignDebugWindow, widgets.Window)
+DesignDebugWindow.ATTRS {
     frame_title = "Debug",
     frame = {
         w = 47,
@@ -117,7 +117,7 @@ DigDebugWindow.ATTRS {
     autoarrange_gap = 1,
     dig_window = DEFAULT_NIL
 }
-function DigDebugWindow:init()
+function DesignDebugWindow:init()
 
     local attrs = {
         -- "shape", -- prints a lot of lines due to the self.arr, best to disable unless needed, TODO add a 'get debug string' function
@@ -829,13 +829,13 @@ local PEN_MASK = {
 local PENS = {}
 
 --
--- Dig
+-- Design
 --
 
-Dig = defclass(Dig, widgets.Window)
-Dig.ATTRS {
+Design = defclass(Design, widgets.Window)
+Design.ATTRS {
     name = "dig_window",
-    frame_title = "Dig",
+    frame_title = "Design",
     frame = {
         w = 40,
         h = 45,
@@ -866,7 +866,7 @@ Dig.ATTRS {
 
 -- Check to see if we're moving a point, or some change was made that implise we need to update the shape
 -- This stop us needing to update the shape geometery every frame which can tank FPS
-function Dig:shape_needs_update()
+function Design:shape_needs_update()
     -- if #self.marks < self.shape.min_points then return false end
 
     if self.needs_update then return true end
@@ -894,7 +894,7 @@ end
 -- neighboring tiles. The first time a certain tile type needs to be drawn, it's pen
 -- is generated and stored in PENS. On subsequent calls, the cached pen will be used for
 -- other tiles with the same position/direction
-function Dig:get_pen(x, y, mousePos)
+function Design:get_pen(x, y, mousePos)
 
     local get_point = self.shape:get_point(x, y)
     local mouse_over = (mousePos) and (x == mousePos.x and y == mousePos.y) or false
@@ -990,7 +990,7 @@ function Dig:get_pen(x, y, mousePos)
     return PENS[pen_key]
 end
 
-function Dig:init()
+function Design:init()
     self:addviews {
         ActionPanel {
             view_id = "action_panel",
@@ -1010,7 +1010,7 @@ function Dig:init()
     }
 end
 
-function Dig:postinit()
+function Design:postinit()
     self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()]
     if self.shape then
         self:add_shape_options()
@@ -1021,7 +1021,7 @@ end
 -- Currently only supports 'bool' aka toggle and 'plusminus' which creates
 -- a pair of HotKeyLabel's to increment/decrement a value
 -- Will need to update as needed to add more option types
-function Dig:add_shape_options()
+function Design:add_shape_options()
     local prefix = "shape_option_"
     for i, view in ipairs(self.subviews or {}) do
         if view.view_id:sub(1, #prefix) == prefix then
@@ -1126,7 +1126,7 @@ function Dig:add_shape_options()
     end
 end
 
-function Dig:on_transform(val)
+function Design:on_transform(val)
     local center_x, center_y = self.shape:get_center()
 
     -- Save mirrored points first
@@ -1189,7 +1189,7 @@ function Dig:on_transform(val)
     self.needs_update = true
 end
 
-function Dig:get_view_bounds()
+function Design:get_view_bounds()
     if #self.marks == 0 then return nil end
 
     local min_x = self.marks[1].x
@@ -1218,7 +1218,7 @@ function Dig:get_view_bounds()
 end
 
 -- return the pen, alter based on if we want to display a corner and a mouse over corner
-function Dig:make_pen(direction, is_corner, is_mouse_over, inshape, extra_point)
+function Design:make_pen(direction, is_corner, is_mouse_over, inshape, extra_point)
 
     local color = COLOR_GREEN
     local ycursor_mod = 0
@@ -1253,7 +1253,7 @@ function Dig:make_pen(direction, is_corner, is_mouse_over, inshape, extra_point)
 end
 
 -- Generate a bit field to store as keys in PENS
-function Dig:gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape, extra_point)
+function Design:gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape, extra_point)
     local ret = 0
     if n then ret = ret + (1 << PEN_MASK.NORTH) end
     if s then ret = ret + (1 << PEN_MASK.SOUTH) end
@@ -1268,13 +1268,13 @@ function Dig:gen_pen_key(n, s, e, w, is_corner, is_mouse_over, inshape, extra_po
 end
 
 -- TODO Function is too long
-function Dig:onRenderFrame(dc, rect)
+function Design:onRenderFrame(dc, rect)
 
     if (SHOW_DEBUG_WINDOW) then
         self.parent_view.debug_window:updateLayout()
     end
 
-    Dig.super.onRenderFrame(self, dc, rect)
+    Design.super.onRenderFrame(self, dc, rect)
 
     if not self.shape then
         self.shape = shapes.all_shapes[self.subviews.shape_name:getOptionValue()]
@@ -1407,8 +1407,8 @@ function Dig:onRenderFrame(dc, rect)
 end
 
 -- TODO function too long
-function Dig:onInput(keys)
-    if Dig.super.onInput(self, keys) then
+function Design:onInput(keys)
+    if Design.super.onInput(self, keys) then
         return true
     end
 
@@ -1577,7 +1577,7 @@ end
 -- Put any special logic for designation type here
 -- Right now it's setting the stair type based on the z-level
 -- Fell through, pass through the option directly from the options value
-function Dig:get_designation(x, y, z)
+function Design:get_designation(x, y, z)
     local mode = self.subviews.mode_name:getOptionValue()
 
     local view_bounds = self:get_view_bounds()
@@ -1615,7 +1615,7 @@ function Dig:get_designation(x, y, z)
 end
 
 -- Commit the shape using quickfort API
-function Dig:commit()
+function Design:commit()
     local data = {}
     local top_left, bot_right = self.shape:get_true_dims()
     local view_bounds = self:get_view_bounds()
@@ -1682,7 +1682,7 @@ function Dig:commit()
     self:updateLayout()
 end
 
-function Dig:get_mirrored_points(points)
+function Design:get_mirrored_points(points)
     local mirror_horiz_value = self.subviews.mirror_horiz_label:getOptionValue()
     local mirror_diag_value = self.subviews.mirror_diag_label:getOptionValue()
     local mirror_vert_value = self.subviews.mirror_vert_label:getOptionValue()
@@ -1753,28 +1753,27 @@ function Dig:get_mirrored_points(points)
 end
 
 --
--- DigScreen
+-- DesignScreen
 --
 
-DigScreen = defclass(DigScreen, gui.ZScreen)
-DigScreen.ATTRS {
+DesignScreen = defclass(DesignScreen, gui.ZScreen)
+DesignScreen.ATTRS {
     focus_path = "dig",
     pass_pause = true,
     pass_movement_keys = true,
 }
 
-function DigScreen:init()
+function DesignScreen:init()
 
-    self.dig_window = Dig {}
+    self.dig_window = Design {}
     self:addviews { self.dig_window }
     if SHOW_DEBUG_WINDOW then
-        self.debug_window = DigDebugWindow { dig_window = self.dig_window }
+        self.debug_window = DesignDebugWindow { dig_window = self.dig_window }
         self:addviews { self.debug_window }
     end
-    -- self:addviews { Dig {} }
 end
 
-function DigScreen:onDismiss()
+function DesignScreen:onDismiss()
     view = nil
 end
 
@@ -1784,4 +1783,4 @@ if not dfhack.isMapLoaded() then
     qerror("This script requires a fortress map to be loaded")
 end
 
-view = view and view:raise() or DigScreen {}:show()
+view = view and view:raise() or DesignScreen {}:show()
