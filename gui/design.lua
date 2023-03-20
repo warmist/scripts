@@ -1584,7 +1584,7 @@ function Design:onInput(keys)
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         -- Close help window if open
-        if view.help_window.visible then view:dismiss_help() return true end
+        if view.help_window.visible then self:dismiss_help() return true end
 
         -- If center draggin, put the shape back to the original center
         if self.prev_center then
