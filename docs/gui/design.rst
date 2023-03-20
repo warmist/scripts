@@ -1,6 +1,6 @@
 
 gui/design
-=======
+==========
 
 .. dfhack-tool::
     :summary: Design designation utility with shapes.
