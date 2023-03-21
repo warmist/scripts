@@ -12,9 +12,7 @@ local MAX_TARGET = 2147483647
 --
 SeedSettings = defclass(SeedSettings, widgets.Window)
 SeedSettings.ATTRS{
-    lockable=false,
     frame={l=5, t=5, w=35, h=9},
-    data={id='', name='', quantity=0, target=0,},
 }
 
 function SeedSettings:init()
@@ -22,11 +20,6 @@ function SeedSettings:init()
         widgets.Label{
             frame={t=0, l=0},
             text='Seed: ',
-        },
-        widgets.Label{
-            view_id='id',
-            frame={t=0, l=0},
-            visible=false,
         },
         widgets.Label{
             view_id='name',
@@ -62,11 +55,9 @@ end
 function SeedSettings:show(choice, on_commit)
     self.data = choice.data
     self.on_commit = on_commit
-    local data = self.data
-    self.subviews.id:setText(data.id)
-    self.subviews.name:setText(data.name)
-    self.subviews.quantity:setText(tostring(data.quantity))
-    self.subviews.target:setText(tostring(data.target))
+    self.subviews.name:setText(self.data.name)
+    self.subviews.quantity:setText(tostring(self.data.quantity))
+    self.subviews.target:setText(tostring(self.data.target))
     self.visible = true
     self:setFocus(true)
     self:updateLayout()
@@ -78,13 +69,10 @@ function SeedSettings:hide()
 end
 
 function SeedSettings:commit()
-    local target = math.tointeger(self.subviews.target.text)
-    if not target or target == '' then
-        target = 0
-    elseif target > MAX_TARGET then
-        target = MAX_TARGET
-    end
-    plugin.seedwatch_setTarget(self.subviews.id.text, target)
+    local target = math.tointeger(self.subviews.target.text) or 0
+    target = math.min(MAX_TARGET, math.max(0, target))
+    
+    plugin.seedwatch_setTarget(self.data.id, target)
     self:hide()
     self.on_commit()
 end
@@ -109,7 +97,6 @@ Seedwatch.ATTRS {
     resize_min={h=25},
     hide_unmonitored=DEFAULT_NIL,
     manual_hide_unmonitored_touched=DEFAULT_NIL,
-    data = {sum=0, seeds_qty=0, seeds_watched=0, seeds = {{id='', name='', quantity=0, target=0,}}},
 }
 
 function Seedwatch:init()
@@ -209,10 +196,6 @@ function Seedwatch:init()
     }
 
     self:refresh_data()
-end
-
-function Seedwatch:getDefaultHide()
-    return false
 end
 
 function Seedwatch:configure_seed(idx, choice)
