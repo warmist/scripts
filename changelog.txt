@@ -14,28 +14,68 @@ that repo.
 # Future
 
 ## New Scripts
-- `combine`: combines stacks of food and plant items. Merge of `combine-plants` and `combine-drinks`.
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`.
 
 ## Fixes
+
+## Misc Improvements
+- `gui/design`: ``gui/dig`` renamed to ``gui/design``
+- `gui/design`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
+
+## Removed
+
+# 50.07-beta1
+
+## New Scripts
+- `suspendmanager`: automatic job suspension management (replaces `autounsuspend`)
+- `gui/suspendmanager`: graphical configuration interface for `suspendmanager`
+- `suspend`: suspends building construction jobs
+
+## Fixes
+- `quicksave`: now reliably triggers an autosave, even if one has been performed recently
+- `gui/launcher`: tab characters in command output now appear as a space instead of a code page 437 "blob"
+
+## Misc Improvements
+- `quickfort`: now reads player-created blueprints from ``dfhack-config/blueprints/`` instead of the old ``blueprints/`` directory. Be sure to move over your personal blueprints to the new directory!
+- `gui/gm-editor`: can now open the selected stockpile if run without parameters
+
+# 50.07-alpha3
+
+## Fixes
+-@ `gui/create-item`: fix generic corpsepiece spawning
+
+## Misc Improvements
+- `gui/create-item`: added ability to spawn 'whole' corpsepieces (every layer of a part)
+-@ `gui/dig`: Allow placing an extra point (curve) while still placing the second main point
+-@ `gui/dig`: Allow placing n-point shapes, shape rotation/mirroring
+-@ `gui/dig`: Allow second bezier point, mirror-mode for freeform shapes, symmetry mode
+
+# 50.07-alpha2
+
+## New Scripts
+- `combine`: combines stacks of food and plant items.
+
+## Fixes
+- `troubleshoot-item`: fix printing of job details for chosen item
 - `makeown`: fixes errors caused by using makeown on an invader
-- `gui/blueprint`: correctly use setting presets passed on the commandline
-- `gui/quickfort`: correctly use settings presets passed on the commandline
+-@ `gui/blueprint`: correctly use setting presets passed on the commandline
+-@ `gui/quickfort`: correctly use settings presets passed on the commandline
 - `devel/query`: can now properly index vectors in the --table argument
 -@ `forbid`: fix detection of unreachable items for items in containers
 -@ `unforbid`: fix detection of unreachable items for items in containers
 
 ## Misc Improvements
+- `troubleshoot-item`: output as bullet point list with indenting, with item description and ID at top
+- `troubleshoot-item`: reports on items that are hidden, artifacts, in containers, and held by a unit
+- `troubleshoot-item`: reports on the contents of containers with counts for each contained item type
 - `devel/visualize-structure`: now automatically inspects the contents of most pointer fields, rather than inspecting the pointers themselves
 - `devel/query`: will now search for jobs at the map coordinate highlighted, if no explicit job is highlighted and there is a map tile highlighted
-- Add overlay to caravan.lua visible on the trade screen that enables:
-    - Selecting all items inside a bin, minus the bin
-    - Collapsing all bins or a single bin
-    - Collapsing all categories
--@ `devel/hello-world`: updated to use ZScreen
+- `caravan`: add trade screen overlay that assists with seleting groups of items and collapsing groups in the UI
+- `gui/gm-editor` will now inspect a selected building itself if the building has no current jobs
 
 ## Removed
-- `combine-drinks` and `combine-plants`
+- `combine-drinks`: replaced by `combine`
+- `combine-plants`: replaced by `combine`
 
 # 50.07-alpha1
 
@@ -53,6 +93,7 @@ that repo.
 - `gui/gm-editor`: now supports multiple independent data inspection windows
 - `gui/gm-editor`: now prints out contents of coordinate vars instead of just the type
 - `rejuvenate`: now takes an --age parameter to choose a desired age.
+- `gui/dig` : Added 'Line' shape that also can draw curves, added draggable center handle
 
 # 50.05-alpha3.1
 
