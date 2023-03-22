@@ -95,8 +95,6 @@ Seedwatch.ATTRS {
     frame={w=60, h=27},
     resizable=true,
     resize_min={h=25},
-    hide_unmonitored=DEFAULT_NIL,
-    manual_hide_unmonitored_touched=DEFAULT_NIL,
 }
 
 function Seedwatch:init()
