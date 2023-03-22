@@ -71,7 +71,7 @@ end
 function SeedSettings:commit()
     local target = math.tointeger(self.subviews.target.text) or 0
     target = math.min(MAX_TARGET, math.max(0, target))
-    
+
     plugin.seedwatch_setTarget(self.data.id, target)
     self:hide()
     self.on_commit()
