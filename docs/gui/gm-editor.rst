@@ -24,7 +24,7 @@ Examples
 --------
 
 ``gui/gm-editor``
-    Opens the editor on the selected unit/item/job/workorder/etc.
+    Opens the editor on the selected unit/item/job/workorder/stockpile etc.
 ``gui/gm-editor df.global.world.items.all``
     Opens the editor on the items list.
 

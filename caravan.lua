@@ -297,7 +297,7 @@ local function caravans_from_ids(ids)
 
     local c = {} --as:df.caravan_state[]
     for _,id in ipairs(ids) do
-        local id = tonumber(id)
+        id = tonumber(id)
         if id then
             c[id] = caravans[id]
         end
@@ -320,7 +320,7 @@ function commands.list()
             df.creature_raw.find(df.historical_entity.find(car.entity).race).name[2], -- adjective
             dfhack.TranslateName(df.historical_entity.find(car.entity).name)
         )))
-        print('  ' .. (df.caravan_state.T_trade_state[car.trade_state] or 'Unknown state: ' .. car.trade_state))
+        print('  ' .. (df.caravan_state.T_trade_state[car.trade_state] or ('Unknown state: ' .. car.trade_state)))
         print(('  %d day(s) remaining'):format(math.floor(car.time_remaining / 120)))
         for flag, msg in pairs(INTERESTING_FLAGS) do
             if car.flags[flag] then

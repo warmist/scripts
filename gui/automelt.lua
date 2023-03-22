@@ -13,7 +13,6 @@ local REFRESH_MS = 10000
 
 StockpileSettings = defclass(StockpileSettings, widgets.Window)
 StockpileSettings.ATTRS{
-    lockable=false,
     frame={l=0, t=5, w=56, h=13},
 }
 

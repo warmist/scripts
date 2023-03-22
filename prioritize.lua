@@ -425,7 +425,7 @@ local function print_current_jobs(job_matchers, opts)
             print('Current unclaimed jobs:')
             first = false
         end
-        print(('%d\t%s'):format(v, k))
+        print(('%4d %s'):format(v, k))
     end
     if first then print('No current unclaimed jobs.') end
 end
