@@ -21,6 +21,9 @@ that repo.
 ## Misc Improvements
 - `gui/design`: ``gui/dig`` renamed to ``gui/design``
 - `gui/design`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
+- `combine`: you can select a target stockpile in the UI instead of having to use the keyboard cursor
+- `combine`: added ``--quiet`` option for no output when there are no changes
+- `gui/control-panel`: added ``combine all`` maintenance option for automatic combining of partial stacks in stockpiles
 
 ## Removed
 

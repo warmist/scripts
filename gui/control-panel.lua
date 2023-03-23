@@ -76,6 +76,9 @@ local REPEATS = {
     ['cleanowned']={
         desc='Encourage dwarves to drop tattered clothing and grab new ones.',
         command={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
+    ['combine']={
+        desc='Combine partial stacks in stockpiles into full stacks.',
+        command={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
     ['orders-sort']={
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
         command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
@@ -92,7 +95,7 @@ table.sort(REPEATS_LIST)
 -- save_fn takes the file as a param and should call f:write() to write data
 local function save_file(path, save_fn)
     local ok, f = pcall(io.open, path, 'w')
-    if not ok then
+    if not ok or not f then
         dialogs.showMessage('Error',
             ('Cannot open file for writing: "%s"'):format(path))
         return
