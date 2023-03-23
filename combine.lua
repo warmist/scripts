@@ -8,7 +8,8 @@ local opts, args = {
     here = nil,
     dry_run = false,
     types = nil,
-    verbose = false
+    quiet = false,
+    verbose = false,
   }, {...}
 
   -- default max stack size of 30
@@ -156,11 +157,18 @@ local function print_stacks_details(stacks)
     end
 end
 
-local function print_stacks_summary(stacks)
+local function print_stacks_summary(stacks, quiet)
     -- print stacks summary to the console
-    dfhack.print('Summary:\n')
-    for _, stacks_type in pairs(stacks) do
-        dfhack.print(('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(stacks_type.type_name, stacks_type.type_id,  stacks_type.item_qty, stacks_type.max_stack_size, stacks_type.before_stacks, stacks_type.after_stacks))
+    local printed = 0
+    for _, s in pairs(stacks) do
+        if s.before_stacks ~= s.after_stacks then
+            printed = printed + 1
+            print(('combined %d %s items from %d stacks into %d')
+                    :format(s.item_qty, s.type_name, s.before_stacks, s.after_stacks))
+        end
+    end
+    if printed == 0 and not quiet then
+        print('All stacks already optimally combined.')
     end
 end
 
@@ -306,20 +314,23 @@ local function get_stockpile_all()
             table.insert(stockpiles, building)
         end
     end
-    dfhack.print(('Stockpile(all): %d found\n'):format(#stockpiles))
+    if opts.verbose then
+        print(('Stockpile(all): %d found'):format(#stockpiles))
+    end
     return stockpiles
 end
 
 local function get_stockpile_here()
-    -- attempt to get the stockpile located at the game cursor, or exit with error
+    -- attempt to get the selected stockpile, or exit with error
     -- return the stockpile as a table
     local stockpiles = {}
-    local pos = argparse.coords('here', 'here')
-    local building = dfhack.buildings.findAtTile(pos)
-    if not building or building:getType() ~= df.building_type.Stockpile then qerror('Stockpile not found at game cursor position.') end
+    local building = dfhack.gui.getSelectedStockpile()
+    if not building then qerror('Please select a stockpile.') end
     table.insert(stockpiles, building)
     local items = dfhack.buildings.getStockpileContents(building)
-    dfhack.print(('Stockpile(here): %s <%d> #items:%d\n'):format(building.name, building.id, #items))
+    if opts.verbose then
+        print(('Stockpile(here): %s <%d> #items:%d'):format(building.name, building.id, #items))
+    end
     return stockpiles
 end
 
@@ -363,8 +374,9 @@ local function parse_commandline(opts, args)
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},
-            {'d', 'dry-run', handler=function(optarg) opts.dry_run = true end},
-            {'v', 'verbose', handler=function(optarg) opts.verbose = true end},
+            {'d', 'dry-run', handler=function() opts.dry_run = true end},
+            {'q', 'quiet', handler=function() opts.quiet = true end},
+            {'v', 'verbose', handler=function() opts.verbose = true end},
     })
 
     -- if stockpile option is not specificed, then default to all
@@ -380,9 +392,7 @@ local function parse_commandline(opts, args)
     if not opts.types then
         opts.types = valid_types_map['all']
     end
-
 end
-
 
 -- main program starts here
 local function main()
@@ -409,7 +419,7 @@ local function main()
     end
 
     print_stacks_details(stacks)
-    print_stacks_summary(stacks)
+    print_stacks_summary(stacks, opts.quiet)
 
 end
 
