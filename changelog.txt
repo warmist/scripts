@@ -19,10 +19,11 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
-- `gui/design`: ``gui/dig`` renamed to ``gui/design``
+- `gui/control-panel`: Now detects overlays from scripts named with capital letters
 - `gui/design`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
 
 ## Removed
+- ``gui/dig``: renamed to ``gui/design``
 
 # 50.07-beta1
 
