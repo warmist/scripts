@@ -302,6 +302,7 @@ function MarksPanel:update_mark_labels()
         }
     }
 
+    self:updateLayout()
 end
 
 -- Panel to show the Mouse position/dimensions/etc
@@ -469,7 +470,7 @@ function GenericOptionsPanel:init()
                     active = true,
                     enabled = true,
                     initial_option = false,
-                    on_change = nil
+                    on_change = function() self.design_panel.needs_update = true end
                 },
                 widgets.ResizingPanel {
                     view_id = 'transform_panel_rotate',
@@ -1513,9 +1514,9 @@ function Design:onRenderFrame(dc, rect)
         self.shape:update(points, self.extra_points)
         self.last_mouse_point = mouse_pos
         self.needs_update = false
+        self:add_shape_options()
+        self:updateLayout()
     end
-
-    self:add_shape_options()
 
     -- Generate bounds based on the shape's dimensions
     local bounds = self:get_view_bounds()
@@ -1565,8 +1566,6 @@ function Design:onRenderFrame(dc, rect)
     end
 
     guidm.renderMapOverlay(get_overlay_pen, bounds)
-
-    self:updateLayout()
 end
 
 -- TODO function too long
