@@ -224,11 +224,13 @@ function ConfigPanel:onInput(keys)
     return handled
 end
 
+local COMMAND_REGEX = '^([%w/_-]+)'
+
 function ConfigPanel:refresh()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.target or choice.command
-        command = command:match('^([%l/_-]+)')
+        command = command:match(COMMAND_REGEX)
         local gui_config = 'gui/' .. command
         local want_gui_config = utils.getval(self.is_configurable)
                 and helpdb.is_entry(gui_config)
@@ -296,7 +298,7 @@ end
 function ConfigPanel:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local command = choice.target:match('^([%l/_-]+)')
+    local command = choice.target:match(COMMAND_REGEX)
     dfhack.run_command('gui/launcher', command .. ' ')
 end
 
