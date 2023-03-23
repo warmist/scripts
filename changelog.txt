@@ -17,6 +17,7 @@ that repo.
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`.
 
 ## Fixes
+- `suspendmanager`: does not suspend non blocking jobs such as floor bars or bridges anymore
 
 ## Misc Improvements
 - `gui/control-panel`: Now detects overlays from scripts named with capital letters
