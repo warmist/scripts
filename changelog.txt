@@ -14,7 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
-- `fix/general-strike`: fix known causes of the general strike bug
+- `fix/general-strike`: fix known causes of the general strike bug (contributed by Putnam)
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`
 
 ## Fixes
