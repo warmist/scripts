@@ -3,7 +3,7 @@ add-recipe
 
 .. dfhack-tool::
     :summary: Add crafting recipes to a civ.
-    :tags: untested adventure fort gameplay
+    :tags: unavailable adventure fort gameplay
 
 Civilizations pick randomly from a pool of possible recipes, which means not all
 civs get high boots, for instance. This script can help fix that. Only weapons,
