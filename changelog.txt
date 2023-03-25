@@ -30,7 +30,8 @@ that repo.
 - `gui/cp437-table`: dialog is now fully controllable with the mouse, including highlighting which key you are hovering over and adding a clickable backspace button
 
 ## Removed
-- ``gui/dig``: renamed to ``gui/design``
+- `autounsuspend`: replaced by `suspendmanager`
+- `gui/dig`: renamed to `gui/design`
 
 # 50.07-beta1
 
