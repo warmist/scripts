@@ -25,6 +25,7 @@ that repo.
 - `combine`: you can select a target stockpile in the UI instead of having to use the keyboard cursor
 - `combine`: added ``--quiet`` option for no output when there are no changes
 - `gui/control-panel`: added ``combine all`` maintenance option for automatic combining of partial stacks in stockpiles
+- `gui/cp437-table`: dialog is now fully controllable with the mouse, including highlighting which key you are hovering over and adding a clickable backspace button
 
 ## Removed
 - ``gui/dig``: renamed to ``gui/design``
