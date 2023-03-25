@@ -6,7 +6,8 @@ local argparse = require('argparse')
 local function fix_seeds(quiet)
     local count = 0
     for _,v in ipairs(df.global.world.items.other.SEEDS) do
-        if (dfhack.items.getGeneralRef(v, df.general_ref_type.BUILDING_HOLDER)) then
+        if not v.flags.in_building and
+                (dfhack.items.getGeneralRef(v, df.general_ref_type.BUILDING_HOLDER)) then
             v.flags.in_building = true
             count = count + 1
         end
