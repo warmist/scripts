@@ -3,7 +3,7 @@ uniform-unstick
 
 .. dfhack-tool::
     :summary: Make military units reevaluate their uniforms.
-    :tags: untested fort bugfix military
+    :tags: unavailable fort bugfix military
 
 This tool prompts military units to reevaluate their uniform, making them
 remove and drop potentially conflicting worn items.

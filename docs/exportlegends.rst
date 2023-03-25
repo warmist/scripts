@@ -3,7 +3,7 @@ exportlegends
 
 .. dfhack-tool::
     :summary: Exports legends data for external viewing.
-    :tags: untested legends inspection
+    :tags: unavailable legends inspection
 
 When run from legends mode, you can export detailed data about your world so
 that it can be browsed with external programs like
