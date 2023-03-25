@@ -196,7 +196,7 @@ function shouldBeSuspended(job, accountblocking)
         return true, 'underwater'
     end
 
-    local bld = dfhack.buildings.findAtTile(job.pos)
+    local bld = dfhack.job.getHolder(job)
     if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
         return true, 'buildingplan'
     end
