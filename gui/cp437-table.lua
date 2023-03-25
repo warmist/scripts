@@ -46,6 +46,7 @@ function CPDialog:init(info)
 
     local board = self.subviews.board
     local edit = self.subviews.edit
+    local hpen = dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_RED}
     for ch = 0,255 do
         if dfhack.screen.charToKey(ch) then
             local chr = string.char(ch)
@@ -54,6 +55,7 @@ function CPDialog:init(info)
                     frame={t=ch//32, l=ch%32, w=1, h=1},
                     auto_height=false,
                     text=chr,
+                    text_hpen=hpen,
                     on_click=function() if ch ~= 0 then edit:insert(chr) end end,
                 },
             }
