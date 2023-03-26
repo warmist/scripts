@@ -40,6 +40,7 @@ local function toggle_civalert_burrow(id)
         burrows:insert('#', id)
     elseif burrows[0] == id then
         burrows:resize(0)
+        clear_alarm()
     else
         burrows[0] = id
     end
@@ -152,7 +153,7 @@ function CivalertOverlay:init()
             },
         },
         widgets.Panel{
-            frame={t=0, r=0, w=20, h=4},
+            frame={b=0, r=0, w=20, h=4},
             frame_style=gui.MEDIUM_FRAME,
             frame_background=gui.CLEAR_PEN,
             visible=should_show_configure_button,
