@@ -6,9 +6,11 @@ gui/civ-alert
     :tags: fort gameplay interface military units
 
 Normally, assigning a unit to a burrow is treated more like a suggestion than a
-command. In contrast, civilian alerts cause all your non-military citizens to
-immediately rush to a specified burrow ASAP and stay there. This allows you to
-keep your civilians safe when there is danger about.
+command. This can be frustrating when you're assigning units to burrows in
+order to get them out of danger. In contrast, triggering a civilian alert with
+`gui/civ-alert` will cause all your non-military citizens to immediately rush
+to a burrow ASAP and stay there. This gives you a way to keep your civilians
+safe when there is danger about.
 
 Usage
 -----
@@ -30,9 +32,9 @@ activate the civ alert right away with the button in the upper right corner.
 You can also access this button at any time from the squads panel.
 
 When danger appears, open up the squads menu and click on the new "Activate
-civilian alert" button. It's big and red; you can't miss it. Your civilians
-will rush off to safety and you can concentrate on dealing with the incursion
-without Urist McArmorsmith getting in the way.
+civilian alert" button in the lower left corner. It's big and red; you can't
+miss it. Your civilians will rush off to safety and you can concentrate on
+dealing with the incursion without Urist McArmorsmith getting in the way.
 
 When the civ alert is active, the civilian alert button will stay on the
 screen, even if the squads menu is closed. After the danger has passed,
@@ -44,9 +46,9 @@ Overlay
 -------
 
 The position of the "Activate civilian alert" button that appears when the
-squads panel is open is configurable via `gui/overlay`. The button will also
-show you the current target burrow and give you hyperlink targets to quickly
-launch `gui/civ-alert` for configuration.
+squads panel is open is configurable via `gui/overlay`. The overlay panel also
+gives you a way to launch `gui/civ-alert` if you need to change which burrow
+civilians should be gathering at.
 
 Technical notes
 ---------------

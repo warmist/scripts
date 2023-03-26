@@ -95,10 +95,10 @@ end
 
 CivalertOverlay = defclass(CivalertOverlay, overlay.OverlayWidget)
 CivalertOverlay.ATTRS{
-    default_pos={x=-30,y=20},
+    default_pos={x=-15,y=-1},
     default_enabled=true,
     viewscreens='dwarfmode',
-    frame={w=20, h=7},
+    frame={w=20, h=5},
 }
 
 local function should_show_alert_button()
@@ -111,45 +111,49 @@ local function should_show_configure_button()
             and not can_sound_alarm() and not can_clear_alarm()
 end
 
-local function get_burrow_name(burrow)
-    if #burrow.name > 0 then return burrow.name end
-    return ('Burrow %d'):format(burrow.id)
-end
-
-local function get_civ_alert_burrow_name()
-    local burrows = get_civ_alert().burrows
-    if #burrows == 0 then return '' end
-    local burrow = df.burrow.find(burrows[0])
-    if not burrow then return '' end
-    return get_burrow_name(burrow)
-end
-
 local function launch_config()
     dfhack.run_script('gui/civ-alert')
+end
+
+last_tp_start = last_tp_start or 0
+CONFIG_BUTTON_PENS = CONFIG_BUTTON_PENS or {}
+local function get_button_pen(idx)
+    local start = dfhack.textures.getControlPanelTexposStart()
+    if last_tp_start == start then return CONFIG_BUTTON_PENS[idx] end
+    last_tp_start = start
+
+    local tp = function(offset)
+        if start == -1 then return nil end
+        return start + offset
+    end
+
+    CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=tp(6), ch=string.byte('[')}
+    CONFIG_BUTTON_PENS[2] = to_pen{tile=tp(9), ch=15} -- gear/masterwork symbol
+    CONFIG_BUTTON_PENS[3] = to_pen{fg=COLOR_CYAN, tile=tp(7), ch=string.byte(']')}
+
+    return CONFIG_BUTTON_PENS[idx]
 end
 
 function CivalertOverlay:init()
     self:addviews{
         widgets.Panel{
-            frame={t=0, r=0, w=12, h=7},
+            frame={t=0, r=0, w=16, h=5},
             frame_style=gui.MEDIUM_FRAME,
             frame_background=gui.CLEAR_PEN,
             visible=should_show_alert_button,
             subviews={
                 BigRedButton{
-                    frame={t=0},
+                    frame={t=0, l=0},
                 },
                 widgets.Label{
-                    frame={t=3, l=0},
-                    text='Burrow:',
-                },
-                widgets.Label{
-                    frame={t=4, l=0},
+                    frame={t=1, r=0, w=3},
                     text={
-                        {text=get_civ_alert_burrow_name},
+                        {tile=curry(get_button_pen, 1)},
+                        {tile=curry(get_button_pen, 2)},
+                        {tile=curry(get_button_pen, 3)},
                     },
                     on_click=launch_config,
-                }
+                },
             },
         },
         widgets.Panel{
@@ -219,6 +223,11 @@ function Civalert:init()
             on_submit=self:callback('select_burrow'),
         },
     }
+end
+
+local function get_burrow_name(burrow)
+    if #burrow.name > 0 then return burrow.name end
+    return ('Burrow %d'):format(burrow.id)
 end
 
 local SELECTED_ICON = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
