@@ -18,6 +18,7 @@ that repo.
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`
 
 ## Fixes
+- `caravan`: item list length now correct when expanding and collapsing containers
 - `suspendmanager`: does not suspend non blocking jobs such as floor bars or bridges anymore
 - `suspendmanager`: fix occasional bad identification of buildingplan jobs
 
