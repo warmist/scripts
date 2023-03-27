@@ -388,14 +388,13 @@ function commands.help()
 end
 
 function main(args)
-    local command = table.remove(args, 1)
+    local command = table.remove(args, 1) or 'list'
     if commands[command] then
         commands[command](table.unpack(args))
     else
         commands.help()
-        if command then
-            qerror("No such subcommand: " .. command)
-        end
+        print()
+        qerror("No such command: " .. command)
     end
 end
 
