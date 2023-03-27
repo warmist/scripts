@@ -165,10 +165,9 @@ function CivalertOverlay:init()
                 widgets.Label{
                     text={
                         'Click to configure', NEWLINE,
-                        {gap=2, text='civilian alert'},
+                        '  civilian alert  ',
                     },
                     text_pen=to_pen{fg=COLOR_YELLOW, bg=COLOR_BLACK},
-                    text_hpen=to_pen{fg=COLOR_LIGHTRED, bg=COLOR_BLACK},
                     on_click=launch_config,
                 },
             },
