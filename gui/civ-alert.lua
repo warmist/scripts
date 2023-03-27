@@ -167,6 +167,7 @@ function CivalertOverlay:init()
                         'Click to configure', NEWLINE,
                         {gap=2, text='civilian alert'},
                     },
+                    text_pen=to_pen{fg=COLOR_BLACK, bg=COLOR_YELLOW},
                     on_click=launch_config,
                 },
             },
