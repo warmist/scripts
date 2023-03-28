@@ -588,6 +588,13 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+    -- sometimes the keys come back as strings; fix that up
+    for k,v in pairs(persisted_data) do
+        if type(k) == 'string' then
+            persisted_data[tonumber(k)] = v
+            persisted_data[k] = nil
+        end
+    end
     g_watched_job_matchers = persisted_data or {}
     update_handlers()
 end
