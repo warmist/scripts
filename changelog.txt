@@ -26,6 +26,7 @@ that repo.
 - `gui/control-panel`: Now detects overlays from scripts named with capital letters
 - `gui/cp437-table`: now has larger key buttons and clickable backspace/submit/cancel buttons, making it fully usable on the Steam Deck and other systems that don't have an accessible keyboard
 - `gui/design`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
+- `exterminate`: add support for ``vaporize`` kill method for when you don't want to leave a corpse
 - `combine`: you can select a target stockpile in the UI instead of having to use the keyboard cursor
 - `combine`: added ``--quiet`` option for no output when there are no changes
 - `stripcaged`: added ``--skip-forbidden`` option for greater control over which items are marked for dumping
