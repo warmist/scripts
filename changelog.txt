@@ -19,6 +19,7 @@ that repo.
 
 ## Fixes
 - `caravan`: item list length now correct when expanding and collapsing containers
+- `prioritize`: fixed all watched job type names showing as ``nil``
 - `suspendmanager`: does not suspend non blocking jobs such as floor bars or bridges anymore
 - `suspendmanager`: fix occasional bad identification of buildingplan jobs
 
