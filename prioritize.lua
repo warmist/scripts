@@ -587,7 +587,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
-    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
     -- sometimes the keys come back as strings; fix that up
     for k,v in pairs(persisted_data) do
         if type(k) == 'string' then
@@ -595,7 +595,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
             persisted_data[k] = nil
         end
     end
-    g_watched_job_matchers = persisted_data or {}
+    g_watched_job_matchers = persisted_data
     update_handlers()
 end
 
