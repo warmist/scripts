@@ -3,7 +3,7 @@ suspend
 
 .. dfhack-tool::
     :summary: Suspends building construction jobs.
-    :tags: auto graphics military
+    :tags: fort productivity jobs
 
 This tool will suspend jobs. It can either suspend all the current jobs, or only
 construction jobs that are likely to block other jobs. When building walls, it's
