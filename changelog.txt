@@ -22,6 +22,7 @@ that repo.
 - `prioritize`: fixed all watched job type names showing as ``nil``
 - `suspendmanager`: does not suspend non blocking jobs such as floor bars or bridges anymore
 - `suspendmanager`: fix occasional bad identification of buildingplan jobs
+- `warn-starving`: no longer warns for enemy and neutral units
 
 ## Misc Improvements
 - `gui/control-panel`: Now detects overlays from scripts named with capital letters
