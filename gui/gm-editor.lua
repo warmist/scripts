@@ -72,7 +72,7 @@ end
 
 GmEditorUi = defclass(GmEditorUi, widgets.Window)
 GmEditorUi.ATTRS{
-    frame=config.data,
+    frame={ w=config.data.w, h=config.data.h, l=config.data.l, r=config.data.r, t=config.data.t, b=config.data.b },
     frame_title="GameMaster's editor",
     frame_inset=0,
     resizable=true,
