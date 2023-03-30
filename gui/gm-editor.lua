@@ -181,11 +181,22 @@ function GmEditorUi:find_id(force_dialog)
         ref_target = field.ref_target
     end
     if ref_target and not force_dialog then
+        local obj
         if not ref_target.find then
-            dialog.showMessage("Error!", ("Cannot look up %s by ID"):format(getmetatable(ref_target)), COLOR_LIGHTRED)
-            return
+            if key == 'mat_type' then
+                local ok, mi = pcall(function()
+                    return self:currentTarget().target['mat_index']
+                end)
+                if ok then
+                    obj = dfhack.matinfo.decode(id, mi)
+                end
+            end
+            if not obj then
+                dialog.showMessage("Error!", ("Cannot look up %s by ID"):format(getmetatable(ref_target)), COLOR_LIGHTRED)
+                return
+            end
         end
-        local obj = ref_target.find(id)
+        obj = obj or ref_target.find(id)
         if obj then
             self:pushTarget(obj)
         else
