@@ -26,6 +26,7 @@ that repo.
 ## New Scripts
 - `fix/general-strike`: fix known causes of the general strike bug (contributed by Putnam)
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`
+- `gui/civ-alert`: configure and trigger civilian alerts
 
 ## Fixes
 - `caravan`: item list length now correct when expanding and collapsing containers
