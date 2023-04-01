@@ -16,8 +16,11 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `gui/gm-editor`: no longer nudges last open window when opening a new one
 
 ## Misc Improvements
+- `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
+- `gui/gm-editor`: they key column now auto-fits to the widest key
 
 ## Removed
 
@@ -34,7 +37,6 @@ that repo.
 - `suspendmanager`: does not suspend non-blocking jobs such as floor bars or bridges anymore
 - `suspendmanager`: fix occasional bad identification of buildingplan jobs
 - `warn-starving`: no longer warns for enemy and neutral units
-- `gui/gm-editor`: no longer nudges last open window when opening a new one
 
 ## Misc Improvements
 - `gui/control-panel`: Now detects overlays from scripts named with capital letters
@@ -48,8 +50,6 @@ that repo.
 - `gui/control-panel`: added ``combine all`` maintenance option for automatic combining of partial stacks in stockpiles
 - `gui/control-panel`: added ``general-strike`` maintenance option for automatic fixing of (at least one cause of) the general strike bug
 - `gui/cp437-table`: dialog is now fully controllable with the mouse, including highlighting which key you are hovering over and adding a clickable backspace button
-- `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
-- `gui/gm-editor`: they key column now auto-fits to the widest key
 
 ## Removed
 - `autounsuspend`: replaced by `suspendmanager`
