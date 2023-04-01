@@ -14,13 +14,24 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.07-beta2
+
+## New Scripts
 - `fix/general-strike`: fix known causes of the general strike bug (contributed by Putnam)
 - `gui/seedwatch`: GUI config and status panel interface for `seedwatch`
+- `gui/civ-alert`: configure and trigger civilian alerts
 
 ## Fixes
 - `caravan`: item list length now correct when expanding and collapsing containers
-- `prioritize`: fixed all watched job type names showing as ``nil``
-- `suspendmanager`: does not suspend non blocking jobs such as floor bars or bridges anymore
+- `prioritize`: fixed all watched job type names showing as ``nil`` after a game load
+- `suspendmanager`: does not suspend non-blocking jobs such as floor bars or bridges anymore
 - `suspendmanager`: fix occasional bad identification of buildingplan jobs
 - `warn-starving`: no longer warns for enemy and neutral units
 - `gui/gm-editor`: no longer nudges last open window when opening a new one
@@ -35,6 +46,7 @@ that repo.
 - `stripcaged`: added ``--skip-forbidden`` option for greater control over which items are marked for dumping
 - `stripcaged`: items that are marked for dumping are now automatically unforbidden (unless ``--skip-forbidden`` is set)
 - `gui/control-panel`: added ``combine all`` maintenance option for automatic combining of partial stacks in stockpiles
+- `gui/control-panel`: added ``general-strike`` maintenance option for automatic fixing of (at least one cause of) the general strike bug
 - `gui/cp437-table`: dialog is now fully controllable with the mouse, including highlighting which key you are hovering over and adding a clickable backspace button
 - `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
 - `gui/gm-editor`: they key column now auto-fits to the widest key
