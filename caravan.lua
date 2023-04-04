@@ -42,7 +42,7 @@ function select_shift_clicked_container_items(new_state, old_state, list_index)
     for k, goodflag in ipairs(new_state) do
         if in_container then
             if goodflag <= GOODFLAG.UNCONTAINED_SELECTED
-                    or goodflag >= GOODFLAG.CONTAINER_COLLAPSED_SELECTED then
+                    or goodflag >= GOODFLAG.CONTAINER_COLLAPSED_UNSELECTED then
                 break
             end
 
@@ -89,7 +89,7 @@ function toggle_ctrl_clicked_containers(new_state, old_state, list_index)
     for k, goodflag in ipairs(new_state) do
         if in_container then
             if goodflag <= GOODFLAG.UNCONTAINED_SELECTED
-                    or goodflag >= GOODFLAG.CONTAINER_COLLAPSED_SELECTED then
+                    or goodflag >= GOODFLAG.CONTAINER_COLLAPSED_UNSELECTED then
                 break
             end
             toggled_item_count = toggled_item_count + 1
