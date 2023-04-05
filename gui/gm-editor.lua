@@ -9,6 +9,18 @@ local utils = require 'utils'
 
 config = config or json.open('dfhack-config/gm-editor.json')
 
+function save_config(data)
+    for k,v in pairs(data) do
+        config.data[k] = v
+    end
+    config:write()
+end
+
+read_only = true
+if config.data.read_only ~= nil then
+    read_only = config.data.read_only
+end
+
 find_funcs = find_funcs or (function()
     local t = {}
     for k in pairs(df) do
@@ -20,6 +32,7 @@ find_funcs = find_funcs or (function()
 end)()
 
 local keybindings_raw = {
+    {name='toggle_ro', key="CUSTOM_CTRL_D",desc="Toggle between read-only and read-write"},
     {name='offset', key="CUSTOM_ALT_O",desc="Show current items offset"},
     {name='find', key="CUSTOM_F",desc="Find a value by entering a predicate"},
     {name='find_id', key="CUSTOM_I",desc="Find object with this ID, using ref-target if available"},
@@ -72,7 +85,7 @@ end
 
 GmEditorUi = defclass(GmEditorUi, widgets.Window)
 GmEditorUi.ATTRS{
-    frame=copyall(config.data),
+    frame=copyall(config.data.frame or {}),
     frame_title="GameMaster's editor",
     frame_inset=0,
     resizable=true,
@@ -242,6 +255,7 @@ function GmEditorUi:find_id(force_dialog)
     end)
 end
 function GmEditorUi:insertNew(typename)
+    if read_only then return end
     local tp=typename
     if typename == nil then
         dialog.showInputPrompt("Class type","You can:\n * Enter type name (without 'df.')\n * Leave empty for default type and 'nil' value\n * Enter '*' for default type and 'new' constructed pointer value",COLOR_WHITE,"",self:callback("insertNew"))
@@ -266,6 +280,7 @@ function GmEditorUi:insertNew(typename)
     end
 end
 function GmEditorUi:deleteSelected(key)
+    if read_only then return end
     local trg=self:currentTarget()
     if trg.target and trg.target._kind and trg.target._kind=="container" then
         trg.target:erase(key)
@@ -353,14 +368,17 @@ function GmEditorUi:editSelected(index,choice,opts)
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
     if trg.target and trg.target._kind and trg.target._kind=="bitfield" then
+        if read_only then return end
         trg.target[trg_key]= not trg.target[trg_key]
         self:updateTarget(true)
     else
         --print(type(trg.target[trg.keys[trg.selected]]),trg.target[trg.keys[trg.selected]]._kind or "")
         local trg_type=type(trg.target[trg_key])
         if self:getSelectedEnumType() and not opts.raw then
+            if read_only then return end
             self:editSelectedEnum()
         elseif trg_type=='number' or trg_type=='string' then --ugly TODO: add metatable get selected
+            if read_only then return end
             local prompt = "Enter new value:"
             if self:getSelectedEnumType() then
                 prompt = "Enter new " .. getTypeName(trg.target:_field(trg_key)._type) .. " value"
@@ -369,6 +387,7 @@ function GmEditorUi:editSelected(index,choice,opts)
                 tostring(trg.target[trg_key]), self:callback("commitEdit",trg_key))
 
         elseif trg_type == 'boolean' then
+            if read_only then return end
             trg.target[trg_key] = not trg.target[trg_key]
             self:updateTarget(true)
         elseif trg_type == 'userdata' or trg_type == 'table' then
@@ -383,6 +402,7 @@ function GmEditorUi:editSelected(index,choice,opts)
 end
 
 function GmEditorUi:commitEdit(key,value)
+    if read_only then return end
     local trg=self:currentTarget()
     if type(trg.target[key])=='number' then
         trg.target[key]=tonumber(value)
@@ -393,6 +413,7 @@ function GmEditorUi:commitEdit(key,value)
 end
 
 function GmEditorUi:set(key,input)
+    if read_only then return end
     local trg=self:currentTarget()
 
     if input== nil then
@@ -423,7 +444,11 @@ function GmEditorUi:onInput(keys)
         return false
     end
 
-    if keys[keybindings.offset.key] then
+    if keys[keybindings.toggle_ro.key] then
+        read_only = not read_only
+        self:updateTitles()
+        return true
+    elseif keys[keybindings.offset.key] then
         local trg=self:currentTarget()
         local _,stoff=df.sizeof(trg.target)
         local size,off=df.sizeof(trg.target:_field(self:getSelectedKey()))
@@ -482,6 +507,18 @@ function getStringValue(trg,field)
     end)
     return text
 end
+
+function GmEditorUi:updateTitles()
+    local title = "GameMaster's Editor"
+    if read_only then
+        title = title.." (Read Only)"
+    end
+    for view,_ in pairs(views) do
+        view.subviews[1].frame_title = title
+    end
+    self.frame_title = title
+    save_config({read_only = read_only})
+end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     local trg=self:currentTarget()
     local filter=self.subviews.filter_input.text:lower()
@@ -518,6 +555,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     else
         self.subviews.list_main:setSelected(trg.selected)
     end
+    self:updateTitles()
 end
 function GmEditorUi:pushTarget(target_to_push)
     local new_tbl={}
@@ -555,7 +593,7 @@ function eval(s)
     return f()
 end
 function GmEditorUi:postUpdateLayout()
-    config:write(self.frame)
+    save_config({frame = self.frame})
 end
 
 GmScreen = defclass(GmScreen, gui.ZScreen)
@@ -577,6 +615,14 @@ end
 
 local function get_editor(args)
     if #args~=0 then
+        if args[1]=='dev' or args[1]=='edit' then
+            read_only = false
+            table.remove(args,1)
+        end
+        if args[1]=='safe' or args[1]=='read' then
+            read_only = true
+            table.remove(args,1)
+        end
         if args[1]=="dialog" then
             dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY,
                     "", function(entry)
