@@ -348,14 +348,22 @@ function GmEditorUi:openOffseted(index,choice)
 end
 function GmEditorUi:locate(t)
     if getmetatable(t) == 'coord' then return t end
+    if df.unit:is_instance(t) then return xyz2pos(dfhack.units.getPosition(t)) end
+    if df.item:is_instance(t) then return xyz2pos(dfhack.items.getPosition(t)) end
+    if df.building:is_instance(t) then return xyz2pos(t.centerx, t.centery, t.z) end
+    -- anything else - look for pos or x/y/z fields
     local ok, pos = pcall(function() return t.pos end)
     if getmetatable(pos) == 'coord' then return pos end
-    local x,y,z -- locate buildings
-    ok, x = pcall(function() return t.centerx end)
-    ok, y = pcall(function() return t.centery end)
+    local x,y,z
+    ok, x = pcall(function() return t.x end)
+    if type(x)~='number' then ok, x = pcall(function() return t.centerx end) end
+    if type(x)~='number' then ok, x = pcall(function() return t.x1 end) end
+    ok, y = pcall(function() return t.y end)
+    if type(y)~='number' then ok, y = pcall(function() return t.centery end) end
+    if type(y)~='number' then ok, y = pcall(function() return t.y1 end) end
     ok, z = pcall(function() return t.z end)
     if type(x)=='number' and type(y)=='number' and type(z)=='number' then
-        return { x=x, y=y, z=z }
+        return xyz2pos(x,y,z)
     end
     return nil
 end
