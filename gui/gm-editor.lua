@@ -381,6 +381,9 @@ function GmEditorUi:gotoPos()
     end
     if pos then
         dfhack.gui.revealInDwarfmodeMap(pos,true)
+        df.global.game.main_interface.recenter_indicator_m.x = pos.x
+        df.global.game.main_interface.recenter_indicator_m.y = pos.y
+        df.global.game.main_interface.recenter_indicator_m.z = pos.z
     end
 end
 function GmEditorUi:editSelectedRaw(index,choice)
