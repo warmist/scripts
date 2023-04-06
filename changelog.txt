@@ -22,6 +22,7 @@ that repo.
 ## Misc Improvements
 - `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
 - `gui/gm-editor`: they key column now auto-fits to the widest key
+- `prioritize`: revise and simplify the default list of prioritized jobs -- be sure to tell us if your forts are running noticeably better (or worse!)
 
 ## Removed
 
