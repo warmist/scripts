@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 - `caravan`: fix trade good list sometimes disappearing when you collapse a bin
 - `gui/gm-editor`: no longer nudges last open window when opening a new one
+- `warn-starving`: no longer warns for dead units
 
 ## Misc Improvements
 - `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
