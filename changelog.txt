@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `caravan`: fix trade good list sometimes disappearing when you collapse a bin
 - `gui/gm-editor`: no longer nudges last open window when opening a new one
 
 ## Misc Improvements
