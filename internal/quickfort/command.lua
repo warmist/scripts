@@ -22,7 +22,7 @@ end
 
 local command_switch = {
     run='do_run',
-    orders='do_orders',
+    -- orders='do_orders', -- until we get stockflow working
     undo='do_undo',
 }
 
@@ -234,6 +234,9 @@ end
 function do_command(args)
     for _,command in ipairs(args.commands) do
         if not command or not command_switch[command] then
+            if command == 'orders' then
+                qerror('orders functionality not updated yet')
+            end
             qerror(string.format('invalid command: "%s"', command))
         end
     end
