@@ -246,7 +246,7 @@ function ConfigPanel:refresh()
         local command = choice.target or choice.command
         command = command:match(COMMAND_REGEX)
         local gui_config = 'gui/' .. command
-        local want_gui_config = utils.getval(self.is_configurable)
+        local want_gui_config = utils.getval(self.is_configurable, gui_config)
                 and helpdb.is_entry(gui_config)
         local enabled = choice.enabled
         local function get_enabled_pen(enabled_pen, disabled_pen)
@@ -360,7 +360,7 @@ end
 FortServices = defclass(FortServices, Services)
 FortServices.ATTRS{
     is_enableable=dfhack.world.isFortressMode,
-    is_configurable=dfhack.world.isFortressMode,
+    is_configurable=function() return dfhack.world.isFortressMode() end,
     intro_text='These tools can only be enabled when you have a fort loaded,'..
                 ' but once you enable them, they will stay enabled when you'..
                 ' save and reload your fort. If you want them to be'..
@@ -430,11 +430,15 @@ end
 -- SystemServices
 --
 
+local function system_service_is_configurable(gui_config)
+    return gui_config ~= 'gui/automelt' or dfhack.world.isFortressMode()
+end
+
 SystemServices = defclass(SystemServices, Services)
 SystemServices.ATTRS{
     title='System',
     is_enableable=true,
-    is_configurable=true,
+    is_configurable=system_service_is_configurable,
     intro_text='These are DFHack system services that are not bound to' ..
             ' a specific fort. Some of these are critical DFHack services' ..
             ' that can be manually disabled, but will re-enable themselves' ..
