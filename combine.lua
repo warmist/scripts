@@ -506,6 +506,7 @@ end
 local function get_stockpile_all()
     -- attempt to get all the stockpiles for the fort, or exit with error
     -- return the stockpiles as a table
+    log(3, 'get_stockpile_all\n')
     local stockpiles = {}
     for _, building in pairs(df.global.world.buildings.all) do
         if building:getType() == df.building_type.Stockpile then
@@ -521,6 +522,7 @@ end
 local function get_stockpile_here()
     -- attempt to get the selected stockpile, or exit with error
     -- return the stockpile as a table
+    log(3, 'get_stockpile_here\n')
     local stockpiles = {}
     local building = dfhack.gui.getSelectedStockpile()
     if not building then qerror('Please select a stockpile.') end
@@ -535,6 +537,7 @@ end
 local function parse_types_opts(arg)
     -- check the types specified on the command line, or exit with error
     -- return the selected types as a table
+    log(3, 'parse_types_opts\n')
     local types = {}
     local div = ''
     local types_output = ''
@@ -556,19 +559,20 @@ local function parse_types_opts(arg)
                 for k3, v3 in pairs(v2) do
                     types[k2][k3]=v3
                 end
-                types_output = types_output .. div .. types[k2].type_name
+                types_output = types_output .. div .. df.item_type[types[k2].type_id]
                 div=', '
             else
                 qerror(('Expected: only one value for %s'):format(t))
             end
         end
     end
-    dfhack.print(types_output .. '\n')
+    log(0, types_output .. '\n')
     return types
 end
 
 local function parse_commandline(opts, args)
     -- check the command line/exit on error, and set the defaults
+    log(3, 'parse_commandline\n')
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},
