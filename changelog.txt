@@ -20,6 +20,7 @@ that repo.
 ## Misc Improvements
 - `gui/design`: ``gui/dig`` renamed to ``gui/design``
 - `gui/design`: Now supports placing constructions using 'Building' mode. Inner and Outer tile constructions are configurable. Uses buildingplan filters set up with the regular buildingplan interface.
+- `combine`: Now supports powders and seeds, and combines into containers.
 
 ## Removed
 

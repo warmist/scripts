@@ -55,5 +55,9 @@ Options
 
         ``plant``: PLANT and PLANT_GROWTH
 
-``-v``, ``--verbose``
-    Print verbose output.
+        ``powders``: POWDERS_MISC
+
+        ``seeds``: SEEDS
+
+``-v``, ``--verbose [0-3]``
+    Print verbose output, level from 0 to 3.
