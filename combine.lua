@@ -8,25 +8,35 @@ local opts, args = {
     here = nil,
     dry_run = false,
     types = nil,
-    verbose = false
+    verbose = 0
   }, {...}
 
   -- default max stack size of 30
-local DEF_MAX=30
+local MAX_ITEM_STACK=30
+local MAX_CONT_ITEMS=500
+
+-- list of types that use race and caste
+local typesThatUseCreatures={REMAINS=true,FISH=true,FISH_RAW=true,VERMIN=true,PET=true,EGG=true,CORPSE=true,CORPSEPIECE=true}
 
 -- list of valid item types for merging
+-- Notes: 1. mergeable stacks are ones with the same type_id+race+caste or type_id+mat_type+mat_index
+--        2. the maximum stack size is calcuated at run time: the highest value of MAX_ITEM_STACK or largest current stack size.
+--        3. even though powders are specified, sand and plaster types items are excluded from merging.
+--        4. seeds cannot be combined in stacks > 1.
 local valid_types_map = {
-    ['all'] = { },
-    ['drink'] = {[df.item_type.DRINK]={type_id=df.item_type.DRINK, type_name='DRINK',type_caste=false,max_stack_size=DEF_MAX}},
-    ['fat'] =   {[df.item_type.GLOB]={type_id=df.item_type.GLOB, type_name='GLOB',type_caste=false,max_stack_size=DEF_MAX},
-                [df.item_type.CHEESE]={type_id=df.item_type.CHEESE, type_name='CHEESE',type_caste=false,max_stack_size=DEF_MAX}},
-    ['fish'] = {[df.item_type.FISH]={type_id=df.item_type.FISH, type_name='FISH',type_caste=true,max_stack_size=DEF_MAX},
-                [df.item_type.FISH_RAW]={type_id=df.item_type.FISH_RAW, type_name='FISH_RAW',type_caste=true,max_stack_size=DEF_MAX},
-                [df.item_type.EGG]={type_id=df.item_type.EGG, type_name='EGG',type_caste=true,max_stack_size=DEF_MAX}},
-    ['food'] = {[df.item_type.FOOD]={type_id=df.item_type.FOOD, type_name='FOOD',type_caste=false,max_stack_size=DEF_MAX}},
-    ['meat'] = {[df.item_type.MEAT]={type_id=df.item_type.MEAT, type_name='MEAT',type_caste=false,max_stack_size=DEF_MAX}},
-    ['plant'] = {[df.item_type.PLANT]={type_id=df.item_type.PLANT, type_name='PLANT',type_caste=false,max_stack_size=DEF_MAX},
-                [df.item_type.PLANT_GROWTH]={type_id=df.item_type.PLANT_GROWTH, type_name='PLANT_GROWTH',type_caste=false,max_stack_size=DEF_MAX}}
+    ['all']    = { },
+    ['drink']  = {[df.item_type.DRINK]       ={type_id=df.item_type.DRINK,        max_size=MAX_ITEM_STACK}},
+    ['fat']    = {[df.item_type.GLOB]        ={type_id=df.item_type.GLOB,         max_size=MAX_ITEM_STACK},
+                  [df.item_type.CHEESE]      ={type_id=df.item_type.CHEESE,       max_size=MAX_ITEM_STACK}},
+    ['fish']   = {[df.item_type.FISH]        ={type_id=df.item_type.FISH,         max_size=MAX_ITEM_STACK},
+                  [df.item_type.FISH_RAW]    ={type_id=df.item_type.FISH_RAW,     max_size=MAX_ITEM_STACK},
+                  [df.item_type.EGG]         ={type_id=df.item_type.EGG,          max_size=MAX_ITEM_STACK}},
+    ['food']   = {[df.item_type.FOOD]        ={type_id=df.item_type.FOOD,         max_size=MAX_ITEM_STACK}},
+    ['meat']   = {[df.item_type.MEAT]        ={type_id=df.item_type.MEAT,         max_size=MAX_ITEM_STACK}},
+    ['plant']  = {[df.item_type.PLANT]       ={type_id=df.item_type.PLANT,        max_size=MAX_ITEM_STACK},
+                  [df.item_type.PLANT_GROWTH]={type_id=df.item_type.PLANT_GROWTH, max_size=MAX_ITEM_STACK}},
+    ['powder'] = {[df.item_type.POWDER_MISC] ={type_id=df.item_type.POWDER_MISC,  max_size=MAX_ITEM_STACK}},
+    ['seed']   = {[df.item_type.SEEDS]       ={type_id=df.item_type.SEEDS,        max_size=1}},
 }
 
 -- populate all types entry
@@ -41,9 +51,9 @@ for k1,v1 in pairs(valid_types_map) do
     end
 end
 
-function log(...)
+function log(level, ...)
     -- if verbose is specified, then print the arguments, or don't.
-    if opts.verbose then dfhack.print(string.format(...)) end
+    if opts.verbose >= level then dfhack.print(string.format(...)) end
 end
 
 -- CList class
@@ -59,47 +69,49 @@ function CList:new(o)
     return o
 end
 
-local function comp_item_new(comp_key, max_stack_size)
+local function comp_item_new(comp_key, max_size)
     -- create a new comp_item entry to be added to a comp_items table.
     local comp_item = {}
     if not comp_key then qerror('new_comp_item: comp_key is nil') end
-    comp_item.comp_key = comp_key
-    comp_item.item_qty = 0
-    comp_item.max_stack_size = max_stack_size or 0
-    comp_item.before_stacks = 0
-    comp_item.after_stacks = 0
-    comp_item.before_stack_size = CList:new(nil)    -- key:item.id, val:item.stack_size
-    comp_item.after_stack_size = CList:new(nil)     -- key:item.id, val:item.stack_size
-    comp_item.items = CList:new(nil)                -- key:item.id, val:item
-    comp_item.sorted_items = CList:new(nil)         -- key:-1*item.id | item.id, val:item_id
+    comp_item.comp_key = comp_key                       -- key used to index comparable items for merging
+    comp_item.description = ''                          -- description of the comp item for output
+    comp_item.max_size = max_size or 0                  -- how many of a comp item can be in one stack
+    -- item info
+    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item, before_size, after_size, before_cont_id, after_cont_id}
+    comp_item.item_qty = 0                              -- total quantity of items
+    comp_item.before_stacks = 0                         -- the number of stacks of the items before...
+    comp_item.after_stacks = 0                          -- ...and after the merge
+    --container info
+    comp_item.before_cont_ids = CList:new(nil)          -- key:container.id, val:container.id
+    comp_item.after_cont_ids = CList:new(nil)           -- key:container.id, val:container.id
     return comp_item
 end
 
-local function comp_item_add_item(comp_item, item)
+local function comp_item_add_item(comp_item, item, container)
     -- add an item into the comp_items table, setting the comp_item attributes.
     if not comp_item.items[item.id] then
-
-        comp_item.items[item.id] = item
         comp_item.item_qty = comp_item.item_qty + item.stack_size
-        if item.stack_size > comp_item.max_stack_size then
-            comp_item.max_stack_size = item.stack_size
-        end
-        comp_item.before_stack_size[item.id] = item.stack_size
-        comp_item.after_stack_size[item.id] = item.stack_size
         comp_item.before_stacks = comp_item.before_stacks + 1
-        comp_item.after_stacks = comp_item.after_stacks + 1
+        comp_item.description = utils.getItemDescription(item, 1)
 
-        local contained_item = dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINED_IN_ITEM)
-
-        -- used to merge contained items before loose items
-        if contained_item then
-            table.insert(comp_item.sorted_items, -1*item.id)
-        else
-            table.insert(comp_item.sorted_items, item.id)
+        if item.stack_size > comp_item.max_size then
+            comp_item.max_size = item.stack_size
         end
+
+        local new_item = {}
+        new_item.item = item
+        new_item.before_size = item.stack_size
+
+        -- item is in a container
+        if container then
+            new_item.before_cont_id = container.id
+            comp_item.before_cont_ids[container.id] = container.id
+        end
+
+        comp_item.items[item.id] = new_item
         return comp_item.items[item.id]
     else
-        -- this case should not happen, unless an item is contained by more than one container.
+        -- this case should not happen, unless an item id is duplicated.
         -- in which case, only allow one instance for the merge.
         return nil
     end
@@ -108,60 +120,150 @@ end
 local function stack_type_new(type_vals)
     -- create a new stack type entry to be added to the stacks table.
     local stack_type = {}
+
+    -- attributes from the type val table
     for k,v in pairs(type_vals) do
         stack_type[k] = v
     end
-    stack_type.item_qty = 0
-    stack_type.before_stacks = 0
-    stack_type.after_stacks = 0
-    stack_type.comp_items = CList:new(nil)          -- key:comp_key, val=comp_item
+
+    -- item info
+    stack_type.comp_items = CList:new(nil)              -- key:comp_key, val:comp_item
+    stack_type.item_qty = 0                             -- total quantity of items types
+    stack_type.before_stacks = 0                        -- the number of stacks of the item types before ...
+    stack_type.after_stacks = 0                         -- ...and after the merge
+
+    --container info
+    stack_type.before_cont_ids = CList:new(nil)         -- key:container.id, val:container.id
+    stack_type.after_cont_ids = CList:new(nil)          -- key:container.id, val:container.id
     return stack_type
 end
 
-local function stacks_type_add_item(stacks_type, item)
+local function stacks_add_item(stacks, stack_type, item, container, contained_count)
     -- add an item to the matching comp_items table; based on comp_key.
     local comp_key = ''
 
-    if stacks_type.type_caste then
-        comp_key = tostring(stacks_type.type_id) .. tostring(item.race) .. tostring(item.caste)
+    if typesThatUseCreatures[df.item_type[stack_type.type_id]] then
+        comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.race) .. "+" .. tostring(item.caste)
     else
-        comp_key = tostring(stacks_type.type_id) .. tostring(item.mat_type) .. tostring(item.mat_index)
+        comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.mat_type) .. "+" .. tostring(item.mat_index)
     end
 
-    if not stacks_type.comp_items[comp_key] then
-        stacks_type.comp_items[comp_key] = comp_item_new(comp_key, stacks_type.max_stack_size)
+    if not stack_type.comp_items[comp_key] then
+        stack_type.comp_items[comp_key] = comp_item_new(comp_key, stack_type.max_size)
     end
 
-    if comp_item_add_item(stacks_type.comp_items[comp_key], item) then
-        stacks_type.before_stacks = stacks_type.before_stacks + 1
-        stacks_type.after_stacks = stacks_type.after_stacks + 1
-        stacks_type.item_qty = stacks_type.item_qty + item.stack_size
-        if item.stack_size > stacks_type.max_stack_size then
-            stacks_type.max_stack_size = item.stack_size
+    if comp_item_add_item(stack_type.comp_items[comp_key], item, container, contained_count) then
+        stack_type.before_stacks = stack_type.before_stacks + 1
+        stack_type.item_qty = stack_type.item_qty + item.stack_size
+
+        stacks.before_stacks = stacks.before_stacks + 1
+        stacks.item_qty = stacks.item_qty + item.stack_size
+
+        if item.stack_size > stack_type.max_size then
+            stack_type.max_size = item.stack_size
+        end
+
+        -- item is in a container
+        if container then
+
+            -- add it to the stack type list
+            stack_type.before_cont_ids[container.id] = container.id
+
+            -- add it to the before stacks container list
+            stacks.before_cont_ids[container.id] = container.id
         end
     end
 end
 
-local function print_stacks_details(stacks)
+local function sorted_items(tab)
+    -- used to sort the comp_items by contained, then size. Important for combining containers.
+    local tmp = {}
+    for id, val in pairs(tab) do 
+        local val = {id=id, before_cont_id=val.before_cont_id, before_size=val.before_size}
+        table.insert(tmp, val)
+    end
+
+    table.sort(tmp, 
+        function(a, b)
+            if not a.before_cont_id and not b.before_cont_id or a.before_cont_id and b.before_cont_id then
+                return a.before_size > b.before_size 
+            else
+                return a.before_cont_id and not b.before_cont_id
+            end 
+        end
+        )
+
+    local i = 0
+    local iter = 
+        function()
+            i = i + 1
+            if tmp[i] == nil then 
+                return nil
+            else 
+                return tmp[i].id, tab[tmp[i].id]
+            end
+        end
+    return iter
+end
+
+local function sorted_desc(tab, ids)
+    -- used to sort the lists by description
+    local tmp = {}
+    for id, val in pairs(tab) do
+        if ids[id] then
+            local val = {id=id, description=val.description}
+            table.insert(tmp, val)
+        end
+    end
+
+    table.sort(tmp, function(a, b) return a.description < b.description end)
+
+    local i = 0
+    local iter = 
+        function()
+            i = i + 1
+            if tmp[i] == nil then 
+                return nil
+            else 
+                return tmp[i].id, tab[tmp[i].id]
+            end
+        end
+    return iter
+end
+
+local function print_stacks(stacks)
     -- print stacks details
-    log(('Details #types:%5d\n'):format(#stacks))
-    for _, stacks_type in pairs(stacks) do
-        log(('   type: <%12s> <%d>  comp item types#:%5d  #item_qty:%5d  stack sizes: max: %5d before:%5d after:%5d\n'):format(stacks_type.type_name, stacks_type.type_id,  stacks_type.item_qty, #stacks_type.comp_items, stacks_type.max_stack_size, stacks_type.before_stacks, stacks_type.after_stacks))
-        for _, comp_item in pairs(stacks_type.comp_items) do
-            log(('      compare key:%12s  #item qty:%5d  #comp item stacks:%5d  stack sizes: max: %5d before:%5d after:%5d\n'):format(comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_stack_size, comp_item.before_stacks, comp_item.after_stacks))
-            for _, item in pairs(comp_item.items) do
-                log(('         item:%40s <%6d> before:%5d after:%5d\n'):format(utils.getItemDescription(item), item.id, comp_item.before_stack_size[item.id], comp_item.after_stack_size[item.id]))
+    log(0, 'Summary:\nContainers:%5d before:%5d  after:%5d\n', #stacks.containers, #stacks.before_cont_ids, #stacks.after_cont_ids)
+    for cont_id, cont in sorted_desc(stacks.containers, stacks.before_cont_ids) do
+        log(1, ('   container: %50s <%6d>   before:%5d after:%5d\n'):format(cont.description, cont_id, cont.before_size, cont.after_size))
+    end
+    log(0, ('Items: #qty: %6d sizes: before:%5d after:%5d\n'):format(stacks.item_qty, stacks.before_stacks, stacks.after_stacks))
+    for key, stack_type in pairs(stacks.stack_types) do
+        log(0, ('   Type: %12s <%d>   #qty:%6d sizes: max:%5d before:%6d after:%6d containers: before:%5d after:%5d\n'):format(df.item_type[stack_type.type_id], stack_type.type_id,  stack_type.item_qty, stack_type.max_size, stack_type.before_stacks, stack_type.after_stacks, #stack_type.before_cont_ids, #stack_type.after_cont_ids))
+        for _, comp_item in sorted_desc(stack_type.comp_items, stack_type.comp_items) do
+            log(1, ('      Comp item:%40s <%12s>  #qty:%6d #stacks:%5d sizes: max:%5d before:%6d after:%6d containers: before:%5d after:%5d\n'):format(comp_item.description, comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_size, comp_item.before_stacks, comp_item.after_stacks, #comp_item.before_cont_ids, #comp_item.after_cont_ids))
+            for _, item in sorted_items(comp_item.items) do
+                log(2, ('           Item:%40s <%6d> before:%6d after:%6d container: before:<%5d> after:<%5d>'):format(comp_item.description, item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0))
+                log(3, (' stackable: %s'):format(df.item_type.attrs[stack_type.type_id].is_stackable))
+                log(2, ('\n'))
             end
         end
     end
 end
 
-local function print_stacks_summary(stacks)
-    -- print stacks summary to the console
-    dfhack.print('Summary:\n')
-    for _, stacks_type in pairs(stacks) do
-        dfhack.print(('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(stacks_type.type_name, stacks_type.type_id,  stacks_type.item_qty, stacks_type.max_stack_size, stacks_type.before_stacks, stacks_type.after_stacks))
-    end
+local function stacks_new()
+    local stacks = {}
+
+    stacks.stack_types = CList:new(nil)         -- key=type_id, val=stack_type
+    stacks.containers = CList:new(nil)          -- key=container.id, val={container, description, before_size, after_size}
+    stacks.before_cont_ids = CList:new(nil)     -- key=container.id, val=container.id
+    stacks.after_cont_ids = CList:new(nil)      -- key=container.id, val=container.id
+    stacks.item_qty = 0
+    stacks.before_stacks = 0
+    stacks.after_stacks = 0
+
+    return stacks
+
 end
 
 local function isRestrictedItem(item)
@@ -172,37 +274,50 @@ local function isRestrictedItem(item)
         or flags.removed or flags.encased or flags.spider_web or #item.specific_refs > 0
 end
 
-
-function stacks_add_items(stacks, items, ind)
+function stacks_add_items(stacks, items, container, contained_count, ind)
 -- loop through each item and add it to the matching stack[type_id].comp_items table
 -- recursively calls itself to add contained items
     if not ind then ind = '' end
 
     for _, item in pairs(items) do
         local type_id = item:getType()
-        local stacks_type = stacks[type_id]
+        local subtype_id = item:getSubtype()
+        local stack_type = stacks.stack_types[type_id]
 
         -- item type in list of included types?
-        if stacks_type then
+        if stack_type and not item:isSand() and not item:isPlaster() then
             if not isRestrictedItem(item) then
 
-                stacks_type_add_item(stacks_type, item)
+                stacks_add_item(stacks, stack_type, item, container, contained_count)
 
-                log(('      %sitem:%40s <%6d> is incl, type %d\n'):format(ind, utils.getItemDescription(item), item.id, type_id))
+                if typesThatUseCreatures[df.item_type[type_id]] then
+                    local raceRaw = df.global.world.raws.creatures.all[item.race]
+                    local casteRaw = raceRaw.caste[item.caste]
+                    log(3, ('      %sitem:%40s <%6d> is incl, type:%d, race:%s, caste:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id,  raceRaw.creature_id,  casteRaw.caste_id))
+                else
+                    local mat_info = dfhack.matinfo.decode(item.mat_type, item.mat_index)
+                    log(3, ('      %sitem:%40s <%6d> is incl, type:%d, info:%s, sand:%s, plaster:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id, mat_info:toString(),item:isSand(), item:isPlaster()))
+                end
+
             else
                 -- restricted; such as marked for action or dump.
-                log(('      %sitem:%40s <%6d> is restricted\n'):format(ind, utils.getItemDescription(item), item.id))
+                log(3, ('      %sitem:%40s <%6d> is restricted\n'):format(ind, utils.getItemDescription(item), item.id))
             end
 
         -- add contained items
         elseif dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINS_ITEM) then
             local contained_items = dfhack.items.getContainedItems(item)
-            log(('      %sContainer:%s <%6d> #items:%5d\n'):format(ind, utils.getItemDescription(item), item.id, #contained_items))
-            stacks_add_items(stacks, contained_items, ind .. '   ')
+            local count = #contained_items
+            stacks.containers[item.id] = {}
+            stacks.containers[item.id].container = item
+            stacks.containers[item.id].before_size = #contained_items
+            stacks.containers[item.id].description = utils.getItemDescription(item, 1)
+            log(3, ('      %sContainer:%s <%6d> #items:%5d Sandbearing:%s\n'):format(ind, utils.getItemDescription(item), item.id, count, item:isSandBearing()))
+            stacks_add_items(stacks, contained_items, item, count, ind .. '   ')
 
         -- excluded item types
         else
-            log(('      %sitem:%40s <%6d> is excl, type %d\n'):format(ind, utils.getItemDescription(item), item.id, type_id))
+            log(3, ('      %sitem:%40s <%6d> is excl, type %d, sand:%s plaster:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id, item:isSand(), item:isPlaster()))
         end
     end
 end
@@ -212,85 +327,159 @@ local function populate_stacks(stacks, stockpiles, types)
     -- 2. loop through the table of stockpiles, get each item in the stockpile, then add them to stacks if the type_id matches
     -- an item is stored at the bottom of the structure: stacks[type_id].comp_items[comp_key].item
     -- comp_key is a compound key comprised of type_id+race+caste or type_id+mat_type+mat_index
-    log('Populating phase\n')
+    log(3, 'Populating phase\n')
 
     -- iterate across the types
-    log('stack types\n')
+    log(3, 'stack types\n')
     for type_id, type_vals in pairs(types) do
-        if not stacks[type_id] then
-            stacks[type_id] = stack_type_new(type_vals)
-            local stacks_type = stacks[type_id]
-            log(('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(stacks_type.type_name, stacks_type.type_id,  stacks_type.item_qty, stacks_type.max_stack_size, stacks_type.before_stacks, stacks_type.after_stacks))
+        if not stacks.stack_types[type_id] then
+            stacks.stack_types[type_id] = stack_type_new(type_vals)
+            local stack_type = stacks.stack_types[type_id]
+            log(3, ('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(df.item_type[stack_type.type_id], stack_type.type_id,  stack_type.item_qty, stack_type.max_size, stack_type.before_stacks, stack_type.after_stacks))
         end
     end
 
     -- iterate across the stockpiles, get the list of items and call the add function to check/add as needed
-    log(('stockpiles\n'))
+    log(3, ('stockpiles\n'))
     for _, stockpile in pairs(stockpiles) do
 
         local items = dfhack.buildings.getStockpileContents(stockpile)
-        log(('   stockpile:%30s <%6d> pos:(%3d,%3d,%3d) #items:%5d\n'):format(stockpile.name, stockpile.id, stockpile.centerx, stockpile.centery, stockpile.z,  #items))
+        log(3, ('   stockpile:%30s <%6d> pos:(%3d,%3d,%3d) #items:%5d\n'):format(stockpile.name, stockpile.id, stockpile.centerx, stockpile.centery, stockpile.z,  #items))
 
         if #items > 0 then
             stacks_add_items(stacks, items)
         else
-            log('      skipping stockpile: no items\n')
+            log(3, '      skipping stockpile: no items\n')
         end
     end
 end
 
 local function preview_stacks(stacks)
-    -- calculate the stacks sizes and store in after_stack_size
+    -- calculate the stacks sizes and store in after_item_stack_size
     -- the max stack size for each comp item is determined as the maximum stack size for it's type
-    log('\nPreview phase\n')
-    for _, stacks_type in pairs(stacks) do
-        for comp_key, comp_item in pairs(stacks_type.comp_items) do
-            -- sort the items.
-            table.sort(comp_item.sorted_items)
+    log(3, '\nPreview phase\n')
 
-            if stacks_type.max_stack_size > comp_item.max_stack_size then
-                comp_item.max_stack_size = stacks_type.max_stack_size
+    for _, stack_type in pairs(stacks.stack_types) do
+        log(3, ('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(df.item_type[stack_type.type_id], stack_type.type_id,  stack_type.item_qty, stack_type.max_size, stack_type.before_stacks, stack_type.after_stacks))
+
+        for comp_key, comp_item in pairs(stack_type.comp_items) do
+            log(3, ('      comp item:%40s <%12s>  #qty:%5d #stacks:%5d sizes: max:%5d before:%5d after:%5d containers: before:%5d after:%5d\n'):format(comp_item.description, comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_size, comp_item.before_stacks, comp_item.after_stacks, #comp_item.before_cont_ids, #comp_item.after_cont_ids))
+
+            -- sort the items, according to contained first, then stack size second
+            if stack_type.max_size > comp_item.max_size then
+                comp_item.max_size = stack_type.max_size
             end
 
-            -- how many stacks are needed ?
-            local max_stacks_needed = math.floor(comp_item.item_qty / comp_item.max_stack_size)
+            -- how many stacks are needed?
+            local stacks_needed = math.floor(comp_item.item_qty / comp_item.max_size)
 
             -- how many items are left over after the max stacks are allocated?
-            local stack_remainder = comp_item.item_qty - max_stacks_needed * comp_item.max_stack_size
+            local stack_remainder = comp_item.item_qty - stacks_needed * comp_item.max_size
 
-            -- update the after stack sizes. use the sorted items list to get the items.
-            for _, s_item in ipairs(comp_item.sorted_items) do
-                local item_id = s_item
-                if s_item < 0 then item_id = s_item * -1 end
-                local item = comp_item.items[item_id]
-                if max_stacks_needed > 0 then
-                    max_stacks_needed = max_stacks_needed - 1
-                    comp_item.after_stack_size[item.id] = comp_item.max_stack_size
+            if stack_remainder > 0 then 
+                comp_item.after_stacks = stacks_needed + 1
+            else
+                comp_item.after_stacks = stacks_needed
+            end
+
+            stack_type.after_stacks = stack_type.after_stacks + comp_item.after_stacks
+            stacks.after_stacks = stacks.after_stacks + comp_item.after_stacks
+
+            -- Update the after stack sizes.
+            for _, item in sorted_items(comp_item.items) do
+                if stacks_needed > 0 then
+                    stacks_needed = stacks_needed - 1
+                    item.after_size = comp_item.max_size
                 elseif stack_remainder > 0 then
-                    comp_item.after_stack_size[item.id] = stack_remainder
+                    item.after_size = stack_remainder
                     stack_remainder = 0
-                elseif stack_remainder == 0 then
-                    comp_item.after_stack_size[item.id] = stack_remainder
-                    comp_item.after_stacks = comp_item.after_stacks - 1
-                    stacks_type.after_stacks = stacks_type.after_stacks - 1
+                else
+                    item.after_size = 0
                 end
             end
+
+            -- Container loop; combine item stacks in containers.
+            local curr_cont = nil
+            local curr_size = 0
+
+            for item_id, item in sorted_items(comp_item.items) do
+               
+                -- non-zero quantity?
+                if item.after_size > 0 then
+
+                    -- in a container before merge?
+                    if item.before_cont_id then
+
+                        local before_cont = stacks.containers[item.before_cont_id]
+
+                        -- first contained item or current container full?
+                        if not curr_cont or curr_size >= MAX_CONT_ITEMS then
+
+                            curr_cont = before_cont
+                            curr_size = curr_cont.before_size
+                            stacks.after_cont_ids[item.before_cont_id] = item.before_cont_id
+                            stack_type.after_cont_ids[item.before_cont_id] = item.before_cont_id
+                            comp_item.after_cont_ids[item.before_cont_id] = item.before_cont_id
+
+                        -- enough room in current container
+                        else
+                            curr_size = curr_size + 1
+                            before_cont.after_size = (before_cont.after_size or before_cont.before_size) - 1
+                        end
+
+                        curr_cont.after_size = curr_size
+                        item.after_cont_id = curr_cont.container.id
+
+                    -- not in a container before merge, container exists, and has space
+                    elseif curr_cont and curr_size < MAX_CONT_ITEMS then
+
+                        curr_size = curr_size + 1
+                        curr_cont.after_size = curr_size
+                        item.after_cont_id = curr_cont.container.id
+
+                    -- not in a container, no container exists or no space in container
+                    else
+                        -- do nothing
+                    end
+
+                -- zero after size, reduce the number of stacks in the container
+                elseif item.before_cont_id then
+                    local before_cont = stacks.containers[item.before_cont_id]
+                    before_cont.after_size = (before_cont.after_size or before_cont.before_size) - 1
+                end
+            end
+            log(3, ('      comp item:%40s <%12s>  #qty:%5d #stacks:%5d sizes: max:%5d before:%5d after:%5d containers: before:%5d after:%5d\n'):format(comp_item.description, comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_size, comp_item.before_stacks, comp_item.after_stacks, #comp_item.before_cont_ids, #comp_item.after_cont_ids))
         end
+        log(3, ('   type: <%12s> <%d>   #item_qty:%5d  stack sizes:  max: %5d  before:%5d  after:%5d\n'):format(df.item_type[stack_type.type_id], stack_type.type_id,  stack_type.item_qty, stack_type.max_size, stack_type.before_stacks, stack_type.after_stacks))
     end
 end
 
 local function merge_stacks(stacks)
-    -- apply the stack size changes in the after_stack_size
-    -- if the after_stack_size is zero, then remove the item
-    log('Merge phase\n')
-    for _, stacks_type in pairs(stacks) do
-        for comp_key, comp_item in pairs(stacks_type.comp_items) do
-            for _, item in pairs(comp_item.items) do
-                if comp_item.after_stack_size[item.id] == 0 then
-                    local remove_item = df.item.find(item.id)
-                    dfhack.items.remove(remove_item)
-                elseif item.stack_size ~= comp_item.after_stack_size[item.id] then
-                    item.stack_size = comp_item.after_stack_size[item.id]
+    -- apply the stack size changes in the after_item_stack_size
+    -- if the after_item_stack_size is zero, then remove the item
+    log(3, 'Merge phase\n')
+    for _, stack_type in pairs(stacks.stack_types) do
+        for comp_key, comp_item in pairs(stack_type.comp_items) do
+
+            for item_id, item in pairs(comp_item.items) do
+
+                -- no items left in stack?
+                if item.after_size == 0 then
+                    log(3, ('  removing item:%40s <%6d> before:%5d after:%5d container: before:<%5d> after:<%5d>'):format(comp_item.description, item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0))
+                    dfhack.items.remove(item.item)
+
+                -- some items left in stack
+                elseif item.before_size ~= item.after_size then
+                    log(3, ('  updating item:%40s <%6d> before:%5d after:%5d container: before:<%5d> after:<%5d>'):format(comp_item.description, item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0))
+                    item.item.stack_size = item.after_size
+                end
+
+                -- move to a container?
+                if item.after_cont_id then
+                    if (item.before_cont_id or 0) ~= item.after_cont_id then
+                        log(3, ('  moving   item:%40s <%6d> before:%5d after:%5d container: before:<%5d> after:<%5d>'):format(comp_item.description, item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0))
+                        dfhack.items.moveToContainer(item.item, stacks.containers[item.after_cont_id].container)
+                    end
                 end
             end
         end
@@ -300,6 +489,7 @@ end
 local function get_stockpile_all()
     -- attempt to get all the stockpiles for the fort, or exit with error
     -- return the stockpiles as a table
+    log(3, 'get_stockpile_all\n')
     local stockpiles = {}
     for _, building in pairs(df.global.world.buildings.all) do
         if building:getType() == df.building_type.Stockpile then
@@ -313,19 +503,21 @@ end
 local function get_stockpile_here()
     -- attempt to get the stockpile located at the game cursor, or exit with error
     -- return the stockpile as a table
+    log(3, 'get_stockpile_here\n')
     local stockpiles = {}
     local pos = argparse.coords('here', 'here')
     local building = dfhack.buildings.findAtTile(pos)
     if not building or building:getType() ~= df.building_type.Stockpile then qerror('Stockpile not found at game cursor position.') end
     table.insert(stockpiles, building)
     local items = dfhack.buildings.getStockpileContents(building)
-    dfhack.print(('Stockpile(here): %s <%d> #items:%d\n'):format(building.name, building.id, #items))
+    log(0, ('Stockpile(here): %s <%d> #items:%d\n'):format(building.name, building.id, #items))
     return stockpiles
 end
 
 local function parse_types_opts(arg)
     -- check the types specified on the command line, or exit with error
     -- return the selected types as a table
+    log(3, 'parse_types_opts\n')
     local types = {}
     local div = ''
     local types_output = ''
@@ -347,24 +539,25 @@ local function parse_types_opts(arg)
                 for k3, v3 in pairs(v2) do
                     types[k2][k3]=v3
                 end
-                types_output = types_output .. div .. types[k2].type_name
+                types_output = types_output .. div .. df.item_type[types[k2].type_id]
                 div=', '
             else
                 qerror(('Expected: only one value for %s'):format(t))
             end
         end
     end
-    dfhack.print(types_output .. '\n')
+    log(0, types_output .. '\n')
     return types
 end
 
 local function parse_commandline(opts, args)
     -- check the command line/exit on error, and set the defaults
+    log(3, 'parse_commandline\n')
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},
             {'d', 'dry-run', handler=function(optarg) opts.dry_run = true end},
-            {'v', 'verbose', handler=function(optarg) opts.verbose = true end},
+            {'v', 'verbose', hasArg=true, handler=function(optarg) opts.verbose = math.tointeger(optarg) or 0 end},
     })
 
     -- if stockpile option is not specificed, then default to all
@@ -398,7 +591,7 @@ local function main()
         return
     end
 
-    local stacks = CList:new()
+    local stacks = stacks_new()
 
     populate_stacks(stacks,  opts.all or opts.here, opts.types)
 
@@ -408,9 +601,8 @@ local function main()
         merge_stacks(stacks)
     end
 
-    print_stacks_details(stacks)
-    print_stacks_summary(stacks)
-
+    print_stacks(stacks)
+    
 end
 
 if not dfhack_flags.module then
