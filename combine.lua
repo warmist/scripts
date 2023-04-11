@@ -14,6 +14,7 @@ local opts, args = {
 
 -- default max stack size of 30
 local MAX_ITEM_STACK=30
+local MAX_AMMO_STACK=25
 local MAX_CONT_ITEMS=500
 
 -- list of types that use race and caste
@@ -26,6 +27,7 @@ local typesThatUseCreatures={REMAINS=true,FISH=true,FISH_RAW=true,VERMIN=true,PE
 --        4. seeds cannot be combined in stacks > 1.
 local valid_types_map = {
     ['all']    = { },
+    ['ammo']   = {[df.item_type.AMMO]        ={type_id=df.item_type.AMMO,         max_size=MAX_AMMO_STACK}},
     ['drink']  = {[df.item_type.DRINK]       ={type_id=df.item_type.DRINK,        max_size=MAX_ITEM_STACK}},
     ['fat']    = {[df.item_type.GLOB]        ={type_id=df.item_type.GLOB,         max_size=MAX_ITEM_STACK},
                   [df.item_type.CHEESE]      ={type_id=df.item_type.CHEESE,       max_size=MAX_ITEM_STACK}},
@@ -145,6 +147,12 @@ local function stacks_add_item(stacks, stack_type, item, container, contained_co
 
     if typesThatUseCreatures[df.item_type[stack_type.type_id]] then
         comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.race) .. "+" .. tostring(item.caste)
+    elseif item:isAmmo() then
+        if item:getQuality() == 5 then
+            comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.mat_type) .. "+" .. tostring(item.mat_index) .. "+" .. tostring(item:getQuality() .. "+" .. item:getMaker())
+        else
+            comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.mat_type) .. "+" .. tostring(item.mat_index) .. "+" .. tostring(item:getQuality())
+        end
     else
         comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.mat_type) .. "+" .. tostring(item.mat_index)
     end
@@ -288,7 +296,8 @@ local function isRestrictedItem(item)
     local flags = item.flags
     return flags.rotten or flags.trader or flags.hostile or flags.forbid
         or flags.dump or flags.on_fire or flags.garbage_collect or flags.owned
-        or flags.removed or flags.encased or flags.spider_web or #item.specific_refs > 0
+        or flags.removed or flags.encased or flags.spider_web or flags.melt 
+        or flags.hidden or #item.specific_refs > 0
 end
 
 function stacks_add_items(stacks, items, container, contained_count, ind)
@@ -311,9 +320,12 @@ function stacks_add_items(stacks, items, container, contained_count, ind)
                     local raceRaw = df.global.world.raws.creatures.all[item.race]
                     local casteRaw = raceRaw.caste[item.caste]
                     log(4, ('      %sitem:%40s <%6d> is incl, type:%d, race:%s, caste:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id,  raceRaw.creature_id,  casteRaw.caste_id))
+                elseif item:isAmmo() then
+                    local mat_info = dfhack.matinfo.decode(item.mat_type, item.mat_index)
+                    log(4, ('      %sitem:%40s <%6d> is incl, type:%d, info:%s, quality:%d, maker:%d\n'):format(ind, utils.getItemDescription(item), item.id, type_id, mat_info:toString(), item:getQuality(), item:getMaker()))
                 else
                     local mat_info = dfhack.matinfo.decode(item.mat_type, item.mat_index)
-                    log(4, ('      %sitem:%40s <%6d> is incl, type:%d, info:%s, sand:%s, plaster:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id, mat_info:toString(),item:isSand(), item:isPlaster()))
+                    log(4, ('      %sitem:%40s <%6d> is incl, type:%d, info:%s, sand:%s, plaster:%s quality:%d ovl quality:%d\n'):format(ind, utils.getItemDescription(item), item.id, type_id, mat_info:toString(), item:isSand(), item:isPlaster(), item:getQuality(), item:getOverallQuality()))
                 end
 
             else
@@ -506,7 +518,6 @@ end
 local function get_stockpile_all()
     -- attempt to get all the stockpiles for the fort, or exit with error
     -- return the stockpiles as a table
-    log(3, 'get_stockpile_all\n')
     local stockpiles = {}
     for _, building in pairs(df.global.world.buildings.all) do
         if building:getType() == df.building_type.Stockpile then
@@ -522,7 +533,6 @@ end
 local function get_stockpile_here()
     -- attempt to get the selected stockpile, or exit with error
     -- return the stockpile as a table
-    log(3, 'get_stockpile_here\n')
     local stockpiles = {}
     local building = dfhack.gui.getSelectedStockpile()
     if not building then qerror('Please select a stockpile.') end
@@ -537,7 +547,6 @@ end
 local function parse_types_opts(arg)
     -- check the types specified on the command line, or exit with error
     -- return the selected types as a table
-    log(3, 'parse_types_opts\n')
     local types = {}
     local div = ''
     local types_output = ''
@@ -559,20 +568,19 @@ local function parse_types_opts(arg)
                 for k3, v3 in pairs(v2) do
                     types[k2][k3]=v3
                 end
-                types_output = types_output .. div .. df.item_type[types[k2].type_id]
+                types_output = types_output .. div .. types[k2].type_name
                 div=', '
             else
                 qerror(('Expected: only one value for %s'):format(t))
             end
         end
     end
-    log(0, types_output .. '\n')
+    dfhack.print(types_output .. '\n')
     return types
 end
 
 local function parse_commandline(opts, args)
     -- check the command line/exit on error, and set the defaults
-    log(3, 'parse_commandline\n')
     local positionals = argparse.processArgsGetopt(args, {
             {'h', 'help', handler=function() opts.help = true end},
             {'t', 'types', hasArg=true, handler=function(optarg) opts.types=parse_types_opts(optarg) end},

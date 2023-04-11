@@ -43,6 +43,8 @@ Options
 
         ``all``:   all of the types listed here.
 
+        ``ammo``: AMMO
+
         ``drink``: DRINK
 
         ``fat``:   GLOB and CHEESE
@@ -59,5 +61,8 @@ Options
 
         ``seeds``: SEEDS
 
-``-v``, ``--verbose 1-4``
-    Print verbose output, level from 1 to 4.
+``-q``, ``--quiet``
+    Only print changes instead of a summary of all processed stockpiles.
+
+``-v``, ``--verbose n``
+    Print verbose output, n from 1 to 4.
