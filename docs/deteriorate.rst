@@ -18,16 +18,16 @@ dwarves feel, your FPS does not like it!
 Usage
 -----
 
-``deteriorate start --types <types> [--freq <frequency>] [--quiet]``
-    Starts deteriorating the specified item types while you play.
+``deteriorate start --types <types> [--freq <frequency>] [--quiet] [--useable]``
+    Starts deteriorating the specified item types while you play, keeping useable corpse pieces.
 ``deteriorate stop --types <types>``
     Stops deteriorating the specified item types.
 ``deteriorate status``
     Shows the item types that are currently being monitored and their
     deterioration frequencies.
-``deteriorate now --types <types> [--quiet]``
+``deteriorate now --types <types> [--quiet] [--useable]``
     Causes all items (of the specified item types) to rot away within a few
-    ticks.
+    ticks, keeping useable corpse pieces.
 
 You can have different types of items rotting away at different rates by running
 ``deteriorate start`` multiple times with different options.
@@ -68,8 +68,7 @@ Types
 
 :clothes:  All clothing pieces that have an armor rating of 0 and are lying on
            the ground.
-:corpses:  All non-dwarf corpses and body parts. This includes potentially
-           useful remains such as hair, wool, hooves, bones, and skulls. Use
-           them before you lose them!
+:corpses:  All resident corpses and body parts. To keep useable remains such as
+           hair, wool, hooves, bones, and skulls, specify --useable.
 :food:     All food and plants, regardless of whether they are in barrels or
            stockpiles. Seeds are left untouched.
