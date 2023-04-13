@@ -72,7 +72,7 @@ end
 
 GmEditorUi = defclass(GmEditorUi, widgets.Window)
 GmEditorUi.ATTRS{
-    frame=config.data,
+    frame=copyall(config.data),
     frame_title="GameMaster's editor",
     frame_inset=0,
     resizable=true,
@@ -181,11 +181,22 @@ function GmEditorUi:find_id(force_dialog)
         ref_target = field.ref_target
     end
     if ref_target and not force_dialog then
+        local obj
         if not ref_target.find then
-            dialog.showMessage("Error!", ("Cannot look up %s by ID"):format(getmetatable(ref_target)), COLOR_LIGHTRED)
-            return
+            if key == 'mat_type' then
+                local ok, mi = pcall(function()
+                    return self:currentTarget().target['mat_index']
+                end)
+                if ok then
+                    obj = dfhack.matinfo.decode(id, mi)
+                end
+            end
+            if not obj then
+                dialog.showMessage("Error!", ("Cannot look up %s by ID"):format(getmetatable(ref_target)), COLOR_LIGHTRED)
+                return
+            end
         end
-        local obj = ref_target.find(id)
+        obj = obj or ref_target.find(id)
         if obj then
             self:pushTarget(obj)
         else
@@ -477,7 +488,9 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
 
     if reindex then
         trg.keys={}
+        trg.kw=10
         for k,v in pairs(trg.target) do
+            if #tostring(k)>trg.kw then trg.kw=#tostring(k) end
             if filter~= "" then
                 local ok,ret=dfhack.pcall(string.match,tostring(k):lower(),filter)
                 if not ok then
@@ -493,7 +506,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     self.subviews.lbl_current_item:itemById('name').text=tostring(trg.target)
     local t={}
     for k,v in pairs(trg.keys) do
-            table.insert(t,{text={{text=string.format("%-25s",tostring(v))},{gap=1,text=getStringValue(trg,v)}}})
+        table.insert(t,{text={{text=string.format("%-"..trg.kw.."s",tostring(v))},{gap=1,text=getStringValue(trg,v)}}})
     end
     local last_pos
     if preserve_pos then
@@ -510,6 +523,7 @@ function GmEditorUi:pushTarget(target_to_push)
     local new_tbl={}
     new_tbl.target=target_to_push
     new_tbl.keys={}
+    new_tbl.kw=10
     new_tbl.selected=1
     new_tbl.filter=""
     if self:currentTarget()~=nil then
@@ -517,6 +531,7 @@ function GmEditorUi:pushTarget(target_to_push)
         self.stack[#self.stack].filter=self.subviews.filter_input.text
     end
     for k,v in pairs(target_to_push) do
+        if #tostring(k)>new_tbl.kw then new_tbl.kw=#tostring(k) end
         table.insert(new_tbl.keys,k)
     end
     new_tbl.item_count=#new_tbl.keys

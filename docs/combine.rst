@@ -23,14 +23,14 @@ Examples
 ``combine all --types=meat,plant``
     Merge ``meat`` and ``plant`` type stacks in all stockpiles.
 ``combine here``
-    Merge stacks in stockpile located at game cursor.
+    Merge stacks in the selected stockpile.
 
 Commands
 --------
 ``all``
     Search all stockpiles.
 ``here``
-    Search the stockpile under the game cursor.
+    Search the currently selected stockpile.
 
 Options
 -------
@@ -55,9 +55,8 @@ Options
 
         ``plant``: PLANT and PLANT_GROWTH
 
-        ``powders``: POWDERS_MISC
+``-q``, ``--quiet``
+    Only print changes instead of a summary of all processed stockpiles.
 
-        ``seeds``: SEEDS
-
-``-v``, ``--verbose [0-3]``
-    Print verbose output, level from 0 to 3.
+``-v``, ``--verbose``
+    Print verbose output.

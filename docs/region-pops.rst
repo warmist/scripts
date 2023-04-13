@@ -3,7 +3,7 @@ region-pops
 
 .. dfhack-tool::
     :summary: Change regional animal populations.
-    :tags: untested fort inspection animals
+    :tags: unavailable fort inspection animals
 
 This tool can show or modify the populations of animals in the region.
 

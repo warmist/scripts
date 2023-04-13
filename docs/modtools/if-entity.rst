@@ -3,7 +3,7 @@ modtools/if-entity
 
 .. dfhack-tool::
     :summary: Run DFHack commands based on current civ id.
-    :tags: untested dev
+    :tags: unavailable dev
 
 Run a command if the current entity matches a given ID.
 

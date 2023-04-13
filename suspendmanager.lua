@@ -78,6 +78,32 @@ function foreach_construction_job(fn)
     end
 end
 
+local CONSTRUCTION_IMPASSABLE = {
+    [df.construction_type.Wall]=true,
+    [df.construction_type.Fortification]=true,
+}
+
+local BUILDING_IMPASSABLE = {
+    [df.building_type.Floodgate]=true,
+    [df.building_type.Statue]=true,
+    [df.building_type.WindowGlass]=true,
+    [df.building_type.WindowGem]=true,
+    [df.building_type.GrateWall]=true,
+    [df.building_type.BarsVertical]=true,
+}
+
+--- Check if a building is blocking once constructed
+---@param building building_constructionst|building
+---@return boolean
+local function isImpassable(building)
+    local type = building:getType()
+    if type == df.building_type.Construction then
+        return CONSTRUCTION_IMPASSABLE[building.type]
+    else
+        return BUILDING_IMPASSABLE[type]
+    end
+end
+
 --- True if there is a construction plan to build an unwalkable tile
 ---@param pos coord
 ---@return boolean
@@ -89,7 +115,7 @@ local function plansToConstructImpassableAt(pos)
         -- The building is already created
         return false
     end
-    return building:isImpassableAtCreation()
+    return isImpassable(building)
 end
 
 --- Check if the tile can be walked on
@@ -142,7 +168,7 @@ function isBlocking(job)
 
     local building = dfhack.job.getHolder(job)
     --- Not building a blocking construction, no risk
-    if not building or not building:isImpassableAtCreation() then return false end
+    if not building or not isImpassable(building) then return false end
 
     --- job.pos is sometimes off by one, get the building pos
     local pos = {x=building.centerx,y=building.centery,z=building.z}
@@ -170,7 +196,7 @@ function shouldBeSuspended(job, accountblocking)
         return true, 'underwater'
     end
 
-    local bld = dfhack.buildings.findAtTile(job.pos)
+    local bld = dfhack.job.getHolder(job)
     if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
         return true, 'buildingplan'
     end
