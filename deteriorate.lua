@@ -54,16 +54,16 @@ local function is_not_useable(opts, item)
                 item.corpse_flags.yarn) ) )
     return not_useable
 end
-   
+
 local function is_valid_corpse(opts, item)
     -- check if the corpse is a resident of the fortress and is not useable
     local unit = df.unit.find(item.unit_id)
     if not unit then
-        return is_not_useable(opts, item) 
+        return is_not_useable(opts, item)
     end
     local hf = df.historical_figure.find(unit.hist_figure_id)
     if not hf then
-        return is_not_useable(opts, item) 
+        return is_not_useable(opts, item)
     end
     for _,link in ipairs(hf.entity_links) do
         if link.entity_id == df.global.plotinfo.group_id and df.histfig_entity_link_type[link:getType()] == 'MEMBER' then
