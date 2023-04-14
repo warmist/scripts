@@ -63,7 +63,7 @@ Options
 
 ``-q``, ``--quiet``
     Only print changes instead of a summary of all processed stockpiles.
-    
+
 ``-v``, ``--verbose n``
     Print verbose output, n from 1 to 4.
 
@@ -72,7 +72,7 @@ Notes
 The following conditions prevent an item from being combined:
 1. An item is not in a stockpile.
 2. An item is sand or plaster.
-3. An item is rotten, forbidden/hidden, marked for dumping/melting, 
+3. An item is rotten, forbidden/hidden, marked for dumping/melting,
 on fire, encased, owned by a trader/hostile/dwarf or is in a spider web.
 
 The following categories are used for combining:

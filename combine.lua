@@ -296,7 +296,7 @@ local function isRestrictedItem(item)
     local flags = item.flags
     return flags.rotten or flags.trader or flags.hostile or flags.forbid
         or flags.dump or flags.on_fire or flags.garbage_collect or flags.owned
-        or flags.removed or flags.encased or flags.spider_web or flags.melt 
+        or flags.removed or flags.encased or flags.spider_web or flags.melt
         or flags.hidden or #item.specific_refs > 0
 end
 
