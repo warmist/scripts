@@ -64,8 +64,8 @@ Options
 ``-q``, ``--quiet``
     Only print changes instead of a summary of all processed stockpiles.
     
-``-v``, ``--verbose [0-3]``
-    Print verbose output, level from 0 to 3.
+``-v``, ``--verbose n``
+    Print verbose output, n from 1 to 4.
 
 Notes
 -----
