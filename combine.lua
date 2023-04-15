@@ -87,7 +87,7 @@ local function comp_item_new(comp_key, max_size)
     comp_item.description = ''                          -- description of the comp item for output
     comp_item.max_size = max_size or 0                  -- how many of a comp item can be in one stack
     -- item info
-    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item, before_size, after_size, before_cont_id, after_cont_id, 
+    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item, before_size, after_size, before_cont_id, after_cont_id,
                                                         --                    before_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
                                                         --                    after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn} }
     comp_item.item_qty = 0                              -- total quantity of items
@@ -131,7 +131,7 @@ local function comp_item_add_item(stack_type, comp_item, item, container)
             new_item.before_mat_amt.HairWool = item.material_amount.HairWool
             new_item.before_mat_amt.Yarn     = item.material_amount.Yarn
             for _, v in pairs(new_item.before_mat_amt) do if new_item.before_mat_amt.Qty < v then new_item.before_mat_amt.Qty = v end end
-            
+
             comp_item.material_amt = comp_item.material_amt + new_item.before_mat_amt.Qty
             if new_item.before_mat_amt.Qty > comp_item.max_mat_amt then comp_item.max_mat_amt = new_item.before_mat_amt.Qty end
         end
@@ -387,7 +387,7 @@ local function isValidPart(item)
             item.material_amount.Horn > 0 or
             item.material_amount.HairWool > 0 or
             item.material_amount.Yarn > 0))
-            
+
 end
 
 function stacks_add_items(stacks, items, container, contained_count, ind)
@@ -526,7 +526,7 @@ local function preview_stacks(stacks)
 
                 if stack_remainder > 0 then
                     comp_item.after_stacks = stacks_needed + 1
-                else 
+                else
                     comp_item.after_stacks = stacks_needed
                 end
 
