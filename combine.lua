@@ -87,7 +87,9 @@ local function comp_item_new(comp_key, max_size)
     comp_item.description = ''                          -- description of the comp item for output
     comp_item.max_size = max_size or 0                  -- how many of a comp item can be in one stack
     -- item info
-    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item, before_size, after_size, before_cont_id, after_cont_id,
+    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item,
+                                                        --                    before_size, after_size, before_cont_id, after_cont_id,
+                                                        --                    stockpile_id, stockpile_name,
                                                         --                    before_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
                                                         --                    after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn} }
     comp_item.item_qty = 0                              -- total quantity of items
@@ -102,7 +104,7 @@ local function comp_item_new(comp_key, max_size)
     return comp_item
 end
 
-local function comp_item_add_item(stack_type, comp_item, item, container)
+local function comp_item_add_item(stockpile, stack_type, comp_item, item, container)
     -- add an item into the comp_items table, setting the comp_item attributes.
     if not comp_item.items[item.id] then
         comp_item.item_qty = comp_item.item_qty + item.stack_size
@@ -116,6 +118,9 @@ local function comp_item_add_item(stack_type, comp_item, item, container)
         local new_item = {}
         new_item.item = item
         new_item.before_size = item.stack_size
+
+        new_item.stockpile_id = stockpile.id
+        new_item.stockpile_name = stockpile.name
 
         -- material amount used?
         new_item.before_mat_amt = {}
@@ -173,15 +178,15 @@ local function stack_type_new(type_vals)
     return stack_type
 end
 
-local function stacks_add_item(stacks, stack_type, item, container, contained_count)
+local function stacks_add_item(stockpile, stacks, stack_type, item, container, contained_count)
     -- add an item to the matching comp_items table; based on comp_key.
     local comp_key = ''
 
     if typesThatUseCreatures[df.item_type[stack_type.type_id]] then
-        if typesThatUseMaterial[df.item_type[stack_type.type_id]] then
-            comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.race)
-        else
+        if not typesThatUseMaterial[df.item_type[stack_type.type_id]] then
             comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.race) .. "+" .. tostring(item.caste)
+        else
+            comp_key = tostring(stack_type.type_id) .. "+" .. tostring(item.race) .. "+" .. tostring(item.caste) .. "+" .. tostring(item:getActualMaterial()) .. "+" .. tostring(item:getActualMaterialIndex())
         end
     elseif item:isAmmo() then
         if item:getQuality() == 5 then
@@ -197,7 +202,7 @@ local function stacks_add_item(stacks, stack_type, item, container, contained_co
         stack_type.comp_items[comp_key] = comp_item_new(comp_key, stack_type.max_size)
     end
 
-    local new_comp_item_item = comp_item_add_item(stack_type, stack_type.comp_items[comp_key], item, container, contained_count)
+    local new_comp_item_item = comp_item_add_item(stockpile, stack_type, stack_type.comp_items[comp_key], item, container, contained_count)
     if new_comp_item_item then
         stack_type.before_stacks = stack_type.before_stacks + 1
         stack_type.item_qty = stack_type.item_qty + item.stack_size
@@ -324,7 +329,7 @@ local function print_stacks_details(stacks, quiet)
                     if comp_item.item_qty > 0 then
                         log(2, ('      Comp item:%40s <%12s>  #Qty:%6d #stacks:%5d max:%5d bef:%6d aft:%6d Cont: bef:%5d aft:%5d Mat amt:%6d\n'):format(comp_item.description, comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_size, comp_item.before_stacks, comp_item.after_stacks, #comp_item.before_cont_ids, #comp_item.after_cont_ids, comp_item.material_amt))
                         for _, item in sorted_items_qty(comp_item.items) do
-                            log(3, ('           Item:%40s <%6d> Qty: bef:%6d aft:%6d Cont: bef:<%5d> aft:<%5d> Mat Amt: bef: %6d aft:%6d'):format(comp_item.description, item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0, item.before_mat_amt.Qty or 0, item.after_mat_amt.Qty or 0))
+                            log(3, ('           Item:%40s <%6d> Qty: bef:%6d aft:%6d Cont: bef:<%5d> aft:<%5d> Mat Amt: bef: %6d aft:%6d stockpile:%s'):format(utils.getItemDescription(item.item), item.item.id, item.before_size or 0, item.after_size or 0, item.before_cont_id or 0, item.after_cont_id or 0, item.before_mat_amt.Qty or 0, item.after_mat_amt.Qty or 0, item.stockpile_name))
                             log(4, (' stackable: %s'):format(df.item_type.attrs[stack_type.type_id].is_stackable))
                             log(3, ('\n'))
                         end
@@ -390,7 +395,7 @@ local function isValidPart(item)
 
 end
 
-function stacks_add_items(stacks, items, container, contained_count, ind)
+function stacks_add_items(stockpile, stacks, items, container, contained_count, ind)
 -- loop through each item and add it to the matching stack[type_id].comp_items table
 -- recursively calls itself to add contained items
     if not ind then ind = '' end
@@ -404,7 +409,7 @@ function stacks_add_items(stacks, items, container, contained_count, ind)
         if stack_type and not item:isSand() and not item:isPlaster() and isValidPart(item) then
             if not isRestrictedItem(item) then
 
-                stacks_add_item(stacks, stack_type, item, container, contained_count)
+                stacks_add_item(stockpile, stacks, stack_type, item, container, contained_count)
 
                 if typesThatUseCreatures[df.item_type[type_id]] then
                     local raceRaw = df.global.world.raws.creatures.all[item.race]
@@ -431,12 +436,12 @@ function stacks_add_items(stacks, items, container, contained_count, ind)
             stacks.containers[item.id].container = item
             stacks.containers[item.id].before_size = #contained_items
             stacks.containers[item.id].description = utils.getItemDescription(item, 1)
-            log(4, ('      %sContainer:%s <%6d> #items:%5d Sandbearing:%s\n'):format(ind, utils.getItemDescription(item), item.id, count, item:isSandBearing()))
-            stacks_add_items(stacks, contained_items, item, count, ind .. '   ')
+            log(4, ('      %sContainer:%s <%6d> #items:%5d\n'):format(ind, utils.getItemDescription(item), item.id, count, item:isSandBearing()))
+            stacks_add_items(stockpile, stacks, contained_items, item, count, ind .. '   ')
 
         -- excluded item types
         else
-            log(4, ('      %sitem:%40s <%6d> is excl, type %d, sand:%s plaster:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id, item:isSand(), item:isPlaster()))
+            log(5, ('      %sitem:%40s <%6d> is excl, type %d, sand:%s plaster:%s\n'):format(ind, utils.getItemDescription(item), item.id, type_id, item:isSand(), item:isPlaster()))
         end
     end
 end
@@ -466,7 +471,7 @@ local function populate_stacks(stacks, stockpiles, types)
         log(4, ('   stockpile:%30s <%6d> pos:(%3d,%3d,%3d) #items:%5d\n'):format(stockpile.name, stockpile.id, stockpile.centerx, stockpile.centery, stockpile.z,  #items))
 
         if #items > 0 then
-            stacks_add_items(stacks, items)
+            stacks_add_items(stockpile, stacks, items)
         else
             log(4, '      skipping stockpile: no items\n')
         end
