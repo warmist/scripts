@@ -18,7 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
-- `combine`: Now supports ammo, powders and seeds, and combines into containers.
+- `combine`: Now supports ammo, parts, powders and seeds, and combines into containers.
 
 ## Removed
 

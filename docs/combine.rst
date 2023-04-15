@@ -55,6 +55,8 @@ Options
 
         ``meat``:  MEAT
 
+        ``parts``: CORPSEPIECE
+
         ``plant``: PLANT and PLANT_GROWTH
 
         ``powders``: POWDERS_MISC
@@ -74,10 +76,12 @@ The following conditions prevent an item from being combined:
 2. An item is sand or plaster.
 3. An item is rotten, forbidden/hidden, marked for dumping/melting,
 on fire, encased, owned by a trader/hostile/dwarf or is in a spider web.
+4. An item is a part and not butchered.
 
 The following categories are used for combining:
-1. Item has a race/caste: category=type + race + caste
-2. Item is ammo, created by for masterwork. category=type + material + quality (+ created by)
-3. Or: category= type + material
+1. Item is a part and has a race: category=type + race
+2. Item has a race/caste: category=type + race + caste
+3. Item is ammo, created by for masterwork. category=type + material + quality (+ created by)
+4. Or: category= type + material
 
 A default stack size of 30 applies to a category, unless a larger stack exists.
