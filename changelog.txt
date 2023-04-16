@@ -20,6 +20,7 @@ that repo.
 ## Misc Improvements
 - `combine`: added seeds and powder types.
 - `gui/gm-editor`: press ``g`` to move the map to the currently selected item/unit/building
+- `gui/gm-editor`: press ``Ctrl-D`` to toggle read-only mode to protect from accidental changes; this state persists across sessions
 
 ## Removed
 
