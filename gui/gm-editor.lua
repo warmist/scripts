@@ -550,7 +550,7 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     self.subviews.lbl_current_item:itemById('name').text=tostring(trg.target)
     local t={}
     for k,v in pairs(trg.keys) do
-        table.insert(t,{text={{text=string.format("%-"..trg.kw.."s",tostring(v))},{gap=1,text=getStringValue(trg,v)}}})
+        table.insert(t,{text={{text=string.format("%-"..trg.kw.."s",tostring(v))},{gap=2,text=getStringValue(trg,v)}}})
     end
     local last_pos
     if preserve_pos then

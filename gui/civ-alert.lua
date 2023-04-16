@@ -190,6 +190,8 @@ Civalert.ATTRS{
 }
 
 function Civalert:init()
+    local choices = self:get_burrow_choices()
+
     self:addviews{
         widgets.Panel{
             frame={t=0, l=0, r=12},
@@ -219,16 +221,23 @@ function Civalert:init()
         },
         widgets.FilteredList{
             frame={t=6, l=0, b=0, r=0},
-            choices=self:get_burrow_choices(),
+            choices=choices,
             icon_width=2,
             on_submit=self:callback('select_burrow'),
+            visible=#choices > 0,
+        },
+        widgets.WrappedLabel{
+            frame={t=7, l=0, r=0},
+            text_to_wrap='No burrows defined. Please define one to use for the civalert.',
+            text_pen=COLOR_RED,
+            visible=#choices == 0,
         },
     }
 end
 
 local function get_burrow_name(burrow)
     if #burrow.name > 0 then return burrow.name end
-    return ('Burrow %d'):format(burrow.id)
+    return ('Burrow %d'):format(burrow.id+1)
 end
 
 local SELECTED_ICON = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
