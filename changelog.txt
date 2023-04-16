@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `combine`: added seeds and powder types.
 - `gui/gm-editor`: press ``g`` to move the map to the currently selected item/unit/building
 
 ## Removed
