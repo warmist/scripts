@@ -3,7 +3,6 @@
 
 local argparse = require('argparse')
 local utils = require('utils')
-local item_stockpiles = {}
 
 local function get_clothes_vectors()
     return {df.global.world.items.other.GLOVES,
@@ -36,9 +35,8 @@ local function is_valid_clothing(item)
             and item.wear > 0
 end
 
-local function is_not_useable(opts, item)
-    local not_useable =
-        not(opts.useable and (
+local function keep_usable(opts, item)
+    return opts.keep_usable and (
                 not item.corpse_flags.unbutchered and (
                     item.corpse_flags.bone or
                     item.corpse_flags.horn or
@@ -51,26 +49,25 @@ local function is_not_useable(opts, item)
                 item.corpse_flags.plant or
                 item.corpse_flags.shell or
                 item.corpse_flags.silk or
-                item.corpse_flags.yarn) ) )
-    return not_useable
+                item.corpse_flags.yarn) )
 end
 
 local function is_valid_corpse(opts, item)
-    -- check if the corpse is a resident of the fortress and is not useable
+    -- check if the corpse is a resident of the fortress and is not keep_usable
     local unit = df.unit.find(item.unit_id)
     if not unit then
-        return is_not_useable(opts, item)
+        return not keep_usable(opts, item)
     end
     local hf = df.historical_figure.find(unit.hist_figure_id)
     if not hf then
-        return is_not_useable(opts, item)
+        return not keep_usable(opts, item)
     end
     for _,link in ipairs(hf.entity_links) do
         if link.entity_id == df.global.plotinfo.group_id and df.histfig_entity_link_type[link:getType()] == 'MEMBER' then
             return false
         end
     end
-    return is_not_useable(opts, item)
+    return not keep_usable(opts, item)
 end
 
 local function is_valid_remains(opts, item)
@@ -283,7 +280,7 @@ local opts = {
     mode = 'days',
     quiet = false,
     types = {},
-    useable = false,
+    keep_usable = false,
     help = false,
 }
 
@@ -292,7 +289,7 @@ local nonoptions = argparse.processArgsGetopt({...}, {
          handler=function(optarg) opts.time,opts.mode = parse_freq(optarg) end},
         {'h', 'help', handler=function() opts.help = true end},
         {'q', 'quiet', handler=function() opts.quiet = true end},
-        {'u', 'useable', handler=function() opts.useable = true end},
+        {'k', 'keep-usable', handler=function() opts.keep_usable = true end},
         {'t', 'types', hasArg=true,
          handler=function(optarg) opts.types = parse_types(optarg) end}})
 
