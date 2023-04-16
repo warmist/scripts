@@ -16,9 +16,11 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
 
 ## Misc Improvements
-- `combine`: added seeds and powder types.
+- `combine`: add seeds and powder types.
+- `deteriorate`: add option to exclude useable parts from deterioration
 - `gui/gm-editor`: press ``g`` to move the map to the currently selected item/unit/building
 
 ## Removed
@@ -32,7 +34,6 @@ that repo.
 -@ `gui/gm-editor`: no longer nudges last open window when opening a new one
 - `warn-starving`: no longer warns for dead units
 -@ `gui/control-panel`: the config UI for `automelt` is no longer offered when not in fortress mode
-- `deteriorate`: check for residents corpses. Added option to exclude useable parts from deterioration.
 
 ## Misc Improvements
 - `gui/gm-editor`: can now jump to material info objects from a mat_type reference with a mat_index using ``i``
