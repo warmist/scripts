@@ -10,9 +10,7 @@ local utils = require 'utils'
 config = config or json.open('dfhack-config/gm-editor.json')
 
 function save_config(data)
-    for k,v in pairs(data) do
-        config.data[k] = v
-    end
+    utils.assign(config.data, data)
     config:write()
 end
 
