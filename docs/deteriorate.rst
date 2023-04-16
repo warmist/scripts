@@ -27,7 +27,7 @@ Usage
     deterioration frequencies.
 ``deteriorate now --types <types> [--quiet] [--useable]``
     Causes all items (of the specified item types) to rot away within a few
-    ticks, keeping useable corpse pieces.
+    ticks.
 
 You can have different types of items rotting away at different rates by running
 ``deteriorate start`` multiple times with different options.
