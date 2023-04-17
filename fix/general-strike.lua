@@ -15,7 +15,7 @@ local function fix_seeds(quiet)
         end
     end
     if not quiet or count > 0 then
-        print(('fixed %d seed(s)'):format(count))
+        print(('fix/general-strike fixed %d mislabeled seed(s)'):format(count))
     end
 end
 
