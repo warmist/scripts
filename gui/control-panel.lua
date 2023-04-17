@@ -62,7 +62,7 @@ table.sort(SYSTEM_SERVICES)
 local PREFERENCES = {
     ['dfhack']={
         HIDE_CONSOLE_ON_STARTUP={type='bool', default=true,
-         desc='Whether to hide the external DFHack console window by default. You can always show it again with the "show" command.'},
+         desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
     },
     ['gui']={
         DEFAULT_INITIAL_PAUSE={type='bool', default=true,
