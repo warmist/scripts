@@ -41,7 +41,6 @@ local function keep_usable(opts, item)
                     item.corpse_flags.bone or
                     item.corpse_flags.horn or
                     item.corpse_flags.leather or
-                    item.corpse_flags.skull1 or
                     item.corpse_flags.skull2 or
                     item.corpse_flags.tooth) or (
                 item.corpse_flags.hair_wool or
