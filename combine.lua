@@ -88,7 +88,7 @@ local function comp_item_new(comp_key, max_size)
                                                         --      before_size, after_size, before_cont_id, after_cont_id,
                                                         --      stockpile_id, stockpile_name,
                                                         --      before_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
-                                                        --      after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn} 
+                                                        --      after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
                                                         --  }
     comp_item.item_qty = 0                              -- total quantity of items
     comp_item.material_amt = 0                          -- total amount of materials
