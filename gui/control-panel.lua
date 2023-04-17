@@ -46,7 +46,7 @@ end
 table.sort(FORT_AUTOSTART)
 
 local SYSTEM_SERVICES = {
-    'automelt', -- TODO needs dynamic detection of configurability
+    'automelt',
     'buildingplan',
     'confirm',
     'overlay',
@@ -60,6 +60,10 @@ end
 table.sort(SYSTEM_SERVICES)
 
 local PREFERENCES = {
+    ['dfhack']={
+        HIDE_CONSOLE_ON_STARTUP={type='bool', default=true,
+         desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
+    },
     ['gui']={
         DEFAULT_INITIAL_PAUSE={type='bool', default=true,
          desc='Whether to pause the game when a DFHack tool is shown.'},
