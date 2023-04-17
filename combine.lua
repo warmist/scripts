@@ -19,11 +19,8 @@ local MAX_CONT_ITEMS=500
 local MAX_MAT_AMT=500
 
 -- list of types that use race and caste
-local typesThatUseCreatures={REMAINS=true,FISH=true,FISH_RAW=true,VERMIN=true,PET=true,EGG=true,CORPSE=true,CORPSEPIECE=true}
-local typesThatUseMaterial={CORPSEPIECE=true}
-
-local ITEM_QTY = 1
-local MATERIAL_AMOUNT = 2
+local typesThatUseCreatures = utils.invert{'REMAINS', 'FISH', 'FISH_RAW', 'VERMIN', 'PET', 'EGG', 'CORPSE', 'CORPSEPIECE'}
+local typesThatUseMaterial=utils.invert{'CORPSEPIECE'}
 
 -- list of valid item types for merging
 -- Notes: 1. mergeable stacks are ones with the same type_id+race+caste or type_id+mat_type+mat_index
@@ -60,7 +57,7 @@ for k1,v1 in pairs(valid_types_map) do
     end
 end
 
-function log(level, ...)
+local function log(level, ...)
     -- if verbose is specified, then print the arguments, or don't.
     if not opts.quiet and opts.verbose >= level then dfhack.print(string.format(...)) end
 end
@@ -75,7 +72,6 @@ function CList:new(o)
     setmetatable(o, self)
     self.__index = self
     self.__len = function (t) local n = 0 for _, __ in pairs(t) do n = n + 1 end return n end
-    self.max = function (t) local v = 0 for _, n in pairs(t) do if n > v then v = n end end return v end
     return o
 end
 
@@ -87,11 +83,13 @@ local function comp_item_new(comp_key, max_size)
     comp_item.description = ''                          -- description of the comp item for output
     comp_item.max_size = max_size or 0                  -- how many of a comp item can be in one stack
     -- item info
-    comp_item.items = CList:new(nil)                    -- key:item.id, val:{ item,
-                                                        --                    before_size, after_size, before_cont_id, after_cont_id,
-                                                        --                    stockpile_id, stockpile_name,
-                                                        --                    before_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
-                                                        --                    after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn} }
+    comp_item.items = CList:new(nil)                    -- key:item.id,
+                                                        -- val:{item,
+                                                        --      before_size, after_size, before_cont_id, after_cont_id,
+                                                        --      stockpile_id, stockpile_name,
+                                                        --      before_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn}
+                                                        --      after_mat_amt {Leather, Bone, Shell, Tooth, Horn, HairWool, Yarn} 
+                                                        --  }
     comp_item.item_qty = 0                              -- total quantity of items
     comp_item.material_amt = 0                          -- total amount of materials
     comp_item.max_mat_amt = MAX_MAT_AMT                 -- max amount of materials in one stack
@@ -122,11 +120,13 @@ local function comp_item_add_item(stockpile, stack_type, comp_item, item, contai
         new_item.stockpile_id = stockpile.id
         new_item.stockpile_name = stockpile.name
 
-        -- material amount used?
+        -- material amount info
         new_item.before_mat_amt = {}
         new_item.before_mat_amt.Qty = 0
         new_item.after_mat_amt = {}
         new_item.after_mat_amt.Qty = 0
+
+        -- material amount used?
         if typesThatUseMaterial[df.item_type[stack_type.type_id]] then
             new_item.before_mat_amt.Leather  = item.material_amount.Leather
             new_item.before_mat_amt.Bone     = item.material_amount.Bone
@@ -370,7 +370,6 @@ local function stacks_new()
     stacks.after_stacks = 0
 
     return stacks
-
 end
 
 local function isRestrictedItem(item)
@@ -392,10 +391,9 @@ local function isValidPart(item)
             item.material_amount.Horn > 0 or
             item.material_amount.HairWool > 0 or
             item.material_amount.Yarn > 0))
-
 end
 
-function stacks_add_items(stockpile, stacks, items, container, contained_count, ind)
+local function stacks_add_items(stockpile, stacks, items, container, contained_count, ind)
 -- loop through each item and add it to the matching stack[type_id].comp_items table
 -- recursively calls itself to add contained items
     if not ind then ind = '' end
@@ -489,7 +487,7 @@ local function preview_stacks(stacks)
         for comp_key, comp_item in pairs(stack_type.comp_items) do
             log(4, ('      comp item:%40s <%12s>  #qty:%5d #stacks:%5d sizes: max:%5d bef:%5d aft:%5d Cont: bef:%5d aft:%5d\n'):format(comp_item.description, comp_item.comp_key, comp_item.item_qty, #comp_item.items, comp_item.max_size, comp_item.before_stacks, comp_item.after_stacks, #comp_item.before_cont_ids, #comp_item.after_cont_ids))
 
-            -- Use item qty or material amount?
+            -- item qty used?
             if not typesThatUseMaterial[df.item_type[stack_type.type_id]] then
 
                 -- max size comparison
@@ -525,6 +523,7 @@ local function preview_stacks(stacks)
                     end
                 end
 
+            -- material amount used.
             else
                 local stacks_needed = math.floor(comp_item.material_amt / comp_item.max_mat_amt)
                 local stack_remainder = comp_item.material_amt - stacks_needed * comp_item.max_mat_amt
