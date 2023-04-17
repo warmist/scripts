@@ -61,19 +61,21 @@ table.sort(SYSTEM_SERVICES)
 
 local PREFERENCES = {
     ['dfhack']={
-        HIDE_CONSOLE_ON_STARTUP={type='bool', default=true,
+        HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup', type='bool', default=true,
          desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
+        HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
+         desc='Hide tools that give you deity-level control by default.'},
     },
     ['gui']={
-        DEFAULT_INITIAL_PAUSE={type='bool', default=true,
+        DEFAULT_INITIAL_PAUSE={label='DFHack tools pause game when shown', type='bool', default=true,
          desc='Whether to pause the game when a DFHack tool is shown.'},
     },
     ['gui.widgets']={
-        DOUBLE_CLICK_MS={type='int', default=500, min=50,
+        DOUBLE_CLICK_MS={label='Mouse double click speed (ms)', type='int', default=500, min=50,
          desc='How long to wait for the second click of a double click, in ms.'},
-        SCROLL_INITIAL_DELAY_MS={type='int', default=300, min=5,
+        SCROLL_INITIAL_DELAY_MS={label='Mouse initial scroll repeat delay (ms)', type='int', default=300, min=5,
          desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
-        SCROLL_DELAY_MS={type='int', default=20, min=5,
+        SCROLL_DELAY_MS={label='Mouse scroll repeat delay (ms)', type='int', default=20, min=5,
          desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
     },
 }
@@ -351,8 +353,11 @@ end
 function Services:get_choices()
     local enabled_map = self:get_enabled_map()
     local choices = {}
+    local hide_armok = dfhack.getHideArmokTools()
     for _,service in ipairs(self.services_list) do
-        table.insert(choices, {target=service, enabled=enabled_map[service]})
+        if not hide_armok or not helpdb.is_entry(service) or not helpdb.get_entry_tags(service).armok then
+            table.insert(choices, {target=service, enabled=enabled_map[service]})
+        end
     end
     return choices
 end
@@ -626,7 +631,7 @@ function Preferences:refresh()
                 {tile=CONFIGURE_PEN_CENTER},
                 {tile=BUTTON_PEN_RIGHT},
                 ' ',
-                id,
+                spec.label,
                 ' (',
                 tostring(ctx_env[id]),
                 ')',
@@ -636,6 +641,7 @@ function Preferences:refresh()
                  ctx_env=ctx_env, id=id, spec=spec})
         end
     end
+    table.sort(choices, function(a, b) return a.spec.label < b.spec.label end)
     local list = self.subviews.list
     local filter = list:getFilter()
     local selected = list:getSelected()
