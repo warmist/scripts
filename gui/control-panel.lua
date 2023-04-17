@@ -64,11 +64,11 @@ local PREFERENCES = {
         HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup', type='bool', default=true,
          desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
         HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
-         desc='Hide tools that give you deity-level control by default.'},
+         desc='Don\'t show tools that give you deity-level control wherever tools are listed.'},
     },
     ['gui']={
-        DEFAULT_INITIAL_PAUSE={label='DFHack tools pause game when shown', type='bool', default=true,
-         desc='Whether to pause the game when a DFHack tool is shown.'},
+        DEFAULT_INITIAL_PAUSE={label='DFHack tools autopause game', type='bool', default=true,
+         desc='Whether to pause the game when a DFHack tool window is shown.'},
     },
     ['gui.widgets']={
         DOUBLE_CLICK_MS={label='Mouse double click speed (ms)', type='int', default=500, min=50,
