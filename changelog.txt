@@ -16,10 +16,13 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
 
 ## Misc Improvements
 - `combine`: Now supports ammo, parts, powders, and seeds, and combines into containers
+- `deteriorate`: add option to exclude useable parts from deterioration
 - `gui/gm-editor`: press ``g`` to move the map to the currently selected item/unit/building
+- `gui/gm-editor`: press ``Ctrl-D`` to toggle read-only mode to protect from accidental changes; this state persists across sessions
 
 ## Removed
 

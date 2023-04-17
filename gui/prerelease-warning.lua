@@ -1,6 +1,3 @@
--- Shows the warning about missing configuration file.
-
-local gui = require 'gui'
 local dlg = require 'gui.dialogs'
 local json = require 'json'
 local utils = require 'utils'
@@ -19,12 +16,11 @@ if dfhack.internal.getAddress('gametype') and df.global.gametype == df.game_type
     return
 end
 
-local state = dfhack.getDFHackRelease():lower():match('[a-z]+')
+local state = dfhack.getDFHackRelease():lower():match('([a-z]+)%d*$')
 if not utils.invert{'alpha', 'beta', 'rc', 'r'}[state] then
     dfhack.printerr('warning: unknown release state: ' .. state)
     state = 'unknown'
 end
-
 
 message = ({
     alpha = {
@@ -55,13 +51,13 @@ message = ({
         COLOR_LIGHTRED,
         'This release is flagged as a prerelease but named as a', NEWLINE,
         'stable release.', NEWLINE,
-        {pen=COLOR_LIGHTMAGENTA, text='Please report this to the DFHack team or a pack maintainer.'}
+        {pen=COLOR_LIGHTMAGENTA, text='Please report this to the DFHack team.'}
     },
     unknown = {
         'Error',
         COLOR_LIGHTMAGENTA,
         'Unknown prerelease DFHack build. This should never happen!', NEWLINE,
-        'Please report this to the DFHack team or a pack maintainer.'
+        'Please report this to the DFHack team.'
     }
 })[state]
 
