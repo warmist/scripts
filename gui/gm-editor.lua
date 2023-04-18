@@ -656,7 +656,7 @@ local function get_editor(args)
         if args[1]=="dialog" then
             dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY,
                     "", function(entry)
-                            view = GmScreen{target=eval(entry)}:show()
+                            views[GmScreen{target=eval(entry)}:show()] = true
                     end)
         elseif args[1]=="free" then
             return GmScreen{target=df.reinterpret_cast(df[args[2]],args[3])}:show()
