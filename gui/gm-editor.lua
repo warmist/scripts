@@ -637,6 +637,7 @@ end
 GmScreen = defclass(GmScreen, gui.ZScreen)
 GmScreen.ATTRS {
     focus_path='gm-editor',
+    freeze=false,
 }
 
 function GmScreen:init(args)
@@ -644,7 +645,16 @@ function GmScreen:init(args)
     if not target then
         qerror('Target not found')
     end
+    self.force_pause = self.freeze
     self:addviews{GmEditorUi{target=target}}
+end
+
+function GmScreen:onIdle()
+    if not self.freeze then
+        GmScreen.super.onIdle(self)
+    elseif self.force_pause and dfhack.isMapLoaded() then
+        df.global.pause_state = true
+    end
 end
 
 function GmScreen:onDismiss()
@@ -652,19 +662,25 @@ function GmScreen:onDismiss()
 end
 
 local function get_editor(args)
+    local freeze = false
+    if args[1] == '-f' or args[1] == '--freeze' then
+        freeze = true
+        table.remove(args, 1)
+    end
     if #args~=0 then
         if args[1]=="dialog" then
             dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY,
                     "", function(entry)
-                            views[GmScreen{target=eval(entry)}:show()] = true
+                        local view = GmScreen{freeze=freeze, target=eval(entry)}:show()
+                        views[view] = true
                     end)
         elseif args[1]=="free" then
-            return GmScreen{target=df.reinterpret_cast(df[args[2]],args[3])}:show()
+            return GmScreen{freeze=freeze, target=df.reinterpret_cast(df[args[2]],args[3])}:show()
         else
-            return GmScreen{target=eval(args[1])}:show()
+            return GmScreen{freeze=freeze, target=eval(args[1])}:show()
         end
     else
-        return GmScreen{target=getTargetFromScreens()}:show()
+        return GmScreen{freeze=freeze, target=getTargetFromScreens()}:show()
     end
 end
 
