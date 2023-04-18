@@ -794,8 +794,6 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
-local DEV_FILTER = {tag={'dev', 'unavailable'}}
-
 -- adds the n most closely affiliated peer entries for the given entry that
 -- aren't already in the entries list. affiliation is determined by how many
 -- tags the entries share.
@@ -831,9 +829,14 @@ local function add_top_related_entries(entries, entry, n)
 end
 
 function LauncherUI:update_autocomplete(firstword)
-    local entries = helpdb.search_entries(
-        {str=firstword, types='command'},
-        dev_mode and {} or DEV_FILTER)
+    local excludes
+    if not dev_mode then
+        excludes = {tag={'dev', 'unavailable'}}
+        if dfhack.getHideArmokTools() then
+            table.insert(excludes.tag, 'armok')
+        end
+    end
+    local entries = helpdb.search_entries({str=firstword, types='command'}, excludes)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a dev script that we masked out) to show that it's a valid
