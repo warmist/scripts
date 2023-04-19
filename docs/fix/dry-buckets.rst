@@ -10,7 +10,7 @@ job is interrupted. These buckets then become unavailable for any other kind of
 use, such as making lye. This tool finds those discarded buckets and removes the
 water from them.
 
-This tool can also be used to remote water (muddy or not) that is blocking well operations.
+This tool also fixes over-full buckets that are blocking well operations.
 
 Usage
 -----
