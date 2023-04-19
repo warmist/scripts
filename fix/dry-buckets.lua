@@ -14,7 +14,7 @@ for _,item in ipairs(df.global.world.items.all) do
     and not (item.flags.in_job) then
         if container.flags.in_building or item.flags.in_building then
             in_building  = in_building  + 1
-        end        
+        end
         dfhack.items.remove(item)
         emptied = emptied + 1
     end
@@ -22,5 +22,5 @@ end
 
 print('Emptied '..emptied..' buckets.')
 if emptied > 0 then
-    print(('Unclogged %d wells.'):format(in_building))   
+    print(('Unclogged %d wells.'):format(in_building))
 end
