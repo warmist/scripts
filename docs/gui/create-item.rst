@@ -33,12 +33,12 @@ Examples
 Options
 -------
 
-``--count <num>``
+``-c``, ``--count <num>``
     Set the quantity of items to create instead of prompting for it.
-``--unit <id>``
+``-u``, ``--unit <id>``
     Use the specified unit as the "creator" of the generated item instead of the
     selected unit or the first citizen.
-``--unrestricted``
+``-f``, ``--unrestricted``
     Don't restrict the material options to only those that are normally
     appropriate for the selected item type.
 ``--startup``
