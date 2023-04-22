@@ -3,7 +3,7 @@ modtools/create-item
 
 .. dfhack-tool::
     :summary: Create arbitrary items.
-    :tags: unavailable dev
+    :tags: dev
 
 This tool provides a commandline interface for creating items of your choice.
 
@@ -21,8 +21,10 @@ Examples
     Have unit 23145 create an exceptionally crafted iron pick.
 ``modtools/create-item -u 323 -i CORPSEPIECE:NONE -m CREATURE_MAT:DWARF:BRAIN``
     Have unit 323 produce a lump of brain.
-``modtools/create-item -i BOULDER:NONE -m INORGANIC:ADAMANTINE -c 5``
-``modtools/create-item -i BOULDER:NONE -m PLANT_MAT:MUSHROOM_HELMET_PLUMP:DRINK``
+``modtools/create-item -i BOULDER:NONE -m INORGANIC:RAW_ADAMANTINE -c 5``
+    Spawn 5 raw adamantine boulders.
+``modtools/create-item -i DRINK:NONE -m PLANT:MUSHROOM_HELMET_PLUMP:DRINK``
+    Spawn a barrel of dwarven ale.
 
 Options
 -------

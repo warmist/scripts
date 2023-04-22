@@ -118,7 +118,8 @@ local function getMatFilter(itemtype, opts)
             return (mat.flags.CHEESE_PLANT or mat.flags.CHEESE_CREATURE)
         end,
         LIQUID_MISC = function(mat, parent, typ, idx)
-            return (mat.flags.LIQUID_MISC_PLANT or mat.flags.LIQUID_MISC_CREATURE or mat.flags.LIQUID_MISC_OTHER)
+            return mat.id == 'WATER' or mat.id == 'LYE' or mat.flags.LIQUID_MISC_PLANT or
+                    mat.flags.LIQUID_MISC_CREATURE or mat.flags.LIQUID_MISC_OTHER
         end,
         POWDER_MISC = function(mat, parent, typ, idx)
             return (mat.flags.POWDER_MISC_PLANT or mat.flags.POWDER_MISC_CREATURE)

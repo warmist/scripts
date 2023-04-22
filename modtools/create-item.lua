@@ -2,7 +2,7 @@
 --author expwnent
 --@module=true
 
-local guidm = require('gui.dwarfmode')
+local argparse = require('argparse')
 local script = require('gui.script')
 local utils = require('utils')
 
@@ -57,6 +57,20 @@ local function usesCreature(itemtype)
     return typesThatUseCreatures[df.item_type[itemtype]]
 end
 
+local function moveToContainer(item, creator, container_type)
+    local containerMat = dfhack.matinfo.find('PLANT_MAT:NETHER_CAP:WOOD')
+    if not containerMat then
+        for i,n in ipairs(df.global.world.raws.plants.all) do
+            if n.flags.TREE then
+                containerMat = dfhack.matinfo.find('PLANT_MAT:' .. n.id .. ':WOOD')
+            end
+            if containerMat then break end
+        end
+    end
+    local bucketType = dfhack.items.findType(container_type .. ':NONE')
+    local bucket = df.item.find(dfhack.items.createItem(bucketType, -1, containerMat.type, containerMat.index, creator))
+    dfhack.items.moveToContainer(item, bucket)
+end
 -- this part was written by four rabbits in a trenchcoat (ppaawwll)
 local function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic)
     -- (partlayer is also used to determine the material if we're spawning a "generic" body part (i'm just lazy lol))
@@ -120,22 +134,7 @@ local function createCorpsePiece(creator, bodypart, partlayer, creatureID, caste
     local item_id = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
     local item = df.item.find(item_id)
     if liquid then
-        local bucketMat = dfhack.matinfo.find('PLANT_MAT:NETHER_CAP:WOOD')
-        if not bucketMat then
-            for i,n in ipairs(df.global.world.raws.plants.all) do
-                if n.flags.TREE then
-                    bucketMat = dfhack.matinfo.find('PLANT_MAT:' .. n.id .. ':WOOD')
-                end
-                if bucketMat then break end
-            end
-        end
-        local prevCursorPos = guidm.getCursorPos()
-        local bucketType = dfhack.items.findType('BUCKET:NONE')
-        local bucket = df.item.find(dfhack.items.createItem(bucketType, -1, bucketMat.type, bucketMat.index, creator))
-        dfhack.items.moveToContainer(item, bucket)
-        guidm.setCursorPos(creator.pos)
-        dfhack.run_command('spotclean')
-        guidm.setCursorPos(prevCursorPos)
+        moveToContainer(item, creator, 'BUCKET')
     end
 
     -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
@@ -256,24 +255,28 @@ local function createItem(mat, itemType, quality, creator, description, amount)
     local item = df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
     local item2 = nil
     assert(item, 'failed to create item')
+    local mat_token = dfhack.matinfo.decode(item):getToken()
     quality = math.max(0, math.min(5, quality - 1))
     item:setQuality(quality)
-    if df.item_type[itemType[1]] == 'SLAB' then
+    local item_type = df.item_type[itemType[1]]
+    if item_type == 'SLAB' then
         item.description = description
-    end
-    if df.item_type[itemType[1]] == 'GLOVES' then
+    elseif item_type == 'GLOVES' then
         --create matching gloves
         item:setGloveHandedness(1)
         item2 = df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
         assert(item2, 'failed to create item')
         item2:setQuality(quality)
         item2:setGloveHandedness(2)
-    end
-    if df.item_type[itemType[1]] == 'SHOES' then
+    elseif item_type == 'SHOES' then
         --create matching shoes
         item2 = df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
         assert(item2, 'failed to create item')
         item2:setQuality(quality)
+    elseif item_type == 'DRINK' then
+        moveToContainer(item, creator, 'BARREL')
+    elseif mat_token == 'WATER' or mat_token == 'LYE' then
+        moveToContainer(item, creator, 'BUCKET')
     end
     if tonumber(amount) > 1 then
         item:setStackSize(amount)
@@ -422,7 +425,7 @@ local accessors = {
         error('not implemented')
     end,
     get_quality = function()
-        return true, opts.quality or df.item_quality.Ordinary
+        return true, (tonumber(opts.quality) or df.item_quality.Ordinary) + 1
     end,
     get_description = function()
         return true, opts.description or error('description not specified')
