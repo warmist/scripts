@@ -19,8 +19,8 @@ Examples
 
 ``modtools/create-item -u 23145 -i WEAPON:ITEM_WEAPON_PICK -m INORGANIC:IRON -q4``
     Have unit 23145 create an exceptionally crafted iron pick.
-``modtools/create-item -u 323 -i CORPSEPIECE:NONE -m CREATURE_MAT:DWARF:BRAIN``
-    Have unit 323 produce a lump of brain.
+``modtools/create-item -u 323 -i MEAT:NONE -m CREATURE_MAT:DWARF:BRAIN``
+    Have unit 323 produce a lump of (prepared) brain.
 ``modtools/create-item -i BOULDER:NONE -m INORGANIC:RAW_ADAMANTINE -c 5``
     Spawn 5 raw adamantine boulders.
 ``modtools/create-item -i DRINK:NONE -m PLANT:MUSHROOM_HELMET_PLUMP:DRINK``
