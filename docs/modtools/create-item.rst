@@ -5,10 +5,17 @@ modtools/create-item
     :summary: Create arbitrary items.
     :tags: unavailable dev
 
-Replaces the `createitem` plugin, with standard
-arguments. The other versions will be phased out in a later version.
+This tool provides a commandline interface for creating items of your choice.
 
-Arguments::
+Usage
+-----
+
+::
+
+    modtools/create-item <options>
+
+Options
+-------
 
     -creator id
         specify the id of the unit who will create the item,

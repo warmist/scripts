@@ -8,7 +8,39 @@ local guidm = require('gui.dwarfmode')
 local script = require('gui.script')
 local utils = require('utils')
 
-local args
+local no_quality_item_types = utils.invert{
+    'BAR',
+    'SMALLGEM',
+    'BLOCKS',
+    'ROUGH',
+    'BOULDER',
+    'WOOD',
+    'CORPSE',
+    'CORPSEPIECE',
+    'REMAINS',
+    'MEAT',
+    'FISH',
+    'FISH_RAW',
+    'VERMIN',
+    'PET',
+    'SEEDS',
+    'PLANT',
+    'SKIN_TANNED',
+    'PLANT_GROWTH',
+    'THREAD',
+    'DRINK',
+    'POWDER_MISC',
+    'CHEESE',
+    'FOOD',
+    'LIQUID_MISC',
+    'COIN',
+    'GLOB',
+    'ROCK',
+    'EGG',
+    'BRANCH',
+}
+
+------------------------------
 
 function getGenderString(gender)
     local sym = df.pronoun_type.attrs[gender].symbol
@@ -55,11 +87,8 @@ function getCreatureMaterialList(creatureID, casteID)
     return crmList
 end
 
-function getRestrictiveMatFilter(itemType)
-    if args.unrestricted then return nil end
-    local rock = function(mat, parent, typ, idx)
-        return (mat.flags.IS_STONE)
-    end
+function getRestrictiveMatFilter(itemType, opts)
+    if opts.unrestricted then return nil end
     local itemTypes = {
         WEAPON = function(mat, parent, typ, idx)
             return (mat.flags.ITEMS_WEAPON or mat.flags.ITEMS_WEAPON_RANGED)
@@ -76,8 +105,9 @@ function getRestrictiveMatFilter(itemType)
         AMULET = function(mat, parent, typ, idx)
             return (mat.flags.ITEMS_SOFT or mat.flags.ITEMS_HARD)
         end,
-        ROCK = rock,
-        BOULDER = rock,
+        ROCK = function(mat, parent, typ, idx)
+            return (mat.flags.IS_STONE)
+        end,
         BAR = function(mat, parent, typ, idx)
             return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id == 'COAL')
         end,
@@ -95,7 +125,7 @@ function getRestrictiveMatFilter(itemType)
     return itemTypes[df.item_type[itemType]]
 end
 
-function getMatFilter(itemtype)
+function getMatFilter(itemtype, opts)
     local itemTypes = {
         SEEDS = function(mat, parent, typ, idx)
             return mat.flags.SEED_MAT
@@ -134,7 +164,7 @@ function getMatFilter(itemtype)
             return (mat.flags.LEATHER)
         end,
     }
-    return itemTypes[df.item_type[itemtype]] or getRestrictiveMatFilter(itemtype)
+    return itemTypes[df.item_type[itemtype]] or getRestrictiveMatFilter(itemtype, opts)
 end
 
 function createItem(mat, itemType, quality, creator, description, amount)
@@ -230,9 +260,8 @@ local HAIR_PIECES = utils.invert{'HAIR', 'EYEBROW', 'EYELASH', 'MOUSTACHE', 'CHI
 local LIQUID_PIECES = utils.invert{'BLOOD', 'PUS', 'VENOM', 'SWEAT', 'TEARS', 'SPIT', 'MILK'}
 
 -- this part was written by four rabbits in a trenchcoat (ppaawwll)
-function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic, quality)
+function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic)
     -- (partlayer is also used to determine the material if we're spawning a "generic" body part (i'm just lazy lol))
-    quality = math.max(0, math.min(5, quality - 1))
     creatureID = tonumber(creatureID)
     -- get the actual raws of the target creature
     local creatorRaceRaw = df.creature_raw.find(creatureID)
@@ -256,12 +285,12 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
     if not generic and not isCorpse then -- if we have a specified body part and layer, figure all the stuff out about that
         -- store the tissue id of the specific layer we selected
         tissueID = tonumber(creatorBody.body_parts[bodypart].layers[partlayer].tissue_id)
-        layerMat = {}
+        local mats = {}
         -- get the material name from the material itself
         for i in string.gmatch(dfhack.matinfo.getToken(creatorRaceRaw.tissue[tissueID].mat_type, creatureID), '([^:]+)') do
-            table.insert(layerMat, i)
+            table.insert(mats, i)
         end
-        layerMat = layerMat[3]
+        layerMat = mats[3]
         layerName = creatorBody.body_parts[bodypart].layers[partlayer].layer_name
     elseif not isCorpse then -- otherwise, figure out the mat name from the dual-use partlayer argument
         -- no "whole" option at the start of the generic creature material selection prompt means that the value we get is actually further along than intended
@@ -427,25 +456,22 @@ function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, ge
     end
 end
 
-function hackWish(unit)
+function hackWish(unit, opts)
     script.start(function()
-        local amountok, amount
-        local matok, mattype, matindex, matFilter
+        local matok, mattype, matindex
         local partlayerok, partlayerID = false, 0
-        local qualityok, quality = false, 0
+        local qualityok, quality = false, df.item_quality.Ordinary
         local itemok, itemtype, itemsubtype = showItemPrompt('What item do you want?',
             function(itype) return df.item_type[itype] ~= 'FOOD' end, true)
         local corpsepieceGeneric
         local bodypart = -1
         if not itemok then return end
-        if not args.notRestrictive then
-            matFilter = getMatFilter(itemtype)
-        end
         if not usesCreature(itemtype) then
-            matok, mattype, matindex = showMaterialPrompt('Wish', 'And what material should it be made of?', matFilter)
+            matok, mattype, matindex = showMaterialPrompt('Wish', 'And what material should it be made of?',
+                not opts.unrestricted and getMatFilter(itemtype, opts) or nil)
             if not matok then return end
         else
-            local creatureok, useless, creatureTable = script.showListPrompt('Wish', 'What creature should it be?',
+            local creatureok, _, creatureTable = script.showListPrompt('Wish', 'What creature should it be?',
                 COLOR_LIGHTGREEN, getCreatureList(), 1, true)
             if not creatureok then return end
             mattype, matindex = getCreatureRaceAndCaste(creatureTable[3])
@@ -470,7 +496,7 @@ function hackWish(unit)
                     getCreatureMaterialList(mattype, matindex), 1, true)
             end
             if not partlayerok then return end
-        elseif df.item_type[itemtype] ~= 'CORPSE' then
+        elseif not no_quality_item_types[df.item_type[itemtype]] then
             qualityok, quality = script.showListPrompt('Wish', 'What quality should it be?', COLOR_LIGHTGREEN,
                 qualityTable())
             if not qualityok then return end
@@ -485,41 +511,45 @@ function hackWish(unit)
             --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
             bodypart = bodypart - 2
         end
-        if args.multi then
+        local count = opts.count
+        if not count then
             repeat
-                amountok, amount = script.showInputPrompt('Wish', 'How many do you want? (numbers only!)',
+                local amountok, amount = script.showInputPrompt('Wish', 'How many do you want? (numbers only!)',
                     COLOR_LIGHTGREEN)
-            until tonumber(amount) or not amountok
-            if not amountok then return end
-            if mattype and itemtype then
-                if df.item_type.attrs[itemtype].is_stackable then
-                    createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, amount)
-                else
-                    local isCorpsePiece = itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE
-                    for i = 1,amount do
-                        if not isCorpsePiece then
-                            createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)
-                        else
-                            createCorpsePiece(unit, bodypart, partlayerID - 2, mattype, matindex, corpsepieceGeneric,
-                                quality)
-                        end
-                    end
-                end
-                return true
-            end
-            return false
-        else
-            if mattype and itemtype then
-                if itemtype ~= df.item_type.CORPSEPIECE and itemtype ~= df.item_type.CORPSE then
-                    createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)
-                else
-                    createCorpsePiece(unit, bodypart, partlayerID - 2, mattype, matindex, corpsepieceGeneric, quality)
-                end
-                return true
-            end
+                if not amountok then return end
+                count = tonumber(amount)
+            until count
+        end
+        if not mattype or not itemtype then
             return false
         end
+        if df.item_type.attrs[itemtype].is_stackable then
+            createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, count)
+        else
+            for _ = 1,count do
+                if itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE then
+                    createCorpsePiece(unit, bodypart, partlayerID - 2, mattype, matindex, corpsepieceGeneric)
+                else
+                    createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)
+                end
+            end
+        end
+        return true
     end)
+end
+
+local function get_first_citizen()
+    local citizens = dfhack.units.getCitizens()
+    if not citizens or not citizens[1] then
+        qerror('Could not choose a creator unit. Please select one in the UI')
+    end
+    return citizens[1]
+end
+
+local function get_creator(opts)
+    return tonumber(opts.unit) and df.unit.find(tonumber(opts.unit)) or
+            dfhack.gui.getSelectedUnit(true) or
+            get_first_citizen()
 end
 
 if dfhack_flags.module then
@@ -530,22 +560,17 @@ validArgs = utils.invert{
     'startup',
     'unrestricted',
     'unit',
-    'multi',
+    'count',
 }
 
-args = utils.processArgs({...}, validArgs)
+local opts = utils.processArgs({...}, validArgs)
 
-if args.startup then
+if opts.startup then
     eventful.onReactionComplete.hackWishP = function(reaction, unit)
         if not reaction.code:find('DFHACK_WISH') then return end
-        hackWish(unit)
+        hackWish(unit, {count = 1})
     end
     return
 end
 
-local unit = tonumber(args.unit) and df.unit.find(tonumber(args.unit)) or dfhack.gui.getSelectedUnit(true)
-if unit then
-    hackWish(unit)
-else
-    qerror('A unit needs to be selected to use gui/create-item.')
-end
+hackWish(get_creator(opts), opts)
