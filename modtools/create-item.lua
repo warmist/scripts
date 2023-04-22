@@ -1,5 +1,6 @@
 -- creates an item of a given type and material
 --author expwnent
+--@module=true
 
 local guidm = require('gui.dwarfmode')
 local script = require('gui.script')

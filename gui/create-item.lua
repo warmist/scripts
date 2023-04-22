@@ -80,7 +80,11 @@ local function getRestrictiveMatFilter(itemType, opts)
             return (mat.flags.IS_STONE)
         end,
         BAR = function(mat, parent, typ, idx)
-            return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id == 'COAL')
+            return (mat.flags.IS_METAL or mat.flags.SOAP or mat.id == 'COAL' or
+                    mat.id == 'POTASH' or mat.id == 'ASH' or mat.id == 'PEARLASH')
+        end,
+        BLOCKS = function(mat, parent, typ, idx)
+            return mat.flags.IS_STONE or mat.flags.IS_METAL or mat.flags.IS_GLASS
         end,
     }
     for k,v in ipairs{'GOBLET', 'FLASK', 'TOY', 'RING', 'CROWN', 'SCEPTER', 'FIGURINE', 'TOOL'} do
