@@ -187,11 +187,21 @@ function isBlocking(job)
 end
 
 --- Return true with a reason if a job should be suspended.
---- It takes in account water flow, buildingplan plugin, and optionally
---- the risk of creating stuck construction buildings
+--- It optionally takes in account the risk of creating stuck
+--- construction buildings
 --- @param job job
 --- @param accountblocking boolean
 function shouldBeSuspended(job, accountblocking)
+    if accountblocking and isBlocking(job) then
+        return true, 'blocking'
+    end
+    return false, nil
+end
+
+--- Return true with a reason if a job should not be unsuspended.
+function shouldStaySuspended(job, accountblocking)
+    -- External reasons to be suspended
+
     if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
         return true, 'underwater'
     end
@@ -201,19 +211,20 @@ function shouldBeSuspended(job, accountblocking)
         return true, 'buildingplan'
     end
 
-    if accountblocking and isBlocking(job) then
-        return true, 'blocking'
-    end
-    return false, nil
+    -- Internal reasons to be suspended, determined by suspendmanager
+    return shouldBeSuspended(job, accountblocking)
 end
 
 local function run_now()
     foreach_construction_job(function(job)
-        local shouldBeSuspended, _ = shouldBeSuspended(job, preventblocking)
-        if shouldBeSuspended and not job.flags.suspend then
-            suspend(job)
-        elseif not shouldBeSuspended and job.flags.suspend then
-            unsuspend(job)
+        if job.flags.suspend then
+            if not shouldStaySuspended(job, preventblocking) then
+                unsuspend(job)
+            end
+        else
+            if shouldBeSuspended(job, preventblocking) then
+                suspend(job)
+            end
         end
     end)
 end
