@@ -469,7 +469,10 @@ Type a command to see its help text here. Hit ENTER to run the command, or tap b
 
 Not sure what to do? First, try running "quickstart-guide" to get oriented with DFHack and its capabilities. Then maybe try the "tags" command to see the different categories of tools DFHack has to offer! Run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
-To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.]]
+To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.
+
+You're running DFHack ]] .. dfhack.getDFHackVersion() ..
+            (dfhack.isPrerelease() and (' (git: %s)'):format(dfhack.getGitCommit(true)) or '')
 
 function HelpPanel:init()
     self.cur_entry = ''
