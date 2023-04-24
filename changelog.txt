@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 - `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
+- `suspendmanager`: Fix over-aggressive suspension of jobs that could still possibly be done (e.g. jobs that are partially submerged in water)
 
 ## Misc Improvements
 - `combine`: Now supports ammo, parts, powders, and seeds, and combines into containers
