@@ -472,7 +472,7 @@ Not sure what to do? First, try running "quickstart-guide" to get oriented with 
 To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.
 
 You're running DFHack ]] .. dfhack.getDFHackVersion() ..
-            (dfhack.isPrerelease() and (' (git: %s)'):format(dfhack.getGitCommit(true)) or '')
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true)))
 
 function HelpPanel:init()
     self.cur_entry = ''
