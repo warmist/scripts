@@ -25,6 +25,7 @@ that repo.
 - `gui/gm-editor`: press ``g`` to move the map to the currently selected item/unit/building
 - `gui/gm-editor`: press ``Ctrl-D`` to toggle read-only mode to protect from accidental changes; this state persists across sessions
 - `gui/gm-editor`: new ``--freeze`` option for ensuring the game doesn't change while you're inspecting it
+- `gui/prerelease-warning`: widgets are now clickable
 
 ## Removed
 
