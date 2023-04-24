@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 - `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
+- `suspendmanager`: Fix over-aggressive suspension of jobs that could still possibly be done (e.g. jobs that are partially submerged in water)
 
 ## Misc Improvements
 - `combine`: Now supports ammo, parts, powders, and seeds, and combines into containers
@@ -25,6 +26,7 @@ that repo.
 - `gui/gm-editor`: press ``Ctrl-D`` to toggle read-only mode to protect from accidental changes; this state persists across sessions
 - `gui/gm-editor`: new ``--freeze`` option for ensuring the game doesn't change while you're inspecting it
 - `gui/launcher`: DFHack version now shown in the default help text
+- `gui/prerelease-warning`: widgets are now clickable
 
 ## Removed
 
