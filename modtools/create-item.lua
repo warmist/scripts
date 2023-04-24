@@ -43,20 +43,6 @@ local CORPSE_PIECES = utils.invert{'BONE', 'SKIN', 'CARTILAGE', 'TOOTH', 'NERVE'
 local HAIR_PIECES = utils.invert{'HAIR', 'EYEBROW', 'EYELASH', 'MOUSTACHE', 'CHIN_WHISKERS', 'SIDEBURNS'}
 local LIQUID_PIECES = utils.invert{'BLOOD', 'PUS', 'VENOM', 'SWEAT', 'TEARS', 'SPIT', 'MILK'}
 
-local function usesCreature(itemtype)
-    local typesThatUseCreatures = {
-        REMAINS = true,
-        FISH = true,
-        FISH_RAW = true,
-        VERMIN = true,
-        PET = true,
-        EGG = true,
-        CORPSE = true,
-        CORPSEPIECE = true,
-    }
-    return typesThatUseCreatures[df.item_type[itemtype]]
-end
-
 local function moveToContainer(item, creator, container_type)
     local containerMat = dfhack.matinfo.find('PLANT_MAT:NETHER_CAP:WOOD')
     if not containerMat then
@@ -295,41 +281,12 @@ end
 function hackWish(accessors, opts)
     local unit = accessors.get_unit(opts) or get_first_citizen()
     script.start(function()
-        local matok, mattype, matindex
-        local partlayerok, partlayerID = false, 0
         local qualityok, quality = false, df.item_quality.Ordinary
         local itemok, itemtype, itemsubtype = accessors.get_item_type()
-        local corpsepieceGeneric
-        local bodypart = -1
         if not itemok then return end
-        if not usesCreature(itemtype) then
-            matok, mattype, matindex = accessors.get_mat(itemtype, opts)
-            if not matok then return end
-        else
-            local creatureok
-            creatureok, mattype, matindex = accessors.get_creature_mat()
-            if not creatureok then return end
-        end
-        if df.item_type[itemtype] == 'CORPSEPIECE' then
-            local bodpartok, bodypartLocal = accessors.get_corpse_part(mattype, matindex)
-            -- createCorpsePiece() references the bodypart variable so it can't be local to here
-            bodypart = bodypartLocal
-            if bodypart == 1 then
-                corpsepieceGeneric = true
-            else
-                --the offsets here are cause indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
-                bodypart = bodypart - 2
-            end
-            if not bodpartok then return end
-            if not corpsepieceGeneric then -- probably a better way of doing this tbh
-                partlayerok, partlayerID = accessors.get_tissue_layer(mattype, matindex, bodypart)
-                partlayerID = partlayerID - 1
-            else
-                partlayerok, partlayerID = accessors.get_creature_part_mat(mattype, matindex)
-            end
-            if not partlayerok then return end
-            partlayerID = partlayerID - 1
-        elseif not no_quality_item_types[df.item_type[itemtype]] then
+        local matok, mattype, matindex, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
+        if not matok then return end
+        if not no_quality_item_types[df.item_type[itemtype]] then
             qualityok, quality = accessors.get_quality()
             if not qualityok then return end
         end
@@ -410,19 +367,16 @@ local accessors = {
         end
         return true, item_type, dfhack.items.findSubtype(opts.item)
     end,
-    get_mat = function()
+    get_mat = function(itype)
         local mat_info = dfhack.matinfo.find(opts.mat)
         if not mat_info then
             error('invalid material: ' .. tostring(opts.mat))
         end
-        return true, mat_info['type'], mat_info.index
-    end,
-    get_corpse_part = function()
-        -- TODO: return 2 if it's a specific corpse part
-        return true, 1
-    end,
-    get_tissue_layer = function()
-        error('not implemented')
+        -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
+        if df.item_type[itype] ~= 'CORPSEPIECE' then
+            return true, mat_info['type'], mat_info.index, -1
+        end
+        return false
     end,
     get_quality = function()
         return true, (tonumber(opts.quality) or df.item_quality.Ordinary) + 1
@@ -434,7 +388,5 @@ local accessors = {
         return true, opts.count or 1
     end,
 }
-accessors.get_creature_mat = accessors.get_mat
-accessors.get_creature_part_mat = accessors.get_mat
 
 hackWish(accessors, {})
