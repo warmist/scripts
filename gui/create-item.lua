@@ -231,7 +231,7 @@ local default_accessors = {
             partlayerID = partlayerID - 1
         end
         if not partlayerok then return end
-        return true, -1, raceId, bodypart, partlayerID - 1, corpsepieceGeneric
+        return true, -1, raceId, casteId, bodypart, partlayerID - 1, corpsepieceGeneric
     end,
     get_quality = function()
         return script.showListPrompt('Wish', 'What quality should it be?',

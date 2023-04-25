@@ -385,11 +385,12 @@ local accessors = {
         if not mat_info then
             error('invalid material: ' .. tostring(opts.mat))
         end
+        local caste = get_caste(mat_info.index, opts.caste)
         if df.item_type[itype] ~= 'CORPSEPIECE' then
-            return true, mat_info['type'], mat_info.index, get_caste(mat_info.index, opts.caste), -1
+            return true, mat_info['type'], mat_info.index, caste, -1
         end
         -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
-        return false
+        return true, -1, mat_info.index, caste, get_body_part(), get_part_layer()
     end,
     get_quality = function()
         return true, (tonumber(opts.quality) or df.item_quality.Ordinary) + 1
