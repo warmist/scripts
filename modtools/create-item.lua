@@ -284,8 +284,10 @@ function hackWish(accessors, opts)
         local qualityok, quality = false, df.item_quality.Ordinary
         local itemok, itemtype, itemsubtype = accessors.get_item_type()
         if not itemok then return end
-        local matok, mattype, matindex, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
+        local matok, mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
         if not matok then return end
+        print(mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric)
+        print(dfhack.matinfo.getToken(mattype, matindex))
         if not no_quality_item_types[df.item_type[itemtype]] then
             qualityok, quality = accessors.get_quality()
             if not qualityok then return end
@@ -312,7 +314,7 @@ function hackWish(accessors, opts)
         else
             for _ = 1,count do
                 if itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE then
-                    createCorpsePiece(unit, bodypart, partlayerID, mattype, matindex, corpsepieceGeneric)
+                    createCorpsePiece(unit, bodypart, partlayerID, matindex, casteId, corpsepieceGeneric)
                 else
                     createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)
                 end
@@ -336,6 +338,7 @@ local positionals = argparse.processArgsGetopt({...}, {
     {'u', 'unit', hasArg = true, handler = function(arg) opts.unit = arg end},
     {'i', 'item', hasArg = true, handler = function(arg) opts.item = arg end},
     {'m', 'material', hasArg = true, handler = function(arg) opts.mat = arg end},
+    {'t', 'caste', hasArg = true, handler = function(arg) opts.caste = arg end},
     {'q', 'quality', hasArg = true, handler = function(arg) opts.quality = arg end},
     {'d', 'description', hasArg = true, handler = function(arg) opts.description = arg end},
     {
@@ -356,6 +359,16 @@ if opts.unit == '\\LAST' then
     opts.unit = tostring(df.global.unit_next_id - 1)
 end
 
+local function get_caste(race_id, caste)
+    if not caste then return 0 end
+    if tonumber(caste) then return tonumber(caste) end
+    caste = caste:lower()
+    for i, c in ipairs(df.creature_raw.find(race_id).caste) do
+        if caste == tostring(c.caste_id):lower() then return i end
+    end
+    return 0
+end
+
 local accessors = {
     get_unit = function()
         return tonumber(opts.unit) and df.unit.find(tonumber(opts.unit)) or nil
@@ -372,10 +385,10 @@ local accessors = {
         if not mat_info then
             error('invalid material: ' .. tostring(opts.mat))
         end
-        -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
         if df.item_type[itype] ~= 'CORPSEPIECE' then
-            return true, mat_info['type'], mat_info.index, -1
+            return true, mat_info['type'], mat_info.index, get_caste(mat_info.index, opts.caste), -1
         end
+        -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
         return false
     end,
     get_quality = function()

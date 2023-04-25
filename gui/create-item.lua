@@ -210,28 +210,28 @@ local default_accessors = {
         local creatureok, _, creatureTable = script.showListPrompt('Wish', 'What creature should it be?',
             COLOR_LIGHTGREEN, getCreatureList(), 1, true)
         if not creatureok then return false end
-        local mattype, matindex = getCreatureRaceAndCaste(creatureTable[3])
+        local raceId, casteId = getCreatureRaceAndCaste(creatureTable[3])
         if df.item_type[itype] ~= 'CORPSEPIECE' then
-            return true, mattype, matindex, -1
+            return true, -1, raceId, casteId, -1
         end
         local bodpartok, bodypart = script.showListPrompt('Wish', 'What body part should it be?',
-            COLOR_LIGHTGREEN, getCreaturePartList(mattype, matindex), 1, true)
+            COLOR_LIGHTGREEN, getCreaturePartList(raceId, casteId), 1, true)
         if not bodpartok then return false end
         local corpsepieceGeneric = false
         local partlayerok, partlayerID
         if bodypart == 1 then
             corpsepieceGeneric = true
             partlayerok, partlayerID = script.showListPrompt('Wish', 'What creature material should it be?',
-                COLOR_LIGHTGREEN, getCreatureMaterialList(mattype, matindex), 1, true)
+                COLOR_LIGHTGREEN, getCreatureMaterialList(raceId, casteId), 1, true)
         else
             --the offsets here are because indexes in lua are wonky (some start at 0, some start at 1), so we adjust for that, as well as the index offset created by inserting the "generic" option at the start of the body part selection prompt
             bodypart = bodypart - 2
             partlayerok, partlayerID = script.showListPrompt('Wish', 'What tissue layer should it be?',
-                COLOR_LIGHTGREEN, getCreaturePartLayerList(mattype, matindex, bodypart), 1, true)
+                COLOR_LIGHTGREEN, getCreaturePartLayerList(raceId, casteId, bodypart), 1, true)
             partlayerID = partlayerID - 1
         end
         if not partlayerok then return end
-        return true, mattype, matindex, bodypart, partlayerID - 1, corpsepieceGeneric
+        return true, -1, raceId, bodypart, partlayerID - 1, corpsepieceGeneric
     end,
     get_quality = function()
         return script.showListPrompt('Wish', 'What quality should it be?',
