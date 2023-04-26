@@ -280,9 +280,9 @@ if opts.startup then
         if not reaction.code:find('DFHACK_WISH') then return end
         local accessors = copyall(default_accessors)
         accessors.get_unit = function() return unit end
-        createitem.hackWish(accessors, { count = 1 })
+        script.start(createitem.hackWish, accessors, { count = 1 })
     end
     return
 end
 
-createitem.hackWish(default_accessors, opts)
+script.start(createitem.hackWish, default_accessors, opts)

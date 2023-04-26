@@ -3,7 +3,6 @@
 --@module=true
 
 local argparse = require('argparse')
-local script = require('gui.script')
 local utils = require('utils')
 
 local no_quality_item_types = utils.invert{
@@ -56,7 +55,9 @@ local function moveToContainer(item, creator, container_type)
     local bucketType = dfhack.items.findType(container_type .. ':NONE')
     local bucket = df.item.find(dfhack.items.createItem(bucketType, -1, containerMat.type, containerMat.index, creator))
     dfhack.items.moveToContainer(item, bucket)
+    return bucket
 end
+
 -- this part was written by four rabbits in a trenchcoat (ppaawwll)
 local function createCorpsePiece(creator, bodypart, partlayer, creatureID, casteID, generic)
     -- (partlayer is also used to determine the material if we're spawning a "generic" body part (i'm just lazy lol))
@@ -119,10 +120,6 @@ local function createCorpsePiece(creator, bodypart, partlayer, creatureID, caste
     local materialInfo = dfhack.matinfo.find(material)
     local item_id = dfhack.items.createItem(itemType, itemSubtype, materialInfo['type'], materialInfo.index, creator)
     local item = df.item.find(item_id)
-    if liquid then
-        moveToContainer(item, creator, 'BUCKET')
-    end
-
     -- if the item type is a corpsepiece, we know we have one, and then go on to set the appropriate flags
     if item_type == 'CORPSEPIECE' then
         if layerName == 'BONE' then -- check if bones
@@ -235,6 +232,10 @@ local function createCorpsePiece(creator, bodypart, partlayer, creatureID, caste
         -- DO THIS LAST or else the game crashes for some reason
         item.caste = casteID
     end
+    if liquid then
+        return moveToContainer(item, creator, 'BUCKET')
+    end
+    return item
 end
 
 local function createItem(mat, itemType, quality, creator, description, amount)
@@ -259,15 +260,17 @@ local function createItem(mat, itemType, quality, creator, description, amount)
         item2 = df.item.find(dfhack.items.createItem(itemType[1], itemType[2], mat[1], mat[2], creator))
         assert(item2, 'failed to create item')
         item2:setQuality(quality)
-    elseif item_type == 'DRINK' then
-        moveToContainer(item, creator, 'BARREL')
-    elseif mat_token == 'WATER' or mat_token == 'LYE' then
-        moveToContainer(item, creator, 'BUCKET')
     end
     if tonumber(amount) > 1 then
         item:setStackSize(amount)
         if item2 then item2:setStackSize(amount) end
     end
+    if item_type == 'DRINK' then
+        return moveToContainer(item, creator, 'BARREL')
+    elseif mat_token == 'WATER' or mat_token == 'LYE' then
+        return moveToContainer(item, creator, 'BUCKET')
+    end
+    return {item, item2}
 end
 
 local function get_first_citizen()
@@ -278,50 +281,49 @@ local function get_first_citizen()
     return citizens[1]
 end
 
+-- returns the list of created items, or nil on error
 function hackWish(accessors, opts)
     local unit = accessors.get_unit(opts) or get_first_citizen()
-    script.start(function()
-        local qualityok, quality = false, df.item_quality.Ordinary
-        local itemok, itemtype, itemsubtype = accessors.get_item_type()
-        if not itemok then return end
-        local matok, mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
-        if not matok then return end
-        print(mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric)
-        print(dfhack.matinfo.getToken(mattype, matindex))
-        if not no_quality_item_types[df.item_type[itemtype]] then
-            qualityok, quality = accessors.get_quality()
-            if not qualityok then return end
-        end
-        local description
-        if df.item_type[itemtype] == 'SLAB' then
-            local descriptionok
-            descriptionok, description = accessors.get_description()
-            if not descriptionok then return end
-        end
-        local count = opts.count
-        if not count then
-            repeat
-                local amountok, amount = accessors.get_count()
-                if not amountok then return end
-                count = tonumber(amount)
-            until count
-        end
-        if not mattype or not itemtype then
-            return false
-        end
-        if df.item_type.attrs[itemtype].is_stackable then
-            createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, count)
+    local qualityok, quality = false, df.item_quality.Ordinary
+    local itemok, itemtype, itemsubtype = accessors.get_item_type()
+    if not itemok then return end
+    local matok, mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
+    if not matok then return end
+    print(mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric)
+    print(dfhack.matinfo.getToken(mattype, matindex))
+    if not no_quality_item_types[df.item_type[itemtype]] then
+        qualityok, quality = accessors.get_quality()
+        if not qualityok then return end
+    end
+    local description
+    if df.item_type[itemtype] == 'SLAB' then
+        local descriptionok
+        descriptionok, description = accessors.get_description()
+        if not descriptionok then return end
+    end
+    local count = opts.count
+    if not count then
+        repeat
+            local amountok, amount = accessors.get_count()
+            if not amountok then return end
+            count = tonumber(amount)
+        until count
+    end
+    if not mattype or not itemtype then return end
+    if df.item_type.attrs[itemtype].is_stackable then
+        return createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, count)
+    end
+    local items = {}
+    for _ = 1,count do
+        if itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE then
+            table.insert(items, createCorpsePiece(unit, bodypart, partlayerID, matindex, casteId, corpsepieceGeneric))
         else
-            for _ = 1,count do
-                if itemtype == df.item_type.CORPSEPIECE or itemtype == df.item_type.CORPSE then
-                    createCorpsePiece(unit, bodypart, partlayerID, matindex, casteId, corpsepieceGeneric)
-                else
-                    createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)
-                end
+            for _,item in ipairs(createItem({mattype, matindex}, {itemtype, itemsubtype}, quality, unit, description, 1)) do
+                table.insert(items, item)
             end
         end
-        return true
-    end)
+    end
+    return items
 end
 
 if dfhack_flags.module then
@@ -347,6 +349,7 @@ local positionals = argparse.processArgsGetopt({...}, {
         hasArg = true,
         handler = function(arg) opts.count = argparse.nonnegativeInt(arg, 'count') end,
     },
+    {'p', 'pos', hasArg = true, handler = function(arg) opts.pos = argparse.coords(arg) end},
 })
 
 if positionals[1] == 'help' then opts.help = true end
@@ -390,7 +393,7 @@ local accessors = {
             return true, mat_info['type'], mat_info.index, caste, -1
         end
         -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
-        return true, -1, mat_info.index, caste, get_body_part(), get_part_layer()
+        return true, -1, mat_info.index, caste, 1, 0, true
     end,
     get_quality = function()
         return true, (tonumber(opts.quality) or df.item_quality.Ordinary) + 1
@@ -403,4 +406,9 @@ local accessors = {
     end,
 }
 
-hackWish(accessors, {})
+local items = hackWish(accessors, {})
+if items and opts.pos then
+    for _,item in ipairs(items) do
+        dfhack.items.moveToGround(item, opts.pos)
+    end
+end
