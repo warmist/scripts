@@ -241,7 +241,7 @@ local default_accessors = {
         return script.showInputPrompt('Slab', 'What should the slab say?', COLOR_WHITE)
     end,
     get_count = function()
-        return script.showInputPrompt('Wish', 'How many do you want? (numbers only!)',
+        return script.showInputPrompt('Wish', 'How many do you want?',
             COLOR_LIGHTGREEN)
     end,
 }
