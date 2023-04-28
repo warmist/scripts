@@ -627,7 +627,8 @@ function GenericOptionsPanel:init()
                 elseif #self.design_panel.marks then
                     local mouse_pos = getMousePoint()
                     if mouse_pos then table.insert(self.design_panel.extra_points,
-                        Point { x = mouse_pos.x, y = mouse_pos.y }) end
+                            mouse_pos)
+                    end
                 end
                 self.design_panel.needs_update = true
             end,
@@ -1142,7 +1143,7 @@ function Design:add_shape_options()
 end
 
 function Design:on_transform(val)
-    local center_x, center_y = self.shape:get_center()
+    local center = self.shape:get_center()
 
     -- Save mirrored points first
     if self.mirror_point then
@@ -1155,13 +1156,13 @@ function Design:on_transform(val)
     for i, mark in ipairs(self.marks) do
         local x, y = mark.x, mark.y
         if val == 'cw' then
-            x, y = center_x - (y - center_y), center_y + (x - center_x)
+            x, y = center.x - (y - center.y), center.y + (x - center.x)
         elseif val == 'ccw' then
-            x, y = center_x + (y - center_y), center_y - (x - center_x)
+            x, y = center.x + (y - center.y), center.y - (x - center.x)
         elseif val == 'fliph' then
-            x = center_x - (x - center_x)
+            x = center.x - (x - center.x)
         elseif val == 'flipv' then
-            y = center_y - (y - center_y)
+            y = center.y - (y - center.y)
         end
         self.marks[i] = Point { x = math.floor(x + 0.5), y = math.floor(y + 0.5), z = self.marks[i].z }
     end
@@ -1170,33 +1171,31 @@ function Design:on_transform(val)
     for i, point in ipairs(self.extra_points) do
         local x, y = point.x, point.y
         if val == 'cw' then
-            x, y = center_x - (y - center_y), center_y + (x - center_x)
+            x, y = center.x - (y - center.y), center.y + (x - center.x)
         elseif val == 'ccw' then
-            x, y = center_x + (y - center_y), center_y - (x - center_x)
+            x, y = center.x + (y - center.y), center.y - (x - center.x)
         elseif val == 'fliph' then
-            x = center_x - (x - center_x)
+            x = center.x - (x - center.x)
         elseif val == 'flipv' then
-            y = center_y - (y - center_y)
+            y = center.y - (y - center.y)
         end
         self.extra_points[i] = Point { x = math.floor(x + 0.5), y = math.floor(y + 0.5), z = self.extra_points[i].z }
     end
 
     -- Calculate center point after transformation
     self.shape:update(self.marks, self.extra_points)
-    local new_center_x, new_center_y = self.shape:get_center()
-    local center = Point{x = center_x, y = center_y}
-    local new_center = Point{x = new_center_x, y = new_center_y}
+    local new_center = self.shape:get_center()
 
     -- Calculate delta between old and new center points
     local delta = center - new_center
 
     -- Adjust marks and extra points based on delta
     for i, mark in ipairs(self.marks) do
-        self.marks[i] = mark + Point{x = delta.x, y = delta.y, z = 0}
+        self.marks[i] = mark + Point { x = delta.x, y = delta.y, z = 0 }
     end
 
     for i, point in ipairs(self.extra_points) do
-        self.extra_points[i] = point + Point{x = delta.x, y = delta.y, z = 0}
+        self.extra_points[i] = point + Point { x = delta.x, y = delta.y, z = 0 }
     end
 
     self:updateLayout()
@@ -1270,8 +1269,8 @@ function Design:onRenderFrame(dc, rect)
     -- TODO clean this up
     if self.prev_center and
         ((self.shape.basic_shape and #self.marks == self.shape.max_points)
-        or (not self.shape.basic_shape and not self.placing_mark.active))
-        and mouse_pos and ( self.prev_center ~= mouse_pos) then
+            or (not self.shape.basic_shape and not self.placing_mark.active))
+        and mouse_pos and (self.prev_center ~= mouse_pos) then
         self.needs_update = true
         local transform = mouse_pos - self.prev_center
 
@@ -1354,14 +1353,14 @@ function Design:onRenderFrame(dc, rect)
     end
 
     plugin.draw_shape(self.shape.arr)
-    
+
     if #self.marks >= self.shape.min_points and self.shape.basic_shape then
         local shape_top_left, shape_bot_right = self.shape:get_point_dims()
         local drag_points = {
-            { x = shape_top_left.x, y = shape_top_left.y },
-            { x = shape_bot_right.x, y = shape_bot_right.y },
-            { x = shape_top_left.x, y = shape_bot_right.y },
-            { x = shape_bot_right.x, y = shape_top_left.y }
+            Point { x = shape_top_left.x, y = shape_top_left.y },
+            Point { x = shape_bot_right.x, y = shape_bot_right.y },
+            Point { x = shape_top_left.x, y = shape_bot_right.y },
+            Point { x = shape_bot_right.x, y = shape_top_left.y }
         }
         plugin.draw_points({ drag_points, "drag_point" })
     else
@@ -1372,10 +1371,9 @@ function Design:onRenderFrame(dc, rect)
 
     if (self.shape.basic_shape and #self.marks == self.shape.max_points) or
         (not self.shape.basic_shape and not self.placing_mark.active and #self.marks > 0) then
-        local center_x, center_y = self.shape:get_center()
-        plugin.draw_points({ {{x = center_x, y = center_y}}, "extra_point" })
+        plugin.draw_points({ { self.shape:get_center() }, "extra_point" })
     end
-    plugin.draw_points({ {self.mirror_point}, "extra_point" })
+    plugin.draw_points({ { self.mirror_point }, "extra_point" })
 
 end
 
@@ -1449,9 +1447,8 @@ function Design:onInput(keys)
         if not pos then return true end
         guidm.setCursorPos(dfhack.gui.getMousePos())
     elseif keys.SELECT then
-        pos = guidm.getCursorPos()
+        pos = Point(guidm.getCursorPos())
     end
-    pos = Point(pos)
 
     if keys._MOUSE_L_DOWN and pos then
         -- TODO Refactor this a bit
@@ -1477,7 +1474,7 @@ function Design:onInput(keys)
             self.needs_update = true
             self.placing_extra.active = false
         elseif self.placing_mirror then
-            self.mirror_point = Point(pos)
+            self.mirror_point = pos
             self.placing_mirror = false
             self.needs_update = true
         else
@@ -1485,13 +1482,13 @@ function Design:onInput(keys)
                 -- Clicking a corner of a basic shape
                 local shape_top_left, shape_bot_right = self.shape:get_point_dims()
                 local corner_drag_info = {
-                    { pos = Point(shape_top_left), opposite_x = shape_bot_right.x, opposite_y = shape_bot_right.y,
+                    { pos = shape_top_left, opposite_x = shape_bot_right.x, opposite_y = shape_bot_right.y,
                         corner = "nw" },
                     { pos = Point { x = shape_bot_right.x, y = shape_top_left.y }, opposite_x = shape_top_left.x,
                         opposite_y = shape_bot_right.y, corner = "ne" },
                     { pos = Point { x = shape_top_left.x, y = shape_bot_right.y }, opposite_x = shape_bot_right.x,
                         opposite_y = shape_top_left.y, corner = "sw" },
-                    { pos = Point(shape_bot_right), opposite_x = shape_top_left.x, opposite_y = shape_top_left.y,
+                    { pos = shape_bot_right, opposite_x = shape_top_left.x, opposite_y = shape_top_left.y,
                         corner = "se" }
                 }
 
@@ -1522,8 +1519,8 @@ function Design:onInput(keys)
 
             -- Clicking center point
             if #self.marks > 0 then
-                local center_x, center_y = self.shape:get_center()
-                if pos == Point { x = center_x, y = center_y } and not self.prev_center then
+                local center = self.shape:get_center()
+                if pos == center and not self.prev_center then
                     self.start_center = pos
                     self.prev_center = pos
                     return true
@@ -1550,7 +1547,7 @@ end
 -- Put any special logic for designation type here
 -- Right now it's setting the stair type based on the z-level
 -- Fell through, pass through the option directly from the options value
-function Design:get_designation(x, y, z)
+function Design:get_designation(point)
     local mode = self.subviews.mode_name:getOptionValue()
 
     local view_bounds = self:get_view_bounds()
@@ -1564,7 +1561,7 @@ function Design:get_designation(x, y, z)
         if z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
         elseif view_bounds and z == math.abs(view_bounds.z1 - view_bounds.z2) then
-            local pos = Point { x = view_bounds.x1 + x, y = view_bounds.y1 + y, z = view_bounds.z1 + z }
+            local pos = Point { x = view_bounds.x1, y = view_bounds.y1, z = view_bounds.z1} + point
             local tile_type = dfhack.maps.getTileType(pos)
             local tile_shape = tile_type and tile_attrs[tile_type].shape or nil
             local designation = dfhack.maps.getTileFlags(pos)
@@ -1590,7 +1587,7 @@ function Design:get_designation(x, y, z)
 
         -- If not completed surrounded, then use outer tile
         for i, d in ipairs(darr) do
-            if not (self.shape:get_point(top_left.x + x + d[1], top_left.y + y + d[2])) then
+            if not (self.shape:get_point(top_left.x + point.x + d[1], top_left.y + point.y + d[2])) then
                 return building_outer_tiles
             end
         end
@@ -1621,7 +1618,7 @@ function Design:commit()
                 data[zlevel][row] = {}
                 for col = 0, math.abs(bot_right.x - top_left.x) do
                     if grid[col] and grid[col][row] then
-                        local desig = self:get_designation(col, row, zlevel)
+                        local desig = self:get_designation(Point{col, row, zlevel})
                         if desig ~= "`" then
                             data[zlevel][row][col] =
                             desig .. (mode ~= "build" and tostring(self.prio) or "")
