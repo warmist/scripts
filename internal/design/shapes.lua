@@ -516,6 +516,7 @@ function Line:update(points, extra_points)
     self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
+    if not top_left or not bot_right then return end
     self.arr = {}
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
