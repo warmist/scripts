@@ -1302,7 +1302,7 @@ function Design:onRenderFrame(dc, rect)
         self.needs_update = false
         self:add_shape_options()
         self:updateLayout()
-        plugin.clear_shape(self.shape.arr)
+        plugin.design_clear_shape(self.shape.arr)
     end
 
     -- Generate bounds based on the shape's dimensions
@@ -1352,7 +1352,7 @@ function Design:onRenderFrame(dc, rect)
         end
     end
 
-    plugin.draw_shape(self.shape.arr)
+    plugin.design_draw_shape(self.shape.arr)
 
     if #self.marks >= self.shape.min_points and self.shape.basic_shape then
         local shape_top_left, shape_bot_right = self.shape:get_point_dims()
@@ -1362,18 +1362,18 @@ function Design:onRenderFrame(dc, rect)
             Point { x = shape_top_left.x, y = shape_bot_right.y },
             Point { x = shape_bot_right.x, y = shape_top_left.y }
         }
-        plugin.draw_points({ drag_points, "drag_point" })
+        plugin.design_draw_points({ drag_points, "drag_point" })
     else
-        plugin.draw_points({ self.marks, "drag_point" })
+        plugin.design_draw_points({ self.marks, "drag_point" })
     end
 
-    plugin.draw_points({ self.extra_points, "extra_point" })
+    plugin.design_draw_points({ self.extra_points, "extra_point" })
 
     if (self.shape.basic_shape and #self.marks == self.shape.max_points) or
         (not self.shape.basic_shape and not self.placing_mark.active and #self.marks > 0) then
-        plugin.draw_points({ { self.shape:get_center() }, "extra_point" })
+        plugin.design_draw_points({ { self.shape:get_center() }, "extra_point" })
     end
-    plugin.draw_points({ { self.mirror_point }, "extra_point" })
+    plugin.design_draw_points({ { self.mirror_point }, "extra_point" })
 
 end
 
