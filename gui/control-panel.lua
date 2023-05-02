@@ -53,6 +53,7 @@ local SYSTEM_SERVICES = {
 }
 local SYSTEM_USER_SERVICES = {
     'faststart',
+    'work-now',
 }
 for _,v in ipairs(SYSTEM_USER_SERVICES) do
     table.insert(SYSTEM_SERVICES, v)
