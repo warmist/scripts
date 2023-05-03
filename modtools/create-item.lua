@@ -289,8 +289,6 @@ function hackWish(accessors, opts)
     if not itemok then return end
     local matok, mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric = accessors.get_mat(itemtype, opts)
     if not matok then return end
-    print(mattype, matindex, casteId, bodypart, partlayerID, corpsepieceGeneric)
-    print(dfhack.matinfo.getToken(mattype, matindex))
     if not no_quality_item_types[df.item_type[itemtype]] then
         qualityok, quality = accessors.get_quality()
         if not qualityok then return end
@@ -392,7 +390,9 @@ local accessors = {
         if df.item_type[itype] ~= 'CORPSEPIECE' then
             return true, mat_info['type'], mat_info.index, caste, -1
         end
-        -- TODO: also return bodypart, partlayerID, corpsepieceGeneric
+        -- support only generic corpse pieces for now. this can be extended to support
+        -- everything that gui/create-item can produce, but we need more commandline
+        -- arguments to provide the info
         return true, -1, mat_info.index, caste, 1, 0, true
     end,
     get_quality = function()
