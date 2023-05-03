@@ -20,6 +20,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `gui/create-item`: ask for number of items to spawn by default
 
 ## Removed
 
