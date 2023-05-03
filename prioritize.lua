@@ -10,25 +10,25 @@ local persist = require('persist-table')
 local GLOBAL_KEY = 'prioritize' -- used for state change hooks and persistence
 
 local DEFAULT_HAUL_LABORS = {'Food', 'Body', 'Animals'}
-local DEFAULT_REACTION_NAMES = {'TAN_A_HIDE'}
+local DEFAULT_REACTION_NAMES = {'TAN_A_HIDE', 'ADAMANTINE_WAFERS'}
 local DEFAULT_JOB_TYPES = {
     -- take care of rottables before they rot
-    'StoreItemInStockpile', 'CustomReaction', 'PrepareRawFish',
+    'StoreItemInStockpile', 'CustomReaction', 'StoreItemInBarrel',
+    'PrepareRawFish', 'PlaceItemInTomb',
     -- ensure medical, hygiene, and hospice tasks get done
-    'CleanSelf', 'RecoverWounded', 'ApplyCast', 'BringCrutch', 'CleanPatient',
-    'DiagnosePatient', 'DressWound', 'GiveFood', 'GiveWater', 'ImmobilizeBreak',
-    'PlaceInTraction', 'SetBone', 'Surgery', 'Suture',
-    -- organize items efficiently so new items can be brought to the stockpiles
-    'StoreItemInVehicle', 'StoreItemInBag', 'StoreItemInBarrel',
-    'StoreItemInLocation', 'StoreItemInBin', 'PushTrackVehicle',
+    'ApplyCast', 'BringCrutch', 'CleanPatient', 'CleanSelf',
+    'DiagnosePatient', 'DressWound', 'GiveFood', 'GiveWater',
+    'ImmobilizeBreak', 'PlaceInTraction', 'RecoverWounded',
+    'SeekInfant', 'SetBone', 'Surgery', 'Suture',
     -- ensure prisoners and animals are tended to quickly
-    'TameAnimal', 'TrainAnimal', 'TrainHuntingAnimal', 'TrainWarAnimal',
-    'PenLargeAnimal', 'PitLargeAnimal', 'SlaughterAnimal',
-    -- when these things come up, get them done ASAP
-    'ManageWorkOrders', 'TradeAtDepot', 'BringItemToDepot', 'DumpItem',
-    'DestroyBuilding', 'RemoveConstruction', 'PullLever', 'FellTree',
-    'FireBallista', 'FireCatapult', 'OperatePump', 'CollectSand', 'MakeArmor',
-    'MakeWeapon',
+    -- (Animal/prisoner storage already covered by 'StoreItemInStockpile' above)
+    'SlaughterAnimal',
+    -- ensure noble tasks never get starved
+    'InterrogateSubject', 'ManageWorkOrders', 'ReportCrime', 'TradeAtDepot',
+    -- get tasks done quickly that might block the player from getting on to
+    -- the next thing they want to do
+    'BringItemToDepot', 'DestroyBuilding', 'DumpItem', 'FellTree',
+    'RemoveConstruction',
 }
 
 -- set of job types that we are watching. maps job_type (as a number) to
@@ -587,8 +587,15 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
-    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-    g_watched_job_matchers = persisted_data or {}
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
+    -- sometimes the keys come back as strings; fix that up
+    for k,v in pairs(persisted_data) do
+        if type(k) == 'string' then
+            persisted_data[tonumber(k)] = v
+            persisted_data[k] = nil
+        end
+    end
+    g_watched_job_matchers = persisted_data
     update_handlers()
 end
 

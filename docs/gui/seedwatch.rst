@@ -3,7 +3,7 @@ gui/seedwatch
 
 .. dfhack-tool::
     :summary: Manages seed and plant cooking based on seed stock levels.
-    :tags: fort auto stockpiles
+    :tags: fort auto plants
 
 This is the configuration interface for the `seedwatch` plugin. You can configure
 a target stock amount for each seed type. If the number of seeds of that type falls
