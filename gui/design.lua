@@ -155,7 +155,6 @@ HELP_PEN_CENTER, CONFIGURE_PEN_CENTER = get_icon_pens()
 -- Debug window
 
 SHOW_DEBUG_WINDOW = false
-DEBUG_PROFILING = true
 
 local function table_to_string(tbl, indent)
     indent = indent or ""
