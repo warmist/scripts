@@ -29,23 +29,22 @@ function fixInstruments(args)
             dry_run = true
         end
     end
-    for _, item in ipairs(df.global.world.items.all) do
-        if item:getType() == df.item_type.INSTRUMENT then
-            for i, ref in pairs(item.general_refs) do
-                if ref:getType() == df.general_ref_type.ACTIVITY_EVENT then
-                    local activity = df.activity_entry.find(ref.activity_id)
-                    if not activity then
-                        if not dry_run then
-                            --remove dead activity reference
-                            item.general_refs:erase(i)
-                            if item.flags.in_job then
-                                --remove stuck in_job flag if true
-                                item.flags.in_job = false
-                            end
+
+    for _, item in ipairs(df.global.world.items.other.INSTRUMENT) do
+        for i, ref in pairs(item.general_refs) do
+            if ref:getType() == df.general_ref_type.ACTIVITY_EVENT then
+                local activity = df.activity_entry.find(ref.activity_id)
+                if not activity then
+                    if not dry_run then
+                        --remove dead activity reference
+                        item.general_refs:erase(i)
+                        if item.flags.in_job then
+                            --remove stuck in_job flag if true
+                            item.flags.in_job = false
                         end
-                        fixed = fixed + 1
-                        break
                     end
+                    fixed = fixed + 1
+                    break
                 end
             end
         end
