@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `exportlegends`: export extended legends information for external browsing
+- `modtools/create-item`: commandline and API interface for creating items
 
 ## Fixes
 
