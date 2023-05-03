@@ -1,6 +1,9 @@
 -- Author: Ajhaa
 
 -- lists books that contain secrets to life and death
+local utils = require("utils")
+local argparse = require("argparse")
+
 
 function get_book_interactions(item)
     local book_interactions = {}
@@ -21,13 +24,6 @@ function get_book_interactions(item)
     end
 
     return book_interactions
-end
-
--- should we check that the interaction is actually a SECRET
-function is_secrets_book(item)
-    local interactions = get_book_interactions(item)
-
-    return next(interactions) ~= nil
 end
 
 function check_slab_secrets(item)
@@ -57,8 +53,8 @@ function print_interactions(interactions)
     end
 end
 
-function necronomicon(scope)
-    if scope == "fort" then
+function necronomicon(include_slabs)
+    if include_slabs then
         print("SLABS:")
         for _, item in ipairs(df.global.world.items.other.SLAB) do
             if check_slab_secrets(item) then
@@ -67,44 +63,33 @@ function necronomicon(scope)
                 print(dfhack.df2console(name))
             end
         end
-        print("\nBOOKS:")
-        for _, item in ipairs(df.global.world.items.other.BOOK) do
-            if is_secrets_book(item) then
-                print(item.title)
-                print_interactions(interactions)
-            end
-        end
-    elseif scope == "world" then
-        -- currently not in use by the script, because the information might be invalid and useless
-        -- use written contents instead of artifacts?
-        for _, artifact in ipairs(df.global.world.artifacts.all) do
-            local item = artifact.item
+        print()
+    end
+    print("BOOKS:")
+    for _, item in ipairs(df.global.world.items.other.BOOK) do
+        local interactions = get_book_interactions(item)
 
-            if item._type == df.item_bookst then
-                local interactions = get_book_interactions(item)
-                if next(interactions) ~= nil then
-                    print(item.title, artifact.id)
-                    print_interactions(interactions)
-                end
-            end
-
-            if item._type == df.item_slabst then
-                if check_slab_secrets(item) then
-                    local name = dfhack.TranslateName(artifact.name)
-                    print(dfhack.df2console(name))
-                end
-            end
+        if next(interactions) ~= nil then
+            print(item.title)
+            print_interactions(interactions)
         end
     end
 end
 
 
-local args = {...}
+local help = false
+local include_slabs = false
+local args = argparse.processArgsGetopt({...}, {
+    {"s", "include-slabs", handler=function() include_slabs = true end},
+    {"h", "help", handler=function() help = true end}
+})
+
 local cmd = args[1]
 
-
-if cmd == "" or cmd == nil then
-    necronomicon("fort")
+if help or cmd == "help" then
+    print(dfhack.script_help())
+elseif cmd == nil or cmd == "" then
+    necronomicon(include_slabs)
 else
-    print("invalid argument")
+    print("necronomicon: Invalid argument \"" .. cmd .. "\"")
 end
