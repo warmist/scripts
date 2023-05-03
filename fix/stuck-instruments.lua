@@ -23,7 +23,7 @@ function fixInstruments(args)
     local fixed = 0
     for _, arg in pairs(args) do
         if args[1]:match('-h') or args[1]:match('help') then
-            print(help)
+            print(dfhack.script_help())
             return
         elseif args[1]:match('-n') or args[1]:match('dry') then
             dry_run = true
