@@ -226,7 +226,7 @@ function ModmanageMenu:init()
                 default_set = true
             end
         end
-    
+
         presetList:setChoices(presets)
     end
 
@@ -236,7 +236,7 @@ function ModmanageMenu:init()
             load_preset(idx)
         end,
     }
-    
+
     refresh_list()
 
     self:addviews{
@@ -251,10 +251,10 @@ function ModmanageMenu:init()
                     local existing_idx = find_preset_by_name(t)
                     if existing_idx then
                         dialogs.showYesNoPrompt(
-                            "Confirmation", 
+                            "Confirmation",
                             "Overwrite " .. t .. "?",
-                            nil, 
-                            function() 
+                            nil,
+                            function()
                                 overwrite_preset(existing_idx)
                                 refresh_list()
                             end
@@ -282,17 +282,17 @@ function ModmanageMenu:init()
 
                 dialogs.showInputPrompt("Enter new name", nil, nil, current.name, function(t)
                     local existing_idx = find_preset_by_name(t)
-                    
+
                     if existing_idx then
                         if existing_idx == idx then
                             return
                         end
 
                         dialogs.showYesNoPrompt(
-                            "Confirmation", 
+                            "Confirmation",
                             "Overwrite " .. t .. "?",
-                            nil, 
-                            function() 
+                            nil,
+                            function()
                                 remove_preset(existing_idx)
                                 rename_preset(idx, t)
                                 refresh_list()
@@ -333,9 +333,9 @@ function ModmanageMenu:init()
                 end
 
                 dialogs.showYesNoPrompt(
-                    "Confirmation", 
-                    "Delete " .. current.text .. "?", 
-                    nil, 
+                    "Confirmation",
+                    "Delete " .. current.text .. "?",
+                    nil,
                     function()
                         remove_preset(idx)
                         refresh_list()
@@ -452,7 +452,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
                         notification_overlay_instance.subviews.lbl:setText("*** Loaded mod list '" .. v.name .. "'!")
                         notification_overlay_end = dfhack.getTickCount() + 5000
                     end
-                    
+
                     break
                 end
             end
