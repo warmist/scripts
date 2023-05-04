@@ -1,6 +1,6 @@
 -- Author: Ajhaa
 
--- lists books that contain secrets to life and death
+-- lists books that contain secrets of life and death
 local utils = require("utils")
 local argparse = require("argparse")
 
@@ -11,7 +11,7 @@ function get_book_interactions(item)
         if improvement._type == df.itemimprovement_pagesst or
            improvement._type == df.itemimprovement_writingst then
             for _, content_id in ipairs(improvement.contents) do
-                written_content = df.written_content.find(content_id)
+                local written_content = df.written_content.find(content_id)
 
                 for _, ref in ipairs (written_content.refs) do
                     if ref._type == df.general_ref_interactionst then
@@ -58,8 +58,8 @@ function necronomicon(include_slabs)
         print("SLABS:")
         for _, item in ipairs(df.global.world.items.other.SLAB) do
             if check_slab_secrets(item) then
-                artifact = get_item_artifact(item)
-                name = dfhack.TranslateName(artifact.name)
+                local artifact = get_item_artifact(item)
+                local name = dfhack.TranslateName(artifact.name)
                 print(dfhack.df2console(name))
             end
         end
