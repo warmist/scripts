@@ -25,7 +25,7 @@ that repo.
 # 50.08-r1
 
 ## New Scripts
-- `gui/modlistman`: a simple gui mod list manager
+- `gui/mod-manager`: a simple gui mod list manager, replaces the old `gui/mod-manager` script
 
 ## Fixes
 - `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
