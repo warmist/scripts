@@ -1,6 +1,8 @@
 -- shape definitions for gui/dig
 --@ module = true
 
+local Point = reqscript("internal/design/util").Point
+
 if not dfhack_flags.module then
     qerror("this script cannot be called directly")
 end
@@ -60,7 +62,7 @@ function Shape:get_point_dims()
         max_y = math.max(max_y, point.y)
     end
 
-    return { x = min_x, y = min_y }, { x = max_x, y = max_y }
+    return Point{ x = min_x, y = min_y }, Point{ x = max_x, y = max_y }
 end
 
 -- Get dimensions as defined by the array of the shape
@@ -161,8 +163,8 @@ function Shape:get_center()
     -- Simple way to get the center defined by the point dims
     if #self.points == 0 then return nil, nil end
     local top_left, bot_right = self:get_point_dims()
-    return math.floor((bot_right.x - top_left.x) / 2) + top_left.x,
-        math.floor((bot_right.y - top_left.y) / 2) + top_left.y
+    return Point{x = math.floor((bot_right.x - top_left.x) / 2) + top_left.x,
+        y = math.floor((bot_right.y - top_left.y) / 2) + top_left.y}
 
 end
 
@@ -516,6 +518,7 @@ function Line:update(points, extra_points)
     self.num_tiles = 0
     self.points = copyall(points)
     local top_left, bot_right = self:get_point_dims()
+    if not top_left or not bot_right then return end
     self.arr = {}
     self.height = bot_right.x - top_left.x
     self.width = bot_right.y - top_left.y
