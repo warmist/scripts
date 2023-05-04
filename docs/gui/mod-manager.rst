@@ -1,5 +1,5 @@
 gui/mod-manager
-==============
+===============
 
 .. dfhack-tool::
     :summary: Simple modlist manager.
