@@ -67,19 +67,37 @@ local function find(t, predicate)
     return nil
 end
 
+local regionBiomeMap = {}
 local biomesMap = {}
 local biomeList = {}
-local function gatherBiomeInfo()
+local function gatherBiomeInfo(z)
     local maxX, maxY, maxZ = dfhack.maps.getTileSize()
     maxX = maxX - 1; maxY = maxY - 1; maxZ = maxZ - 1
 
-    local z = df.global.window_z
+    local z = z or df.global.window_z
 
+    --for z = 0, maxZ do
     for y = 0, maxY do
         for x = 0, maxX do
             local rgnX, rgnY = dfhack.maps.getTileBiomeRgn(x,y,z)
-            local biomeTypeId = dfhack.maps.getBiomeType(rgnX, rgnY)
-            local biome = dfhack.maps.getRegionBiome(rgnX, rgnY)
+            if rgnX == nil then goto continue end
+            
+            local regionBiomesX = regionBiomeMap[rgnX]
+            if not regionBiomesX then
+                regionBiomesX = {}
+                regionBiomeMap[rgnX] = regionBiomesX
+            end
+            local regionBiomesXY = regionBiomesX[rgnY]
+            if not regionBiomesXY then
+                regionBiomesXY = {
+                    biomeTypeId = dfhack.maps.getBiomeType(rgnX, rgnY),
+                    biome = dfhack.maps.getRegionBiome(rgnX, rgnY),
+                }
+                regionBiomesX[rgnY] = regionBiomesXY
+            end
+
+            local biomeTypeId = regionBiomesXY.biomeTypeId
+            local biome = regionBiomesXY.biome
 
             local biomesZ = biomesMap[z]
             if not biomesZ then
@@ -103,8 +121,11 @@ local function gatherBiomeInfo()
             end
 
             biomesZY[x] = ix
+
+            ::continue::
         end
     end
+    --end
 end
 
 gatherBiomeInfo()
@@ -155,12 +176,21 @@ function BiomeVisualizerLegend:init()
             frame = { t = 0 },
             text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
             --cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
-            --on_select = self:callback('onSelectEntry'),
+            on_select = self:callback('onSelectEntry'),
         },
     }
 
-    local choices = {}
-    for _, biomeExt in ipairs(biomeList) do
+    self:UpdateChoices()
+end
+
+function BiomeVisualizerLegend:onSelectEntry(idx, option)
+    self.SelectedIndex = idx
+end
+
+function BiomeVisualizerLegend:UpdateChoices()
+    local choices = self.subviews.list:getChoices() or {}
+    for i = #choices + 1, #biomeList do
+        local biomeExt = biomeList[i]
         table.insert(choices, {
             text = ([[%s: %s]]):format(biomeExt.char, GetBiomeName(biomeExt.biome, biomeExt.typeId)),
             biomeTypeId = biomeExt.typeId,
@@ -186,21 +216,32 @@ local function getMapViewBounds()
 end
 
 function BiomeVisualizer:init()
-    self:addviews{BiomeVisualizerLegend{}}
+    self:addviews{BiomeVisualizerLegend{view_id = 'legend'}}
 end
 
 function BiomeVisualizer:onRenderFrame(dc, rect)
     BiomeVisualizer.super.onRenderFrame(dc, rect)
 
+    local z = df.global.window_z
+    if not biomesMap[z] then
+        gatherBiomeInfo(z)
+        self.subviews.legend:UpdateChoices()
+    end
+
     local function get_overlay_pen(pos)
+        local self = self
         local safe_index = safe_index
         -- 304 = `0`, 353 = `a`
         local idxBaseTile = 353
+        -- 2586 = yellow-ish indicator
+        local idxHighlightedTile = 2585
         local biomes = biomesMap
 
         local N = safe_index(biomes, pos.z, pos.y, pos.x)
         if not N then return end
-        return COLOR_RED, tostring(N), idxBaseTile + (N - 1)
+
+        local idxTile = (N == self.subviews.legend.SelectedIndex) and idxHighlightedTile or idxBaseTile + (N - 1)
+        return COLOR_RED, tostring(N), idxTile
     end
 
     guidm.renderMapOverlay(get_overlay_pen, nil) -- nil for bounds means entire viewport
@@ -208,6 +249,10 @@ end
 
 function BiomeVisualizer:onDismiss()
     view = nil
+end
+
+if not dfhack.isMapLoaded() then
+    qerror('gui/biomes requires a map to be loaded')
 end
 
 view = view and view:raise() or BiomeVisualizer{}:show()
