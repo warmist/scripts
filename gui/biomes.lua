@@ -117,13 +117,14 @@ BiomeVisualizerLegend.ATTRS {
     frame_title=TITLE,
     frame_inset=0,
     resizable=true,
+    resize_min={h=5, w = 14},
     autoarrange_subviews = true,
     autoarrange_gap = 1,
     frame = {
         w = 47,
         h = 10,
-        l = 5,
-        t = 8,
+        r = 2,
+        t = 18,
     },
 }
 
@@ -189,7 +190,7 @@ function BiomeVisualizer:init()
 end
 
 function BiomeVisualizer:onRenderFrame(dc, rect)
-    BiomeVisualizer.super.onRenderFrame()
+    BiomeVisualizer.super.onRenderFrame(dc, rect)
 
     local function get_overlay_pen(pos)
         local safe_index = safe_index
@@ -201,9 +202,8 @@ function BiomeVisualizer:onRenderFrame(dc, rect)
         if not N then return end
         return COLOR_RED, tostring(N), idxBaseTile + (N - 1)
     end
-    local overlay_bounds = getMapViewBounds()
 
-    guidm.renderMapOverlay(get_overlay_pen, overlay_bounds)
+    guidm.renderMapOverlay(get_overlay_pen, nil) -- nil for bounds means entire viewport
 end
 
 function BiomeVisualizer:onDismiss()
