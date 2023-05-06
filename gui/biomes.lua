@@ -1,5 +1,7 @@
 -- Show biomes on the map.
 
+local RELOAD = false -- set to true to help with debugging
+
 local gui = require('gui')
 local widgets = require('gui.widgets')
 local guidm = require('gui.dwarfmode')
@@ -130,17 +132,17 @@ end
 
 gatherBiomeInfo()
 
+--------------------------------------------------------------------------------
+
 local TITLE = "Biomes"
 
-BiomeVisualizerLegend = nil -- for debugging purposes
+if RELOAD then BiomeVisualizerLegend = nil end
 BiomeVisualizerLegend = defclass(BiomeVisualizerLegend, widgets.Window)
 BiomeVisualizerLegend.ATTRS {
     frame_title=TITLE,
     frame_inset=0,
     resizable=true,
     resize_min={h=5, w = 14},
-    autoarrange_subviews = true,
-    autoarrange_gap = 1,
     frame = {
         w = 47,
         h = 10,
@@ -174,8 +176,7 @@ function BiomeVisualizerLegend:init()
         widgets.List{
             view_id = 'list',
             frame = { t = 0 },
-            text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-            --cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
+            text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
             on_select = self:callback('onSelectEntry'),
         },
     }
@@ -194,11 +195,128 @@ function BiomeVisualizerLegend:UpdateChoices()
         table.insert(choices, {
             text = ([[%s: %s]]):format(biomeExt.char, GetBiomeName(biomeExt.biome, biomeExt.typeId)),
             biomeTypeId = biomeExt.typeId,
+            biome = biomeExt.biome,
         })
     end
     self.subviews.list:setChoices(choices)
 end
 
+do -- implementation of onMouseHoverEntry(idx, option)
+    function BiomeVisualizerLegend:onRenderFrame(dc, rect)
+        BiomeVisualizerLegend.super.onRenderFrame(self, dc, rect)
+
+        local list = self.subviews.list
+        local currentHoverIx = list:getIdxUnderMouse()
+        local oldIx = self.HoverIndex
+        if currentHoverIx ~= oldIx then
+            self.HoverIndex = currentHoverIx
+            if self.onMouseHoverEntry then
+                local choices = list:getChoices()
+                self:onMouseHoverEntry(currentHoverIx, choices[currentHoverIx])
+            end
+        end
+    end
+end
+
+local function add_field_text(lines, biome, field_name)
+    lines[#lines+1] = ("%s: %s"):format(field_name, biome[field_name])
+    lines[#lines+1] = NEWLINE
+end
+
+function BiomeVisualizerLegend:onMouseHoverEntry(idx, option)
+    if not idx then
+        self:ShowTooltip(nil)
+        return
+    end
+
+    local text = {}
+    text[#text+1] = ("type: %s"):format(df.biome_type[option.biomeTypeId])
+    text[#text+1] = NEWLINE
+
+    local biome = option.biome
+
+    add_field_text(text, biome, "savagery")
+    add_field_text(text, biome, "evilness")
+    table.insert(text, NEWLINE)
+
+    add_field_text(text, biome, "elevation")
+    add_field_text(text, biome, "rainfall")
+    add_field_text(text, biome, "drainage")
+    add_field_text(text, biome, "vegetation")
+    add_field_text(text, biome, "temperature")
+    add_field_text(text, biome, "volcanism")
+    table.insert(text, NEWLINE)
+
+    local flags = biome.flags
+    if flags.is_lake then
+        text[#text+1] = "lake"
+        text[#text+1] = NEWLINE
+    end
+    if flags.is_brook then
+        text[#text+1] = "brook"
+        text[#text+1] = NEWLINE
+    end
+
+    self:ShowTooltip(text)
+end
+
+function BiomeVisualizerLegend:ShowTooltip(text)
+    self.TooltipWindow = self.TooltipWindow or self.parent_view.subviews.legend_tooltip
+    self.TooltipWindow:ShowTooltip(text)
+end
+
+--------------------------------------------------------------------------------
+
+if RELOAD then TooltipWindow = nil end
+TooltipWindow = defclass(TooltipWindow, widgets.Window)
+
+local function calc_tooltip_frame(frame)
+    local frame = copyall(frame)
+    frame.t = frame.t + frame.h
+    frame.h = 15
+    return frame
+end
+
+TooltipWindow.ATTRS {
+    visible = false,
+    frame_title=DEFAULT_NIL,
+    frame_inset=0,
+    resizable=false,
+    frame_style = gui.PANEL_FRAME,
+    autoarrange_subviews = true,
+    autoarrange_gap = 0,
+    frame = calc_tooltip_frame(BiomeVisualizerLegend.ATTRS.frame),
+    --
+    parent_window = DEFAULT_NIL,
+}
+
+function TooltipWindow:init()
+    self:addviews{
+        widgets.Label{
+            view_id = 'label',
+            frame = {t = 0, h = 1000},
+            auto_height = false,
+            --wtf??? without this the label is always a single line
+            text={NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,}
+        },
+    }
+end
+
+function TooltipWindow:ShowTooltip(text)
+    if not text or text == "" or not self.parent_window then
+        self.visible = false
+        return
+    end
+
+    local parent = self.parent_window
+    local lbl = self.subviews.label
+    lbl:setText(text)
+    self.visible = true
+end
+
+--------------------------------------------------------------------------------
+
+if RELOAD then BiomeVisualizer = nil end
 BiomeVisualizer = defclass(BiomeVisualizer, gui.ZScreen)
 BiomeVisualizer.ATTRS{
     focus_path='BiomeVisualizer',
@@ -216,11 +334,13 @@ local function getMapViewBounds()
 end
 
 function BiomeVisualizer:init()
-    self:addviews{BiomeVisualizerLegend{view_id = 'legend'}}
+    local legend = BiomeVisualizerLegend{view_id = 'legend'}
+    local legend_tooltip = TooltipWindow{view_id = 'legend_tooltip', parent_window = legend}
+    self:addviews{legend, legend_tooltip}
 end
 
 function BiomeVisualizer:onRenderFrame(dc, rect)
-    BiomeVisualizer.super.onRenderFrame(dc, rect)
+    BiomeVisualizer.super.onRenderFrame(self, dc, rect)
 
     local z = df.global.window_z
     if not biomesMap[z] then
@@ -253,6 +373,10 @@ end
 
 if not dfhack.isMapLoaded() then
     qerror('gui/biomes requires a map to be loaded')
+end
+
+if RELOAD and view then
+    view:dismiss()
 end
 
 view = view and view:raise() or BiomeVisualizer{}:show()
