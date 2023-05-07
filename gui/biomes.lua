@@ -6,6 +6,9 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 local guidm = require('gui.dwarfmode')
 
+local TILE_HIGHLIGHTED = 2585 -- yellow-ish indicator
+local TILE_STARTING_SYMBOL = 353 -- `a`
+
 local biomeTypeNames = {
     MOUNTAIN = "Mountain",
     GLACIER = "Glacier",
@@ -176,12 +179,26 @@ function BiomeVisualizerLegend:init()
         widgets.List{
             view_id = 'list',
             frame = { t = 0 },
+            icon_width = 1,
             text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
             on_select = self:callback('onSelectEntry'),
         },
     }
 
     self:UpdateChoices()
+end
+
+local PEN_ACTIVE_ICON = dfhack.pen.parse{tile=TILE_HIGHLIGHTED}
+local PEN_NO_ICON = nil
+
+function BiomeVisualizerLegend:get_icon_pen_callback(ix)
+    return function ()
+        if self.SelectedIndex == ix then
+            return PEN_ACTIVE_ICON
+        else
+            return PEN_NO_ICON
+        end
+    end
 end
 
 function BiomeVisualizerLegend:onSelectEntry(idx, option)
@@ -194,6 +211,7 @@ function BiomeVisualizerLegend:UpdateChoices()
         local biomeExt = biomeList[i]
         table.insert(choices, {
             text = ([[%s: %s]]):format(biomeExt.char, GetBiomeName(biomeExt.biome, biomeExt.typeId)),
+            icon = self:get_icon_pen_callback(#choices+1),
             biomeTypeId = biomeExt.typeId,
             biome = biomeExt.biome,
         })
@@ -322,17 +340,6 @@ BiomeVisualizer.ATTRS{
     focus_path='BiomeVisualizer',
 }
 
-local function getMapViewBounds()
-    local dims = dfhack.gui.getDwarfmodeViewDims()
-    local x = df.global.window_x
-    local y = df.global.window_y
-    return {x1 = dims.map_x1 + x,
-            y1 = dims.map_y1 + y,
-            x2 = dims.map_x2 + x,
-            y2 = dims.map_y2 + y,
-    }
-end
-
 function BiomeVisualizer:init()
     local legend = BiomeVisualizerLegend{view_id = 'legend'}
     local legend_tooltip = TooltipWindow{view_id = 'legend_tooltip', parent_window = legend}
@@ -351,17 +358,20 @@ function BiomeVisualizer:onRenderFrame(dc, rect)
     local function get_overlay_pen(pos)
         local self = self
         local safe_index = safe_index
-        -- 304 = `0`, 353 = `a`
-        local idxBaseTile = 353
-        -- 2586 = yellow-ish indicator
-        local idxHighlightedTile = 2585
         local biomes = biomesMap
 
         local N = safe_index(biomes, pos.z, pos.y, pos.x)
         if not N then return end
 
-        local idxTile = (N == self.subviews.legend.SelectedIndex) and idxHighlightedTile or idxBaseTile + (N - 1)
-        return COLOR_RED, tostring(N), idxTile
+        local idxSelected = self.subviews.legend.SelectedIndex
+        local idxTile = (N == idxSelected)
+                    and TILE_HIGHLIGHTED
+                    or TILE_STARTING_SYMBOL + (N-1)
+        local color = (N == idxSelected)
+                    and COLOR_CYAN
+                    or COLOR_GREY
+        local ch = string.char(string.byte('a') + (N-1))
+        return color, ch, idxTile
     end
 
     guidm.renderMapOverlay(get_overlay_pen, nil) -- nil for bounds means entire viewport
