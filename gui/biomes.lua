@@ -86,7 +86,7 @@ local function gatherBiomeInfo(z)
         for x = 0, maxX do
             local rgnX, rgnY = dfhack.maps.getTileBiomeRgn(x,y,z)
             if rgnX == nil then goto continue end
-            
+
             local regionBiomesX = regionBiomeMap[rgnX]
             if not regionBiomesX then
                 regionBiomesX = {}
