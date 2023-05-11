@@ -313,8 +313,6 @@ function BiomeVisualizerLegend:ShowTooltip(option)
     local lbl = tooltip_panel.subviews.label
 
     lbl:setText(text)
-
-    -- tooltip_panel:updateLayout()
 end
 
 --------------------------------------------------------------------------------
