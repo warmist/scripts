@@ -2,7 +2,7 @@ gui/biomes
 ==========
 
 .. dfhack-tool::
-    :summary: Shows biomes map overlay.
+    :summary: Visualize and inspect biome regions on the map.
     :tags: fort inspection map
 
 This script shows biomes map overlay.
