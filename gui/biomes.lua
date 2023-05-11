@@ -1,6 +1,6 @@
 -- Visualize and inspect biome regions on the map.
 
-local RELOAD = false -- set to true to help with debugging
+local RELOAD = false -- set to true when actively working on this script
 
 local gui = require('gui')
 local widgets = require('gui.widgets')
