@@ -145,15 +145,16 @@ gatherBiomeInfo(0)
 local TITLE = "Biomes"
 
 if RELOAD then BiomeVisualizerLegend = nil end
+local DEFAULT_LIST_HEIGHT = 5
 BiomeVisualizerLegend = defclass(BiomeVisualizerLegend, widgets.Window)
 BiomeVisualizerLegend.ATTRS {
     frame_title=TITLE,
     frame_inset=0,
-    resizable=true,
+    resizable=false,
     resize_min={h=5, w = 14},
     frame = {
         w = 47,
-        h = 10,
+        h = DEFAULT_LIST_HEIGHT + 2 + 15,
         r = 2,
         t = 18,
     },
@@ -180,15 +181,35 @@ local function GetBiomeName(biome, biomeTypeId)
 end
 
 function BiomeVisualizerLegend:init()
-    self:addviews{
-        widgets.List{
-            view_id = 'list',
-            frame = { t = 0 },
-            icon_width = 1,
-            text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
-            on_select = self:callback('onSelectEntry'),
+    local list = widgets.List{
+        view_id = 'list',
+        frame = { t = 0, h = DEFAULT_LIST_HEIGHT, w = self.frame.w },
+        frame_inset = 0,
+        icon_width = 1,
+        text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
+        on_select = self:callback('onSelectEntry'),
+    }
+    local tooltip_panel = widgets.Panel{
+        view_id='tooltip_panel',
+        autoarrange_subviews=true,
+        frame = { t = list.frame.h + 1, h = 15 },
+        frame_style=gui.INTERIOR_FRAME,
+        frame_background=gui.CLEAR_PEN,
+        subviews={
+            widgets.Label{
+                view_id='label',
+                text_to_wrap='',
+                scroll_keys={},
+            },
         },
     }
+    self:addviews{
+        list,
+        tooltip_panel,
+    }
+
+    self.list = list
+    self.tooltip_panel = tooltip_panel
 
     self:UpdateChoices()
 end
@@ -208,10 +229,13 @@ end
 
 function BiomeVisualizerLegend:onSelectEntry(idx, option)
     self.SelectedIndex = idx
+    self.SelectedOption = option
+
+    self:ShowTooltip(option)
 end
 
 function BiomeVisualizerLegend:UpdateChoices()
-    local choices = self.subviews.list:getChoices() or {}
+    local choices = self.list:getChoices() or {}
     for i = #choices + 1, #biomeList do
         local biomeExt = biomeList[i]
         table.insert(choices, {
@@ -221,14 +245,14 @@ function BiomeVisualizerLegend:UpdateChoices()
             biome = biomeExt.biome,
         })
     end
-    self.subviews.list:setChoices(choices)
+    self.list:setChoices(choices)
 end
 
 do -- implementation of onMouseHoverEntry(idx, option)
     function BiomeVisualizerLegend:onRenderFrame(dc, rect)
         BiomeVisualizerLegend.super.onRenderFrame(self, dc, rect)
 
-        local list = self.subviews.list
+        local list = self.list
         local currentHoverIx = list:getIdxUnderMouse()
         local oldIx = self.HoverIndex
         if currentHoverIx ~= oldIx then
@@ -246,12 +270,7 @@ local function add_field_text(lines, biome, field_name)
     lines[#lines+1] = NEWLINE
 end
 
-function BiomeVisualizerLegend:onMouseHoverEntry(idx, option)
-    if not idx then
-        self:ShowTooltip(nil)
-        return
-    end
-
+local function get_tooltip_text(option)
     local text = {}
     text[#text+1] = ("type: %s"):format(df.biome_type[option.biomeTypeId])
     text[#text+1] = NEWLINE
@@ -280,61 +299,22 @@ function BiomeVisualizerLegend:onMouseHoverEntry(idx, option)
         text[#text+1] = NEWLINE
     end
 
-    self:ShowTooltip(text)
+    return text
 end
 
-function BiomeVisualizerLegend:ShowTooltip(text)
-    self.TooltipWindow = self.TooltipWindow or self.parent_view.subviews.legend_tooltip
-    self.TooltipWindow:ShowTooltip(text)
+function BiomeVisualizerLegend:onMouseHoverEntry(idx, option)
+    self:ShowTooltip(option or self.SelectedOption)
 end
 
---------------------------------------------------------------------------------
+function BiomeVisualizerLegend:ShowTooltip(option)
+    local text = get_tooltip_text(option)
 
-if RELOAD then TooltipWindow = nil end
-TooltipWindow = defclass(TooltipWindow, widgets.Window)
+    local tooltip_panel = self.tooltip_panel
+    local lbl = tooltip_panel.subviews.label
 
-local function calc_tooltip_frame(frame)
-    local frame = copyall(frame)
-    frame.t = frame.t + frame.h
-    frame.h = 15
-    return frame
-end
-
-TooltipWindow.ATTRS {
-    visible = false,
-    frame_title=DEFAULT_NIL,
-    frame_inset=0,
-    resizable=false,
-    frame_style = gui.PANEL_FRAME,
-    autoarrange_subviews = true,
-    autoarrange_gap = 0,
-    frame = calc_tooltip_frame(BiomeVisualizerLegend.ATTRS.frame),
-    --
-    parent_window = DEFAULT_NIL,
-}
-
-function TooltipWindow:init()
-    self:addviews{
-        widgets.Label{
-            view_id = 'label',
-            frame = {t = 0, h = 1000},
-            auto_height = false,
-            --wtf??? without this the label is always a single line
-            text={NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,NEWLINE,}
-        },
-    }
-end
-
-function TooltipWindow:ShowTooltip(text)
-    if not text or text == "" or not self.parent_window then
-        self.visible = false
-        return
-    end
-
-    local parent = self.parent_window
-    local lbl = self.subviews.label
     lbl:setText(text)
-    self.visible = true
+
+    -- tooltip_panel:updateLayout()
 end
 
 --------------------------------------------------------------------------------
