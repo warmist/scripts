@@ -1,4 +1,4 @@
--- Show biomes on the map.
+-- Visualize and inspect biome regions on the map.
 
 local RELOAD = false -- set to true to help with debugging
 
@@ -6,8 +6,11 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 local guidm = require('gui.dwarfmode')
 
-local TILE_HIGHLIGHTED = 2585 -- yellow-ish indicator
-local TILE_STARTING_SYMBOL = 353 -- `a`
+local TILE_HIGHLIGHTED = dfhack.textures.getOnOffTexposStart() -- yellow-ish indicator
+if TILE_HIGHLIGHTED < 0 then -- use a fallback
+    TILE_HIGHLIGHTED = 88 -- `X`
+end
+local TILE_STARTING_SYMBOL = 97 -- `a`
 
 local biomeTypeNames = {
     MOUNTAIN = "Mountain",
@@ -338,6 +341,7 @@ if RELOAD then BiomeVisualizer = nil end
 BiomeVisualizer = defclass(BiomeVisualizer, gui.ZScreen)
 BiomeVisualizer.ATTRS{
     focus_path='BiomeVisualizer',
+    pass_movement_keys=true,
 }
 
 function BiomeVisualizer:init()
