@@ -136,7 +136,9 @@ local function gatherBiomeInfo(z)
     --end
 end
 
-gatherBiomeInfo()
+-- always gather info at the very bottom first: this ensures the important biomes are
+-- always in the same order (high up in the air strange things happen)
+gatherBiomeInfo(0)
 
 --------------------------------------------------------------------------------
 
