@@ -6,6 +6,9 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 local guidm = require('gui.dwarfmode')
 
+local INITIAL_LIST_HEIGHT = 5
+local INITIAL_INFO_HEIGHT = 15
+
 local TILE_HIGHLIGHTED = dfhack.textures.getOnOffTexposStart() -- yellow-ish indicator
 if TILE_HIGHLIGHTED < 0 then -- use a fallback
     TILE_HIGHLIGHTED = 88 -- `X`
@@ -145,16 +148,16 @@ gatherBiomeInfo(0)
 local TITLE = "Biomes"
 
 if RELOAD then BiomeVisualizerLegend = nil end
-local DEFAULT_LIST_HEIGHT = 5
 BiomeVisualizerLegend = defclass(BiomeVisualizerLegend, widgets.Window)
 BiomeVisualizerLegend.ATTRS {
     frame_title=TITLE,
     frame_inset=0,
-    resizable=false,
+    resizable=true,
     resize_min={h=5, w = 14},
     frame = {
         w = 47,
-        h = DEFAULT_LIST_HEIGHT + 2 + 15,
+        h = INITIAL_LIST_HEIGHT + 2 + INITIAL_INFO_HEIGHT,
+        -- just under the minimap:
         r = 2,
         t = 18,
     },
@@ -183,7 +186,7 @@ end
 function BiomeVisualizerLegend:init()
     local list = widgets.List{
         view_id = 'list',
-        frame = { t = 0, h = DEFAULT_LIST_HEIGHT, w = self.frame.w },
+        frame = { t = 0, b = INITIAL_INFO_HEIGHT + 1 },
         frame_inset = 0,
         icon_width = 1,
         text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
@@ -192,7 +195,7 @@ function BiomeVisualizerLegend:init()
     local tooltip_panel = widgets.Panel{
         view_id='tooltip_panel',
         autoarrange_subviews=true,
-        frame = { t = list.frame.h + 1, h = 15 },
+        frame = { b = 0, h = INITIAL_INFO_HEIGHT },
         frame_style=gui.INTERIOR_FRAME,
         frame_background=gui.CLEAR_PEN,
         subviews={
@@ -326,8 +329,7 @@ BiomeVisualizer.ATTRS{
 
 function BiomeVisualizer:init()
     local legend = BiomeVisualizerLegend{view_id = 'legend'}
-    local legend_tooltip = TooltipWindow{view_id = 'legend_tooltip', parent_window = legend}
-    self:addviews{legend, legend_tooltip}
+    self:addviews{legend}
 end
 
 function BiomeVisualizer:onRenderFrame(dc, rect)
@@ -371,6 +373,7 @@ end
 
 if RELOAD and view then
     view:dismiss()
+    -- view is nil now
 end
 
 view = view and view:raise() or BiomeVisualizer{}:show()
