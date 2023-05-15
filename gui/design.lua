@@ -1557,13 +1557,13 @@ function Design:get_designation(point)
         local stairs_top_type = self.subviews.stairs_top_subtype:getOptionValue()
         local stairs_middle_type = self.subviews.stairs_middle_subtype:getOptionValue()
         local stairs_bottom_type = self.subviews.stairs_bottom_subtype:getOptionValue()
-        if z == 0 then
+        if point.z == 0 then
             return stairs_bottom_type == "auto" and "u" or stairs_bottom_type
-        elseif view_bounds and z == math.abs(view_bounds.z1 - view_bounds.z2) then
+        elseif view_bounds and point.z == math.abs(view_bounds.z1 - view_bounds.z2) then
             local pos = Point { x = view_bounds.x1, y = view_bounds.y1, z = view_bounds.z1} + point
-            local tile_type = dfhack.maps.getTileType(pos)
+            local tile_type = dfhack.maps.getTileType({x = pos.x, y = pos.y, z = pos.z})
             local tile_shape = tile_type and tile_attrs[tile_type].shape or nil
-            local designation = dfhack.maps.getTileFlags(pos)
+            local designation = dfhack.maps.getTileFlags({x = pos.x, y = pos.y, z = pos.z})
 
             -- If top of the view_bounds is down stair, 'auto' should change it to up/down to match vanilla stair logic
             local up_or_updown_dug = (
@@ -1617,7 +1617,7 @@ function Design:commit()
                 data[zlevel][row] = {}
                 for col = 0, math.abs(bot_right.x - top_left.x) do
                     if grid[col] and grid[col][row] then
-                        local desig = self:get_designation(Point{col, row, zlevel})
+                        local desig = self:get_designation(Point{x = col, y = row, z = zlevel})
                         if desig ~= "`" then
                             data[zlevel][row][col] =
                             desig .. (mode ~= "build" and tostring(self.prio) or "")

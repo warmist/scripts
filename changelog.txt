@@ -19,6 +19,7 @@ that repo.
 - `necronomicon`: search fort for items containing the secrets of life and death
 
 ## Fixes
+- `gui/design`: Fix building and stairs designation
 
 ## Misc Improvements
 - `gui/create-item`: ask for number of items to spawn by default
