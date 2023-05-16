@@ -374,7 +374,8 @@ end
 
 ModmanageOverlay = defclass(ModmanageOverlay, overlay.OverlayWidget)
 ModmanageOverlay.ATTRS {
-    frame = { w=30, h=1 },
+    frame = { w=16, h=3 },
+    frame_style = gui.MEDIUM_FRAME,
     default_pos = { x=5, y=-5 },
     viewscreens = { "new_region/Mods" },
     default_enabled=true,
