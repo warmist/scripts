@@ -39,6 +39,7 @@ local FORT_AUTOSTART = {
     'ban-cooking all',
     'buildingplan set boulders false',
     'buildingplan set logs false',
+    'light-aquifers-only fort',
 }
 for _,v in ipairs(FORT_SERVICES) do
     table.insert(FORT_AUTOSTART, v)
@@ -351,12 +352,21 @@ function Services:get_enabled_map()
     return enabled_map
 end
 
+local function get_first_word(text)
+    local word = text:trim():split(' +')[1]
+    if word:startswith(':') then word = word:sub(2) end
+    print(text, word)
+    return word
+end
+
 function Services:get_choices()
     local enabled_map = self:get_enabled_map()
     local choices = {}
     local hide_armok = dfhack.getHideArmokTools()
     for _,service in ipairs(self.services_list) do
-        if not hide_armok or not helpdb.is_entry(service) or not helpdb.get_entry_tags(service).armok then
+        local entry_name = get_first_word(service)
+        if not hide_armok or not helpdb.is_entry(entry_name)
+                or not helpdb.get_entry_tags(entry_name).armok then
             table.insert(choices, {target=service, enabled=enabled_map[service]})
         end
     end
