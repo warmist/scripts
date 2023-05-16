@@ -1,7 +1,6 @@
 -- Save and restore lists of active mods.
 --@ module = true
 
-local argparse = require('argparse')
 local overlay = require('plugins.overlay')
 local gui = require('gui')
 local widgets = require('gui.widgets')
@@ -363,7 +362,7 @@ end
 
 ModmanageScreen = defclass(ModmanageScreen, gui.ZScreen)
 ModmanageScreen.ATTRS {
-    focus_path = "modman_screen",
+    focus_path = "mod-manager",
     defocusable = false,
 }
 

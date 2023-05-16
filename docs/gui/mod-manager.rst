@@ -2,7 +2,7 @@ gui/mod-manager
 ===============
 
 .. dfhack-tool::
-    :summary: Simple modlist manager.
+    :summary: Save and restore lists of active mods.
     :tags: dfhack interface
 
 Adds an optional overlay to the mod list screen that
