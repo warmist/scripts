@@ -1,17 +1,16 @@
--- Simple modlist manager
+-- Save and restore lists of active mods.
 --@ module = true
 
 local argparse = require('argparse')
 local overlay = require('plugins.overlay')
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local repeatutil = require('repeat-util')
 local dialogs = require('gui.dialogs')
 local json = require('json')
 local utils = require('utils')
 
-local presets_file = json.open("dfhack-config/modpresets.json")
-local GLOBAL_KEY = 'modlistloader'
+local presets_file = json.open("dfhack-config/mod-manager.json")
+local GLOBAL_KEY = 'mod-manager'
 
 local function get_newregion_viewscreen()
     local vs = dfhack.gui.getViewscreenByType(df.viewscreen_new_regionst, 0)
@@ -402,17 +401,17 @@ NotificationOverlay.ATTRS {
     default_pos = { x=3, y=-2 },
     viewscreens = { "new_region" },
     default_enabled=true,
-    focus_path = "modman_notification",
 }
 
+notification_message = ""
+next_notification_timer_call = 0
+notification_overlay_end = 0
 function NotificationOverlay:init()
-    notification_overlay_instance = self
-
     self:addviews{
         widgets.Label{
             frame = { l=0, t=0, w = 60, h = 1 },
             view_id = "lbl",
-            text = "",
+            text = {{ text = function() return notification_message end }},
             text_pen = { fg = COLOR_GREEN, bold = true, bg = nil },
 
         },
@@ -424,12 +423,10 @@ OVERLAY_WIDGETS = {
     notification = NotificationOverlay,
 }
 
-next_notification_timer_call = 0
-notification_overlay_end = 0
 function notification_timer_fn()
-    if notification_overlay_instance and #notification_overlay_instance.subviews.lbl.text > 0 then
+    if #notification_message > 0 then
         if notification_overlay_end < dfhack.getTickCount() then
-            notification_overlay_instance.subviews.lbl:setText("")
+            notification_message = ""
         end
     end
 
@@ -448,10 +445,8 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
                 if v.default then
                     load_preset(i)
 
-                    if notification_overlay_instance then
-                        notification_overlay_instance.subviews.lbl:setText("*** Loaded mod list '" .. v.name .. "'!")
-                        notification_overlay_end = dfhack.getTickCount() + 5000
-                    end
+                    notification_message = "*** Loaded mod list '" .. v.name .. "'!"
+                    notification_overlay_end = dfhack.getTickCount() + 5000
 
                     break
                 end

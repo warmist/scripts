@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `exportlegends`: export extended legends information for external browsing
+- `gui/mod-manager`: automatically restore your list of active mods when generating new worlds
 
 ## Fixes
 
@@ -23,9 +24,6 @@ that repo.
 ## Removed
 
 # 50.08-r1
-
-## New Scripts
-- `gui/mod-manager`: a simple gui mod list manager, replaces the old `gui/mod-manager` script
 
 ## Fixes
 - `deteriorate`: ensure remains of enemy dwarves are properly deteriorated
