@@ -16,7 +16,7 @@ that repo.
 ## New Scripts
 - `exportlegends`: reinstated: export extended legends information for external browsing
 - `modtools/create-item`: reinstated: commandline and API interface for creating items
-- `light-aquifers-only`: reinstated: convert heavy aquifers to light (available as an fort autostart option in `gui/control-panel`)
+- `light-aquifers-only`: reinstated: convert heavy aquifers to light
 - `necronomicon`: search fort for items containing the secrets of life and death
 
 ## Fixes
@@ -24,6 +24,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/create-item`: ask for number of items to spawn by default
+- `light-aquifers-only`: now available as an fort autostart option in `gui/control-panel`
 
 ## Removed
 
