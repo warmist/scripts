@@ -78,6 +78,8 @@ local PREFERENCES = {
          desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
         SCROLL_DELAY_MS={label='Mouse scroll repeat delay (ms)', type='int', default=20, min=5,
          desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
+        FILTER_FULL_TEXT={label='DFHack list filters search full text', type='bool', default=false,
+         desc='Whether to search for a match in the full text (true) or just at the start of words (false).'},
     },
 }
 
@@ -627,18 +629,16 @@ function Preferences:refresh()
     for ctx_name,settings in pairs(PREFERENCES) do
         local ctx_env = require(ctx_name)
         for id,spec in pairs(settings) do
+            local label = ('%s (%s)'):format(spec.label, ctx_env[id])
             local text = {
                 {tile=BUTTON_PEN_LEFT},
                 {tile=CONFIGURE_PEN_CENTER},
                 {tile=BUTTON_PEN_RIGHT},
                 ' ',
-                spec.label,
-                ' (',
-                tostring(ctx_env[id]),
-                ')',
+                label,
             }
             table.insert(choices,
-                {text=text, desc=spec.desc, search_key=id,
+                {text=text, desc=spec.desc, search_key=label,
                  ctx_env=ctx_env, id=id, spec=spec})
         end
     end
