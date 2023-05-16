@@ -24,7 +24,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/create-item`: ask for number of items to spawn by default
-- `light-aquifers-only`: now available as an fort autostart option in `gui/control-panel`
+- `light-aquifers-only`: now available as an fort autostart option in `gui/control-panel`. note that it will only appear if "armok" tools are configured to be shown on the Preferences tab.
 
 ## Removed
 
