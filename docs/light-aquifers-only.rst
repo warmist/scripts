@@ -25,7 +25,7 @@ Technical details
 -----------------
 
 When run pre-embark, this script changes the drainage of all world tiles that
-would generate heavy aquifers into a value that results in Light aquifers
+would generate heavy aquifers into a value that results in light aquifers
 instead, based on logic revealed by ToadyOne in a FotF answer:
 http://www.bay12forums.com/smf/index.php?topic=169696.msg8099138#msg8099138
 
