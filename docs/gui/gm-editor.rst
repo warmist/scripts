@@ -32,7 +32,9 @@ Examples
 ``gui/gm-editor world.items.all``
     Opens the editor on the items list.
 ``gui/gm-editor --freeze scr``
-    Opens the editor on the current viewscreen data and prevents it from getting updates while you have the editor open.
+    Opens the editor on the current DF viewscreen data (bypassing any DFHack
+    layers) and prevents the underlying viewscreen from getting updates while
+    you have the editor open.
 
 Options
 -------
@@ -40,12 +42,12 @@ Options
 ``-f``, ``--freeze``
     Freeze the underlying viewscreen so that it does not receive any updates.
     This allows you to be sure that whatever you are inspecting or modifying
-    will not be changed by the game until you are done with it. Note that this
-    will also prevent any rendering refreshes, so the background may strobe,
-    and if you drag the `gui/gm-editor` window around then you will see visual
-    artifacts. You might want to maximize the gm-editor window by
-    double-clicking in the title bar, otherwise the stobe effect of the
-    background might get tiring on the eyes.
+    will not be read or changed by the game until you are done with it. Note
+    that this will also prevent any rendering refreshes, so the background is
+    replaced with a blank screen. You can open multiple instances of
+    `gui/gm-editor` as usual when the game is frozen. The black background will
+    disappear when the last `gui/gm-editor` window that was opened with the
+    ``--freeze`` option is dismissed.
 
 Screenshot
 ----------

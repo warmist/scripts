@@ -1,4 +1,5 @@
 -- Interface powered memory object editor.
+--@module=true
 
 local gui = require 'gui'
 local json = require 'json'
@@ -634,39 +635,92 @@ function GmEditorUi:postUpdateLayout()
     save_config({frame = self.frame})
 end
 
+FreezeScreen = defclass(FreezeScreen, gui.Screen)
+FreezeScreen.ATTRS{
+    focus_path='gm-editor/freeze',
+}
+
+function FreezeScreen:init()
+    self:addviews{
+        widgets.Panel{
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=1},
+                    auto_width=true,
+                    text='gui/gm-editor has paused all game functions',
+                },
+                widgets.Label{
+                    frame={t=0, r=1},
+                    auto_width=true,
+                    text='gui/gm-editor has paused all game functions',
+                },
+                widgets.Label{
+                    frame={},
+                    auto_width=true,
+                    text='gui/gm-editor has paused all game functions',
+                },
+                widgets.Label{
+                    frame={b=0, l=1},
+                    auto_width=true,
+                    text='gui/gm-editor has paused all game functions',
+                },
+                widgets.Label{
+                    frame={b=0, r=1},
+                    auto_width=true,
+                    text='gui/gm-editor has paused all game functions',
+                },
+            },
+        },
+    }
+    freeze_screen = self
+end
+
+function FreezeScreen:onDismiss()
+    freeze_screen = nil
+end
+
 GmScreen = defclass(GmScreen, gui.ZScreen)
 GmScreen.ATTRS {
     focus_path='gm-editor',
     freeze=false,
 }
 
+local function has_frozen_view()
+    for view in pairs(views) do
+        if view.freeze then
+            return true
+        end
+    end
+    return false
+end
+
 function GmScreen:init(args)
     local target = args.target
     if not target then
         qerror('Target not found')
     end
-    self.force_pause = self.freeze
-    self:addviews{GmEditorUi{target=target}}
-end
-
-function GmScreen:onIdle()
-    if not self.freeze then
-        GmScreen.super.onIdle(self)
-    elseif self.force_pause and dfhack.isMapLoaded() then
-        df.global.pause_state = true
-    end
-end
-
-function GmScreen:render(dc)
     if self.freeze then
-        GmScreen.super.super.render(self, dc)
-    else
-        GmScreen.super.render(self, dc)
+        self.force_pause = true
+        if not has_frozen_view() then
+            FreezeScreen{}:show()
+            -- raise existing views above the freeze screen
+            for view in pairs(views) do
+                view:raise()
+            end
+        end
     end
+    self:addviews{GmEditorUi{target=target}}
+    views[self] = true
 end
 
 function GmScreen:onDismiss()
     views[self] = nil
+    if freeze_screen then
+        if not has_frozen_view() then
+            freeze_screen:dismiss()
+        end
+    end
 end
 
 local function get_editor(args)
@@ -679,18 +733,27 @@ local function get_editor(args)
         if args[1]=="dialog" then
             dialog.showInputPrompt("Gm Editor", "Object to edit:", COLOR_GRAY,
                     "", function(entry)
-                        local view = GmScreen{freeze=freeze, target=eval(entry)}:show()
-                        views[view] = true
+                        GmScreen{freeze=freeze, target=eval(entry)}:show()
                     end)
         elseif args[1]=="free" then
-            return GmScreen{freeze=freeze, target=df.reinterpret_cast(df[args[2]],args[3])}:show()
+            GmScreen{freeze=freeze, target=df.reinterpret_cast(df[args[2]],args[3])}:show()
+        elseif args[1]=="scr" then
+            -- this will not work for more complicated expressions, like scr.fieldname, but
+            -- it should capture the most common case
+            GmScreen{freeze=freeze, target=dfhack.gui.getDFViewscreen(true)}:show()
         else
-            return GmScreen{freeze=freeze, target=eval(args[1])}:show()
+            GmScreen{freeze=freeze, target=eval(args[1])}:show()
         end
     else
-        return GmScreen{freeze=freeze, target=getTargetFromScreens()}:show()
+        GmScreen{freeze=freeze, target=getTargetFromScreens()}:show()
     end
 end
 
 views = views or {}
-views[get_editor{...}] = true
+freeze_screen = freeze_screen or nil
+
+if dfhack_flags.module then
+    return
+end
+
+get_editor{...}
