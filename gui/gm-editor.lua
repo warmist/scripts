@@ -657,6 +657,14 @@ function GmScreen:onIdle()
     end
 end
 
+function GmScreen:render(dc)
+    if self.freeze then
+        GmScreen.super.super.render(self, dc)
+    else
+        GmScreen.super.render(self, dc)
+    end
+end
+
 function GmScreen:onDismiss()
     views[self] = nil
 end

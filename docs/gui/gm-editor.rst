@@ -38,9 +38,14 @@ Options
 -------
 
 ``-f``, ``--freeze``
-    Freeze the underlying viewscreen so that it does not receive logic updates.
-    Note that this will prevent scrolling the map by draggint with the middle
-    mouse button.
+    Freeze the underlying viewscreen so that it does not receive any updates.
+    This allows you to be sure that whatever you are inspecting or modifying
+    will not be changed by the game until you are done with it. Note that this
+    will also prevent any rendering refreshes, so the background may strobe,
+    and if you drag the `gui/gm-editor` window around then you will see visual
+    artifacts. You might want to maximize the gm-editor window by
+    double-clicking in the title bar, otherwise the stobe effect of the
+    background might get tiring on the eyes.
 
 Screenshot
 ----------
