@@ -833,8 +833,6 @@ function ControlPanel:init()
             },
             on_select=self:callback('set_page'),
             get_cur_page=function() return self.subviews.pages:getSelected() end,
-            key='CUSTOM_ALT_T',
-            key_back='CUSTOM_ALT_R',
         },
         widgets.Pages{
             view_id='pages',

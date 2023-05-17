@@ -357,8 +357,6 @@ function HelpPanel:init()
             },
             on_select=function(idx) self.subviews.pages:setSelected(idx) end,
             get_cur_page=function() return self.subviews.pages:getSelected() end,
-            key='CUSTOM_ALT_T',
-            key_back='CUSTOM_ALT_R',
         },
         widgets.Pages{
             view_id='pages',
