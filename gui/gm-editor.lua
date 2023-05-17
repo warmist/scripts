@@ -634,6 +634,12 @@ end
 function GmEditorUi:postUpdateLayout()
     save_config({frame = self.frame})
 end
+function GmEditorUi:onRenderFrame(dc, rect)
+    GmEditorUi.super.onRenderFrame(self, dc, rect)
+    if self.parent_view.freeze then
+        dc:seek(rect.x1+2, rect.y2):string(' GAME SUSPENDED ', COLOR_RED)
+    end
+end
 
 FreezeScreen = defclass(FreezeScreen, gui.Screen)
 FreezeScreen.ATTRS{
@@ -648,27 +654,27 @@ function FreezeScreen:init()
                 widgets.Label{
                     frame={t=0, l=1},
                     auto_width=true,
-                    text='gui/gm-editor has paused all game functions',
+                    text='Dwarf Fortress is currently suspended by gui/gm-editor',
                 },
                 widgets.Label{
                     frame={t=0, r=1},
                     auto_width=true,
-                    text='gui/gm-editor has paused all game functions',
+                    text='Dwarf Fortress is currently suspended by gui/gm-editor',
                 },
                 widgets.Label{
                     frame={},
                     auto_width=true,
-                    text='gui/gm-editor has paused all game functions',
+                    text='Dwarf Fortress is currently suspended by gui/gm-editor',
                 },
                 widgets.Label{
                     frame={b=0, l=1},
                     auto_width=true,
-                    text='gui/gm-editor has paused all game functions',
+                    text='Dwarf Fortress is currently suspended by gui/gm-editor',
                 },
                 widgets.Label{
                     frame={b=0, r=1},
                     auto_width=true,
-                    text='gui/gm-editor has paused all game functions',
+                    text='Dwarf Fortress is currently suspended by gui/gm-editor',
                 },
             },
         },
