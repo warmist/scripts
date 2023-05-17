@@ -13,7 +13,6 @@ local REFRESH_MS = 10000
 
 BurrowSettings = defclass(BurrowSettings, widgets.Window)
 BurrowSettings.ATTRS{
-    lockable=false,
     frame={l=0, t=5, w=56, h=13},
 }
 

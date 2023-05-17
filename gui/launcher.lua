@@ -340,7 +340,10 @@ Type a command to see its help text here. Hit ENTER to run the command, or tap b
 
 Not sure what to do? First, try running "quickstart-guide" to get oriented with DFHack and its capabilities. Then maybe try the "tags" command to see the different categories of tools DFHack has to offer! Run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
-To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.]]
+To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.
+
+You're running DFHack ]] .. dfhack.getDFHackVersion() ..
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true)))
 
 function HelpPanel:init()
     self.cur_entry = ''
@@ -667,8 +670,6 @@ local function sort_by_freq(entries)
     table.sort(entries, stable_sort_by_frequency)
 end
 
-local DEV_FILTER = {tag={'dev', 'untested'}}
-
 -- adds the n most closely affiliated peer entries for the given entry that
 -- aren't already in the entries list. affiliation is determined by how many
 -- tags the entries share.
@@ -704,9 +705,14 @@ local function add_top_related_entries(entries, entry, n)
 end
 
 function LauncherUI:update_autocomplete(firstword)
-    local entries = helpdb.search_entries(
-        {str=firstword, types='command'},
-        dev_mode and {} or DEV_FILTER)
+    local excludes
+    if not dev_mode then
+        excludes = {tag={'dev', 'unavailable'}}
+        if dfhack.getHideArmokTools() then
+            table.insert(excludes.tag, 'armok')
+        end
+    end
+    local entries = helpdb.search_entries({str=firstword, types='command'}, excludes)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a dev script that we masked out) to show that it's a valid
@@ -780,6 +786,8 @@ function LauncherUI:run_command(reappear, command)
     self:on_edit_input('')
     if #output == 0 then
         output = 'Command finished successfully'
+    else
+        output = output:gsub('\t', ' ')
     end
     self.subviews.help:add_output(('> %s\n\n%s'):format(command, output))
 end
