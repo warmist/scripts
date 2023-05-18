@@ -3,7 +3,7 @@ necronomicon
 
 .. dfhack-tool::
     :summary: Find books that contain the secrets of life and death.
-    :tags: fort items
+    :tags: fort inspection productivity items
 
 Lists all books in the fortress that contain the secrets to life and death.
 To find the books in fortress mode, go to the Written content submenu in Objects (O).
