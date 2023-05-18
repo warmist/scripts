@@ -19,6 +19,7 @@ that repo.
 - `light-aquifers-only`: reinstated: convert heavy aquifers to light
 - `necronomicon`: search fort for items containing the secrets of life and death
 - `gui/mod-manager`: automatically restore your list of active mods when generating new worlds
+- `gui/autodump`: point and click item teleportation and destruction interface
 
 ## Fixes
 - `gui/design`: Fix building and stairs designation
