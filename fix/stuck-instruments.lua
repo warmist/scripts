@@ -25,7 +25,7 @@ function fixInstruments(opts)
 
     if fixed > 0 or opts.dry_run then
         print(("%s %d stuck instruments."):format(
-                dry_run and "Found" or "Fixed",
+                opts.dry_run and "Found" or "Fixed",
                 fixed
         ))
     end
