@@ -10,6 +10,7 @@ function fixInstruments(opts)
             if ref:getType() == df.general_ref_type.ACTIVITY_EVENT then
                 local activity = df.activity_entry.find(ref.activity_id)
                 if not activity then
+                    print(('Found stuck instrument: %s'):format(dfhack.items.getDescription(item, 0, true)))
                     if not opts.dry_run then
                         --remove dead activity reference
                         item.general_refs[i]:delete()
