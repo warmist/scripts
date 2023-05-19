@@ -16,6 +16,7 @@ Usage
 ::
 
     diplomacy
+    diplomacy all <RELATIONSHIP>
     diplomacy <CIV_ID> <RELATIONSHIP>
 
 Examples
@@ -24,6 +25,8 @@ Examples
 ``diplomacy``
     See current diplomatic relationships between you and all other contacted
     civs.
-``diplomacy 224 war``
+``diplomacy 224 peace``
     Changes both your stance towards civilization 224 and their stance towards
-    you to War.
+    you to peace.
+``diplomacy all war``
+    Induce the entire world to declare war on your civilization.
