@@ -14,6 +14,7 @@ that repo.
 # Future
 
 ## New Scripts
+- `diplomacy`: view or alter diplomatic relationships
 - `exportlegends`: reinstated: export extended legends information for external browsing
 - `modtools/create-item`: reinstated: commandline and API interface for creating items
 - `light-aquifers-only`: reinstated: convert heavy aquifers to light
