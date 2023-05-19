@@ -1,18 +1,3 @@
-@@ -0,0 +1,79 @@
---[[
-diplo - Quick "Diplomacy"
-Without arguments:
-    Print list of civs the player civ has diplomatic relations to.
-    This list might not match the ingame civ list, but is what matters. Does not include 'no contact' civs, etc.
-    Also shows if relations match between player civ and other civ - a mismatch can potentially happen 'naturally', but is important when trying to make peace proper, as both civs need to be at peace with the other.
-With arguments:
-    diplo CIV_ID RELATION
-    Changes the relation to the civ identified by CIV_ID to the one specified in RELATION, making sure that this is mutual.
-    CIV_ID can be 'all' to change relations with all civs.
-    RELATION can be 'peace'/0 or 'war'/1.
-    Civ list is shown afterwards.
-]]
-
 local args = {...}
 
 -- player civ references:
@@ -29,9 +14,9 @@ function get_civ_list()
             -- if true then
             rel_str = ""
             if entity.relation == 0 then
-                rel_str = "0 (Peace)"
+                rel_str = "Peace"
             elseif entity.relation == 1 then
-                rel_str = "1 (War)"
+                rel_str = "War"
             end
             matched = "No"
             for _, entity2 in pairs(cur_civ.relations.diplomacy) do
@@ -56,7 +41,7 @@ function output_civ_list()
     if not next(civ_list) then
         print("Your civilisation has no diplomatic relations! This means something is going wrong, as it should have at least a relation to itself.")
     else
-        print(([[%4s %12s %8s %30s]]):format("ID", "Relation", "Matched", "Name"))
+        print(([[%4s %12s %8s %30s]]):format("ID", "Relation", "Mutual", "Name"))
         for _, civ in pairs(civ_list) do
             print(([[%4s %12s %8s %30s]]):format(civ[1], civ[2], civ[3], civ[4]))
         end
@@ -65,7 +50,7 @@ end
 
 -- change relation:
 function change_relation(civ_id, relation)
-    print("Changing relation with " .. civ_id .. " to " .. relation)
+    print("Changing relation with " .. civ_id .. " to " .. (relation == 0 and "Peace" or "War"))
     for _, entity in pairs(p_civ.relations.diplomacy) do
         local cur_civ_id = entity.group_id
         local cur_civ = df.historical_entity.find(cur_civ_id)
@@ -82,15 +67,11 @@ end
 
 -- parse relation string args:
 function relation_parse(rel_str)
-    if rel_str:lower() == "peace" then
+    if rel_str == "0"  or rel_str:lower() == "peace" then
         return 0
-    elseif rel_str:lower() == "war" then
+    elseif rel_str == "1" or rel_str:lower() == "war" then
         return 1
-    elseif rel_str == "0" then
-        return 0
-    elseif rel_str == "1" then
-        return 1
-     else
+    else
         print(dfhack.script_help())
         qerror("Cannot parse relation: " .. rel_str)
     end
@@ -119,10 +100,9 @@ end
 -- make sure that there is a relation to change to:
 if not args[2] then
     print(dfhack.script_help())
-    qerror("Missing relation!")
+    qerror("Please specify 'peace' or 'war'")
 end
 
 -- change relation(s) according to args:
 handle_all(args[1], relation_parse(args[2]))
 output_civ_list()
-return
