@@ -281,8 +281,7 @@ local function do_smooth(digctx)
     if is_construction(digctx.tileattrs) or
             not is_hard(digctx.tileattrs) or
             is_smooth(digctx.tileattrs) or
-            (not is_floor(digctx.tileattrs) and
-             not is_wall(digctx.tileattrs)) then
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) then
         return nil
     end
     return function() digctx.flags.smooth = values.tile_smooth end
@@ -290,8 +289,8 @@ end
 
 local function do_engrave(digctx)
     if digctx.flags.hidden or
-            is_construction(digctx.tileattrs) or
             not is_smooth(digctx.tileattrs) or
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) or
             digctx.engraving ~= nil then
         return nil
     end
@@ -710,9 +709,18 @@ local function do_run_impl(zlevel, grid, ctx)
                              get_track_direction(extent_x, extent_y,
                                                  extent.width, extent.height))
                     local digctx = init_dig_ctx(ctx, extent_pos, direction)
-                    -- can't dig through buildings
-                    if digctx.occupancy.building ~= 0 then
-                        goto inner_continue
+                    if db_entry.action == do_smooth or db_entry.action == do_engrave or
+                            db_entry.action == do_track then
+                        -- can only smooth passable tiles
+                        if digctx.occupancy.building > df.tile_building_occ.Passable and
+                                digctx.occupancy.building ~= df.tile_building_occ.Dynamic then
+                            goto inner_continue
+                        end
+                    else
+                        -- can't dig through buildings
+                        if digctx.occupancy.building ~= 0 then
+                            goto inner_continue
+                        end
                     end
                     local action_fn = dig_tile(digctx, db_entry)
                     quickfort_preview.set_preview_tile(ctx, extent_pos,

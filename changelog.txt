@@ -22,6 +22,7 @@ that repo.
 - `gui/autodump`: point and click item teleportation and destruction interface
 
 ## Fixes
+- `quickfort`: properly allow dwarves to smooth, engrave, and carve beneath passable tiles of buildings
 - `gui/design`: Fix building and stairs designation
 
 ## Misc Improvements
