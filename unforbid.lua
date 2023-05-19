@@ -50,6 +50,7 @@ local positionals = argparse.processArgsGetopt(args, {
 
 if positionals[1] == nil or positionals[1] == 'help' or options.help then
     print(dfhack.script_help())
+    return
 end
 
 if positionals[1] == 'all' then
