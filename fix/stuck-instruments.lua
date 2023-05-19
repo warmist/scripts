@@ -34,8 +34,8 @@ end
 local opts = {}
 
 local positionals = argparse.processArgsGetopt({...}, {
-    { 'h', 'help', handler = function() options.help = true end },
-    { 'n', 'dry-run', handler = function() options.dry_run = true end },
+    { 'h', 'help', handler = function() opts.help = true end },
+    { 'n', 'dry-run', handler = function() opts.dry_run = true end },
 })
 
 if positionals[1] == 'help' or opts.help then
