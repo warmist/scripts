@@ -360,7 +360,6 @@ end
 local function get_first_word(text)
     local word = text:trim():split(' +')[1]
     if word:startswith(':') then word = word:sub(2) end
-    print(text, word)
     return word
 end
 
