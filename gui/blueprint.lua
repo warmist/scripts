@@ -111,7 +111,8 @@ function NamePanel:detect_name_collision()
 
     local suffix_pos = #name + 1
 
-    local paths = dfhack.filesystem.listdir_recursive('blueprints', nil, false)
+    local paths = dfhack.filesystem.listdir_recursive('dfhack-config/blueprints', nil, false)
+    if not paths then return false end
     for _,v in ipairs(paths) do
         if (v.isdir and v.path..'/' == name) or
                 (v.path:startswith(name) and

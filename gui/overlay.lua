@@ -9,6 +9,7 @@ local overlay = require('plugins.overlay')
 
 local DIALOG_WIDTH = 59
 local LIST_HEIGHT = 14
+local HIGHLIGHT_TILE = df.global.init.load_bar_texpos[1]
 
 local SHADOW_FRAME = copyall(gui.PANEL_FRAME)
 SHADOW_FRAME.signature_pen = false
@@ -16,14 +17,14 @@ SHADOW_FRAME.signature_pen = false
 local to_pen = dfhack.pen.parse
 
 local HIGHLIGHT_FRAME = {
-    t_frame_pen = to_pen{tile=902, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    l_frame_pen = to_pen{tile=908, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    b_frame_pen = to_pen{tile=916, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    r_frame_pen = to_pen{tile=910, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    lt_frame_pen = to_pen{tile=901, ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    lb_frame_pen = to_pen{tile=915, ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    rt_frame_pen = to_pen{tile=903, ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
-    rb_frame_pen = to_pen{tile=917, ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    t_frame_pen = to_pen{tile=df.global.init.texpos_border_n, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    l_frame_pen = to_pen{tile=df.global.init.texpos_border_w, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    b_frame_pen = to_pen{tile=df.global.init.texpos_border_s, ch=205, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    r_frame_pen = to_pen{tile=df.global.init.texpos_border_e, ch=186, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lt_frame_pen = to_pen{tile=df.global.init.texpos_border_nw, ch=201, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    lb_frame_pen = to_pen{tile=df.global.init.texpos_border_sw, ch=200, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rt_frame_pen = to_pen{tile=df.global.init.texpos_border_ne, ch=187, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
+    rb_frame_pen = to_pen{tile=df.global.init.texpos_border_se, ch=188, fg=COLOR_GREEN, bg=COLOR_BLACK, tile_fg=COLOR_LIGHTGREEN},
     signature_pen=false,
 }
 
@@ -31,14 +32,14 @@ local function make_highlight_frame_style(frame)
     local frame_style = copyall(HIGHLIGHT_FRAME)
     local fg, bg = COLOR_GREEN, COLOR_LIGHTGREEN
     if frame.t then
-        frame_style.t_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
+        frame_style.t_frame_pen = to_pen{tile=HIGHLIGHT_TILE, ch=205, fg=fg, bg=bg}
     elseif frame.b then
-        frame_style.b_frame_pen = to_pen{tile=779, ch=205, fg=fg, bg=bg}
+        frame_style.b_frame_pen = to_pen{tile=HIGHLIGHT_TILE, ch=205, fg=fg, bg=bg}
     end
     if frame.l then
-        frame_style.l_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
+        frame_style.l_frame_pen = to_pen{tile=HIGHLIGHT_TILE, ch=186, fg=fg, bg=bg}
     elseif frame.r then
-        frame_style.r_frame_pen = to_pen{tile=779, ch=186, fg=fg, bg=bg}
+        frame_style.r_frame_pen = to_pen{tile=HIGHLIGHT_TILE, ch=186, fg=fg, bg=bg}
     end
     return frame_style
 end

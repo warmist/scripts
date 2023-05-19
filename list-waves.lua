@@ -51,7 +51,7 @@ These options are used to specify what wave information to display
 The script must loop through all active units in df.global.world.units.active and build
 each wave one dwarf at a time. This requires calculating arrival information for each
 dwarf and combining this information into a sort of unique wave ID number. After this
-is finished these wave UIDs are loops through and normalized so they start at zero and
+is finished these wave UIDs are looped through and normalized so they start at zero and
 incremented by one for each new wave UID.
 
 As you might surmise, this is a relatively dumb script and every execution has the

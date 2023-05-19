@@ -2,21 +2,14 @@
 --@module = true
 
 local guidm = require('gui.dwarfmode')
-local utils = require('utils')
+local argparse = require('argparse')
+local suspendmanager = reqscript('suspendmanager')
 
 local overlay = require('plugins.overlay')
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
     buildingplan = nil
-end
-
-local function foreach_construction_job(fn)
-    for _,job in utils.listpairs(df.global.world.jobs.list) do
-        if job.job_type == df.job_type.ConstructBuilding then
-            fn(job)
-        end
-    end
 end
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
@@ -60,7 +53,7 @@ end
 function SuspendOverlay:overlay_onupdate()
     local added = false
     self.data_version = self.data_version + 1
-    foreach_construction_job(function(job)
+    suspendmanager.foreach_construction_job(function(job)
         self:update_building(dfhack.job.getHolder(job).id, job)
         added = true
     end)
@@ -153,12 +146,12 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
     end
     local color = COLOR_YELLOW
     local ch = 'x'
-    if data.suspend_count > 1 then
-        color = COLOR_RED
-        ch = 'X'
-    elseif buildingplan and buildingplan.isPlannedBuilding(bld) then
+    if buildingplan and buildingplan.isPlannedBuilding(bld) then
         color = COLOR_GREEN
         ch = 'P'
+    elseif data.suspend_count > 1 then
+        color = COLOR_RED
+        ch = 'X'
     end
     dc:seek(screen_pos.x, screen_pos.y):tile(ch, nil, color)
 end
@@ -184,32 +177,33 @@ if dfhack_flags.module then
     return
 end
 
-local unsuspended_count, flow_count, buildingplan_count = 0, 0, 0
+local quiet, skipblocking = false, false
+argparse.processArgsGetopt({...}, {
+    {'q', 'quiet', handler=function() quiet = true end},
+    {'s', 'skipblocking', handler=function() skipblocking = true end},
+})
 
-foreach_construction_job(function(job)
+local skipped_counts = {}
+local unsuspended_count = 0
+
+suspendmanager.foreach_construction_job(function(job)
     if not job.flags.suspend then return end
-    if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
-        flow_count = flow_count + 1
+
+    local skip,reason=suspendmanager.shouldStaySuspended(job, skipblocking)
+    if skip then
+        skipped_counts[reason] = (skipped_counts[reason] or 0) + 1
         return
     end
-    local bld = dfhack.buildings.findAtTile(job.pos)
-    if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
-        buildingplan_count = buildingplan_count + 1
-        return
-    end
-    job.flags.suspend = false
+    suspendmanager.unsuspend(job)
     unsuspended_count = unsuspended_count + 1
 end)
 
-local opts = utils.invert{...}
-local quiet = opts['-q'] or opts['--quiet']
+if not quiet then
+    for reason,count in pairs(skipped_counts) do
+        print(string.format('Not unsuspending %d %s job(s)', count, reason))
+    end
 
-if flow_count > 0 then
-    print(string.format('Not unsuspending %d underwater job(s)', flow_count))
-end
-if buildingplan_count > 0 then
-    print(string.format('Not unsuspending %d buildingplan job(s)', buildingplan_count))
-end
-if unsuspended_count > 0 or not quiet then
-    print(string.format('Unsuspended %d job(s).', unsuspended_count))
+    if unsuspended_count > 0 then
+        print(string.format('Unsuspended %d job(s).', unsuspended_count))
+    end
 end

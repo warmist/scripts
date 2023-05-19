@@ -263,7 +263,7 @@ local function do_remove_ramps(digctx)
     if digctx.on_map_edge or digctx.flags.hidden then return nil end
     if is_construction(digctx.tileattrs) or
             not is_removable_shape(digctx.tileattrs) then
-        return mo;
+        return nil;
     end
     return function() digctx.flags.dig = values.dig_default end
 end
@@ -281,8 +281,7 @@ local function do_smooth(digctx)
     if is_construction(digctx.tileattrs) or
             not is_hard(digctx.tileattrs) or
             is_smooth(digctx.tileattrs) or
-            (not is_floor(digctx.tileattrs) and
-             not is_wall(digctx.tileattrs)) then
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) then
         return nil
     end
     return function() digctx.flags.smooth = values.tile_smooth end
@@ -290,8 +289,8 @@ end
 
 local function do_engrave(digctx)
     if digctx.flags.hidden or
-            is_construction(digctx.tileattrs) or
             not is_smooth(digctx.tileattrs) or
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) or
             digctx.engraving ~= nil then
         return nil
     end
@@ -375,46 +374,47 @@ local function get_items_at(pos, include_buildings)
     return items
 end
 
-local function do_item_flag(pos, flag_name, flag_value, include_buildings)
-    local items = get_items_at(pos, include_buildings)
-    if #items == 0 then return nil end
+local function do_item_flag(digctx, flag_name, flag_value, include_buildings)
+    if digctx.flags.hidden then return nil end
+    local items = get_items_at(digctx.pos, include_buildings)
+    if #items == 0 then return function() end end -- noop, but not an error
     return function()
         for _,item in ipairs(items) do item.flags[flag_name] = flag_value end
     end
 end
 
 local function do_claim(digctx)
-    return do_item_flag(digctx.pos, "forbid", values.item_claimed, true)
+    return do_item_flag(digctx, "forbid", values.item_claimed, true)
 end
 
 local function do_forbid(digctx)
-    return do_item_flag(digctx.pos, "forbid", values.item_forbidden, true)
+    return do_item_flag(digctx, "forbid", values.item_forbidden, true)
 end
 
 local function do_melt(digctx)
     -- the game appears to autoremove the flag from unmeltable items, so we
     -- don't actually need to do any filtering here
-    return do_item_flag(digctx.pos, "melt", values.item_melted, false)
+    return do_item_flag(digctx, "melt", values.item_melted, false)
 end
 
 local function do_remove_melt(digctx)
-    return do_item_flag(digctx.pos, "melt", values.item_unmelted, false)
+    return do_item_flag(digctx, "melt", values.item_unmelted, false)
 end
 
 local function do_dump(digctx)
-    return do_item_flag(digctx.pos, "dump", values.item_dumped, false)
+    return do_item_flag(digctx, "dump", values.item_dumped, false)
 end
 
 local function do_remove_dump(digctx)
-    return do_item_flag(digctx.pos, "dump", values.item_undumped, false)
+    return do_item_flag(digctx, "dump", values.item_undumped, false)
 end
 
 local function do_hide(digctx)
-    return do_item_flag(digctx.pos, "hidden", values.item_hidden, true)
+    return do_item_flag(digctx, "hidden", values.item_hidden, true)
 end
 
 local function do_unhide(digctx)
-    return do_item_flag(digctx.pos, "hidden", values.item_unhidden, true)
+    return do_item_flag(digctx, "hidden", values.item_unhidden, true)
 end
 
 local function do_traffic_high(digctx)
@@ -710,9 +710,18 @@ local function do_run_impl(zlevel, grid, ctx)
                              get_track_direction(extent_x, extent_y,
                                                  extent.width, extent.height))
                     local digctx = init_dig_ctx(ctx, extent_pos, direction)
-                    -- can't dig through buildings
-                    if digctx.occupancy.building ~= 0 then
-                        goto inner_continue
+                    if db_entry.action == do_smooth or db_entry.action == do_engrave or
+                            db_entry.action == do_track then
+                        -- can only smooth passable tiles
+                        if digctx.occupancy.building > df.tile_building_occ.Passable and
+                                digctx.occupancy.building ~= df.tile_building_occ.Dynamic then
+                            goto inner_continue
+                        end
+                    else
+                        -- can't dig through buildings
+                        if digctx.occupancy.building ~= 0 then
+                            goto inner_continue
+                        end
                     end
                     local action_fn = dig_tile(digctx, db_entry)
                     quickfort_preview.set_preview_tile(ctx, extent_pos,

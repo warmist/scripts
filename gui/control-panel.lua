@@ -6,11 +6,13 @@ local repeatUtil = require('repeat-util')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
+-- init files
+local SYSTEM_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-system.init'
 local PREFERENCES_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-preferences.init'
 local AUTOSTART_FILE = 'dfhack-config/init/onMapLoad.control-panel-new-fort.init'
 local REPEATS_FILE = 'dfhack-config/init/onMapLoad.control-panel-repeats.init'
 
--- eventually this should be queryable from Core/script-manager
+-- service and command lists
 local FORT_SERVICES = {
     'autobutcher',
     'autochop',
@@ -20,7 +22,6 @@ local FORT_SERVICES = {
     'autolabor',
     'autonestbox',
     'autoslab',
-    'autounsuspend',
     'emigration',
     'fastdwarf',
     'fix/protect-nicks',
@@ -30,39 +31,56 @@ local FORT_SERVICES = {
     'prioritize',
     'seedwatch',
     'starvingdead',
+    'suspendmanager',
     'tailor',
 }
 
 local FORT_AUTOSTART = {
     'ban-cooking all',
-    --'buildingplan set boulders false',
-    --'buildingplan set logs false',
+    'buildingplan set boulders false',
+    'buildingplan set logs false',
+    'light-aquifers-only fort',
 }
 for _,v in ipairs(FORT_SERVICES) do
     table.insert(FORT_AUTOSTART, v)
 end
 table.sort(FORT_AUTOSTART)
 
--- eventually this should be queryable from Core/script-manager
 local SYSTEM_SERVICES = {
-    'automelt', -- TODO needs dynamic detection of configurability
+    'automelt',
     'buildingplan',
     'confirm',
     'overlay',
 }
+local SYSTEM_USER_SERVICES = {
+    'faststart',
+    'work-now',
+}
+for _,v in ipairs(SYSTEM_USER_SERVICES) do
+    table.insert(SYSTEM_SERVICES, v)
+end
+table.sort(SYSTEM_SERVICES)
 
 local PREFERENCES = {
+    ['dfhack']={
+        HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup', type='bool', default=true,
+         desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
+        HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
+         desc='Don\'t show tools that give you god-like powers wherever DFHack tools are listed.'},
+    },
     ['gui']={
-        DEFAULT_INITIAL_PAUSE={type='bool', default=true,
-         desc='Whether to pause the game when a DFHack tool is shown.'},
+        DEFAULT_INITIAL_PAUSE={label='DFHack tools autopause game', type='bool', default=true,
+         desc='Whether to pause the game when a DFHack tool window is shown.'},
     },
     ['gui.widgets']={
-        DOUBLE_CLICK_MS={type='int', default=500, min=50,
+        DOUBLE_CLICK_MS={label='Mouse double click speed (ms)', type='int', default=500, min=50,
          desc='How long to wait for the second click of a double click, in ms.'},
-        SCROLL_INITIAL_DELAY_MS={type='int', default=300, min=5,
+        SCROLL_INITIAL_DELAY_MS={label='Mouse initial scroll repeat delay (ms)', type='int', default=300, min=5,
          desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
-        SCROLL_DELAY_MS={type='int', default=20, min=5,
+        SCROLL_DELAY_MS={label='Mouse scroll repeat delay (ms)', type='int', default=20, min=5,
          desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
+        FILTER_FULL_TEXT={label='DFHack list filters search full text', type='bool', default=false,
+         desc='Whether to search for a match in the full text (true) or just at the start of words (false).'},
     },
 }
 
@@ -76,6 +94,15 @@ local REPEATS = {
     ['cleanowned']={
         desc='Encourage dwarves to drop tattered clothing and grab new ones.',
         command={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
+    ['combine']={
+        desc='Combine partial stacks in stockpiles into full stacks.',
+        command={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
+    ['stuck-instruments']={
+        desc='Fix activity references on stuck instruments to make them usable again.',
+        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
+    ['general-strike']={
+        desc='Prevent dwarves from getting stuck and refusing to work.',
+        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
     ['orders-sort']={
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
         command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
@@ -92,7 +119,7 @@ table.sort(REPEATS_LIST)
 -- save_fn takes the file as a param and should call f:write() to write data
 local function save_file(path, save_fn)
     local ok, f = pcall(io.open, path, 'w')
-    if not ok then
+    if not ok or not f then
         dialogs.showMessage('Error',
             ('Cannot open file for writing: "%s"'):format(path))
         return
@@ -103,32 +130,35 @@ local function save_file(path, save_fn)
     f:close()
 end
 
-
 local function get_icon_pens()
     local start = dfhack.textures.getControlPanelTexposStart()
     local valid = start > 0
     start = start + 10
 
+    local function tp(offset)
+        return valid and start + offset or nil
+    end
+
     local enabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+0) or nil, ch=string.byte('[')}
+            tile=tp(0), ch=string.byte('[')}
     local enabled_pen_center = dfhack.pen.parse{fg=COLOR_LIGHTGREEN,
-            tile=valid and (start+1) or nil, ch=251} -- check
+            tile=tp(1) or nil, ch=251} -- check
     local enabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+2) or nil, ch=string.byte(']')}
+            tile=tp(2) or nil, ch=string.byte(']')}
     local disabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+3) or nil, ch=string.byte('[')}
+            tile=tp(3) or nil, ch=string.byte('[')}
     local disabled_pen_center = dfhack.pen.parse{fg=COLOR_RED,
-            tile=valid and (start+4) or nil, ch=string.byte('x')}
+            tile=tp(4) or nil, ch=string.byte('x')}
     local disabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+5) or nil, ch=string.byte(']')}
+            tile=tp(5) or nil, ch=string.byte(']')}
     local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+6) or nil, ch=string.byte('[')}
+            tile=tp(6) or nil, ch=string.byte('[')}
     local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=valid and (start+7) or nil, ch=string.byte(']')}
+            tile=tp(7) or nil, ch=string.byte(']')}
     local help_pen_center = dfhack.pen.parse{
-            tile=valid and (start+8) or nil, ch=string.byte('?')}
+            tile=tp(8) or nil, ch=string.byte('?')}
     local configure_pen_center = dfhack.pen.parse{
-            tile=valid and (start+9) or nil, ch=15} -- gear/masterwork symbol
+            tile=tp(9) or nil, ch=15} -- gear/masterwork symbol
     return enabled_pen_left, enabled_pen_center, enabled_pen_right,
             disabled_pen_left, disabled_pen_center, disabled_pen_right,
             button_pen_left, button_pen_right,
@@ -221,13 +251,15 @@ function ConfigPanel:onInput(keys)
     return handled
 end
 
+local COMMAND_REGEX = '^([%w/_-]+)'
+
 function ConfigPanel:refresh()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.target or choice.command
-        command = command:match('^([%l/_-]+)')
+        command = command:match(COMMAND_REGEX)
         local gui_config = 'gui/' .. command
-        local want_gui_config = utils.getval(self.is_configurable)
+        local want_gui_config = utils.getval(self.is_configurable, gui_config)
                 and helpdb.is_entry(gui_config)
         local enabled = choice.enabled
         local function get_enabled_pen(enabled_pen, disabled_pen)
@@ -293,7 +325,7 @@ end
 function ConfigPanel:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local command = choice.target:match('^([%l/_-]+)')
+    local command = choice.target:match(COMMAND_REGEX)
     dfhack.run_command('gui/launcher', command .. ' ')
 end
 
@@ -325,11 +357,23 @@ function Services:get_enabled_map()
     return enabled_map
 end
 
+local function get_first_word(text)
+    local word = text:trim():split(' +')[1]
+    if word:startswith(':') then word = word:sub(2) end
+    print(text, word)
+    return word
+end
+
 function Services:get_choices()
     local enabled_map = self:get_enabled_map()
     local choices = {}
+    local hide_armok = dfhack.getHideArmokTools()
     for _,service in ipairs(self.services_list) do
-        table.insert(choices, {target=service, enabled=enabled_map[service]})
+        local entry_name = get_first_word(service)
+        if not hide_armok or not helpdb.is_entry(entry_name)
+                or not helpdb.get_entry_tags(entry_name).armok then
+            table.insert(choices, {target=service, enabled=enabled_map[service]})
+        end
     end
     return choices
 end
@@ -341,7 +385,7 @@ end
 FortServices = defclass(FortServices, Services)
 FortServices.ATTRS{
     is_enableable=dfhack.world.isFortressMode,
-    is_configurable=dfhack.world.isFortressMode,
+    is_configurable=function() return dfhack.world.isFortressMode() end,
     intro_text='These tools can only be enabled when you have a fort loaded,'..
                 ' but once you enable them, they will stay enabled when you'..
                 ' save and reload your fort. If you want them to be'..
@@ -368,12 +412,13 @@ function FortServicesAutostart:init()
     local enabled_map = {}
     local ok, f = pcall(io.open, AUTOSTART_FILE)
     if ok and f then
+        local services_set = utils.invert(FORT_AUTOSTART)
         for line in f:lines() do
             line = line:trim()
             if #line == 0 or line:startswith('#') then goto continue end
             local service = line:match('^on%-new%-fortress enable ([%S]+)$')
                     or line:match('^on%-new%-fortress (.+)')
-            if service then
+            if service and services_set[service] then
                 enabled_map[service] = true
             end
             ::continue::
@@ -410,16 +455,35 @@ end
 -- SystemServices
 --
 
+local function system_service_is_configurable(gui_config)
+    return gui_config ~= 'gui/automelt' or dfhack.world.isFortressMode()
+end
+
 SystemServices = defclass(SystemServices, Services)
 SystemServices.ATTRS{
     title='System',
     is_enableable=true,
-    is_configurable=true,
-    intro_text='These are DFHack system services that should generally not'..
-                ' be turned off. If you do turn them off, they may'..
-                ' automatically re-enable themselves when you restart DF.',
+    is_configurable=system_service_is_configurable,
+    intro_text='These are DFHack system services that are not bound to' ..
+            ' a specific fort. Some of these are critical DFHack services' ..
+            ' that can be manually disabled, but will re-enable themselves' ..
+            ' when DF restarts.',
     services_list=SYSTEM_SERVICES,
 }
+
+function SystemServices:on_submit()
+    SystemServices.super.on_submit(self)
+
+    local enabled_map = self:get_enabled_map()
+    local save_fn = function(f)
+        for _,service in ipairs(SYSTEM_USER_SERVICES) do
+            if enabled_map[service] then
+                f:write(('enable %s\n'):format(service))
+            end
+        end
+    end
+    save_file(SYSTEM_INIT_FILE, save_fn)
+end
 
 --
 -- Overlays
@@ -578,21 +642,20 @@ function Preferences:refresh()
     for ctx_name,settings in pairs(PREFERENCES) do
         local ctx_env = require(ctx_name)
         for id,spec in pairs(settings) do
+            local label = ('%s (%s)'):format(spec.label, ctx_env[id])
             local text = {
                 {tile=BUTTON_PEN_LEFT},
                 {tile=CONFIGURE_PEN_CENTER},
                 {tile=BUTTON_PEN_RIGHT},
                 ' ',
-                id,
-                ' (',
-                tostring(ctx_env[id]),
-                ')',
+                label,
             }
             table.insert(choices,
-                {text=text, desc=spec.desc, search_key=id,
+                {text=text, desc=spec.desc, search_key=label,
                  ctx_env=ctx_env, id=id, spec=spec})
         end
     end
+    table.sort(choices, function(a, b) return a.spec.label < b.spec.label end)
     local list = self.subviews.list
     local filter = list:getFilter()
     local selected = list:getSelected()
@@ -746,143 +809,6 @@ function RepeatAutostart:on_submit()
 end
 
 --
--- Tab
----
-
-local to_pen = dfhack.pen.parse
-local active_tab_pens = {
-    text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
-    text_mode_label_pen=to_pen{fg=COLOR_WHITE},
-    lt=to_pen{tile=1005, write_to_lower=true},
-    lt2=to_pen{tile=1006, write_to_lower=true},
-    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1008, write_to_lower=true},
-    rt=to_pen{tile=1009, write_to_lower=true},
-    lb=to_pen{tile=1015, write_to_lower=true},
-    lb2=to_pen{tile=1016, write_to_lower=true},
-    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1018, write_to_lower=true},
-    rb=to_pen{tile=1019, write_to_lower=true},
-}
-
-local inactive_tab_pens = {
-    text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
-    text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
-    lt=to_pen{tile=1000, write_to_lower=true},
-    lt2=to_pen{tile=1001, write_to_lower=true},
-    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1003, write_to_lower=true},
-    rt=to_pen{tile=1004, write_to_lower=true},
-    lb=to_pen{tile=1010, write_to_lower=true},
-    lb2=to_pen{tile=1011, write_to_lower=true},
-    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1013, write_to_lower=true},
-    rb=to_pen{tile=1014, write_to_lower=true},
-}
-
-Tab = defclass(Tabs, widgets.Widget)
-Tab.ATTRS{
-    id=DEFAULT_NIL,
-    label=DEFAULT_NIL,
-    on_select=DEFAULT_NIL,
-    get_pens=DEFAULT_NIL,
-}
-
-function Tab:preinit(init_table)
-    init_table.frame = init_table.frame or {}
-    init_table.frame.w = #init_table.label + 4
-    init_table.frame.h = 2
-end
-
-function Tab:onRenderBody(dc)
-    local pens = self.get_pens()
-    dc:seek(0, 0)
-    if dfhack.screen.inGraphicsMode() then
-        dc:char(nil, pens.lt):char(nil, pens.lt2)
-        for i=1,#self.label do
-            dc:char(self.label:sub(i,i), pens.t)
-        end
-        dc:char(nil, pens.rt2):char(nil, pens.rt)
-        dc:seek(0, 1)
-        dc:char(nil, pens.lb):char(nil, pens.lb2)
-        for i=1,#self.label do
-            dc:char(self.label:sub(i,i), pens.b)
-        end
-        dc:char(nil, pens.rb2):char(nil, pens.rb)
-    else
-        local tp = pens.text_mode_tab_pen
-        dc:char(' ', tp):char('/', tp)
-        for i=1,#self.label do
-            dc:char('-', tp)
-        end
-        dc:char('\\', tp):char(' ', tp)
-        dc:seek(0, 1)
-        dc:char('/', tp):char('-', tp)
-        dc:string(self.label, pens.text_mode_label_pen)
-        dc:char('-', tp):char('\\', tp)
-    end
-end
-
-function Tab:onInput(keys)
-    if Tab.super.onInput(self, keys) then return true end
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
-        self.on_select(self.id)
-        return true
-    end
-end
-
---
--- TabBar
---
-
-TabBar = defclass(TabBar, widgets.ResizingPanel)
-TabBar.ATTRS{
-    labels=DEFAULT_NIL,
-    on_select=DEFAULT_NIL,
-    get_cur_page=DEFAULT_NIL,
-}
-
-function TabBar:init()
-    for idx,label in ipairs(self.labels) do
-        self:addviews{
-            Tab{
-                frame={t=0, l=0},
-                id=idx,
-                label=label,
-                on_select=self.on_select,
-                get_pens=function()
-                    return self.get_cur_page() == idx and
-                            active_tab_pens or inactive_tab_pens
-                end,
-            }
-        }
-    end
-end
-
-function TabBar:postComputeFrame(body)
-    local t, l, width = 0, 0, body.width
-    for _,tab in ipairs(self.subviews) do
-        if l > 0 and l + tab.frame.w > width then
-            t = t + 2
-            l = 0
-        end
-        tab.frame.t = t
-        tab.frame.l = l
-        l = l + tab.frame.w
-    end
-end
-
-function TabBar:onInput(keys)
-    if TabBar.super.onInput(self, keys) then return true end
-    if keys.CUSTOM_CTRL_T then
-        local zero_idx = self.get_cur_page() - 1
-        local next_zero_idx = (zero_idx + 1) % #self.labels
-        self.on_select(next_zero_idx + 1)
-        return true
-    end
-end
-
---
 -- ControlPanel
 --
 
@@ -898,7 +824,7 @@ ControlPanel.ATTRS {
 
 function ControlPanel:init()
     self:addviews{
-        TabBar{
+        widgets.TabBar{
             frame={t=0},
             labels={
                 'Fort',
@@ -909,7 +835,7 @@ function ControlPanel:init()
                 'Autostart',
             },
             on_select=self:callback('set_page'),
-            get_cur_page=function() return self.subviews.pages:getSelected() end
+            get_cur_page=function() return self.subviews.pages:getSelected() end,
         },
         widgets.Pages{
             view_id='pages',
