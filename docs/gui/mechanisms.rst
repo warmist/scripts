@@ -3,7 +3,7 @@ gui/mechanisms
 
 .. dfhack-tool::
     :summary: List mechanisms and links connected to a building.
-    :tags: untested fort inspection buildings
+    :tags: unavailable fort inspection buildings
 
 This convenient tool lists the mechanisms connected to the building and the
 buildings linked via the mechanisms. Navigating the list centers the view on the

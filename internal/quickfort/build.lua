@@ -92,7 +92,9 @@ local function is_valid_tile_has_space_or_is_ramp(pos)
 end
 
 local function is_valid_tile_machine(pos)
-    return is_valid_tile_has_space_or_is_ramp(pos)
+    local shape = df.tiletype.attrs[dfhack.maps.getTileType(pos)].shape
+    local basic_shape = df.tiletype_shape.attrs[shape].basic_shape
+    return is_valid_tile_has_space_or_is_ramp(pos) or basic_shape == df.tiletype_shape_basic.Stair
 end
 
 -- ramps are ok everywhere except under the anchor point of directional bridges
@@ -312,7 +314,7 @@ local function make_ns_ew_entry(name, building_type, long_dim_min, long_dim_max,
             min_width=width_min, max_width=width_max,
             min_height=height_min, max_height=height_max,
             direction=vertical and 1 or 0,
-            is_valid_tile_fn=is_valid_tile_has_space, -- impeded by ramps
+            is_valid_tile_fn=is_valid_tile_machine,
             transform=transform}
 end
 local function make_water_wheel_entry(vertical)

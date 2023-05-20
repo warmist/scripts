@@ -3,7 +3,7 @@ gui/dfstatus
 
 .. dfhack-tool::
     :summary: Show a quick overview of critical stock quantities.
-    :tags: untested fort inspection
+    :tags: unavailable fort inspection
 
 This tool show a quick overview of stock quantities for:
 

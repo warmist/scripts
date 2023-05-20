@@ -111,7 +111,8 @@ function NamePanel:detect_name_collision()
 
     local suffix_pos = #name + 1
 
-    local paths = dfhack.filesystem.listdir_recursive('blueprints', nil, false)
+    local paths = dfhack.filesystem.listdir_recursive('dfhack-config/blueprints', nil, false)
+    if not paths then return false end
     for _,v in ipairs(paths) do
         if (v.isdir and v.path..'/' == name) or
                 (v.path:startswith(name) and
@@ -496,9 +497,6 @@ function Blueprint:onInput(keys)
         end
         return true
     end
-
-    -- send movement keys through, but otherwise we're a modal dialog
-    return not guidm.getMapKey(keys)
 end
 
 -- assemble and execute the blueprint commandline
@@ -597,22 +595,17 @@ end
 BlueprintScreen = defclass(BlueprintScreen, gui.ZScreen)
 BlueprintScreen.ATTRS {
     focus_path='blueprint',
-    force_pause=true,
-    pass_pause=false,
     pass_movement_keys=true,
     pass_mouse_clicks=false,
     presets=DEFAULT_NIL,
 }
 
 function BlueprintScreen:init()
-    self.saved_pause_state = df.global.pause_state
-    df.global.pause_state = true
-    self:addviews{Blueprint{presets=presets}}
+    self:addviews{Blueprint{presets=self.presets}}
 end
 
 function BlueprintScreen:onDismiss()
     view = nil
-    df.global.pause_state = self.saved_pause_state
 end
 
 if dfhack_flags.module then

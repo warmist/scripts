@@ -149,6 +149,10 @@ function SpawnLiquid:spawn(pos)
         else
             liquids.spawnLiquid(pos, self:getLiquidLevel(pos), self.type)
         end
+
+        -- Regardless of spawning or removing liquids, we need to reindex to
+        -- ensure pathability is up to date.
+        df.global.world.reindex_pathfinding = true
     end
 end
 
@@ -234,7 +238,6 @@ SpawnLiquidScreen.ATTRS {
     focus_path = 'spawnliquid',
     pass_movement_keys = true,
     pass_mouse_clicks = false,
-    force_pause = true,
 }
 
 function SpawnLiquidScreen:init()

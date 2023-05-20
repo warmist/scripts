@@ -13,7 +13,7 @@ local function unforbid_all(include_unreachable, quiet)
                 local reachable = false
 
                 for _, unit in pairs(citizens) do
-                    if dfhack.maps.canWalkBetween(item.pos, unit.pos) then
+                    if dfhack.maps.canWalkBetween(xyz2pos(dfhack.items.getPosition(item)), unit.pos) then
                         reachable = true
                     end
                 end
@@ -50,6 +50,7 @@ local positionals = argparse.processArgsGetopt(args, {
 
 if positionals[1] == nil or positionals[1] == 'help' or options.help then
     print(dfhack.script_help())
+    return
 end
 
 if positionals[1] == 'all' then

@@ -3,7 +3,7 @@ modtools/create-tree
 
 .. dfhack-tool::
     :summary: Spawn trees.
-    :tags: untested dev
+    :tags: unavailable dev
 
 Spawns a tree.
 

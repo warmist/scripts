@@ -3,7 +3,7 @@ fix/retrieve-units
 
 .. dfhack-tool::
     :summary: Allow stuck offscreen units to enter the map.
-    :tags: untested fort bugfix units
+    :tags: fort bugfix units
 
 This script finds units that are marked as pending entry to the active map and
 forces them to enter. This can fix issues such as:
