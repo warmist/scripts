@@ -25,6 +25,7 @@ that repo.
 
 ## Fixes
 - `quickfort`: properly allow dwarves to smooth, engrave, and carve beneath passable tiles of buildings
+- `deathcause`: fix incorrect weapon sometimes being reported
 - `gui/design`: Fix building and stairs designation
 - `quickfort`: fixed detection of tiles where machines are allowed (e.g. water wheels *can* be built on stairs if there is a machine support nearby)
 
