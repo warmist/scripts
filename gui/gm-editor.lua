@@ -10,6 +10,8 @@ local utils = require 'utils'
 
 config = config or json.open('dfhack-config/gm-editor.json')
 
+local REFRESH_MS = 100
+
 function save_config(data)
     utils.assign(config.data, data)
     config:write()
@@ -27,6 +29,7 @@ end)()
 
 local keybindings_raw = {
     {name='toggle_ro', key="CUSTOM_CTRL_D",desc="Toggle between read-only and read-write"},
+    {name='autoupdate', key="CUSTOM_ALT_A",desc="See live updates of changing values"},
     {name='offset', key="CUSTOM_ALT_O",desc="Show current items offset"},
     {name='find', key="CUSTOM_F",desc="Find a value by entering a predicate"},
     {name='find_id', key="CUSTOM_I",desc="Find object with this ID, using ref-target if available"},
@@ -145,6 +148,39 @@ function GmEditorUi:init(args)
 
     self:addviews{widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     self:pushTarget(args.target)
+end
+function GmEditorUi:verifyStack(args)
+    local failure = false
+
+    local last_good_level = nil
+
+    for i, level in pairs(self.stack) do
+        local obj=level.target
+
+        local keys = level.keys
+        local selection = level.selected
+        local sel_key = keys[selection]
+        local next_by_ref
+        local status, _ = pcall(
+        function()
+            next_by_ref = obj[sel_key]
+            end
+        )
+        if not status then
+            failure = true
+            last_good_level = i - 1
+            break
+        end
+        if not self.stack[i+1] == next_by_ref then
+            failure = true
+            break
+        end
+    end
+    if failure then
+        self.stack = {table.unpack(self.stack, 1, last_good_level)}
+        return false
+    end
+    return true
 end
 function GmEditorUi:text_input(new_text)
     self:updateTarget(true,true)
@@ -341,7 +377,7 @@ function GmEditorUi:editSelectedEnum(index,choice)
 end
 function GmEditorUi:openReinterpret(key)
     local trg=self:currentTarget()
-    dialog.showInputPrompt(tostring(trg_key),"Enter new type:",COLOR_WHITE,
+    dialog.showInputPrompt(tostring(self:getSelectedKey()),"Enter new type:",COLOR_WHITE,
                 "",function(choice)
                     local ntype=df[choice]
                     self:pushTarget(df.reinterpret_cast(ntype,trg.target[key]))
@@ -350,7 +386,6 @@ end
 function GmEditorUi:openOffseted(index,choice)
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
-
     dialog.showInputPrompt(tostring(trg_key),"Enter offset:",COLOR_WHITE,"",
         function(choice)
             self:pushTarget(trg.target[trg_key]:_displace(tonumber(choice)))
@@ -400,6 +435,10 @@ function GmEditorUi:editSelectedRaw(index,choice)
     self:editSelected(index, choice, {raw=true})
 end
 function GmEditorUi:editSelected(index,choice,opts)
+    if not self:verifyStack() then
+        self:updateTarget()
+        return
+    end
     opts = opts or {}
     local trg=self:currentTarget()
     local trg_key=trg.keys[index]
@@ -408,7 +447,6 @@ function GmEditorUi:editSelected(index,choice,opts)
         trg.target[trg_key]= not trg.target[trg_key]
         self:updateTarget(true)
     else
-        --print(type(trg.target[trg.keys[trg.selected]]),trg.target[trg.keys[trg.selected]]._kind or "")
         local trg_type=type(trg.target[trg_key])
         if self:getSelectedEnumType() and not opts.raw then
             if self.read_only then return end
@@ -484,6 +522,9 @@ function GmEditorUi:onInput(keys)
         self.read_only = not self.read_only
         self:updateTitles()
         return true
+    elseif keys[keybindings.autoupdate.key] then
+        self.autoupdate = not self.autoupdate
+        return true
     elseif keys[keybindings.offset.key] then
         local trg=self:currentTarget()
         local _,stoff=df.sizeof(trg.target)
@@ -522,6 +563,7 @@ function GmEditorUi:onInput(keys)
         return true
     end
 end
+
 function getStringValue(trg,field)
     local obj=trg.target
 
@@ -559,7 +601,9 @@ function GmEditorUi:updateTitles()
     save_config({read_only = self.read_only})
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
+    self:verifyStack()
     local trg=self:currentTarget()
+    if not trg then return end
     local filter=self.subviews.filter_input.text:lower()
 
     if reindex then
@@ -584,17 +628,20 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     for k,v in pairs(trg.keys) do
         table.insert(t,{text={{text=string.format("%-"..trg.kw.."s",tostring(v))},{gap=2,text=getStringValue(trg,v)}}})
     end
-    local last_pos
+    local last_selected, last_top
     if preserve_pos then
-        last_pos=self.subviews.list_main:getSelected()
+        last_selected=self.subviews.list_main:getSelected()
+        last_top=self.subviews.list_main.page_top
     end
     self.subviews.list_main:setChoices(t)
-    if last_pos then
-        self.subviews.list_main:setSelected(last_pos)
+    if last_selected then
+        self.subviews.list_main:setSelected(last_selected)
+        self.subviews.list_main:on_scrollbar(last_top)
     else
         self.subviews.list_main:setSelected(trg.selected)
     end
     self:updateTitles()
+    self.next_refresh_ms = dfhack.getTickCount() + REFRESH_MS
 end
 function GmEditorUi:pushTarget(target_to_push)
     local new_tbl={}
@@ -638,6 +685,9 @@ function GmEditorUi:onRenderFrame(dc, rect)
     GmEditorUi.super.onRenderFrame(self, dc, rect)
     if self.parent_view.freeze then
         dc:seek(rect.x1+2, rect.y2):string(' GAME SUSPENDED ', COLOR_RED)
+    end
+    if self.autoupdate and self.next_refresh_ms <= dfhack.getTickCount() then
+        self:updateTarget(true, true)
     end
 end
 
