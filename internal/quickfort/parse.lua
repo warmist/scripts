@@ -12,7 +12,7 @@ local quickfort_transform = reqscript('internal/quickfort/transform')
 valid_modes = utils.invert({
     'dig',
     'build',
---    'place',
+    'place',
 --    'zone',
 --    'query',
 --    'config',
@@ -290,7 +290,7 @@ local function parse_modeline(modeline, filename, modeline_id)
     if not modeline then return nil end
     local _, mode_end, mode = string.find(modeline, '^#([%l]+)')
     -- remove this as these modes become supported
-    if mode == 'place' or mode == 'zone' or mode == 'query' or mode == 'config' then
+    if mode == 'zone' or mode == 'query' or mode == 'config' then
         mode = 'ignore'
     end
     if not mode or not valid_modes[mode] then return nil end

@@ -166,39 +166,39 @@ function PhasesPanel:init()
         widgets.Panel{
             frame={h=1},
             subviews={widgets.ToggleHotkeyLabel{view_id='dig_phase',
-                        frame={t=0, l=0}, key='CUSTOM_D', label='dig',
+                        frame={t=0, l=0, w=19}, key='CUSTOM_D', label='dig',
                         initial_option=self:get_default('dig'), label_width=9},
                       widgets.ToggleHotkeyLabel{view_id='carve_phase',
-                        frame={t=0, l=19}, key='CUSTOM_SHIFT_D', label='carve',
+                        frame={t=0, l=19, w=19}, key='CUSTOM_SHIFT_D', label='carve',
                         initial_option=self:get_default('carve')},
                     }},
         widgets.Panel{
             frame={h=1},
             subviews={widgets.ToggleHotkeyLabel{view_id='construct_phase',
-                        frame={t=0, l=0}, key='CUSTOM_SHIFT_B',
+                        frame={t=0, l=0, w=19}, key='CUSTOM_SHIFT_B',
                         label='construct',
                         initial_option=self:get_default('construct')},
                       widgets.ToggleHotkeyLabel{view_id='build_phase',
-                        frame={t=0, l=19}, key='CUSTOM_B', label='build',
+                        frame={t=0, l=19, w=19}, key='CUSTOM_B', label='build',
                         initial_option=self:get_default('build')}}},
---         widgets.Panel{frame={h=1},
---             subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
---                         frame={t=0, l=0},
---                         key='CUSTOM_P', label='place',
---                         initial_option=self:get_default('place')},
+        widgets.Panel{frame={h=1},
+            subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
+                        frame={t=0, l=0, w=19},
+                        key='CUSTOM_P', label='place',
+                        initial_option=self:get_default('place')},
 --                     widgets.ToggleHotkeyLabel{view_id='zone_phase',
---                         frame={t=0, l=15},
+--                         frame={t=0, l=15, w=19},
 --                         key='CUSTOM_Z', label='zone',
 --                         initial_option=self:get_default('zone'),
 --                         label_width=5}
---                     }},
+                    }},
 --         widgets.Panel{frame={h=1},
 --             subviews={widgets.ToggleHotkeyLabel{view_id='query_phase',
---                         frame={t=0, l=0},
+--                         frame={t=0, l=0, w=19},
 --                         key='CUSTOM_Q', label='query',
 --                         initial_option=self:get_default('query')},
 --                     widgets.ToggleHotkeyLabel{view_id='rooms_phase',
---                         frame={t=0, l=15},
+--                         frame={t=0, l=15, w=19},
 --                         key='CUSTOM_SHIFT_Q', label='rooms',
 --                         initial_option=self:get_default('rooms')}
 --                     }},
@@ -531,6 +531,14 @@ function Blueprint:commit(pos)
 
     -- set cursor to top left corner of the *uppermost* z-level
     local bounds = self:get_bounds()
+    if not bounds then
+        dialogs.MessageBox{
+            frame_title='Error',
+            text='Ensure blueprint bounds are set'
+        }:show()
+        return
+    end
+
     table.insert(params, ('--cursor=%d,%d,%d')
                          :format(bounds.x1, bounds.y1, bounds.z2))
 
