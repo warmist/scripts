@@ -29,6 +29,7 @@ end)()
 
 local keybindings_raw = {
     {name='toggle_ro', key="CUSTOM_CTRL_D",desc="Toggle between read-only and read-write"},
+    {name='autoupdate', key="CUSTOM_ALT_A",desc="See live updates of changing values"},
     {name='offset', key="CUSTOM_ALT_O",desc="Show current items offset"},
     {name='find', key="CUSTOM_F",desc="Find a value by entering a predicate"},
     {name='find_id', key="CUSTOM_I",desc="Find object with this ID, using ref-target if available"},
@@ -41,7 +42,6 @@ local keybindings_raw = {
     {name='gotopos', key="CUSTOM_G",desc="Move map view to location of target"},
     {name='help', key="STRING_A063",desc="Show this help"},
     {name='displace', key="STRING_A093",desc="Open reference offseted by index"},
-    {name='autoupdate', key="CUSTOM_ALT_A",desc="Automatically keep values updated"},
     --{name='NOT_USED', key="SEC_SELECT",desc="Edit selected entry as a number (for enums)"}, --not a binding...
 }
 
@@ -143,8 +143,7 @@ function GmEditorUi:init(args)
         subviews={
             mainList,
             widgets.Label{text={{text="<no item>",id="name"},{gap=1,text="Help",key=keybindings.help.key,key_sep = '()'}}, view_id = 'lbl_current_item',frame = {l=1,t=1,yalign=0}},
-            widgets.EditField{frame={l=1,t=2,h=1},label_text="Search",key=keybindings.start_filter.key,key_sep='(): ',on_change=self:callback('text_input'),view_id="filter_input"},
-        widgets.ToggleHotkeyLabel{label="Auto-Update", key=keybindings.autoupdate.key, initial_option=false, view_id = 'lbl_autoupdate', frame={l=1,t=0,yalign=0}}}
+            widgets.EditField{frame={l=1,t=2,h=1},label_text="Search",key=keybindings.start_filter.key,key_sep='(): ',on_change=self:callback('text_input'),view_id="filter_input"}}
         ,view_id='page_main'}
 
     self:addviews{widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
@@ -180,9 +179,8 @@ function GmEditorUi:verifyStack(args)
     if failure then
         self.stack = {table.unpack(self.stack, 1, last_good_level)}
         return false
-    else
-        return true
     end
+    return true
 end
 function GmEditorUi:text_input(new_text)
     self:updateTarget(true,true)
@@ -379,7 +377,7 @@ function GmEditorUi:editSelectedEnum(index,choice)
 end
 function GmEditorUi:openReinterpret(key)
     local trg=self:currentTarget()
-    dialog.showInputPrompt(tostring(trg_key),"Enter new type:",COLOR_WHITE,
+    dialog.showInputPrompt(tostring(self:getSelectedKey()),"Enter new type:",COLOR_WHITE,
                 "",function(choice)
                     local ntype=df[choice]
                     self:pushTarget(df.reinterpret_cast(ntype,trg.target[key]))
@@ -524,6 +522,9 @@ function GmEditorUi:onInput(keys)
         self.read_only = not self.read_only
         self:updateTitles()
         return true
+    elseif keys[keybindings.autoupdate.key] then
+        self.autoupdate = not self.autoupdate
+        return true
     elseif keys[keybindings.offset.key] then
         local trg=self:currentTarget()
         local _,stoff=df.sizeof(trg.target)
@@ -602,6 +603,7 @@ end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     self:verifyStack()
     local trg=self:currentTarget()
+    if not trg then return end
     local filter=self.subviews.filter_input.text:lower()
 
     if reindex then
@@ -626,13 +628,15 @@ function GmEditorUi:updateTarget(preserve_pos,reindex)
     for k,v in pairs(trg.keys) do
         table.insert(t,{text={{text=string.format("%-"..trg.kw.."s",tostring(v))},{gap=2,text=getStringValue(trg,v)}}})
     end
-    local last_pos
+    local last_selected, last_top
     if preserve_pos then
-        last_pos=self.subviews.list_main:getSelected()
+        last_selected=self.subviews.list_main:getSelected()
+        last_top=self.subviews.list_main.page_top
     end
     self.subviews.list_main:setChoices(t)
-    if last_pos then
-        self.subviews.list_main:setSelected(last_pos)
+    if last_selected then
+        self.subviews.list_main:setSelected(last_selected)
+        self.subviews.list_main:on_scrollbar(last_top)
     else
         self.subviews.list_main:setSelected(trg.selected)
     end
@@ -682,6 +686,9 @@ function GmEditorUi:onRenderFrame(dc, rect)
     if self.parent_view.freeze then
         dc:seek(rect.x1+2, rect.y2):string(' GAME SUSPENDED ', COLOR_RED)
     end
+    if self.autoupdate and self.next_refresh_ms <= dfhack.getTickCount() then
+        self:updateTarget(true, true)
+    end
 end
 
 FreezeScreen = defclass(FreezeScreen, gui.Screen)
@@ -727,12 +734,6 @@ end
 
 function FreezeScreen:onDismiss()
     freeze_screen = nil
-end
-
-function GmEditorUi:onRenderBody()
-    if self.subviews.lbl_autoupdate:getOptionValue() and self.next_refresh_ms <= dfhack.getTickCount()  then
-        self:updateTarget()
-    end
 end
 
 GmScreen = defclass(GmScreen, gui.ZScreen)
