@@ -17,6 +17,7 @@ local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 local quickfort_preview = reqscript('internal/quickfort/preview')
 local quickfort_set = reqscript('internal/quickfort/set')
+local quickfort_transform = reqscript('internal/quickfort/transform')
 
 local log = quickfort_common.log
 
@@ -437,11 +438,82 @@ local function do_traffic_restricted(digctx)
     return function() digctx.flags.traffic = values.traffic_restricted end
 end
 
-local function track_alias_entry(directions)
+local unit_vectors = quickfort_transform.unit_vectors
+local unit_vectors_revmap = quickfort_transform.unit_vectors_revmap
+
+local track_end_data = {
+    N=unit_vectors.north,
+    E=unit_vectors.east,
+    S=unit_vectors.south,
+    W=unit_vectors.west
+}
+local track_end_revmap = {
+    [unit_vectors_revmap.north]='N',
+    [unit_vectors_revmap.east]='E',
+    [unit_vectors_revmap.south]='S',
+    [unit_vectors_revmap.west]='W'
+}
+
+local track_through_data = {
+    NS=unit_vectors.north,
+    EW=unit_vectors.east
+}
+local track_through_revmap = {
+    [unit_vectors_revmap.north]='NS',
+    [unit_vectors_revmap.east]='EW',
+    [unit_vectors_revmap.south]='NS',
+    [unit_vectors_revmap.west]='EW'
+}
+
+local track_corner_data = {
+    NE={x=1, y=-2},
+    NW={x=-2, y=-1},
+    SE={x=2, y=1},
+    SW={x=-1, y=2}
+}
+local track_corner_revmap = {
+    ['x=1, y=-2'] = 'NE',
+    ['x=2, y=-1'] = 'NE',
+    ['x=2, y=1'] = 'SE',
+    ['x=1, y=2'] = 'SE',
+    ['x=-1, y=2'] = 'SW',
+    ['x=-2, y=1'] = 'SW',
+    ['x=-2, y=-1'] = 'NW',
+    ['x=-1, y=-2'] = 'NW'
+}
+
+local track_tee_data = {
+    NSE={x=1, y=-2},
+    NEW={x=-2, y=-1},
+    SEW={x=2, y=1},
+    NSW={x=-1, y=2}
+}
+local track_tee_revmap = {
+    ['x=1, y=-2'] = 'NSE',
+    ['x=2, y=-1'] = 'NEW',
+    ['x=2, y=1'] = 'SEW',
+    ['x=1, y=2'] = 'NSE',
+    ['x=-1, y=2'] = 'NSW',
+    ['x=-2, y=1'] = 'SEW',
+    ['x=-2, y=-1'] = 'NEW',
+    ['x=-1, y=-2'] = 'NSW'
+}
+
+local function make_transform_track_fn(vector, revmap)
+    return function(ctx)
+        return 'track' .. quickfort_transform.resolve_transformed_vector(ctx, vector, revmap)
+    end
+end
+local function make_track_entry(name, data, revmap)
+    local transform = nil
+    if data and revmap then
+        transform = make_transform_track_fn(data[name], revmap)
+    end
     return {action=do_track, use_priority=true, can_clobber_engravings=true,
-            direction={single_tile=true, north=directions.north,
-                       south=directions.south, east=directions.east,
-                       west=directions.west}}
+            direction={single_tile=true, north=name:find('N'),
+                       south=name:find('S'), east=name:find('E'),
+                       west=name:find('W')},
+            transform=transform}
 end
 
 local dig_db = {
@@ -478,24 +550,25 @@ local dig_db = {
     ol={action=do_traffic_low},
     ['or']={action=do_traffic_restricted},
     -- single-tile track aliases
-    trackN=track_alias_entry{north=true},
-    trackS=track_alias_entry{south=true},
-    trackE=track_alias_entry{east=true},
-    trackW=track_alias_entry{west=true},
-    trackNS=track_alias_entry{north=true, south=true},
-    trackNE=track_alias_entry{north=true, east=true},
-    trackNW=track_alias_entry{north=true, west=true},
-    trackSE=track_alias_entry{south=true, east=true},
-    trackSW=track_alias_entry{south=true, west=true},
-    trackEW=track_alias_entry{east=true, west=true},
-    trackNSE=track_alias_entry{north=true, south=true, east=true},
-    trackNSW=track_alias_entry{north=true, south=true, west=true},
-    trackNEW=track_alias_entry{north=true, east=true, west=true},
-    trackSEW=track_alias_entry{south=true, east=true, west=true},
-    trackNSEW=track_alias_entry{north=true, south=true, east=true, west=true},
+    trackN=make_track_entry('N', track_end_data, track_end_revmap),
+    trackS=make_track_entry('S', track_end_data, track_end_revmap),
+    trackE=make_track_entry('E', track_end_data, track_end_revmap),
+    trackW=make_track_entry('W', track_end_data, track_end_revmap),
+    trackNS=make_track_entry('NS', track_through_data, track_through_revmap),
+    trackEW=make_track_entry('EW', track_through_data, track_through_revmap),
+    trackNE=make_track_entry('NE', track_corner_data, track_corner_revmap),
+    trackNW=make_track_entry('NW', track_corner_data, track_corner_revmap),
+    trackSE=make_track_entry('SE', track_corner_data, track_corner_revmap),
+    trackSW=make_track_entry('SW', track_corner_data, track_corner_revmap),
+    trackNSE=make_track_entry('NSE', track_tee_data, track_tee_revmap),
+    trackNSW=make_track_entry('NSW', track_tee_data, track_tee_revmap),
+    trackNEW=make_track_entry('NEW', track_tee_data, track_tee_revmap),
+    trackSEW=make_track_entry('SEW', track_tee_data, track_tee_revmap),
+    trackNSEW=make_track_entry('NSEW'),
 }
 
 -- add trackramp aliases for the track aliases
+-- (trackramps are just tracks carved over ramps)
 dig_db.trackrampN = dig_db.trackN
 dig_db.trackrampS = dig_db.trackS
 dig_db.trackrampE = dig_db.trackE
@@ -674,6 +747,10 @@ local function do_run_impl(zlevel, grid, ctx)
                                 :format(text, cell))
                 stats.invalid_keys.value = stats.invalid_keys.value + 1
                 goto continue
+            end
+            if db_entry.transform then
+                db_entry = copyall(db_entry)
+                db_entry.direction = dig_db[db_entry.transform(ctx)].direction
             end
             if db_entry.action == do_track and not db_entry.direction and
                     math.abs(extent.width) == 1 and

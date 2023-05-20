@@ -28,6 +28,7 @@ that repo.
 - `deathcause`: fix incorrect weapon sometimes being reported
 - `gui/design`: Fix building and stairs designation
 - `quickfort`: fixed detection of tiles where machines are allowed (e.g. water wheels *can* be built on stairs if there is a machine support nearby)
+- `quickfort`: fixed rotation of blueprints with carved track tiles
 
 ## Misc Improvements
 - `quickfort`: blueprints that designate items for dumping/forbidding/etc. no longer show an error highlight for tiles that have no items on them
