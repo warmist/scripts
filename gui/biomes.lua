@@ -85,7 +85,7 @@ local function gatherBiomeInfo(z)
     local maxX, maxY, maxZ = dfhack.maps.getTileSize()
     maxX = maxX - 1; maxY = maxY - 1; maxZ = maxZ - 1
 
-    local z = z or df.global.window_z
+    z = z or df.global.window_z
 
     --for z = 0, maxZ do
     for y = 0, maxY do
@@ -274,6 +274,10 @@ local function add_field_text(lines, biome, field_name)
 end
 
 local function get_tooltip_text(option)
+    if not option then
+        return ""
+    end
+
     local text = {}
     text[#text+1] = ("type: %s"):format(df.biome_type[option.biomeTypeId])
     text[#text+1] = NEWLINE
@@ -334,6 +338,10 @@ end
 
 function BiomeVisualizer:onRenderFrame(dc, rect)
     BiomeVisualizer.super.onRenderFrame(self, dc, rect)
+
+    if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
+        return
+    end
 
     local z = df.global.window_z
     if not biomesMap[z] then
