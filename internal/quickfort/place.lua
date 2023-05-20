@@ -50,7 +50,7 @@ local function is_valid_stockpile_extent(s)
 end
 
 local stockpile_template = {
-    has_extents=true, min_width=1, max_width=31, min_height=1, max_height=31,
+    has_extents=true, min_width=1, max_width=math.huge, min_height=1, max_height=math.huge,
     is_valid_tile_fn = is_valid_stockpile_tile,
     is_valid_extent_fn = is_valid_stockpile_extent
 }
