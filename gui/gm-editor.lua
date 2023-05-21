@@ -160,6 +160,7 @@ function GmEditorUi:verifyStack(args)
         local keys = level.keys
         local selection = level.selected
         local sel_key = keys[selection]
+        if not sel_key then goto continue end
         local next_by_ref
         local status, _ = pcall(
         function()
@@ -175,6 +176,7 @@ function GmEditorUi:verifyStack(args)
             failure = true
             break
         end
+        ::continue::
     end
     if failure then
         self.stack = {table.unpack(self.stack, 1, last_good_level)}
@@ -603,7 +605,6 @@ end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     self:verifyStack()
     local trg=self:currentTarget()
-    if not trg then return end
     local filter=self.subviews.filter_input.text:lower()
 
     if reindex then
