@@ -81,7 +81,7 @@ local function getRestrictiveMatFilter(itemType, opts)
             return (mat.flags.ITEMS_AMMO)
         end,
         ARMOR = function(mat, parent, typ, idx)
-            return (mat.flags.ITEMS_ARMOR)
+            return (mat.flags.ITEMS_ARMOR or mat.flags.LEATHER)
         end,
         INSTRUMENT = function(mat, parent, typ, idx)
             return (mat.flags.ITEMS_HARD)
