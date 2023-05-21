@@ -556,6 +556,8 @@ function Quickfort:refresh_preview()
 end
 
 local to_pen = dfhack.pen.parse
+local CURSOR_PEN = to_pen{ch='o', fg=COLOR_BLUE,
+                         tile=dfhack.screen.findGraphicsTile('CURSORS', 5, 22)}
 local GOOD_PEN = to_pen{ch='x', fg=COLOR_GREEN,
                         tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
 local BAD_PEN = to_pen{ch='X', fg=COLOR_RED,
@@ -584,6 +586,7 @@ function Quickfort:onRenderFrame(dc, rect)
     if not tiles[cursor.z] then return end
 
     local function get_overlay_pen(pos)
+        if same_xyz(pos, cursor) then return CURSOR_PEN end
         local preview_tile = quickfort_preview.get_preview_tile(tiles, pos)
         if preview_tile == nil then return end
         return preview_tile and GOOD_PEN or BAD_PEN
@@ -612,6 +615,7 @@ function Quickfort:commit()
 end
 
 function Quickfort:do_command(command, dry_run, post_fn)
+    self.dirty = true
     print(('executing via gui/quickfort: quickfort %s'):format(
                 quickfort_parse.format_command(
                     command, self.blueprint_name, self.section_name, dry_run)))
