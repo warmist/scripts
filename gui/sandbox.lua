@@ -16,8 +16,8 @@ local DISPOSITIONS = {
 Sandbox = defclass(Sandbox, widgets.Window)
 Sandbox.ATTRS {
     frame_title='Arena Sandbox',
-    frame={r=2, t=18, w=26, h=24},
-    frame_inset=0,
+    frame={r=2, t=18, w=26, h=20},
+    frame_inset={b=1},
 }
 
 local function is_sentient(unit)
@@ -83,7 +83,7 @@ function Sandbox:init()
         widgets.ResizingPanel{
             frame={t=0},
             frame_style=gui.FRAME_INTERIOR,
-            frame_inset=1,
+            frame_inset={l=1, r=1},
             autoarrange_subviews=1,
             subviews={
                 widgets.Label{
@@ -133,9 +133,9 @@ function Sandbox:init()
             },
         },
         widgets.ResizingPanel{
-            frame={t=10},
+            frame={t=11},
             frame_style=gui.FRAME_INTERIOR,
-            frame_inset=1,
+            frame_inset={l=1, r=1},
             autoarrange_subviews=1,
             subviews={
                 widgets.HotkeyLabel{
