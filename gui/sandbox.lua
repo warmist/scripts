@@ -59,8 +59,6 @@ local function finalize_animal(unit, disposition)
 end
 
 local function finalize_units(first_created_unit_id, disposition)
-    print(first_created_unit_id, disposition)
-    -- unit->flags4.bits.agitated_wilderness_creature
     for unit_id=first_created_unit_id,df.global.unit_next_id-1 do
         local unit = df.unit.find(unit_id)
         if not unit then goto continue end
@@ -167,28 +165,33 @@ function Sandbox:init()
     }
 end
 
+local function is_arena_action_in_progress()
+    return df.global.game.main_interface.arena_unit.open or
+            df.global.game.main_interface.arena_tree.open or
+            df.global.game.main_interface.bottom_mode_selected ~= -1
+end
+
+local function clear_arena_action()
+    -- close any open arena UI elements
+    df.global.game.main_interface.arena_unit.open = false
+    df.global.game.main_interface.arena_tree.open = false
+    df.global.game.main_interface.bottom_mode_selected = -1
+end
+
 function Sandbox:onInput(keys)
     if keys._MOUSE_R_DOWN and self:getMouseFramePos() then
-        -- close any open UI elements
-        df.global.game.main_interface.arena_unit.open = false
-        df.global.game.main_interface.arena_tree.open = false
-        df.global.game.main_interface.bottom_mode_selected = -1
+        clear_arena_action()
         return false
     end
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-        if df.global.game.main_interface.arena_unit.open or
-                df.global.game.main_interface.arena_tree.open or
-                df.global.game.main_interface.bottom_mode_selected ~= -1 then
-            view:sendInputToParent{LEAVESCREEN=true}
+        if is_arena_action_in_progress() then
+            clear_arena_action()
             return true
         else
             return false
         end
     end
-    if not Sandbox.super.onInput(self, keys) then
-        view:sendInputToParent(keys)
-    end
-    return true
+    return Sandbox.super.onInput(self, keys)
 end
 
 function Sandbox:finalize_group()
@@ -290,10 +293,6 @@ function SandboxScreen:init()
     self:addviews{
         Sandbox{
             view_id='sandbox',
-        },
-        InterfaceMask{
-            frame={l=17, r=38, t=0, h=3},
-            frame_background=gui.CLEAR_PEN,
         },
         InterfaceMask{
             frame={l=0, r=0, b=0, h=3},
