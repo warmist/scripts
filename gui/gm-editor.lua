@@ -149,13 +149,14 @@ function GmEditorUi:init(args)
     self:addviews{widgets.Pages{subviews={mainPage,helpPage},view_id="pages"}}
     self:pushTarget(args.target)
 end
-function GmEditorUi:verifyStack(args)
+function GmEditorUi:verifyStack()
     local failure = false
 
     local last_good_level = nil
 
     for i, level in pairs(self.stack) do
         local obj=level.target
+        if obj._kind == "bitfield" then goto continue end
 
         local keys = level.keys
         local selection = level.selected
