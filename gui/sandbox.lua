@@ -155,6 +155,7 @@ local function finalize_animal(unit, disposition)
         unit.flags4.agitated_wilderness_creature = true
     elseif disposition == DISPOSITIONS.WILD then
         unit.flags2.roaming_wilderness_population_source = true
+        unit.flags2.roaming_wilderness_population_source_not_a_map_feature = true
         unit.animal.leave_countdown = 20000
     elseif disposition == DISPOSITIONS.FRIENDLY then
         -- noop; units are created friendly by default
