@@ -1,6 +1,8 @@
 local gui = require('gui')
+local materials = require('gui.materials')
 local makeown = reqscript('makeown')
 local widgets = require('gui.widgets')
+local utils = require('utils')
 
 local DISPOSITIONS = {
     HOSTILE = 1,
@@ -191,7 +193,9 @@ function Sandbox:onInput(keys)
             return false
         end
     end
-    return Sandbox.super.onInput(self, keys)
+    if not Sandbox.super.onInput(self, keys) then
+        view:sendInputToParent(keys)
+    end
 end
 
 function Sandbox:finalize_group()
@@ -226,10 +230,74 @@ SandboxScreen.ATTRS {
     defocusable=false,
 }
 
+local RAWS = df.global.world.raws
+local MAT_TABLE = RAWS.mat_table
+
+-- elements of df.entity_sell_category
+local EQUIPMENT_TYPES = {
+    Weapons={itemdefs=RAWS.itemdefs.weapons,
+        item_type=df.item_type.WEAPON,
+        def_filter=function(def) return not def.flags.TRAINING end,
+        mat_filter=function(mat) return mat.flags.ITEMS_WEAPON and mat.flags.ITEMS_METAL end},
+    TrainingWeapons={itemdefs=RAWS.itemdefs.weapons,
+        item_type=df.item_type.WEAPON,
+        def_filter=function(def) return def.flags.TRAINING end,
+        mat_filter=function(mat) return mat.flags.WOOD end},
+    Ammo={itemdefs=RAWS.itemdefs.ammo,
+        item_type=df.item_type.AMMO,
+        mat_filter=function(mat) return mat.flags.ITEMS_AMMO end},
+    Bodywear={itemdefs=RAWS.itemdefs.armor,
+        item_type=df.item_type.ARMOR,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Headwear={itemdefs=RAWS.itemdefs.helms,
+        item_type=df.item_type.HELM,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Handwear={itemdefs=RAWS.itemdefs.gloves,
+        item_type=df.item_type.GLOVES,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Footwear={itemdefs=RAWS.itemdefs.shoes,
+        item_type=df.item_type.SHOES,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Legwear={itemdefs=RAWS.itemdefs.pants,
+        item_type=df.item_type.PANTS,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Shields={itemdefs=RAWS.itemdefs.shields,
+        item_type=df.item_type.SHIELD,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
+    Tools={itemdefs=RAWS.itemdefs.tools,
+        item_type=df.item_type.TOOL,
+        mat_filter=function(mat) return mat.flags.ITEMS_HARD end},
+}
+
+local function scan_organic(cat, vec, start_idx, base, do_insert)
+    local indexes = MAT_TABLE.organic_indexes[cat]
+    for idx = start_idx,#indexes-1 do
+        local matindex = indexes[idx]
+        local organic = vec[matindex]
+        for offset, mat in ipairs(organic.material) do
+            if do_insert(mat, base + offset, matindex) then
+                print('index', matindex)
+                pcall(function() print(organic.creature_id) end)
+                pcall(function() print(organic.id) end)
+                print(organic.material[offset].id)
+                return matindex
+            end
+        end
+    end
+    return 0
+end
+
 local function init_arena()
     local arena = df.global.world.arena
     local arena_unit = df.global.game.main_interface.arena_unit
     local arena_tree = df.global.game.main_interface.arena_tree
+    local leather_index_hint, plant_index_hint = 0, 0
 
     -- races
     arena.race:resize(0)
@@ -242,11 +310,10 @@ local function init_arena()
     arena_unit.races_all:resize(0)
     arena_unit.castes_filtered:resize(0)
     arena_unit.castes_all:resize(0)
-    for i, cre in ipairs(df.global.world.raws.creatures.all) do
+    for i, cre in ipairs(RAWS.creatures.all) do
         if cre.flags.VERMIN_GROUNDER or cre.flags.VERMIN_SOIL then goto continue end
         arena.creature_cnt:insert('#', 0)
         for caste in ipairs(cre.caste) do
-            -- the real interface sorts these alphabetically
             arena.race:insert('#', i)
             arena.caste:insert('#', caste)
         end
@@ -254,11 +321,14 @@ local function init_arena()
     end
 
     -- interactions
+    -- note this doesn't actually come up with anything in vanilla. normal arena
+    -- mode reads from the files in data/vanilla/interaction examples/ where some
+    -- usable insteractions exist
     arena.interactions:resize(0)
     arena.interaction = -1
     arena_unit.interactions:resize(0)
     arena_unit.interaction = -1
-    for _, inter in ipairs(df.global.world.raws.interactions) do
+    for _, inter in ipairs(RAWS.interactions) do
         for _, effect in ipairs(inter.effects) do
             if #effect.arena_name > 0 then
                 arena.interactions:insert('#', effect)
@@ -278,13 +348,65 @@ local function init_arena()
         end
     end
 
+    -- equipment
+    -- this is slow, so optimize for speed:
+    -- - use pre-allocated structures if possible
+    -- - don't scan past the basic metals
+    -- - only scan until we fine one kind of thing. we don't need 1000 types of leather
+    --   or 40 types of wood
+    -- - remember the last matched material and try that again for the next item type
+    for idx, list in ipairs(arena.item_types.list) do
+        local list_size = 0
+        local data = EQUIPMENT_TYPES[df.entity_sell_category[idx]]
+        if not data then goto continue end
+        for _,itemdef in ipairs(data.itemdefs) do
+            if data.def_filter and not data.def_filter(itemdef) then goto inner_continue end
+            local do_insert = function(mat, mattype, matindex)
+                if data.mat_filter and not data.mat_filter(mat) then return end
+                local element = {
+                    item_type=data.item_type,
+                    item_subtype=itemdef.subtype,
+                    mattype=mattype,
+                    matindex=matindex,
+                    unk_c=1}
+                if #list > list_size then
+                    utils.assign(list[list_size], element)
+                else
+                    element.new = df.embark_item_choice.T_list
+                    list:insert('#', element)
+                end
+                list_size = list_size + 1
+                return true
+            end
+            -- if there is call for glass tools, uncomment this
+            -- for i in ipairs(df.builtin_mats) do
+            --     do_insert(MAT_TABLE.builtin[i], i, -1)
+            -- end
+            for i, mat in ipairs(RAWS.inorganics) do
+                do_insert(mat.material, 0, i)
+                -- stop at the first "special" metal. we don't need more than that
+                if mat.flags.DEEP_SPECIAL then break end
+            end
+            if data.want_leather then
+                leather_index_hint = scan_organic(df.organic_mat_category.Leather, RAWS.creatures.all, leather_index_hint, materials.CREATURE_BASE, do_insert)
+            end
+            plant_index_hint = scan_organic(df.organic_mat_category.Wood, RAWS.plants.all, plant_index_hint, materials.PLANT_BASE, do_insert)
+            ::inner_continue::
+        end
+        ::continue::
+        for list_idx=list_size,#list-1 do
+            df.delete(list[list_idx])
+        end
+        list:resize(list_size)
+    end
+
     -- trees
     arena.tree_types:resize(0)
     arena.tree_age = 100
     arena_tree.tree_types_filtered:resize(0)
     arena_tree.tree_types_all:resize(0)
     arena_tree.age = 100
-    for _, tree in ipairs(df.global.world.raws.plants.trees) do
+    for _, tree in ipairs(RAWS.plants.trees) do
         arena.tree_types:insert('#', tree)
     end
 end
