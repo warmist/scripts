@@ -2,14 +2,10 @@ gui/sandbox
 ===========
 
 .. dfhack-tool::
-    :summary: Create units, trees, liquids, snow, and mud.
-    :tags: fort armok animals map plants units
+    :summary: Create units, trees, or items.
+    :tags: fort armok animals items map plants units
 
-This tool brings up the arena creation interface while you're in fort mode. You
-can create units (with arbitrary skillsets) and trees, spawn liquids, and paint
-the ground with snow or mud. You can also use this tool to clean the map of
-spatters (like snow, mud, or blood). Note that the weather controls do not have
-an effect on your fort.
+This tool provides a spawning interface for units, trees, and/or items. Units can be created with arbitrary skillsets, and trees can be created either as saplings or as fully grown (depending on the age you set).
 
 You can choose whether spawned units are:
 
@@ -17,9 +13,6 @@ You can choose whether spawned units are:
 - independent/wild
 - friendly
 - citizens/pets
-
-See `clean` for other ways to clean the map of spatters and `gui/liquids` for a
-more focused interface for creating liquids.
 
 Usage
 -----
