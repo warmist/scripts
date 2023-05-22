@@ -243,12 +243,14 @@ local function init_arena()
     arena_unit.castes_filtered:resize(0)
     arena_unit.castes_all:resize(0)
     for i, cre in ipairs(df.global.world.raws.creatures.all) do
+        if cre.flags.VERMIN_GROUNDER or cre.flags.VERMIN_SOIL then goto continue end
         arena.creature_cnt:insert('#', 0)
         for caste in ipairs(cre.caste) do
             -- the real interface sorts these alphabetically
             arena.race:insert('#', i)
             arena.caste:insert('#', caste)
         end
+        ::continue::
     end
 
     -- interactions
