@@ -22,6 +22,7 @@ that repo.
 - `fix/stuck-instruments`: fix instruments that are attached to invalid jobs, making them unusable
 - `gui/mod-manager`: automatically restore your list of active mods when generating new worlds
 - `gui/autodump`: point and click item teleportation and destruction interface
+- `gui/sandbox`: creation interface for units, trees, and items
 
 ## Fixes
 - `quickfort`: properly allow dwarves to smooth, engrave, and carve beneath passable tiles of buildings
