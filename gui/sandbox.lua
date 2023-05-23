@@ -1,14 +1,16 @@
 local gui = require('gui')
 local materials = require('gui.materials')
 local makeown = reqscript('makeown')
+local syndrome_util = require('syndrome-util')
 local widgets = require('gui.widgets')
 local utils = require('utils')
 
 local DISPOSITIONS = {
     HOSTILE = 1,
-    WILD = 2,
-    FRIENDLY = 3,
-    FORT = 4,
+    HOSTILE_UNDEAD = 2,
+    WILD = 3,
+    FRIENDLY = 4,
+    FORT = 5,
 }
 
 ---------------------
@@ -20,6 +22,7 @@ Sandbox.ATTRS {
     frame_title='Arena Sandbox',
     frame={r=2, t=18, w=26, h=20},
     frame_inset={b=1},
+    interface_masks=DEFAULT_NIL,
 }
 
 local function is_sentient(unit)
@@ -29,7 +32,8 @@ end
 
 local function finalize_sentient(unit, disposition)
 
-    if disposition == DISPOSITIONS.HOSTILE then
+    if disposition == DISPOSITIONS.HOSTILE or disposition == DISPOSITIONS.HOSTILE_UNDEAD then
+        unit.flags1.active_invader = true;
         unit.flags1.marauder = true;
     elseif disposition == DISPOSITIONS.WILD then
         unit.flags2.visitor = true
@@ -43,9 +47,7 @@ local function finalize_sentient(unit, disposition)
 end
 
 local function finalize_animal(unit, disposition)
-    if disposition == DISPOSITIONS.HOSTILE then
-        unit.flags1.active_invader = true;
-        unit.flags1.marauder = true;
+    if disposition == DISPOSITIONS.HOSTILE or disposition == DISPOSITIONS.HOSTILE_UNDEAD then
         unit.flags4.agitated_wilderness_creature = true
     elseif disposition == DISPOSITIONS.WILD then
         unit.flags2.roaming_wilderness_population_source = true
@@ -60,11 +62,28 @@ local function finalize_animal(unit, disposition)
     end
 end
 
-local function finalize_units(first_created_unit_id, disposition)
+local function is_arena_action_in_progress()
+    return df.global.game.main_interface.arena_unit.open or
+            df.global.game.main_interface.arena_tree.open or
+            df.global.game.main_interface.bottom_mode_selected ~= -1
+end
+
+local function clear_arena_action()
+    -- close any open arena UI elements
+    df.global.game.main_interface.arena_unit.open = false
+    df.global.game.main_interface.arena_tree.open = false
+    df.global.game.main_interface.bottom_mode_selected = -1
+end
+
+local function finalize_units(first_created_unit_id, disposition, syndrome)
     for unit_id=first_created_unit_id,df.global.unit_next_id-1 do
         local unit = df.unit.find(unit_id)
         if not unit then goto continue end
         unit.profession = df.profession.STANDARD
+        if syndrome then
+            syndrome_util.infectWithSyndrome(unit, syndrome)
+            unit.flags1.zombie = true;
+        end
         unit.name.has_name = false
         if is_sentient(unit) then
             finalize_sentient(unit, disposition)
@@ -83,33 +102,18 @@ function Sandbox:init()
         widgets.ResizingPanel{
             frame={t=0},
             frame_style=gui.FRAME_INTERIOR,
-            frame_inset={l=1, r=1},
             autoarrange_subviews=1,
             subviews={
                 widgets.Label{
                     frame={l=0},
                     text={
-                        'Spawn group #',
+                        'Unit group #',
                         {text=function() return self.spawn_group end},
                         NEWLINE,
                         '  unit',
-                        {text=function() return df.global.unit_next_id - self.first_unit_id == 1 and '' or 's' end}, ': ',
+                        {text=function() return df.global.unit_next_id - self.first_unit_id == 1 and '' or 's' end},
+                        ' in group: ',
                         {text=function() return df.global.unit_next_id - self.first_unit_id end},
-                    },
-                },
-                widgets.Panel{frame={h=1}},
-                widgets.CycleHotkeyLabel{
-                    view_id='disposition',
-                    frame={l=0},
-                    key='CUSTOM_SHIFT_D',
-                    key_back='CUSTOM_SHIFT_A',
-                    label='Unit disposition',
-                    label_below=true,
-                    options={
-                        {label='hostile', value=DISPOSITIONS.HOSTILE, pen=COLOR_RED},
-                        {label='independent/wild', value=DISPOSITIONS.WILD, pen=COLOR_YELLOW},
-                        {label='friendly', value=DISPOSITIONS.FRIENDLY, pen=COLOR_GREEN},
-                        {label='citizens/pets', value=DISPOSITIONS.FORT, pen=COLOR_BLUE},
                     },
                 },
                 widgets.Panel{frame={h=1}},
@@ -119,10 +123,11 @@ function Sandbox:init()
                     label="Spawn unit",
                     on_activate=function()
                         df.global.enabler.mouse_lbut = 0
+                        clear_arena_action()
                         view:sendInputToParent{ARENA_CREATE_CREATURE=true}
+                        df.global.game.main_interface.arena_unit.editing_filter = true
                     end,
                 },
-                widgets.Panel{frame={h=1}},
                 widgets.HotkeyLabel{
                     frame={l=0},
                     key='CUSTOM_SHIFT_G',
@@ -130,12 +135,27 @@ function Sandbox:init()
                     on_activate=self:callback('finalize_group'),
                     enabled=function() return df.global.unit_next_id ~= self.first_unit_id end,
                 },
+                widgets.Panel{frame={h=1}},
+                widgets.CycleHotkeyLabel{
+                    view_id='disposition',
+                    frame={l=0},
+                    key='CUSTOM_SHIFT_D',
+                    key_back='CUSTOM_SHIFT_A',
+                    label='Group disposition',
+                    label_below=true,
+                    options={
+                        {label='hostile', value=DISPOSITIONS.HOSTILE, pen=COLOR_LIGHTRED},
+                        {label='hostile (undead)', value=DISPOSITIONS.HOSTILE_UNDEAD, pen=COLOR_RED},
+                        {label='independent/wild', value=DISPOSITIONS.WILD, pen=COLOR_YELLOW},
+                        {label='friendly', value=DISPOSITIONS.FRIENDLY, pen=COLOR_GREEN},
+                        {label='citizens/pets', value=DISPOSITIONS.FORT, pen=COLOR_BLUE},
+                    },
+                },
             },
         },
         widgets.ResizingPanel{
             frame={t=11},
             frame_style=gui.FRAME_INTERIOR,
-            frame_inset={l=1, r=1},
             autoarrange_subviews=1,
             subviews={
                 widgets.HotkeyLabel{
@@ -144,7 +164,9 @@ function Sandbox:init()
                     label="Spawn tree",
                     on_activate=function()
                         df.global.enabler.mouse_lbut = 0
+                        clear_arena_action()
                         view:sendInputToParent{ARENA_CREATE_TREE=true}
+                        df.global.game.main_interface.arena_tree.editing_filter = true
                     end,
                 },
                 widgets.HotkeyLabel{
@@ -158,26 +180,13 @@ function Sandbox:init()
         widgets.HotkeyLabel{
             frame={l=1, b=0},
             key='LEAVESCREEN',
-            label="Return to fortress",
+            label="Return to game",
             on_activate=function()
                 repeat until not self:onInput{LEAVESCREEN=true}
                 view:dismiss()
             end,
         },
     }
-end
-
-local function is_arena_action_in_progress()
-    return df.global.game.main_interface.arena_unit.open or
-            df.global.game.main_interface.arena_tree.open or
-            df.global.game.main_interface.bottom_mode_selected ~= -1
-end
-
-local function clear_arena_action()
-    -- close any open arena UI elements
-    df.global.game.main_interface.arena_unit.open = false
-    df.global.game.main_interface.arena_tree.open = false
-    df.global.game.main_interface.bottom_mode_selected = -1
 end
 
 function Sandbox:onInput(keys)
@@ -193,14 +202,43 @@ function Sandbox:onInput(keys)
             return false
         end
     end
-    if not Sandbox.super.onInput(self, keys) then
-        view:sendInputToParent(keys)
+    if Sandbox.super.onInput(self, keys) then
+        return true
     end
+    if keys._MOUSE_L then
+        for _,mask_panel in ipairs(self.interface_masks) do
+            if mask_panel:getMousePos() then return true end
+        end
+    end
+    view:sendInputToParent(keys)
+end
+
+function Sandbox:find_zombie_syndrome()
+    if self.zombie_syndrome then return self.zombie_syndrome end
+    for _,syn in ipairs(df.global.world.raws.syndromes.all) do
+        if #syn.syn_class == 0 then goto continue end
+        if syn.syn_class[0] ~= 'ZOMBIE' then goto continue end
+        for _,effect in ipairs(syn.ce) do
+            if df.creature_interaction_effect_add_simple_flagst.is_instance(effect) and
+                    effect.tags1.OPPOSED_TO_LIFE then
+                self.zombie_syndrome = syn
+                return syn
+            end
+        end
+        ::continue::
+    end
+    dfhack.printerr('ZOMBIE syndrome not found; not marking as undead')
 end
 
 function Sandbox:finalize_group()
+    local syndrome = nil
+    if self.subviews.disposition:getOptionValue() == DISPOSITIONS.HOSTILE_UNDEAD then
+        syndrome = self:find_zombie_syndrome()
+    end
+
     finalize_units(self.first_unit_id,
-            self.subviews.disposition:getOptionValue())
+            self.subviews.disposition:getOptionValue(),
+            syndrome)
 
     self.spawn_group = self.spawn_group + 1
     self.first_unit_id = df.global.unit_next_id
@@ -282,10 +320,6 @@ local function scan_organic(cat, vec, start_idx, base, do_insert)
         local organic = vec[matindex]
         for offset, mat in ipairs(organic.material) do
             if do_insert(mat, base + offset, matindex) then
-                print('index', matindex)
-                pcall(function() print(organic.creature_id) end)
-                pcall(function() print(organic.id) end)
-                print(organic.material[offset].id)
                 return matindex
             end
         end
@@ -310,14 +344,20 @@ local function init_arena()
     arena_unit.races_all:resize(0)
     arena_unit.castes_filtered:resize(0)
     arena_unit.castes_all:resize(0)
+    local arena_creatures = {}
     for i, cre in ipairs(RAWS.creatures.all) do
-        if cre.flags.VERMIN_GROUNDER or cre.flags.VERMIN_SOIL then goto continue end
+        if not cre.flags.VERMIN_GROUNDER and not cre.flags.VERMIN_SOIL then
+            table.insert(arena_creatures, {race=i, cre=cre})
+        end
+    end
+    table.sort(arena_creatures,
+            function(a, b) return string.lower(a.cre.name[0]) < string.lower(b.cre.name[0]) end)
+    for _, cre_data in ipairs(arena_creatures) do
         arena.creature_cnt:insert('#', 0)
-        for caste in ipairs(cre.caste) do
-            arena.race:insert('#', i)
+        for caste in ipairs(cre_data.cre.caste) do
+            arena.race:insert('#', cre_data.race)
             arena.caste:insert('#', caste)
         end
-        ::continue::
     end
 
     -- interactions
@@ -414,26 +454,33 @@ end
 function SandboxScreen:init()
     init_arena()
 
-    self:addviews{
-        Sandbox{
-            view_id='sandbox',
-        },
-        InterfaceMask{
-            frame={l=0, r=0, b=0, h=3},
+    local mask_panel = widgets.Panel{
+        subviews={
+            InterfaceMask{frame={t=18, r=2, w=22, h=6}},
+            InterfaceMask{frame={l=0, r=0, b=0, h=3}},
         },
     }
 
+    self:addviews{
+        mask_panel,
+        Sandbox{
+            view_id='sandbox',
+            interface_masks=mask_panel.subviews,
+        },
+    }
+
+    self.prev_gametype = df.global.gametype
     df.global.gametype = df.game_type.DWARF_ARENA
 end
 
 function SandboxScreen:onDismiss()
-    df.global.gametype = df.game_type.DWARF_MAIN
+    df.global.gametype = self.prev_gametype
     view = nil
     self.subviews.sandbox:finalize_group()
 end
 
-if df.global.gametype ~= df.game_type.DWARF_MAIN then
-    qerror('must have a fort loaded')
+if not dfhack.isWorldLoaded() then
+    qerror('gui/sandbox must have a world loaded')
 end
 
 view = view and view:raise() or SandboxScreen{}:show()
