@@ -31,7 +31,6 @@ local function is_sentient(unit)
 end
 
 local function finalize_sentient(unit, disposition)
-
     if disposition == DISPOSITIONS.HOSTILE or disposition == DISPOSITIONS.HOSTILE_UNDEAD then
         unit.flags1.active_invader = true;
         unit.flags1.marauder = true;
