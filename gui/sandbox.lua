@@ -19,7 +19,7 @@ local DISPOSITIONS = {
 
 Sandbox = defclass(Sandbox, widgets.Window)
 Sandbox.ATTRS {
-    frame_title='Arena Sandbox',
+    frame_title='Armok\'s Sandbox',
     frame={r=2, t=18, w=26, h=20},
     frame_inset={b=1},
     interface_masks=DEFAULT_NIL,
@@ -206,6 +206,7 @@ function Sandbox:onInput(keys)
         return true
     end
     if keys._MOUSE_L then
+        if self:getMouseFramePos() then return true end
         for _,mask_panel in ipairs(self.interface_masks) do
             if mask_panel:getMousePos() then return true end
         end
