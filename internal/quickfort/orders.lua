@@ -11,10 +11,13 @@ end
 
 local quickfort_common = reqscript('internal/quickfort/common')
 
-local ok, stockflow = pcall(require, 'plugins.stockflow')
-if not ok then
-    stockflow = nil
-end
+-- local ok, stockflow = pcall(require, 'plugins.stockflow')
+-- if not ok then
+--     stockflow = nil
+-- end
+
+-- use our own copy of stockflow logic until stockflow becomes available again
+local stockflow = reqscript('internal/quickfort/stockflow')
 
 local log = quickfort_common.log
 
