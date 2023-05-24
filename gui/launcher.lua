@@ -588,7 +588,7 @@ function LauncherUI:init(args)
         else
             new_frame = config.data
             if not next(new_frame) then
-                new_frame = {l=5, r=25, t=5, b=5}
+                new_frame = {w=110, h=36}
             end
         end
         main_panel.frame = new_frame
