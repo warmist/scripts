@@ -216,18 +216,16 @@ end
 function Sandbox:find_zombie_syndrome()
     if self.zombie_syndrome then return self.zombie_syndrome end
     for _,syn in ipairs(df.global.world.raws.syndromes.all) do
-        if #syn.syn_class == 0 then goto continue end
-        if syn.syn_class[0] ~= 'ZOMBIE' then goto continue end
         for _,effect in ipairs(syn.ce) do
-            if df.creature_interaction_effect_add_simple_flagst.is_instance(effect) and
-                    effect.tags1.OPPOSED_TO_LIFE then
+            if df.creature_interaction_effect_add_simple_flagst:is_instance(effect) and
+                    effect.tags1.OPPOSED_TO_LIFE and effect['end'] == -1 then
                 self.zombie_syndrome = syn
                 return syn
             end
         end
         ::continue::
     end
-    dfhack.printerr('ZOMBIE syndrome not found; not marking as undead')
+    dfhack.printerr('permanent syndrome with OPPOSED_TO_LIFE not found; not marking as undead')
 end
 
 function Sandbox:finalize_group()
@@ -265,6 +263,7 @@ SandboxScreen = defclass(SandboxScreen, gui.ZScreen)
 SandboxScreen.ATTRS {
     focus_path='sandbox',
     force_pause=true,
+    pass_pause=false,
     defocusable=false,
 }
 
@@ -346,7 +345,7 @@ local function init_arena()
     arena_unit.castes_all:resize(0)
     local arena_creatures = {}
     for i, cre in ipairs(RAWS.creatures.all) do
-        if not cre.flags.VERMIN_GROUNDER and not cre.flags.VERMIN_SOIL then
+        if not cre.flags.VERMIN_GROUNDER and not cre.flags.VERMIN_SOIL and cre.graphics then
             table.insert(arena_creatures, {race=i, cre=cre})
         end
     end
