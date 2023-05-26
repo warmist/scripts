@@ -35,6 +35,7 @@ that repo.
 ## Misc Improvements
 - `gui/quickfort`: blueprints that designate items for dumping/forbidding/etc. no longer show an error highlight for tiles that have no items on them
 - `gui/quickfort`: place (stockpile layout) mode is now supported. note that detailed stockpile configurations were part of query mode and are not yet supported
+- `gui/quickfort`: you can now generate manager orders for items required to complete bluerpints
 - `gui/create-item`: ask for number of items to spawn by default
 - `light-aquifers-only`: now available as a fort Autostart option in `gui/control-panel`. note that it will only appear if "armok" tools are configured to be shown on the Preferences tab.
 - `gui/gm-editor`: when passing the ``--freeze`` option, further ensure that the game is frozen by halting all rendering (other than for the gm-editor window itself)

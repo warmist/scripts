@@ -22,7 +22,7 @@ end
 
 local command_switch = {
     run='do_run',
-    -- orders='do_orders', -- until we get stockflow working
+    orders='do_orders',
     undo='do_undo',
 }
 
@@ -185,7 +185,7 @@ local function do_one_command(command, cursor, blueprint_name, section_name,
         if command == 'orders' or mode == 'notes' or mode == 'config' then
             cursor = {x=0, y=0, z=0}
         else
-            qerror('please position the game cursor at the blueprint start ' ..
+            qerror('please position the keyboard cursor at the blueprint start ' ..
                    'location or use the --cursor option')
         end
     end
@@ -234,9 +234,6 @@ end
 function do_command(args)
     for _,command in ipairs(args.commands) do
         if not command or not command_switch[command] then
-            if command == 'orders' then
-                qerror('orders functionality not updated yet')
-            end
             qerror(string.format('invalid command: "%s"', command))
         end
     end
