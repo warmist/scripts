@@ -2,31 +2,12 @@
 --@ module = true
 
 local argparse = require('argparse')
-local quickfort = reqscript('quickfort')
-
--- ensures the list of available minecarts has been calculated by the game
-local function refresh_ui_hauling_vehicles()
-    local qfdata
-    if #df.global.plotinfo.hauling.routes > 0 then
-        -- if there is an existing route, move to the vehicle screen and back
-        -- out to force the game to scan for assignable minecarts
-        qfdata = 'hv^^'
-    else
-        -- if no current routes, create a route, move to the vehicle screen,
-        -- back out, and remove the route. The extra "px" is in the string in
-        -- case the user has the confirm plugin enabled. "p" pauses the plugin
-        -- and "x" retries the route deletion.
-        qfdata = 'hrv^xpx^'
-    end
-    quickfort.apply_blueprint{mode='config', data=qfdata}
-end
 
 function get_free_vehicles()
-    refresh_ui_hauling_vehicles()
     local free_vehicles = {}
-    for _,minecart in ipairs(df.global.plotinfo.hauling.vehicles) do
-        if minecart and minecart.route_id == -1 then
-            table.insert(free_vehicles, minecart)
+    for _,vehicle in ipairs(df.global.world.vehicles.active) do
+        if vehicle and vehicle.route_id == -1 then
+            table.insert(free_vehicles, vehicle)
         end
     end
     return free_vehicles
@@ -136,7 +117,7 @@ local function all(quiet)
     end
 end
 
-local function do_help()
+local function do_help(_)
     print(dfhack.script_help())
 end
 
