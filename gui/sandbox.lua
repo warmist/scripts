@@ -283,6 +283,10 @@ local EQUIPMENT_TYPES = {
     Ammo={itemdefs=RAWS.itemdefs.ammo,
         item_type=df.item_type.AMMO,
         mat_filter=function(mat) return mat.flags.ITEMS_AMMO end},
+    Quivers={itemdefs={{subtype=-1}},
+        item_type=df.item_type.QUIVER,
+        want_leather=true,
+        mat_filter=function(mat) return mat.flags.LEATHER end},
     Bodywear={itemdefs=RAWS.itemdefs.armor,
         item_type=df.item_type.ARMOR,
         want_leather=true,
@@ -307,9 +311,6 @@ local EQUIPMENT_TYPES = {
         item_type=df.item_type.SHIELD,
         want_leather=true,
         mat_filter=function(mat) return mat.flags.ITEMS_ARMOR or mat.flags.LEATHER end},
-    Tools={itemdefs=RAWS.itemdefs.tools,
-        item_type=df.item_type.TOOL,
-        mat_filter=function(mat) return mat.flags.ITEMS_HARD end},
 }
 
 local function scan_organic(cat, vec, start_idx, base, do_insert)
