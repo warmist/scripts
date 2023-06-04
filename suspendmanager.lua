@@ -29,12 +29,15 @@ REASON = {
     BUILDINGPLAN = 2,
     --- Fuzzy risk detection of jobs blocking each other in shapes like corners
     RISK_BLOCKING = 3,
+    --- Building job on top of an erasable designation (smoothing, carving, ...)
+    ERASE_DESIGNATION = 4,
 }
 
 REASON_TEXT = {
     [REASON.UNDER_WATER] = 'underwater',
     [REASON.BUILDINGPLAN] = 'planned',
-    [REASON.RISK_BLOCKING] = 'blocking'
+    [REASON.RISK_BLOCKING] = 'blocking',
+    [REASON.ERASE_DESIGNATION] = 'designation',
 }
 
 --- Suspension reasons from an external source
@@ -133,6 +136,13 @@ local BUILDING_IMPASSABLE = {
     [df.building_type.BarsVertical]=true,
 }
 
+--- Designation job type that are erased if a building is built on top of it
+local ERASABLE_DESIGNATION = {
+    [df.job_type.CarveTrack]=true,
+    [df.job_type.SmoothFloor]=true,
+    [df.job_type.DetailFloor]=true,
+}
+
 --- Check if a building is blocking once constructed
 ---@param building building_constructionst|building
 ---@return boolean
@@ -227,6 +237,26 @@ local function riskBlocking(job)
     return false
 end
 
+--- Return true if the building overlaps with a tile with a designation flag
+---@param building building
+local function buildingOnDesignation(building)
+    local z = building.z
+    for x=building.x1,building.x2 do
+        for y=building.y1,building.y2 do
+            local flags, occupancy = dfhack.maps.getTileFlags(x,y,z)
+            if flags.dig ~= df.tile_dig_designation.No or
+                flags.smooth > 0 or
+                occupancy.carve_track_north or
+                occupancy.carve_track_east or
+                occupancy.carve_track_south or
+                occupancy.carve_track_west
+            then
+                return true
+            end
+        end
+    end
+end
+
 --- Return the reason for suspending a job or nil if it should not be suspended
 --- @param job job
 --- @return reason?
@@ -268,6 +298,29 @@ function SuspendManager:refresh()
         -- Internal reasons to suspend a job
         if riskBlocking(job) then
             self.suspensions[job.id]=REASON.RISK_BLOCKING
+        end
+
+        -- First designation protection check: tile with designation flag
+        if job.job_type == df.job_type.ConstructBuilding then
+            ---@type building
+            local building = dfhack.job.getHolder(job)
+            if building then
+                if buildingOnDesignation(building) then
+                    self.suspensions[job.id]=REASON.ERASE_DESIGNATION
+                end
+            end
+        end
+
+        -- Second designation protection check: designation job
+        if ERASABLE_DESIGNATION[job.job_type] then
+            local building = dfhack.buildings.findAtTile(job.pos)
+            if building ~= nil then
+                for _,building_job in ipairs(building.jobs) do
+                    if building_job.job_type == df.job_type.ConstructBuilding then
+                        self.suspensions[building_job.id]=REASON.ERASE_DESIGNATION
+                    end
+                end
+            end
         end
 
         ::continue::
