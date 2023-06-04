@@ -16,23 +16,64 @@ end
 local GLOBAL_KEY = 'suspendmanager' -- used for state change hooks and persistence
 
 enabled = enabled or false
-preventblocking = preventblocking == nil and true or preventblocking
 
 eventful.enableEvent(eventful.eventType.JOB_INITIATED, 10)
 eventful.enableEvent(eventful.eventType.JOB_COMPLETED, 10)
+
+--- List of reasons for a job to be suspended
+---@enum reason
+REASON = {
+    --- The job is under water and dwarves will suspend the job when starting it
+    UNDER_WATER = 1,
+    --- The job is planned by buildingplan, but not yet ready to start
+    BUILDINGPLAN = 2,
+    --- Fuzzy risk detection of jobs blocking each other in shapes like corners
+    RISK_BLOCKING = 3,
+}
+
+REASON_TEXT = {
+    [REASON.UNDER_WATER] = 'underwater',
+    [REASON.BUILDINGPLAN] = 'planned',
+    [REASON.RISK_BLOCKING] = 'blocking'
+}
+
+--- Suspension reasons from an external source
+--- SuspendManager does not actively suspend such jobs, but
+--- will not unsuspend them
+EXTERNAL_REASONS = {
+    [REASON.UNDER_WATER]=true,
+    [REASON.BUILDINGPLAN]=true,
+}
+
+---@class SuspendManager
+---@field preventBlocking boolean
+---@field suspensions table<integer, reason>
+SuspendManager = defclass(SuspendManager)
+SuspendManager.ATTRS {
+    --- When enabled, suspendmanager also tries to suspend blocking jobs,
+    --- when not enabled, it only cares about avoiding unsuspending jobs suspended externally
+    preventBlocking = false,
+
+    --- Current job suspensions with their reasons
+    suspensions = {}
+}
+
+--- SuspendManager instance kept between frames
+---@type SuspendManager
+Instance = Instance or SuspendManager{preventBlocking=true}
 
 function isEnabled()
     return enabled
 end
 
 function preventBlockingEnabled()
-    return preventblocking
+    return Instance.preventBlocking
 end
 
 local function persist_state()
     persist.GlobalTable[GLOBAL_KEY] = json.encode({
         enabled=enabled,
-        prevent_blocking=preventblocking,
+        prevent_blocking=Instance.preventBlocking,
     })
 end
 
@@ -41,9 +82,9 @@ end
 function update_setting(setting, value)
     if setting == "preventblocking" then
         if (value == "true" or value == true) then
-            preventblocking = true
+            Instance.preventBlocking = true
         elseif (value == "false" or value == false) then
-            preventblocking = false
+            Instance.preventBlocking = false
         else
             qerror(tostring(value) .. " is not a valid value for preventblocking, it must be true or false")
         end
@@ -162,7 +203,7 @@ local function riskOfStuckConstructionAt(pos)
 end
 
 --- Return true if this job is at risk of blocking another one
-function isBlocking(job)
+local function riskBlocking(job)
     -- Not a construction job, no risk
     if job.job_type ~= df.job_type.ConstructBuilding then return false end
 
@@ -186,43 +227,62 @@ function isBlocking(job)
     return false
 end
 
---- Return true with a reason if a job should be suspended.
---- It optionally takes in account the risk of creating stuck
---- construction buildings
+--- Return the reason for suspending a job or nil if it should not be suspended
 --- @param job job
---- @param accountblocking boolean
-function shouldBeSuspended(job, accountblocking)
-    if accountblocking and isBlocking(job) then
-        return true, 'blocking'
+--- @return reason?
+function SuspendManager:shouldBeSuspended(job)
+    local reason = self.suspensions[job.id]
+    if reason and EXTERNAL_REASONS[reason] then
+        -- don't actively suspend external reasons for suspension
+        return nil
     end
-    return false, nil
+    return reason
 end
 
---- Return true with a reason if a job should not be unsuspended.
-function shouldStaySuspended(job, accountblocking)
-    -- External reasons to be suspended
+--- Return the reason for keeping a job suspended or nil if it can be unsuspended
+--- @param job job
+--- @return reason?
+function SuspendManager:shouldStaySuspended(job)
+    return self.suspensions[job.id]
+end
 
-    if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
-        return true, 'underwater'
+--- Recompute the list of suspended jobs
+function SuspendManager:refresh()
+    self.suspensions = {}
+
+    for _,job in utils.listpairs(df.global.world.jobs.list) do
+        -- External reasons to suspend a job
+        if job.job_type == df.job_type.ConstructBuilding then
+            if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
+                self.suspensions[job.id]=REASON.UNDER_WATER
+            end
+
+            local bld = dfhack.job.getHolder(job)
+            if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
+                self.suspensions[job.id]=REASON.BUILDINGPLAN
+            end
+        end
+
+        if not self.preventBlocking then goto continue end
+
+        -- Internal reasons to suspend a job
+        if riskBlocking(job) then
+            self.suspensions[job.id]=REASON.RISK_BLOCKING
+        end
+
+        ::continue::
     end
-
-    local bld = dfhack.job.getHolder(job)
-    if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
-        return true, 'buildingplan'
-    end
-
-    -- Internal reasons to be suspended, determined by suspendmanager
-    return shouldBeSuspended(job, accountblocking)
 end
 
 local function run_now()
+    Instance:refresh()
     foreach_construction_job(function(job)
         if job.flags.suspend then
-            if not shouldStaySuspended(job, preventblocking) then
+            if not Instance:shouldStaySuspended(job) then
                 unsuspend(job)
             end
         else
-            if shouldBeSuspended(job, preventblocking) then
+            if Instance:shouldBeSuspended(job) then
                 suspend(job)
             end
         end
@@ -231,7 +291,7 @@ end
 
 --- @param job job
 local function on_job_change(job)
-    if preventblocking then
+    if Instance.preventBlocking then
         -- Note: This method could be made incremental by taking in account the
         -- changed job
         run_now()
@@ -262,7 +322,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
 
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
     enabled = (persisted_data or {enabled=false})['enabled']
-    preventblocking = (persisted_data or {prevent_blocking=true})['prevent_blocking']
+    Instance.preventBlocking = (persisted_data or {prevent_blocking=true})['prevent_blocking']
     update_triggers()
 end
 
@@ -294,7 +354,7 @@ local function main(args)
         update_setting(positionals[2], positionals[3])
     elseif command == nil then
         print(string.format("suspendmanager is currently %s", (enabled and "enabled" or "disabled")))
-        if preventblocking then
+        if Instance.preventBlocking then
             print("It is configured to prevent construction jobs from blocking each others")
         else
             print("It is configured to unsuspend all jobs")
