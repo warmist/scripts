@@ -12,6 +12,11 @@ instead. Double-click anywhere on the map to teleport the items there. Be wary
 (or excited) that if you teleport the items into an unsupported position (e.g.
 mid-air), then they will become projectiles and fall.
 
+There are options to include or exclude forbidden items, items that are
+currently tagged as being used by an active job, and items dropped by traders.
+If trader items are included, the ``trader`` flag will be cleared upon teleport
+so the items can be used.
+
 Usage
 -----
 
