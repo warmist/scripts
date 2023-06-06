@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `gui/autodump`: add option to clear the ``trader`` flag from teleported items, allowing you to reclaim items dropped by merchants
 
 ## Removed
 
