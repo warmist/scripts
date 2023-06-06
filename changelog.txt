@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
 
 ## Misc Improvements
 
