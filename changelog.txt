@@ -19,6 +19,7 @@ that repo.
 - `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
 
 ## Misc Improvements
+- `gui/autodump`: add option to clear the ``trader`` flag from teleported items, allowing you to reclaim items dropped by merchants
 
 ## Removed
 
