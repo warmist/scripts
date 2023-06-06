@@ -9,15 +9,16 @@ local function get_dims(pos1, pos2)
     return width, height, depth
 end
 
-local function is_good_item(item, include_forbidden, include_in_job)
+local function is_good_item(item, include)
     if not item then return false end
     if not item.flags.on_ground or item.flags.garbage_collect or
-            item.flags.hostile or item.flags.on_fire or item.flags.trader or
-            item.flags.in_building or item.flags.construction or item.flags.spider_web then
+            item.flags.hostile or item.flags.on_fire or item.flags.in_building or
+            item.flags.construction or item.flags.spider_web then
         return false
     end
-    if item.flags.forbid and not include_forbidden then return false end
-    if item.flags.in_job and not include_in_job then return false end
+    if item.flags.forbid and not include.forbidden then return false end
+    if item.flags.in_job and not include.in_job then return false end
+    if item.flags.trader and not include.trader then return false end
     return true
 end
 
@@ -28,7 +29,7 @@ end
 Autodump = defclass(Autodump, widgets.Window)
 Autodump.ATTRS {
     frame_title='Autodump',
-    frame={w=47, h=18, r=2, t=18},
+    frame={w=48, h=18, r=2, t=18},
     resizable=true,
     resize_min={h=10},
     autoarrange_subviews=true,
@@ -127,6 +128,15 @@ function Autodump:init()
             on_change=self:callback('refresh_dump_items'),
         },
         widgets.ToggleHotkeyLabel{
+            view_id='include_trader',
+            frame={l=0},
+            label='Include items dropped by traders',
+            key='CUSTOM_CTRL_T',
+            auto_width=true,
+            initial_option=false,
+            on_change=self:callback('refresh_dump_items'),
+        },
+        widgets.ToggleHotkeyLabel{
             view_id='mark_as_forbidden',
             frame={l=0},
             label='Forbid after teleporting',
@@ -151,16 +161,21 @@ function Autodump:reset_selected_state()
     end
 end
 
+function Autodump:get_include()
+    local include = {forbidden=false, in_job=false, trader=false}
+    if next(self.subviews) then
+        include.forbidden = self.subviews.include_forbidden:getOptionValue()
+        include.in_job = self.subviews.include_in_job:getOptionValue()
+        include.trader = self.subviews.include_trader:getOptionValue()
+    end
+    return include
+end
+
 function Autodump:refresh_dump_items()
     local dump_items = {}
-    local include_forbidden = false
-    local include_in_job = false
-    if next(self.subviews) then
-        include_forbidden = self.subviews.include_forbidden:getOptionValue()
-        include_in_job = self.subviews.include_in_job:getOptionValue()
-    end
+    local include = self:get_include()
     for _,item in ipairs(df.global.world.items.all) do
-        if not is_good_item(item, include_forbidden, include_in_job) then goto continue end
+        if not is_good_item(item, include) then goto continue end
         if item.flags.dump then
             table.insert(dump_items, item)
         end
@@ -208,11 +223,10 @@ function Autodump:get_bounds(cursor, mark)
 end
 
 function Autodump:select_items_in_block(block, bounds)
-    local include_forbidden = self.subviews.include_forbidden:getOptionValue()
-    local include_in_job = self.subviews.include_in_job:getOptionValue()
+    local include = self:get_include()
     for _,item_id in ipairs(block.items) do
         local item = df.item.find(item_id)
-        if not is_good_item(item, include_forbidden, include_in_job) then
+        if not is_good_item(item, include) then
             goto continue
         end
         local x, y, z = dfhack.items.getPosition(item)
@@ -334,6 +348,7 @@ function Autodump:do_dump(pos)
     for _,item in ipairs(items) do
         if dfhack.items.moveToGround(item, pos) then
             item.flags.dump = false
+            item.flags.trader = false
             if mark_as_forbidden then
                 item.flags.forbid = true
             end
