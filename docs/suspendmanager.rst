@@ -11,6 +11,9 @@ This tool will watch your active jobs and:
     items temporarily in the way, or worker dwarves getting scared by wildlife
 - suspend construction jobs that would prevent a dwarf from reaching an adjacent
     construction job, such as when building a wall corner.
+- suspend construction jobs on top of a smoothing, engraving or track carving
+  designation. This prevents the construction job from being completed first,
+  which would erase the designation.
 
 Usage
 -----
