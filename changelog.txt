@@ -20,6 +20,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/autodump`: add option to clear the ``trader`` flag from teleported items, allowing you to reclaim items dropped by merchants
+- `quickfort`: now handles zones, locations, stockpile configuration, hauling routes, and more
 
 ## Removed
 
