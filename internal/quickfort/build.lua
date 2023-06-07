@@ -232,7 +232,24 @@ local function do_workshop_furnace_props(db_entry, props)
     end
 end
 
+local function do_roller_props(db_entry, props)
+    if props.speed and
+        (props.speed == '50000' or props.speed == '40000' or props.speed == '30000' or
+         props.speed == '20000' or props.speed == '10000')
+    then
+        db_entry.props.speed = tonumber(props.speed)
+        props.speed = nil
+    end
+end
+
 local function do_trackstop_props(db_entry, props)
+    if props.friction and
+        (props.friction == '50000' or props.friction == '10000' or props.friction == '500' or
+         props.friction == '50' or props.friction == '10')
+    then
+        db_entry.props.friction = tonumber(props.friction)
+        props.friction = nil
+    end
     if props.take_from then
         ensure_key(db_entry, 'route').from_names = argparse.stringList(props.take_from)
         props.take_from = nil
@@ -475,6 +492,7 @@ local function make_roller_entry(direction, speed)
         direction=direction,
         fields={speed=speed},
         is_valid_tile_fn=is_valid_tile_machine,
+        props_fn=do_roller_props,
         transform=transform
     }
 end
