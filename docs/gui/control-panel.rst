@@ -1,3 +1,5 @@
+.. _dfhack-examples-guide:
+
 gui/control-panel
 =================
 
