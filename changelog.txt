@@ -25,6 +25,7 @@ that repo.
 - `quickfort`: now handles zones, locations, stockpile configuration, hauling routes, and more
 - `suspendmanager`: now suspends construction jobs on top of floor designations, protecting the designations from being erased
 - `prioritize`: add wild animal management tasks and lever pulling to the default list of prioritized job types
+- `suspendmanager`: suspend jobs when building high walls or filling corridors
 
 ## Removed
 
