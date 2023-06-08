@@ -22,6 +22,7 @@ that repo.
 - `gui/control-panel`: add some popular startup configuration commands for `autobutcher` and `autofarm`
 - `gui/control-panel`: add option for running `fix/blood-del` on new forts (enabled by default)
 - `gui/autodump`: add option to clear the ``trader`` flag from teleported items, allowing you to reclaim items dropped by merchants
+- `quickfort`: now handles zones, locations, stockpile configuration, hauling routes, and more
 - `suspendmanager`: now suspends construction jobs on top of floor designations, protecting the designations from being erased
 
 ## Removed
