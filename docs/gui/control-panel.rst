@@ -1,5 +1,3 @@
-.. _dfhack-examples-guide:
-
 gui/control-panel
 =================
 
@@ -35,6 +33,8 @@ run custom commandline commands to configure that tool manually. If the tool has
 an associated GUI config screen, a gear icon will also appear next to the help
 icon. Hit :kbd:`Ctrl`:kbd:`G` or click on that icon to launch the relevant
 configuration interface.
+
+.. _dfhack-examples-guide:
 
 New Fort Autostart Commands
 ---------------------------
