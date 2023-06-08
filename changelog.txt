@@ -19,7 +19,10 @@ that repo.
 - `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
 
 ## Misc Improvements
+- `gui/control-panel`: add some popular startup configuration commands for `autobutcher` and `autofarm`
+- `gui/control-panel`: add option for running `fix/blood-del` on new forts (enabled by default)
 - `gui/autodump`: add option to clear the ``trader`` flag from teleported items, allowing you to reclaim items dropped by merchants
+- `suspendmanager`: now suspends construction jobs on top of floor designations, protecting the designations from being erased
 - `prioritize`: add wild animal management tasks and lever pulling to the default list of prioritized job types
 
 ## Removed
