@@ -44,7 +44,7 @@ function desert(u,method,civ)
         u.flags2.visitor = true
         u.animal.leave_countdown = 2
     end
-    
+
     local hf_id = u.hist_figure_id
     local hf = df.historical_figure.find(u.hist_figure_id)
     local fort_ent = df.global.ui.main.fortress_entity
@@ -52,7 +52,7 @@ function desert(u,method,civ)
 
     local newent_id = -1
     local newsite_id = -1
-    
+
     -- free owned rooms
     for i = #u.owned_buildings-1, 0, -1 do
         local temp_bld = df.building.find(u.owned_buildings[i].id)
@@ -121,7 +121,7 @@ function desert(u,method,civ)
             df.global.world.history.events:insert("#", {new = df.history_event_change_hf_statest, year = df.global.cur_year, seconds = df.global.cur_year_tick, id = hf_event_id, hfid = hf_id, state = 1, reason = -1, site = newsite_id})
         end
     end
-    
+
     print(line)
     dfhack.gui.showAnnouncement(line, COLOR_WHITE)
 end
@@ -167,7 +167,7 @@ function checkmigrationnow()
             if unit.flags1.merchant then table.insert(merchant_civ_ids, unit.civ_id) end
         end
     end
-    
+
     if #merchant_civ_ids == 0 then
         checkForDeserters('wild', df.global.ui.main.fortress_entity.entity_links[0].target)
     else
