@@ -31,6 +31,8 @@ REASON = {
     RISK_BLOCKING = 3,
     --- Building job on top of an erasable designation (smoothing, carving, ...)
     ERASE_DESIGNATION = 4,
+    --- Blocks a dead end (either a corridor or on top of a wall)
+    DEADEND = 5,
 }
 
 REASON_TEXT = {
@@ -38,6 +40,7 @@ REASON_TEXT = {
     [REASON.BUILDINGPLAN] = 'planned',
     [REASON.RISK_BLOCKING] = 'blocking',
     [REASON.ERASE_DESIGNATION] = 'designation',
+    [REASON.DEADEND] = 'dead end',
 }
 
 --- Suspension reasons from an external source
@@ -155,18 +158,17 @@ local function isImpassable(building)
     end
 end
 
---- True if there is a construction plan to build an unwalkable tile
+--- If there is a construction plan to build an unwalkable tile, return the building
 ---@param pos coord
----@return boolean
+---@return building?
 local function plansToConstructImpassableAt(pos)
     --- @type building_constructionst|building
     local building = dfhack.buildings.findAtTile(pos)
-    if not building then return false end
-    if building.flags.exists then
-        -- The building is already created
-        return false
+    if not building then return nil end
+    if not building.flags.exists and isImpassable(building) then
+        return building
     end
-    return isImpassable(building)
+    return nil
 end
 
 --- Check if the tile can be walked on
@@ -237,6 +239,65 @@ local function riskBlocking(job)
     return false
 end
 
+--- Analyzes the given job, and if it is at a dead end, follow the "corridor" and
+--- mark the jobs containing it as dead end blocking jobs
+function SuspendManager:suspendDeadend(start_job)
+    local building = dfhack.job.getHolder(start_job)
+    if not building then return end
+    local pos = {x=building.centerx,y=building.centery,z=building.z}
+
+    -- visited building ids of this potential dead end
+    local visited = {
+        [building.id] = true
+    }
+
+    --- Support dead ends of a maximum length of 1000
+    for _=0,1000 do
+        -- building plan on the way to the exit
+        ---@type building?
+        local exit = nil
+        for _,neighbourPos in pairs(neighbours(pos)) do
+            if not walkable(neighbourPos) then
+                -- non walkable neighbour, not an exit
+                goto continue
+            end
+
+            local impassablePlan = plansToConstructImpassableAt(neighbourPos)
+            if not impassablePlan then
+                -- walkable neighbour with no building scheduled, not in a dead end
+                return
+            end
+
+            if visited[impassablePlan.id] then
+                -- already visited, not an exit
+                goto continue
+            end
+
+            if exit then
+                -- more than one exit, not in a dead end
+                return
+            end
+
+            -- the building plan is a candidate to exit
+            exit = impassablePlan
+
+            ::continue::
+        end
+
+        if not exit then return end
+
+        -- exit is the single exit point of this corridor, suspend its construction job
+        -- and continue the exploration from its position
+        for _,job in ipairs(exit.jobs) do
+            if job.job_type == df.job_type.ConstructBuilding then
+                self.suspensions[job.id] = REASON.DEADEND
+            end
+        end
+        visited[exit.id] = true
+        pos = {x=exit.centerx,y=exit.centery,z=exit.z}
+    end
+end
+
 --- Return true if the building overlaps with a tile with a designation flag
 ---@param building building
 local function buildingOnDesignation(building)
@@ -299,6 +360,9 @@ function SuspendManager:refresh()
         if riskBlocking(job) then
             self.suspensions[job.id]=REASON.RISK_BLOCKING
         end
+
+        -- If this job is a dead end, mark jobs leading to it as dead end
+        self:suspendDeadend(job)
 
         -- First designation protection check: tile with designation flag
         if job.job_type == df.job_type.ConstructBuilding then
