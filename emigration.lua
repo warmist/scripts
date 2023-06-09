@@ -1,29 +1,35 @@
 --Allow stressed dwarves to emigrate from the fortress
--- Updated for 0.47.05 and potentially for 50.08 by wsfsbvchr
 -- For 34.11 by IndigoFenix; update and cleanup by PeridexisErrant
 -- old version:  http://dffd.bay12games.com/file.php?id=8404
---@module = true
---@enable = true
+--[====[
+emigration
+==========
+Allows dwarves to emigrate from the fortress when stressed,
+in proportion to how badly stressed they are and adjusted
+for who they would have to leave with - a dwarven merchant
+being more attractive than leaving alone (or with an elf).
+The check is made monthly.
 
-local json = require('json')
-local persist = require('persist-table')
+A happy dwarf (ie with negative stress) will never emigrate.
 
-local GLOBAL_KEY = 'emigration' -- used for state change hooks and persistence
+Usage::
+
+    emigration enable|disable
+]====]
 
 enabled = enabled or false
 
-function isEnabled()
-    return enabled
-end
-
-local function persist_state()
-    persist.GlobalTable[GLOBAL_KEY] = json.encode({enabled=enabled})
+local args = {...}
+if args[1] == "enable" then
+    enabled = true
+elseif args[1] == "disable" then
+    enabled = false
 end
 
 function desireToStay(unit,method,civ_id)
     -- on a percentage scale
     local value = 100 - unit.status.current_soul.personality.stress / 5000
-    if method == 'merchant' then
+    if method == 'merchant' or method == 'diplomat' then
         if civ_id ~= unit.civ_id then value = value*2 end end
     if method == 'wild' then
         value = value*5 end
@@ -47,7 +53,7 @@ function desert(u,method,civ)
 
     local hf_id = u.hist_figure_id
     local hf = df.historical_figure.find(u.hist_figure_id)
-    local fort_ent = df.global.ui.main.fortress_entity
+    local fort_ent = df.global.plotinfo.main.fortress_entity
     local civ_ent = df.historical_entity.find(hf.civ_id)
 
     local newent_id = -1
@@ -62,20 +68,20 @@ function desert(u,method,civ)
     -- erase the unit from the fortress entity
     for k,v in ipairs(fort_ent.histfig_ids) do
         if v == hf_id then
-            df.global.ui.main.fortress_entity.histfig_ids:erase(k)
+            df.global.plotinfo.main.fortress_entity.histfig_ids:erase(k)
             break
         end
     end
     for k,v in ipairs(fort_ent.hist_figures) do
         if v.id == hf_id then
-            df.global.ui.main.fortress_entity.hist_figures:erase(k)
+            df.global.plotinfo.main.fortress_entity.hist_figures:erase(k)
             break
         end
     end
     for k,v in ipairs(fort_ent.nemesis) do
         if v.figure.id == hf_id then
-            df.global.ui.main.fortress_entity.nemesis:erase(k)
-            df.global.ui.main.fortress_entity.nemesis_ids:erase(k)
+            df.global.plotinfo.main.fortress_entity.nemesis:erase(k)
+            df.global.plotinfo.main.fortress_entity.nemesis_ids:erase(k)
             break
         end
     end
@@ -169,10 +175,9 @@ function checkmigrationnow()
     end
 
     if #merchant_civ_ids == 0 then
-        checkForDeserters('wild', df.global.ui.main.fortress_entity.entity_links[0].target)
-    else
-        for _, civ_id in pairs(merchant_civ_ids) do checkForDeserters('merchant', civ_id) end
+        checkForDeserters('wild', df.global.plotinfo.main.fortress_entity.entity_links[0].target)
     end
+    for _, civ_id in pairs(merchant_civ_ids) do checkForDeserters('merchant', civ_id) end
 end
 
 local function event_loop()
@@ -182,42 +187,17 @@ local function event_loop()
     end
 end
 
-dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-    if sc == SC_MAP_UNLOADED then
-        enabled = false
-        return
+dfhack.onStateChange.loadEmigration = function(code)
+    if code==SC_MAP_LOADED then
+        if enabled then
+            print("Emigration enabled.")
+            event_loop()
+        else
+            print("Emigration disabled.")
+        end
     end
-
-    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        return
-    end
-
-    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-    enabled = (persisted_data or {enabled=false})['enabled']
-    event_loop()
 end
 
-if dfhack_flags.module then
-    return
+if dfhack.isMapLoaded() then
+    dfhack.onStateChange.loadEmigration(SC_MAP_LOADED)
 end
-
-if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
-    dfhack.printerr('emigration needs a loaded fortress map to work')
-    return
-end
-
-local args = {...}
-if dfhack_flags and dfhack_flags.enable then
-    args = {dfhack_flags.enable_state and 'enable' or 'disable'}
-end
-
-if args[1] == "enable" then
-    enabled = true
-elseif args[1] == "disable" then
-    enabled = false
-else
-    return
-end
-
-event_loop()
-persist_state()
