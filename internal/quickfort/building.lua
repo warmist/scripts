@@ -96,7 +96,7 @@ local function flood_fill(ctx, grid, seen_cells, x, y, data, db, aliases)
     if data.db_entry then
         if data.db_entry.merge_fn then data.db_entry:merge_fn(db_entry) end
     else
-        data.db_entry = copyall(db_entry)
+        data.db_entry = db_entry
     end
     table.insert(data.cells, cell)
     seen_cells[cell] = true

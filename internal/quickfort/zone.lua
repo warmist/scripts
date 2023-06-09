@@ -82,21 +82,14 @@ local function is_valid_zone_extent(s)
     return false
 end
 
-local function ensure_data(db_entry)
-    if not db_entry.data then
-        db_entry.data = {{}}
-        utils.assign(db_entry.data[1], db_entry.default_data)
-    end
-end
-
 local function merge_db_entries(self, other)
     if self.label ~= other.label then
         error(('cannot merge db entries of different types: %s != %s'):format(self.label, other.label))
     end
-    ensure_data(self)
-    ensure_data(other)
-    for i=1,#self.data do
-        utils.assign(self.data[i], other.data[i])
+    if other.data then
+        for i=1,#self.data do
+            utils.assign(self.data[i], other.data[i] or {})
+        end
     end
 end
 
@@ -107,7 +100,7 @@ local zone_template = {
     merge_fn=merge_db_entries,
 }
 
-local zone_db = {
+local zone_db_raw = {
     m={label='Meeting Area', default_data={type=df.civzone_type.MeetingHall}},
     b={label='Bedroom', default_data={type=df.civzone_type.Bedroom}},
     h={label='Dining Hall', default_data={type=df.civzone_type.DiningHall}},
@@ -132,7 +125,7 @@ local zone_db = {
        assign={zone_settings={gather={pick_trees=true, pick_shrubs=true, gather_fallen=true}}}}},
     c={label='Clay', default_data={type=df.civzone_type.ClayCollection}},
 }
-for _, v in pairs(zone_db) do
+for _, v in pairs(zone_db_raw) do
     utils.assign(v, zone_template)
     ensure_key(v.default_data, 'assign').is_active = 8 -- set to active by default
 end
@@ -285,11 +278,11 @@ local function get_noble_unit(noble)
 end
 
 local function parse_zone_config(c, props)
-    if not rawget(zone_db, c) then
+    if not rawget(zone_db_raw, c) then
         return 'Invalid', nil
     end
     local zone_data = {}
-    local db_entry = zone_db[c]
+    local db_entry = zone_db_raw[c]
     utils.assign(zone_data, db_entry.default_data)
     zone_data.location = parse_location_props(props)
     if props.active == 'false' then
@@ -344,6 +337,7 @@ local function custom_zone(_, keys)
     return db_entry
 end
 
+local zone_db = {}
 setmetatable(zone_db, {__index=custom_zone})
 
 local word_table = df.global.world.raws.language.word_table[0][35]
@@ -471,10 +465,7 @@ function do_run(zlevel, grid, ctx)
             ' from spreadsheet cells: %s',
             db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
             table.concat(zone.cells, ', '))
-        if not db_entry.data then
-            ensure_data(db_entry)
-        end
-        for _,data in ipairs(db_entry.data) do
+        for _,data in ipairs(db_entry.data or {}) do
             log('creating zone with properties:')
             logfn(printall_recurse, data)
             local ntiles = create_zone(zone, data, ctx)
