@@ -384,8 +384,11 @@ local function create_zone(zone, data, ctx)
     local extents, ntiles =
             quickfort_building.make_extents(zone, ctx.dry_run)
     if ctx.dry_run then return ntiles end
-    local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
-                            height=zone.height, extents=extents}}
+    local fields = {
+        assigned_unit_id=-1,
+        room={x=zone.pos.x, y=zone.pos.y, width=zone.width, height=zone.height,
+            extents=extents},
+    }
     local bld, err = dfhack.buildings.constructBuilding{
         type=df.building_type.Civzone, subtype=data.type,
         abstract=true, pos=zone.pos, width=zone.width, height=zone.height,
