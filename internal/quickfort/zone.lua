@@ -402,6 +402,7 @@ local function set_location(zone, location, ctx)
                 bld.flags[flag] = val
             end
         end
+        bld.contents.building_ids:insert('#', zone.id)
     end
     zone.site_id = site.id
     zone.location_id = loc_id
