@@ -406,6 +406,8 @@ local function set_location(zone, location, ctx)
     end
     zone.site_id = site.id
     zone.location_id = loc_id
+    -- categorize the zone in the location vector
+    utils.insert_sorted(df.global.world.buildings.other.LOCATION_ASSIGNED, zone, 'id')
     if location.label then
         -- remember this location for future associations in this blueprint
         ensure_keys(ctx, 'zone', 'locations')[location.label] = loc_id
