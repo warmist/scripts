@@ -133,16 +133,6 @@ end
 -- we may want to offer full name aliases for the single letter ones above
 local aliases = {}
 
-local hospital_max_values = {
-    thread=1500000,
-    cloth=1000000,
-    splints=100,
-    crutches=100,
-    plaster=15000,
-    buckets=100,
-    soap=15000
-}
-
 local valid_locations = {
     tavern={new=df.abstract_building_inn_tavernst,
         assign={name={type=df.language_name_type.SymbolFood},
@@ -176,15 +166,6 @@ for _, v in pairs(valid_locations) do
     ensure_key(v.assign.name, 'parts_of_speech').resize = false
     v.assign.name.parts_of_speech.FirstAdjective = df.part_of_speech.Adjective
 end
-
-local location_occupations = {
-    tavern={df.occupation_type.TAVERN_KEEPER, df.occupation_type.PERFORMER},
-    hospital={df.occupation_type.DOCTOR, df.occupation_type.DIAGNOSTICIAN,
-              df.occupation_type.SURGEON, df.occupation_type.BONE_DOCTOR},
-    guildhall={},
-    library={},
-    temple={},
-}
 
 local prop_prefix = 'desired_'
 
@@ -226,7 +207,7 @@ local function parse_location_props(props)
                 local prop = props[short_prop]
                 props[short_prop] = nil
                 local val = tonumber(prop)
-                if not val or val ~= math.floor(val) or val < 0 then
+                if not val or val ~= math.floor(val) or val < 0 or val > 999 then
                     dfhack.printerr(('ignoring invalid %s value: "%s"'):format(short_prop, prop))
                     goto continue
                 end
@@ -366,20 +347,6 @@ local function set_location(zone, location, ctx)
     utils.assign(data, location.data)
     if not loc_id then
         loc_id = site.next_building_id
-        local occupations = df.global.world.occupations.all
-        for _,ot in ipairs(location_occupations[location.type]) do
-            local occ_id = df.global.occupation_next_id
-            occupations:insert('#', {
-                new=df.occupation,
-                id=occ_id,
-                type=ot,
-                location_id=loc_id,
-                site_id=site.id,
-            })
-            table.insert(ensure_key(data, 'occupations'), occupations[#occupations-1])
-            df.global.occupation_next_id = df.global.occupation_next_id + 1
-        end
-
         data.name = generate_name()
         data.id = loc_id
         data.site_id = site.id
