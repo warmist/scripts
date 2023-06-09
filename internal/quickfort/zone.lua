@@ -353,9 +353,10 @@ local function set_location(zone, location, ctx)
         data.pos = copyall(site.pos)
         for _,entity_site_link in ipairs(site.entity_links) do
             local he = df.historical_entity.find(entity_site_link.entity_id)
-            if not he or he.type ~= df.historical_entity_type.SiteGovernment then goto continue end
-            data.site_owner_id = he.id
-            ::continue::
+            if he and he.type == df.historical_entity_type.SiteGovernment then
+                data.site_owner_id = he.id
+                break
+            end
         end
         site.buildings:insert('#', data)
         site.next_building_id = site.next_building_id + 1
@@ -364,10 +365,8 @@ local function set_location(zone, location, ctx)
         for flag, val in pairs(data.assign.flags) do
             bld.flags[flag] = val
         end
-        if data.flags then
-            for flag, val in pairs(data.flags) do
-                bld.flags[flag] = val
-            end
+        for flag, val in pairs(data.flags or {}) do
+            bld.flags[flag] = val
         end
         bld.contents.building_ids:insert('#', zone.id)
     end
