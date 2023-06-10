@@ -49,13 +49,13 @@ function desert(u,method,civ)
     local civ_ent = df.historical_entity.find(hf.civ_id)
     local newent_id = -1
     local newsite_id = -1
-    
+
     -- free owned rooms
     for i = #u.owned_buildings-1, 0, -1 do
         local temp_bld = df.building.find(u.owned_buildings[i].id)
         dfhack.buildings.setOwner(temp_bld, nil)
     end
-    
+
     -- erase the unit from the fortress entity
     for k,v in ipairs(fort_ent.histfig_ids) do
         if v == hf_id then
@@ -76,7 +76,7 @@ function desert(u,method,civ)
             break
         end
     end
-    
+
     -- remove the old entity link and create new one to indicate former membership
     hf.entity_links:insert("#", {new = df.histfig_entity_link_former_memberst, entity_id = fort_ent.id, link_strength = 100})
     for k,v in ipairs(hf.entity_links) do
@@ -85,7 +85,7 @@ function desert(u,method,civ)
             break
         end
     end
-    
+
     -- try to find a new entity for the unit to join
     for k,v in ipairs(civ_ent.entity_links) do
         if v.type == df.entity_entity_link_type.CHILD and v.target ~= fort_ent.id then
@@ -93,7 +93,7 @@ function desert(u,method,civ)
             break
         end
     end
-    
+
     if newent_id > -1 then
         hf.entity_links:insert("#", {new = df.histfig_entity_link_memberst, entity_id = newent_id, link_strength = 100})
 
