@@ -45,7 +45,7 @@ function desert(u,method,civ)
     end
     local hf_id = u.hist_figure_id
     local hf = df.historical_figure.find(u.hist_figure_id)
-    local fort_ent = df.global.ui.main.fortress_entity
+    local fort_ent = df.global.plotinfo.main.fortress_entity
     local civ_ent = df.historical_entity.find(hf.civ_id)
     local newent_id = -1
     local newsite_id = -1
@@ -59,20 +59,20 @@ function desert(u,method,civ)
     -- erase the unit from the fortress entity
     for k,v in ipairs(fort_ent.histfig_ids) do
         if v == hf_id then
-            df.global.ui.main.fortress_entity.histfig_ids:erase(k)
+            df.global.plotinfo.main.fortress_entity.histfig_ids:erase(k)
             break
         end
     end
     for k,v in ipairs(fort_ent.hist_figures) do
         if v.id == hf_id then
-            df.global.ui.main.fortress_entity.hist_figures:erase(k)
+            df.global.plotinfo.main.fortress_entity.hist_figures:erase(k)
             break
         end
     end
     for k,v in ipairs(fort_ent.nemesis) do
         if v.figure.id == hf_id then
-            df.global.ui.main.fortress_entity.nemesis:erase(k)
-            df.global.ui.main.fortress_entity.nemesis_ids:erase(k)
+            df.global.plotinfo.main.fortress_entity.nemesis:erase(k)
+            df.global.plotinfo.main.fortress_entity.nemesis_ids:erase(k)
             break
         end
     end
@@ -163,7 +163,7 @@ function checkmigrationnow()
     end
 
     if #merchant_civ_ids == 0 then
-        checkForDeserters('wild', df.global.ui.main.fortress_entity.entity_links[0].target)
+        checkForDeserters('wild', df.global.plotinfo.main.fortress_entity.entity_links[0].target)
     else
         for _, civ_id in pairs(merchant_civ_ids) do checkForDeserters('merchant', civ_id) end
     end
