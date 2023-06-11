@@ -82,21 +82,14 @@ local function is_valid_zone_extent(s)
     return false
 end
 
-local function ensure_data(db_entry)
-    if not db_entry.data then
-        db_entry.data = {{}}
-        utils.assign(db_entry.data[1], db_entry.default_data)
-    end
-end
-
 local function merge_db_entries(self, other)
     if self.label ~= other.label then
         error(('cannot merge db entries of different types: %s != %s'):format(self.label, other.label))
     end
-    ensure_data(self)
-    ensure_data(other)
-    for i=1,#self.data do
-        utils.assign(self.data[i], other.data[i])
+    if other.data then
+        for i=1,#self.data do
+            utils.assign(self.data[i], other.data[i] or {})
+        end
     end
 end
 
@@ -107,7 +100,7 @@ local zone_template = {
     merge_fn=merge_db_entries,
 }
 
-local zone_db = {
+local zone_db_raw = {
     m={label='Meeting Area', default_data={type=df.civzone_type.MeetingHall}},
     b={label='Bedroom', default_data={type=df.civzone_type.Bedroom}},
     h={label='Dining Hall', default_data={type=df.civzone_type.DiningHall}},
@@ -132,23 +125,13 @@ local zone_db = {
        assign={zone_settings={gather={pick_trees=true, pick_shrubs=true, gather_fallen=true}}}}},
     c={label='Clay', default_data={type=df.civzone_type.ClayCollection}},
 }
-for _, v in pairs(zone_db) do
+for _, v in pairs(zone_db_raw) do
     utils.assign(v, zone_template)
     ensure_key(v.default_data, 'assign').is_active = 8 -- set to active by default
 end
 
 -- we may want to offer full name aliases for the single letter ones above
 local aliases = {}
-
-local hospital_max_values = {
-    thread=1500000,
-    cloth=1000000,
-    splints=100,
-    crutches=100,
-    plaster=15000,
-    buckets=100,
-    soap=15000
-}
 
 local valid_locations = {
     tavern={new=df.abstract_building_inn_tavernst,
@@ -183,15 +166,6 @@ for _, v in pairs(valid_locations) do
     ensure_key(v.assign.name, 'parts_of_speech').resize = false
     v.assign.name.parts_of_speech.FirstAdjective = df.part_of_speech.Adjective
 end
-
-local location_occupations = {
-    tavern={df.occupation_type.TAVERN_KEEPER, df.occupation_type.PERFORMER},
-    hospital={df.occupation_type.DOCTOR, df.occupation_type.DIAGNOSTICIAN,
-              df.occupation_type.SURGEON, df.occupation_type.BONE_DOCTOR},
-    guildhall={},
-    library={},
-    temple={},
-}
 
 local prop_prefix = 'desired_'
 
@@ -233,7 +207,7 @@ local function parse_location_props(props)
                 local prop = props[short_prop]
                 props[short_prop] = nil
                 local val = tonumber(prop)
-                if not val or val ~= math.floor(val) or val < 0 then
+                if not val or val ~= math.floor(val) or val < 0 or val > 999 then
                     dfhack.printerr(('ignoring invalid %s value: "%s"'):format(short_prop, prop))
                     goto continue
                 end
@@ -285,11 +259,11 @@ local function get_noble_unit(noble)
 end
 
 local function parse_zone_config(c, props)
-    if not rawget(zone_db, c) then
+    if not rawget(zone_db_raw, c) then
         return 'Invalid', nil
     end
     local zone_data = {}
-    local db_entry = zone_db[c]
+    local db_entry = zone_db_raw[c]
     utils.assign(zone_data, db_entry.default_data)
     zone_data.location = parse_location_props(props)
     if props.active == 'false' then
@@ -344,6 +318,7 @@ local function custom_zone(_, keys)
     return db_entry
 end
 
+local zone_db = {}
 setmetatable(zone_db, {__index=custom_zone})
 
 local word_table = df.global.world.raws.language.word_table[0][35]
@@ -372,29 +347,16 @@ local function set_location(zone, location, ctx)
     utils.assign(data, location.data)
     if not loc_id then
         loc_id = site.next_building_id
-        local occupations = df.global.world.occupations.all
-        for _,ot in ipairs(location_occupations[location.type]) do
-            local occ_id = df.global.occupation_next_id
-            occupations:insert('#', {
-                new=df.occupation,
-                id=occ_id,
-                type=ot,
-                location_id=loc_id,
-                site_id=site.id,
-            })
-            table.insert(ensure_key(data, 'occupations'), occupations[#occupations-1])
-            df.global.occupation_next_id = df.global.occupation_next_id + 1
-        end
-
         data.name = generate_name()
         data.id = loc_id
         data.site_id = site.id
         data.pos = copyall(site.pos)
         for _,entity_site_link in ipairs(site.entity_links) do
             local he = df.historical_entity.find(entity_site_link.entity_id)
-            if not he or he.type ~= df.historical_entity_type.SiteGovernment then goto continue end
-            data.site_owner_id = he.id
-            ::continue::
+            if he and he.type == df.historical_entity_type.SiteGovernment then
+                data.site_owner_id = he.id
+                break
+            end
         end
         site.buildings:insert('#', data)
         site.next_building_id = site.next_building_id + 1
@@ -403,14 +365,15 @@ local function set_location(zone, location, ctx)
         for flag, val in pairs(data.assign.flags) do
             bld.flags[flag] = val
         end
-        if data.flags then
-            for flag, val in pairs(data.flags) do
-                bld.flags[flag] = val
-            end
+        for flag, val in pairs(data.flags or {}) do
+            bld.flags[flag] = val
         end
+        bld.contents.building_ids:insert('#', zone.id)
     end
     zone.site_id = site.id
     zone.location_id = loc_id
+    -- categorize the zone in the location vector
+    utils.insert_sorted(df.global.world.buildings.other.LOCATION_ASSIGNED, zone, 'id')
     if location.label then
         -- remember this location for future associations in this blueprint
         ensure_keys(ctx, 'zone', 'locations')[location.label] = loc_id
@@ -421,8 +384,11 @@ local function create_zone(zone, data, ctx)
     local extents, ntiles =
             quickfort_building.make_extents(zone, ctx.dry_run)
     if ctx.dry_run then return ntiles end
-    local fields = {room={x=zone.pos.x, y=zone.pos.y, width=zone.width,
-                            height=zone.height, extents=extents}}
+    local fields = {
+        assigned_unit_id=-1,
+        room={x=zone.pos.x, y=zone.pos.y, width=zone.width, height=zone.height,
+            extents=extents},
+    }
     local bld, err = dfhack.buildings.constructBuilding{
         type=df.building_type.Civzone, subtype=data.type,
         abstract=true, pos=zone.pos, width=zone.width, height=zone.height,
@@ -471,10 +437,7 @@ function do_run(zlevel, grid, ctx)
             ' from spreadsheet cells: %s',
             db_entry.label, zone.pos.x, zone.pos.y, zone.pos.z,
             table.concat(zone.cells, ', '))
-        if not db_entry.data then
-            ensure_data(db_entry)
-        end
-        for _,data in ipairs(db_entry.data) do
+        for _,data in ipairs(db_entry.data or {}) do
             log('creating zone with properties:')
             logfn(printall_recurse, data)
             local ntiles = create_zone(zone, data, ctx)

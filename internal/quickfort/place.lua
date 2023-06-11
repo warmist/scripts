@@ -51,31 +51,18 @@ local function is_valid_stockpile_extent(s)
     return false
 end
 
-local function ensure_data(db_entry)
-    if not db_entry.links then
-        db_entry.links = {give_to={}, take_from={}}
-    end
-    if not db_entry.props then
-        db_entry.props = {}
-    end
-    if not db_entry.adjustments then
-        db_entry.adjustments = {}
-    end
-end
-
 local function merge_db_entries(self, other)
     if self.label ~= other.label then
         error(('cannot merge db entries of different types: %s != %s'):format(self.label, other.label))
     end
-    ensure_data(self)
-    utils.assign(self.props, other.props or {})
-    for adj in pairs(other.adjustments or {}) do
+    utils.assign(self.props, other.props)
+    for adj in pairs(other.adjustments) do
         self.adjustments[adj] = true
     end
-    for _, to in ipairs(other.links and other.links.give_to or {}) do
+    for _, to in ipairs(other.links.give_to) do
         table.insert(self.links.give_to, to)
     end
-    for _, from in ipairs(other.links and other.links.take_from or {}) do
+    for _, from in ipairs(other.links.take_from) do
         table.insert(self.links.take_from, from)
     end
 end
@@ -87,7 +74,7 @@ local stockpile_template = {
     merge_fn = merge_db_entries,
 }
 
-local stockpile_db = {
+local stockpile_db_raw = {
     a={label='Animal', categories={'animals'}},
     f={label='Food', categories={'food'}, want_barrels=true},
     u={label='Furniture', categories={'furniture'}},
@@ -107,7 +94,7 @@ local stockpile_db = {
     d={label='Armor', categories={'armor'}, want_bins=true},
     c={label='Custom', categories={}}
 }
-for _, v in pairs(stockpile_db) do utils.assign(v, stockpile_template) end
+for _, v in pairs(stockpile_db_raw) do utils.assign(v, stockpile_template) end
 
 local place_key_pattern = '%w+'
 
@@ -130,7 +117,7 @@ local function make_db_entry(keys)
     for k in keys:gmatch('.') do
         local digit = tonumber(k)
         if digit and prev_key then
-            local raw_db_entry = rawget(stockpile_db, prev_key)
+            local raw_db_entry = rawget(stockpile_db_raw, prev_key)
             if raw_db_entry.want_bins then
                 if not in_digits then num_bins = 0 end
                 num_bins = add_resource_digit(num_bins, digit)
@@ -144,13 +131,13 @@ local function make_db_entry(keys)
             in_digits = true
             goto continue
         end
-        if not rawget(stockpile_db, k) then return nil end
-        table.insert(labels, stockpile_db[k].label)
-        table.insert(categories, stockpile_db[k].categories[1])
-        want_bins = want_bins or stockpile_db[k].want_bins
-        want_barrels = want_barrels or stockpile_db[k].want_barrels
+        if not rawget(stockpile_db_raw, k) then return nil end
+        table.insert(labels, stockpile_db_raw[k].label)
+        table.insert(categories, stockpile_db_raw[k].categories[1])
+        want_bins = want_bins or stockpile_db_raw[k].want_bins
+        want_barrels = want_barrels or stockpile_db_raw[k].want_barrels
         want_wheelbarrows =
-                want_wheelbarrows or stockpile_db[k].want_wheelbarrows
+                want_wheelbarrows or stockpile_db_raw[k].want_wheelbarrows
         prev_key = k
         -- flag that we're starting a new (potential) digit sequence and we
         -- should reset the accounting for the relevent resource number
@@ -165,7 +152,10 @@ local function make_db_entry(keys)
         want_wheelbarrows=want_wheelbarrows,
         num_bins=num_bins,
         num_barrels=num_barrels,
-        num_wheelbarrows=num_wheelbarrows
+        num_wheelbarrows=num_wheelbarrows,
+        links={give_to={}, take_from={}},
+        props={},
+        adjustments={},
     }
     utils.assign(db_entry, stockpile_template)
     return db_entry
@@ -178,7 +168,6 @@ local function custom_stockpile(_, keys)
     if token_and_label.label then
         db_entry.label = ('%s/%s'):format(db_entry.label, token_and_label.label)
     end
-    ensure_data(db_entry)
     if next(adjustments) then
         db_entry.adjustments[adjustments] = true
     end
@@ -241,6 +230,7 @@ local function custom_stockpile(_, keys)
     return db_entry
 end
 
+local stockpile_db = {}
 setmetatable(stockpile_db, {__index=custom_stockpile})
 
 local function configure_stockpile(bld, db_entry)
@@ -249,7 +239,7 @@ local function configure_stockpile(bld, db_entry)
         log('enabling stockpile category: %s', cat)
         stockpiles.import_stockpile(name, {id=bld.id, mode='enable'})
     end
-    for adjlist in pairs(db_entry.adjustments) do
+    for adjlist in pairs(db_entry.adjustments or {}) do
         for _,adj in ipairs(adjlist) do
             log('applying stockpile preset: %s %s (filters=)', adj.mode, adj.name, table.concat(adj.filters or {}, ','))
             stockpiles.import_stockpile(adj.name, {id=bld.id, mode=adj.mode, filters=adj.filters})
@@ -297,10 +287,11 @@ local function create_stockpile(s, link_data, dry_run)
         -- is supposed to prevent this from ever happening
         error(string.format('unable to place stockpile: %s', err))
     end
-    utils.assign(bld, db_entry.props)
+    local props = db_entry.props
+    utils.assign(bld, props)
     configure_stockpile(bld, db_entry)
-    if db_entry.props.name then
-        table.insert(ensure_key(link_data.piles, db_entry.props.name), bld)
+    if props.name then
+        table.insert(ensure_key(link_data.piles, props.name), bld)
     end
     for _,recipient in ipairs(db_entry.links.give_to) do
         log('giving to: "%s"', recipient)
@@ -417,7 +408,6 @@ function do_run(zlevel, grid, ctx)
     local link_data = {piles={}, nodes={}}
     for _, s in ipairs(piles) do
         if s.pos then
-            ensure_data(s.db_entry)
             local ntiles = create_stockpile(s, link_data, dry_run)
             stats.place_tiles.value = stats.place_tiles.value + ntiles
             stats.place_designated.value = stats.place_designated.value + 1
@@ -434,9 +424,9 @@ function do_orders(zlevel, grid, ctx)
     quickfort_building.init_buildings(ctx, zlevel, grid, piles, stockpile_db)
     for _, s in ipairs(piles) do
         local db_entry = s.db_entry
-        ensure_data(db_entry)
+        local props = db_entry.props or {}
         quickfort_orders.enqueue_container_orders(ctx,
-            db_entry.props.max_bins, db_entry.props.max_barrels, db_entry.props.max_wheelbarrows)
+            props.max_bins, props.max_barrels, props.max_wheelbarrows)
     end
 end
 

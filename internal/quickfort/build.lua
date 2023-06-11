@@ -624,7 +624,7 @@ local function make_track_entry(name, data, revmap, is_ramp)
 end
 
 -- grouped by type, generally in ui order
-local building_db = {
+local building_db_raw = {
     -- basic building types
     a={label='Armor Stand', type=df.building_type.Armorstand},
     b={label='Bed', type=df.building_type.Bed,
@@ -640,13 +640,13 @@ local building_db = {
     G={label='Floor Grate', type=df.building_type.GrateFloor,
        is_valid_tile_fn=is_tile_coverable},
     B={label='Vertical Bars', type=df.building_type.BarsVertical},
-    ['{Alt}b']={label='Floor Bars', type=df.building_type.BarsFloor,
+    ['~b']={label='Floor Bars', type=df.building_type.BarsFloor,
                 is_valid_tile_fn=is_tile_coverable},
     f={label='Cabinet', type=df.building_type.Cabinet},
     h={label='Container', type=df.building_type.Box},
     r={label='Weapon Rack', type=df.building_type.Weaponrack},
     s={label='Statue', type=df.building_type.Statue},
-    ['{Alt}s']={label='Slab', type=df.building_type.Slab},
+    ['~s']={label='Slab', type=df.building_type.Slab},
     t={label='Table', type=df.building_type.Table},
     gs=make_bridge_entry(df.building_bridgest.T_direction.Retracting),
     gw=make_bridge_entry(df.building_bridgest.T_direction.Up),
@@ -704,9 +704,9 @@ local building_db = {
     R={label='Traction Bench', type=df.building_type.TractionBench,
        additional_orders={'table', 'mechanisms', 'cloth rope'}},
     N={label='Nest Box', type=df.building_type.NestBox},
-    ['{Alt}h']={label='Hive', type=df.building_type.Hive, props_fn=do_hive_props},
-    ['{Alt}a']={label='Offering Place', type=df.building_type.OfferingPlace},
-    ['{Alt}c']={label='Bookcase', type=df.building_type.Bookcase},
+    ['~h']={label='Hive', type=df.building_type.Hive, props_fn=do_hive_props},
+    ['~a']={label='Offering Place', type=df.building_type.OfferingPlace},
+    ['~c']={label='Bookcase', type=df.building_type.Bookcase},
     F={label='Display Furniture', type=df.building_type.DisplayFurniture},
 
     -- basic building types with extents
@@ -917,32 +917,24 @@ local building_db = {
     trackrampNSEW=make_track_entry('NSEW', nil, nil, true)
 }
 
-local function ensure_data(db_entry)
-    if not db_entry.props then
-        db_entry.props = {}
-    end
-    if not db_entry.links then
-        db_entry.links = {give_to={}, take_from={}}
-    end
-    if not db_entry.adjustments then
-        db_entry.adjustments = {}
-    end
-end
-
 local function merge_db_entries(self, other)
     if self.label ~= other.label then
         error(('cannot merge db entries of different types: %s != %s'):format(self.label, other.label))
     end
-    ensure_data(self)
-    ensure_data(other)
     utils.assign(self.props, other.props)
+    for _, to in ipairs(other.links.give_to) do
+        table.insert(self.links.give_to, to)
+    end
+    for _, from in ipairs(other.links.take_from) do
+        table.insert(self.links.take_from, from)
+    end
     for _,adj in ipairs(other.adjustments) do
         table.insert(self.adjustments, adj)
     end
 end
 
 -- fill in default values if they're not already specified
-for _, v in pairs(building_db) do
+for _, v in pairs(building_db_raw) do
     v.merge_fn = merge_db_entries
     if v.has_extents then
         if not v.min_width then
@@ -973,8 +965,8 @@ for _, v in pairs(building_db) do
 end
 
 -- case sensitive aliases
-building_db.g = building_db.gs
-building_db.Ms = building_db.Msu
+building_db_raw.g = building_db_raw.gs
+building_db_raw.Ms = building_db_raw.Msu
 
 -- case insensitive aliases for keys in the db
 -- this allows us to keep compatibility with the old python quickfort and makes
@@ -1065,11 +1057,11 @@ local building_aliases = {
     trackrampnew='trackrampNEW',
     trackrampsew='trackrampSEW',
     trackrampnsew='trackrampNSEW',
-    ['~h']='{Alt}h',
-    ['~a']='{Alt}a',
-    ['~c']='{Alt}c',
-    ['~b']='{Alt}b',
-    ['~s']='{Alt}s',
+    ['{Alt}h']='~h',
+    ['{Alt}a']='~a',
+    ['{Alt}c']='~c',
+    ['{Alt}b']='~b',
+    ['{Alt}s']='~s',
 }
 
 local build_key_pattern = '~?%w+'
@@ -1079,7 +1071,7 @@ local function custom_building(_, keys)
     -- properties and adjustments may hide the alias from the building.init_buildings algorithm
     -- so we might have to do our own mapping here
     local resolved_alias = building_aliases[token_and_label.token:lower()]
-    local db_entry = rawget(building_db, resolved_alias or token_and_label.token)
+    local db_entry = rawget(building_db_raw, resolved_alias or token_and_label.token)
     if not db_entry then
         return nil
     end
@@ -1089,7 +1081,9 @@ local function custom_building(_, keys)
         db_entry.label = ('%s/%s'):format(db_entry.label, token_and_label.label)
         db_entry.transform_suffix = ('/%s%s'):format(token_and_label.label, db_entry.transform_suffix)
     end
-    ensure_data(db_entry)
+    db_entry.props = {}
+    db_entry.links = {give_to={}, take_from={}}
+    db_entry.adjustments = {}
     local props, next_token_pos = quickfort_parse.parse_properties(keys, props_start_pos)
     if props.name then
         db_entry.props.name = props.name
@@ -1107,6 +1101,7 @@ local function custom_building(_, keys)
     return db_entry
 end
 
+local building_db = {}
 setmetatable(building_db, {__index=custom_building})
 
 --
@@ -1120,8 +1115,7 @@ local function create_building(b, cache, dry_run)
         b.width, b.height, db_entry.label, b.pos.x, b.pos.y, b.pos.z,
         table.concat(b.cells, ', '))
     if dry_run then return end
-    local fields = {}
-    if db_entry.fields then fields = copyall(db_entry.fields) end
+    local fields = db_entry.fields and copyall(db_entry.fields) or {}
     local use_extents = db_entry.has_extents and
             not (db_entry.no_extents_if_solid and is_extent_solid(b))
     if use_extents then
@@ -1137,7 +1131,6 @@ local function create_building(b, cache, dry_run)
         -- is supposed to prevent this from ever happening
         error(string.format('unable to place %s: %s', db_entry.label, err))
     end
-    ensure_data(db_entry)
     utils.assign(bld, db_entry.props)
     if db_entry.adjust_fn then
         db_entry:adjust_fn(bld)
