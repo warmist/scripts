@@ -152,6 +152,7 @@ local valid_locations = {
                 contents={desired_paper=10, need_more={paper=true}}}},
     temple={new=df.abstract_building_templest,
         assign={name={type=df.language_name_type.Temple},
+                deity_data={Religion=-1},
                 contents={desired_instruments=5, need_more={instruments=true}}}},
 }
 local valid_restrictions = {
@@ -372,8 +373,9 @@ local function set_location(zone, location, ctx)
     end
     zone.site_id = site.id
     zone.location_id = loc_id
-    -- categorize the zone in the location vector
-    utils.insert_sorted(df.global.world.buildings.other.LOCATION_ASSIGNED, zone, 'id')
+    -- recategorize the civzone as attached to a location
+    zone:uncategorize()
+    zone:categorize(true)
     if location.label then
         -- remember this location for future associations in this blueprint
         ensure_keys(ctx, 'zone', 'locations')[location.label] = loc_id
