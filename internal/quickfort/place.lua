@@ -288,8 +288,8 @@ local function create_stockpile(s, link_data, dry_run)
         error(string.format('unable to place stockpile: %s', err))
     end
     local props = db_entry.props
-    utils.assign(bld, props)
     configure_stockpile(bld, db_entry)
+    utils.assign(bld, props)
     if props.name then
         table.insert(ensure_key(link_data.piles, props.name), bld)
     end
