@@ -17,6 +17,7 @@ that repo.
 
 ## Fixes
 - `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
+- `emigration`: reassign home site for emigrating units so they don't just come right back to the fort
 
 ## Misc Improvements
 - `gui/control-panel`: add some popular startup configuration commands for `autobutcher` and `autofarm`
