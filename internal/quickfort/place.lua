@@ -56,6 +56,7 @@ local function merge_db_entries(self, other)
         error(('cannot merge db entries of different types: %s != %s'):format(self.label, other.label))
     end
     utils.assign(self.props, other.props)
+    utils.assign(self.logistics, other.logistics)
     for adj in pairs(other.adjustments) do
         self.adjustments[adj] = true
     end
@@ -156,6 +157,7 @@ local function make_db_entry(keys)
         links={give_to={}, take_from={}},
         props={},
         adjustments={},
+        logistics={},
     }
     utils.assign(db_entry, stockpile_template)
     return db_entry
@@ -170,6 +172,24 @@ local function custom_stockpile(_, keys)
     end
     if next(adjustments) then
         db_entry.adjustments[adjustments] = true
+    end
+
+    -- logistics properties
+    if props.automelt == 'true' then
+        db_entry.logistics.automelt = true
+        props.automelt = nil
+    end
+    if props.autotrade == 'true' then
+        db_entry.logistics.autotrade = true
+        props.autotrade = nil
+    end
+    if props.autodump == 'true' then
+        db_entry.logistics.autodump = true
+        props.autodump = nil
+    end
+    if props.autotrain == 'true' then
+        db_entry.logistics.autotrain = true
+        props.autotrain = nil
     end
 
     -- convert from older parsing style to properties
@@ -300,6 +320,23 @@ local function create_stockpile(s, link_data, dry_run)
     for _,supplier in ipairs(db_entry.links.take_from) do
         log('taking from: "%s"', supplier)
         table.insert(link_data.nodes, {from=supplier, to=bld})
+    end
+    if next(db_entry.logistics) then
+        local logistics_command = {'logistics', 'add', '-s', tostring(bld.stockpile_number)}
+        if db_entry.logistics.automelt then
+            table.insert(logistics_command, 'melt')
+        end
+        if db_entry.logistics.autotrade then
+            table.insert(logistics_command, 'trade')
+        end
+        if db_entry.logistics.autodump then
+            table.insert(logistics_command, 'dump')
+        end
+        if db_entry.logistics.autotrain then
+            table.insert(logistics_command, 'train')
+        end
+        log('running logistics command: "%s"', table.concat(logistics_command, ' '))
+        dfhack.run_command(logistics_command)
     end
     return ntiles
 end
