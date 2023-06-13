@@ -151,14 +151,23 @@ local ERASABLE_DESIGNATION = {
 }
 
 --- Job types that impact suspendmanager
-local FILTER_JOB_TYPES = {
-    [df.job_type.CarveTrack]=true,
-    [df.job_type.ConstructBuilding]=true,
-    [df.job_type.DestroyBuilding]=true,
-    [df.job_type.DetailFloor]=true,
-    [df.job_type.Dig]=true,
-    [df.job_type.DigChannel]=true,
-    [df.job_type.SmoothFloor]=true,
+--- Any completed pathable job can impact suspendmanager by allowing or disallowing
+--- access to construction job
+local FILTER_JOB_TYPES = utils.invert{
+    df.job_type.CarveRamp,
+    df.job_type.CarveTrack,
+    df.job_type.CarveUpDownStaircase,
+    df.job_type.CarveUpwardStaircase,
+    df.job_type.CarveDownwardStaircase,
+    df.job_type.ConstructBuilding,
+    df.job_type.DestroyBuilding,
+    df.job_type.DetailFloor,
+    df.job_type.Dig,
+    df.job_type.DigChannel,
+    df.job_type.FellTree,
+    df.job_type.SmoothFloor,
+    df.job_type.RemoveConstruction,
+    df.job_type.RemoveStairs,
 }
 
 --- Check if a building is blocking once constructed
