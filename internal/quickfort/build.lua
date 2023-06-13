@@ -230,6 +230,10 @@ local function do_workshop_furnace_props(db_entry, props)
         db_entry.links.give_to = argparse.stringList(props.give_to)
         props.give_to = nil
     end
+    if props.max_general_orders and tonumber(props.max_general_orders) then
+        ensure_key(db_entry.props, 'profile').max_general_orders = math.max(0, math.min(10, tonumber(props.max_general_orders)))
+        props.max_general_orders = nil
+    end
 end
 
 local function do_roller_props(db_entry, props)
