@@ -54,6 +54,7 @@ EXTERNAL_REASONS = {
 ---@class SuspendManager
 ---@field preventBlocking boolean
 ---@field suspensions table<integer, reason>
+---@field lastAutoRunTick integer
 SuspendManager = defclass(SuspendManager)
 SuspendManager.ATTRS {
     --- When enabled, suspendmanager also tries to suspend blocking jobs,
@@ -61,7 +62,10 @@ SuspendManager.ATTRS {
     preventBlocking = false,
 
     --- Current job suspensions with their reasons
-    suspensions = {}
+    suspensions = {},
+
+    --- Last tick where it was run automatically
+    lastAutoRunTick = -1,
 }
 
 --- SuspendManager instance kept between frames
@@ -144,6 +148,17 @@ local ERASABLE_DESIGNATION = {
     [df.job_type.CarveTrack]=true,
     [df.job_type.SmoothFloor]=true,
     [df.job_type.DetailFloor]=true,
+}
+
+--- Job types that impact suspendmanager
+local FILTER_JOB_TYPES = {
+    [df.job_type.CarveTrack]=true,
+    [df.job_type.ConstructBuilding]=true,
+    [df.job_type.DestroyBuilding]=true,
+    [df.job_type.DetailFloor]=true,
+    [df.job_type.Dig]=true,
+    [df.job_type.DigChannel]=true,
+    [df.job_type.SmoothFloor]=true,
 }
 
 --- Check if a building is blocking once constructed
@@ -408,7 +423,9 @@ end
 
 --- @param job job
 local function on_job_change(job)
-    if Instance.preventBlocking then
+    local tick = df.global.cur_year_tick
+    if Instance.preventBlocking and FILTER_JOB_TYPES[job.job_type] and tick ~= Instance.lastAutoRunTick then
+        Instance.lastAutoRunTick = tick
         -- Note: This method could be made incremental by taking in account the
         -- changed job
         run_now()
