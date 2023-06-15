@@ -152,7 +152,9 @@ local ERASABLE_DESIGNATION = {
 
 --- Job types that impact suspendmanager
 --- Any completed pathable job can impact suspendmanager by allowing or disallowing
---- access to construction job
+--- access to construction job.
+--- Any job read by suspendmanager such as smoothing and carving can also impact
+--- job suspension, since it suspends construction job on top of it
 local FILTER_JOB_TYPES = utils.invert{
     df.job_type.CarveRamp,
     df.job_type.CarveTrack,
