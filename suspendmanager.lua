@@ -54,6 +54,7 @@ EXTERNAL_REASONS = {
 ---@class SuspendManager
 ---@field preventBlocking boolean
 ---@field suspensions table<integer, reason>
+---@field lastAutoRunTick integer
 SuspendManager = defclass(SuspendManager)
 SuspendManager.ATTRS {
     --- When enabled, suspendmanager also tries to suspend blocking jobs,
@@ -61,7 +62,10 @@ SuspendManager.ATTRS {
     preventBlocking = false,
 
     --- Current job suspensions with their reasons
-    suspensions = {}
+    suspensions = {},
+
+    --- Last tick where it was run automatically
+    lastAutoRunTick = -1,
 }
 
 --- SuspendManager instance kept between frames
@@ -144,6 +148,28 @@ local ERASABLE_DESIGNATION = {
     [df.job_type.CarveTrack]=true,
     [df.job_type.SmoothFloor]=true,
     [df.job_type.DetailFloor]=true,
+}
+
+--- Job types that impact suspendmanager
+--- Any completed pathable job can impact suspendmanager by allowing or disallowing
+--- access to construction job.
+--- Any job read by suspendmanager such as smoothing and carving can also impact
+--- job suspension, since it suspends construction job on top of it
+local FILTER_JOB_TYPES = utils.invert{
+    df.job_type.CarveRamp,
+    df.job_type.CarveTrack,
+    df.job_type.CarveUpDownStaircase,
+    df.job_type.CarveUpwardStaircase,
+    df.job_type.CarveDownwardStaircase,
+    df.job_type.ConstructBuilding,
+    df.job_type.DestroyBuilding,
+    df.job_type.DetailFloor,
+    df.job_type.Dig,
+    df.job_type.DigChannel,
+    df.job_type.FellTree,
+    df.job_type.SmoothFloor,
+    df.job_type.RemoveConstruction,
+    df.job_type.RemoveStairs,
 }
 
 --- Check if a building is blocking once constructed
@@ -408,7 +434,9 @@ end
 
 --- @param job job
 local function on_job_change(job)
-    if Instance.preventBlocking then
+    local tick = df.global.cur_year_tick
+    if Instance.preventBlocking and FILTER_JOB_TYPES[job.job_type] and tick ~= Instance.lastAutoRunTick then
+        Instance.lastAutoRunTick = tick
         -- Note: This method could be made incremental by taking in account the
         -- changed job
         run_now()
