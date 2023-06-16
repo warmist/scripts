@@ -27,6 +27,7 @@ that repo.
 - `suspendmanager`: now suspends construction jobs on top of floor designations, protecting the designations from being erased
 - `prioritize`: add wild animal management tasks and lever pulling to the default list of prioritized job types
 - `suspendmanager`: suspend blocking jobs when building high walls or filling corridors
+- `workorder`: reduce existing orders for automatic shearing and milking jobs when animals are no longer available
 
 ## Removed
 - `gui/automelt`: replaced by an overlay panel that appears when you click on a stockpile
