@@ -6,7 +6,6 @@ reqscript('quickfort').refresh_scripts()
 
 local quickfort_command = reqscript('internal/quickfort/command')
 local quickfort_list = reqscript('internal/quickfort/list')
-local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 local quickfort_preview = reqscript('internal/quickfort/preview')
 local quickfort_transform = reqscript('internal/quickfort/transform')
@@ -388,12 +387,19 @@ function Quickfort:get_blueprint_name()
 end
 
 function Quickfort:get_lock_cursor_label()
+    if self.cursor_locked and self.saved_cursor.z ~= df.global.window_z then
+        return 'Zoom to locked position'
+    end
     return (self.cursor_locked and 'Unl' or 'L') .. 'ock blueprint position'
 end
 
 function Quickfort:toggle_lock_cursor()
     if self.cursor_locked then
-        quickfort_map.move_cursor(self.saved_cursor)
+        local was_on_different_zlevel = self.saved_cursor.z ~= df.global.window_z
+        dfhack.gui.revealInDwarfmodeMap(self.saved_cursor)
+        if was_on_different_zlevel then
+            return
+        end
     end
     self.cursor_locked = not self.cursor_locked
 end
@@ -588,7 +594,7 @@ function Quickfort:onRenderFrame(dc, rect)
     if not tiles[cursor.z] then return end
 
     local function get_overlay_pen(pos)
-        if same_xyz(pos, cursor) then return CURSOR_PEN end
+        if same_xyz(pos, self.saved_cursor) then return CURSOR_PEN end
         local preview_tile = quickfort_preview.get_preview_tile(tiles, pos)
         if preview_tile == nil then return end
         return preview_tile and GOOD_PEN or BAD_PEN

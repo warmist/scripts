@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 - `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
 - `emigration`: reassign home site for emigrating units so they don't just come right back to the fort
+- `gui/liquids`: ensure tile temperature is set correctly when painting water or magma
 
 ## Misc Improvements
 - `gui/control-panel`: add some popular startup configuration commands for `autobutcher` and `autofarm`
@@ -28,6 +29,7 @@ that repo.
 - `prioritize`: add wild animal management tasks and lever pulling to the default list of prioritized job types
 - `suspendmanager`: suspend blocking jobs when building high walls or filling corridors
 - `workorder`: reduce existing orders for automatic shearing and milking jobs when animals are no longer available
+- `gui/quickfort`: adapt "cursor lock" to mouse controls so it's easier to see the full preview for multi-level blueprints before you apply them
 
 ## Removed
 - `gui/automelt`: replaced by an overlay panel that appears when you click on a stockpile
