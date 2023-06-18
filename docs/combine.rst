@@ -2,7 +2,7 @@ combine
 =======
 
 .. dfhack-tool::
-    :summary: Combine stacks of food and plants.
+    :summary: Combine items that can be stacked together.
     :tags: fort productivity items plants stockpiles
 
 Usage
@@ -63,7 +63,7 @@ Options
 
         ``powders``: POWDERS_MISC
 
-        ``seeds``: SEEDS
+        ``seed``: SEEDS
 
 ``-q``, ``--quiet``
     Only print changes instead of a summary of all processed stockpiles.
@@ -85,5 +85,6 @@ The following categories are defined:
     3. Ammo, grouped by ammo type, material, and quality. If the ammo is a masterwork, it is also grouped by who created it.
     4. Anything else, grouped by item type and material
 
-Each category has a default stack size of 30 unless a larger stack already exists in your fort.
-In that case the largest existing stack size is used.
+Each category has a default stack size of 30 unless a larger stack already
+exists "naturally" in your fort. In that case the largest existing stack size
+is used.

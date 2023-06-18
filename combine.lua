@@ -1,4 +1,5 @@
--- Combines food and plant items across stockpiles.
+-- Combines items in a stockpile that could be stacked together
+
 local argparse = require('argparse')
 local utils = require('utils')
 
@@ -178,7 +179,7 @@ local function stack_type_new(type_vals)
     return stack_type
 end
 
-local function stacks_add_item(stockpile, stacks, stack_type, item, container, contained_count)
+local function stacks_add_item(stockpile, stacks, stack_type, item, container)
     -- add an item to the matching comp_items table; based on comp_key.
     local comp_key = ''
 
@@ -202,7 +203,7 @@ local function stacks_add_item(stockpile, stacks, stack_type, item, container, c
         stack_type.comp_items[comp_key] = comp_item_new(comp_key, stack_type.max_size)
     end
 
-    local new_comp_item_item = comp_item_add_item(stockpile, stack_type, stack_type.comp_items[comp_key], item, container, contained_count)
+    local new_comp_item_item = comp_item_add_item(stockpile, stack_type, stack_type.comp_items[comp_key], item, container)
     if new_comp_item_item then
         stack_type.before_stacks = stack_type.before_stacks + 1
         stack_type.item_qty = stack_type.item_qty + item.stack_size
@@ -393,7 +394,7 @@ local function isValidPart(item)
             item.material_amount.Yarn > 0))
 end
 
-local function stacks_add_items(stockpile, stacks, items, container, contained_count, ind)
+local function stacks_add_items(stockpile, stacks, items, container, ind)
 -- loop through each item and add it to the matching stack[type_id].comp_items table
 -- recursively calls itself to add contained items
     if not ind then ind = '' end
@@ -407,7 +408,7 @@ local function stacks_add_items(stockpile, stacks, items, container, contained_c
         if stack_type and not item:isSand() and not item:isPlaster() and isValidPart(item) then
             if not isRestrictedItem(item) then
 
-                stacks_add_item(stockpile, stacks, stack_type, item, container, contained_count)
+                stacks_add_item(stockpile, stacks, stack_type, item, container)
 
                 if typesThatUseCreatures[df.item_type[type_id]] then
                     local raceRaw = df.global.world.raws.creatures.all[item.race]
@@ -435,7 +436,7 @@ local function stacks_add_items(stockpile, stacks, items, container, contained_c
             stacks.containers[item.id].before_size = #contained_items
             stacks.containers[item.id].description = utils.getItemDescription(item, 1)
             log(4, ('      %sContainer:%s <%6d> #items:%5d\n'):format(ind, utils.getItemDescription(item), item.id, count, item:isSandBearing()))
-            stacks_add_items(stockpile, stacks, contained_items, item, count, ind .. '   ')
+            stacks_add_items(stockpile, stacks, contained_items, item, ind .. '   ')
 
         -- excluded item types
         else
