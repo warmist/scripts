@@ -3,7 +3,7 @@ devel/sc
 
 .. dfhack-tool::
     :summary: Scan DF structures for errors.
-    :tags: unavailable dev
+    :tags: dev
 
 Size Check: scans structures for invalid vectors, misaligned structures, and
 unidentified enum values.

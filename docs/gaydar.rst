@@ -3,7 +3,7 @@ gaydar
 
 .. dfhack-tool::
     :summary: Shows the sexual orientation of units.
-    :tags: unavailable fort inspection animals units
+    :tags: fort inspection animals units
 
 ``gaydar`` is useful for social engineering or checking the viability of
 livestock breeding programs.
