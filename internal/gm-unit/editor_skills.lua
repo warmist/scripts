@@ -68,20 +68,20 @@ function Editor_Skills:init( args )
             choices=skill_list,
             frame = {t=0, b=3,l=0},
             view_id="skills",
-            edit_ignore_keys={"KEYBOARD_CURSOR_UP_Z", "KEYBOARD_CURSOR_DOWN_Z", "STRING_A047"},
+            edit_ignore_keys={"STRING_A045", "STRING_A043", "STRING_A047"},
         },
         widgets.Label{
             frame = { b=0,l=0},
             text ={
                 {text=": remove level ",
-                key = "KEYBOARD_CURSOR_UP_Z",
+                key = "STRING_A045",
                 on_activate=self:callback("level_skill",-1)},
                 {text=": add level ",
-                key = "KEYBOARD_CURSOR_DOWN_Z",
+                key = "STRING_A043",
                 on_activate=self:callback("level_skill",1)},
                 NEWLINE,
                 {text=": show learned only ",
-                key = "STRING_A047",
+                key = "STRING_A047", -- /
                 on_activate=function ()
                     self.learned_only=not self.learned_only
                     self:update_list(true)
