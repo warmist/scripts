@@ -346,7 +346,9 @@ local function init_arena()
     arena_unit.castes_all:resize(0)
     local arena_creatures = {}
     for i, cre in ipairs(RAWS.creatures.all) do
-        if not cre.flags.VERMIN_GROUNDER and not cre.flags.VERMIN_SOIL and cre.graphics then
+        if not cre.flags.VERMIN_GROUNDER and not cre.flags.VERMIN_SOIL
+            and not cre.flags.DOES_NOT_EXIST and not cre.flags.EQUIPMENT_WAGON
+        then
             table.insert(arena_creatures, {race=i, cre=cre})
         end
     end
