@@ -794,6 +794,10 @@ local function do_run_impl(zlevel, grid, ctx)
                                 digctx.occupancy.building ~= df.tile_building_occ.Dynamic then
                             goto inner_continue
                         end
+                    elseif db_entry.action == do_traffic_high or db_entry.action == do_traffic_normal
+                        or db_entry.action == do_traffic_low or db_entry.action == do_traffic_restricted
+                    then
+                        -- pass
                     else
                         -- can't dig through buildings
                         if digctx.occupancy.building ~= 0 then

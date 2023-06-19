@@ -19,6 +19,7 @@ that repo.
 - `gui/create-item`: allow blocks to be made out of wood when using the restrictive filters
 - `emigration`: reassign home site for emigrating units so they don't just come right back to the fort
 - `gui/liquids`: ensure tile temperature is set correctly when painting water or magma
+- `gui/quickfort`: allow traffic designations to be applied over buildings
 
 ## Misc Improvements
 - `gui/control-panel`: add some popular startup configuration commands for `autobutcher` and `autofarm`
