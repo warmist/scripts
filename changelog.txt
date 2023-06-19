@@ -30,6 +30,7 @@ that repo.
 - `suspendmanager`: suspend blocking jobs when building high walls or filling corridors
 - `workorder`: reduce existing orders for automatic shearing and milking jobs when animals are no longer available
 - `gui/quickfort`: adapt "cursor lock" to mouse controls so it's easier to see the full preview for multi-level blueprints before you apply them
+- `gui/quickfort`: only display post-blueprint messages once when repeating the blueprint up or down z-levels
 
 ## Removed
 - `gui/automelt`: replaced by an overlay panel that appears when you click on a stockpile
