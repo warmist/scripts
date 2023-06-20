@@ -32,6 +32,7 @@ that repo.
 - `prioritize`: add wild animal management tasks and lever pulling to the default list of prioritized job types
 - `suspendmanager`: suspend blocking jobs when building high walls or filling corridors
 - `workorder`: reduce existing orders for automatic shearing and milking jobs when animals are no longer available
+- `gui/quickfort`: protect against meta blueprints recursing infinitely if they include themselves
 - `gui/quickfort`: adapt "cursor lock" to mouse controls so it's easier to see the full preview for multi-level blueprints before you apply them
 
 ## Removed
