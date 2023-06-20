@@ -1,12 +1,36 @@
---[[
-    'tweak makeown' as a lua include
-    make_own(unit)        -- removes foreign flags, sets civ_id to fort civ_id, and sets clothes ownership
-    make_citizen(unit)    -- called by make_own if unit.race == fort race
---]]
 --@module=true
 
-local utils = require 'utils'
+local function get_translation(race_id)
+    local race_name = df.global.world.raws.creatures.all[race_id].creature_id
+    for _,translation in ipairs(df.global.world.raws.language.translations) do
+        if translation.name == race_name then
+            return translation
+        end
+    end
+    return df.global.world.raws.language.translations[0]
+end
 
+local function pick_first_name(race_id)
+    local translation = get_translation(race_id)
+    return translation.words[math.random(0, #translation.words-1)].value
+end
+
+local LANGUAGE_IDX = 0
+local word_table = df.global.world.raws.language.word_table[LANGUAGE_IDX][35]
+
+function name_unit(unit)
+    if unit.name.has_name then return end
+
+    unit.name.first_name = pick_first_name(unit.race)
+    unit.name.words.FrontCompound = word_table.words.FrontCompound[math.random(0, #word_table.words.FrontCompound-1)]
+    unit.name.words.RearCompound = word_table.words.RearCompound[math.random(0, #word_table.words.RearCompound-1)]
+
+    unit.name.language = LANGUAGE_IDX
+    unit.name.parts_of_speech.FrontCompound = df.part_of_speech.Noun
+    unit.name.parts_of_speech.RearCompound = df.part_of_speech.Verb3rdPerson
+    unit.name.type = df.language_name_type.Figure
+    unit.name.has_name = true
+end
 
 local function fix_clothing_ownership(unit)
     -- extracted/translated from tweak makeown plugin
@@ -261,11 +285,12 @@ function make_citizen(unit)
         end
         print("makeown: migrated nemesis entry")
     end -- nemesis
+
+    -- generate a name for the unit if it doesn't already have one
+    name_unit(unit)
 end
 
-
 function make_own(unit)
-    --tweak makeown
     unit.flags1.marauder = false;
     unit.flags1.merchant = false;
     unit.flags1.forest = false;
