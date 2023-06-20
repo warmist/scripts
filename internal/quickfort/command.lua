@@ -35,6 +35,7 @@ local function make_ctx_base(prev_ctx)
         stats={out_of_bounds={label='Tiles outside map boundary', value=0},
                invalid_keys={label='Invalid key sequences', value=0}},
                messages={},
+               messages_set={},
     }
     return {
         zmin=30000,
@@ -43,6 +44,7 @@ local function make_ctx_base(prev_ctx)
         order_specs=prev_ctx.order_specs,
         stats=prev_ctx.stats,
         messages=prev_ctx.messages,
+        messages_set=prev_ctx.messages_set,
     }
 end
 
@@ -166,8 +168,11 @@ function do_command_section(ctx, section_name, modifiers)
     local filepath = quickfort_list.get_blueprint_filepath(ctx.blueprint_name)
     local first_modeline =
             do_apply_modifiers(filepath, sheet_name, label, ctx, modifiers)
-    if first_modeline and first_modeline.message and ctx.command == 'run' then
+    if first_modeline and first_modeline.message and ctx.command == 'run'
+        and not ctx.messages_set[first_modeline.message]
+    then
         table.insert(ctx.messages, first_modeline.message)
+        ctx.messages_set[first_modeline.message] = true
     end
 end
 
