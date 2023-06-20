@@ -156,7 +156,7 @@ function GmEditorUi:verifyStack()
 
     for i, level in pairs(self.stack) do
         local obj=level.target
-        if obj._kind == "bitfield" then goto continue end
+        if obj._kind == "bitfield" or obj._kind == "struct" then goto continue end
 
         local keys = level.keys
         local selection = level.selected
