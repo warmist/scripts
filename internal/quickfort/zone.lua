@@ -341,13 +341,18 @@ local function set_location(zone, location, ctx)
     end
     local site = df.global.world.world_data.active_site[0]
     local loc_id = nil
-    if location.label then
-        loc_id = safe_index(ctx, 'zone', 'locations', location.label)
+    if location.label and safe_index(ctx, 'zone', 'locations', location.label) then
+        local cached_loc = ctx.zone.locations[location.label]
+        loc_id = cached_loc.id
+        local bld = cached_loc.bld
+        for flag, val in pairs(location.data.flags or {}) do
+            bld.flags[flag] = val
+        end
     end
-    local data = copyall(valid_locations[location.type])
-    utils.assign(data, location.data)
     if not loc_id then
         loc_id = site.next_building_id
+        local data = copyall(valid_locations[location.type])
+        utils.assign(data, location.data)
         data.name = generate_name()
         data.id = loc_id
         data.site_id = site.id
@@ -370,16 +375,19 @@ local function set_location(zone, location, ctx)
             bld.flags[flag] = val
         end
         bld.contents.building_ids:insert('#', zone.id)
+        if location.label then
+            -- remember this location for future associations in this blueprint
+            local cached_loc = ensure_keys(ctx, 'zone', 'locations', location.label)
+            cached_loc.id = loc_id
+            cached_loc.flags = data.flags
+            cached_loc.bld = bld
+        end
     end
     zone.site_id = site.id
     zone.location_id = loc_id
     -- recategorize the civzone as attached to a location
     zone:uncategorize()
     zone:categorize(true)
-    if location.label then
-        -- remember this location for future associations in this blueprint
-        ensure_keys(ctx, 'zone', 'locations')[location.label] = loc_id
-    end
 end
 
 local function create_zone(zone, data, ctx)
