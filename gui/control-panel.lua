@@ -36,9 +36,9 @@ local FORT_SERVICES = {
 }
 
 local FORT_AUTOSTART = {
-    'autobutcher target 50 50 14 2 BIRD_GOOSE',
-    'autobutcher target 50 50 14 2 BIRD_TURKEY',
-    'autobutcher target 50 50 14 2 BIRD_CHICKEN',
+    'autobutcher target 10 10 14 2 BIRD_GOOSE',
+    'autobutcher target 10 10 14 2 BIRD_TURKEY',
+    'autobutcher target 10 10 14 2 BIRD_CHICKEN',
     'autofarm threshold 150 grass_tail_pig',
     'ban-cooking all',
     'buildingplan set boulders false',
