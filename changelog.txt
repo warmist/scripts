@@ -20,6 +20,7 @@ that repo.
 - `emigration`: reassign home site for emigrating units so they don't just come right back to the fort
 - `gui/sandbox`: allow creatures that have separate caste-based graphics to be spawned (like ewes/rams)
 - `gui/liquids`: ensure tile temperature is set correctly when painting water or magma
+- `workorder`: prevent autoMilkCreature from over-counting milkable animals, which was leading to cancellation spam for the MilkCreature job
 - `gui/quickfort`: allow traffic designations to be applied over buildings
 
 ## Misc Improvements
