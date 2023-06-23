@@ -16,8 +16,8 @@ local opts, args = {
 -- default max stack size of 30
 local MAX_ITEM_STACK=30
 local MAX_AMMO_STACK=25
-local MAX_CONT_ITEMS=500
-local MAX_MAT_AMT=500
+local MAX_CONT_ITEMS=30
+local MAX_MAT_AMT=30
 
 -- list of types that use race and caste
 local typesThatUseCreatures = utils.invert{'REMAINS', 'FISH', 'FISH_RAW', 'VERMIN', 'PET', 'EGG', 'CORPSE', 'CORPSEPIECE'}
