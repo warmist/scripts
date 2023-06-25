@@ -3,7 +3,7 @@ devel/export-dt-ini
 
 .. dfhack-tool::
     :summary: Export memory addresses for Dwarf Therapist configuration.
-    :tags: unavailable dev
+    :tags: dev
 
 This tool exports an ini file containing memory addresses for Dwarf Therapist.
 
