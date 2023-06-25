@@ -129,7 +129,7 @@ address('historical_figures_vector',globals,'world','history','figures')
 address('world_site_type',df.world_site,'type')
 address('active_sites_vector',df.world_data,'active_site')
 address('gview',globals,'gview')
-address('external_flag',globals,'game_extra','external_flag')
+address('external_flag',globals,'game','external_flag')
 vtable('viewscreen_setupdwarfgame_vtable','viewscreen_setupdwarfgamest')
 
 header('offsets')
