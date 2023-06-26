@@ -143,7 +143,7 @@ local function get_texposes()
         return valid and start + offset or nil
     end
 
-    return tp(0), tp(1), tp(2)
+    return tp(3), tp(1), tp(0)
 end
 local PLANNED_TEXPOS, SUSPENDED_TEXPOS, REPEAT_SUSPENDED_TEXPOS = get_texposes()
 
