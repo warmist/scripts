@@ -252,6 +252,9 @@ local function riskBlocking(job)
     --- job.pos is sometimes off by one, get the building pos
     local pos = {x=building.centerx,y=building.centery,z=building.z}
 
+    -- The construction is on a non walkable tile, it can't get worst
+    if not walkable(pos) then return false end
+
     --- Get self risk of being blocked
     local risk = riskOfStuckConstructionAt(pos)
 
