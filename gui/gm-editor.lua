@@ -173,7 +173,7 @@ function GmEditorUi:verifyStack()
             last_good_level = i - 1
             break
         end
-        if not self.stack[i+1] == next_by_ref then
+        if self.stack[i+1] and not self.stack[i+1] == next_by_ref then
             failure = true
             break
         end
