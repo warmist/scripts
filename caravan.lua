@@ -42,7 +42,7 @@ function set_height(list_index, delta)
     if delta >= 0 then return end
     _,screen_height = dfhack.screen.getWindowSize()
     -- list only increments in three tiles at a time
-    local page_height = ((screen_height - 26) // 3) * 3
+    local page_height = ((screen_height - MARGIN_HEIGHT) // 3) * 3
     trade.scroll_position_item[list_index] = math.max(0,
             math.min(trade.scroll_position_item[list_index],
                      trade.i_height[list_index] - page_height))
@@ -277,8 +277,60 @@ function CaravanTradeOverlay:onInput(keys)
     end
 end
 
+DiplomacyOverlay = defclass(DiplomacyOverlay, overlay.OverlayWidget)
+DiplomacyOverlay.ATTRS{
+    default_pos={x=45,y=-6},
+    default_enabled=true,
+    viewscreens='dwarfmode/Diplomacy/Requests',
+    frame={w=31, h=4},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+local diplomacy = df.global.game.main_interface.diplomacy
+local function diplomacy_toggle_cat(idx, target_val)
+    local priority_idx = diplomacy.taking_requests_tablist[idx]
+    local priority = diplomacy.environment.meeting.sell_requests.priority[priority_idx]
+    if #priority == 0 then return end
+    target_val = target_val or (priority[0] == 0 and 4 or 0)
+    for i in ipairs(priority) do
+        priority[i] = target_val
+    end
+    return target_val
+end
+
+local function diplomacy_toggle_cur_cat()
+    return diplomacy_toggle_cat(diplomacy.taking_requests_selected_tab)
+end
+
+local function diplomacy_toggle_all_cat()
+    -- choose whether we're toggling on or off based on the current tab
+    local target_val = diplomacy_toggle_cur_cat()
+    for i in ipairs(diplomacy.taking_requests_tablist) do
+        target_val = diplomacy_toggle_cat(i, target_val)
+    end
+end
+
+function DiplomacyOverlay:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='Toggle all shown',
+            key='CUSTOM_CTRL_A',
+            on_activate=diplomacy_toggle_cur_cat,
+        },
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='Toggle all categories',
+            key='CUSTOM_CTRL_B',
+            on_activate=diplomacy_toggle_all_cat,
+        },
+    }
+end
+
 OVERLAY_WIDGETS = {
-    tradeScreenExtension=CaravanTradeOverlay,
+    trade=CaravanTradeOverlay,
+    diplomacy=DiplomacyOverlay,
 }
 
 INTERESTING_FLAGS = {
