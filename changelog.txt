@@ -18,9 +18,14 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
-- `caravan`: new overlay for selecting all/none on trade request screen
 
 ## Removed
+
+# 50.09-r1
+
+## Misc Improvements
+- `caravan`: new overlay for selecting all/none on trade request screen
+- `suspendmanager`: don't suspend constructions that are built over open space
 
 # 50.08-r4
 
