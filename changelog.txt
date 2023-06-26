@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `caravan`: new overlay for selecting all/none on trade request screen
 
 ## Removed
 
