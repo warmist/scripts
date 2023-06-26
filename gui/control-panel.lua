@@ -51,12 +51,14 @@ for _,v in ipairs(FORT_SERVICES) do
 end
 table.sort(FORT_AUTOSTART)
 
+-- these are re-enabled by the default DFHack init scripts
 local SYSTEM_SERVICES = {
-    'automelt',
     'buildingplan',
     'confirm',
+    'logistics',
     'overlay',
 }
+-- these are fully controlled by the user
 local SYSTEM_USER_SERVICES = {
     'faststart',
     'work-now',
