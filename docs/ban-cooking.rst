@@ -22,11 +22,11 @@ call: ``ban-cooking oil tallow`` will ban both oil and tallow from cooking.
 
 Examples::
 
-    on-new-fortress ban-cooking booze; ban-cooking brew; ban-cooking fruit;
-    ban-cooking honey; ban-cooking milk; ban-cooking mill; ban-cooking oil;
-    ban-cooking seeds; ban-cooking tallow; ban-cooking thread
+    on-new-fortress ban-cooking all
 
 Ban cooking all otherwise useful ingredients once when starting a new fortress.
+Note that this exact command can be enabled via the ``Autostart`` tab of
+`gui/control-panel`.
 
 Options
 -------
