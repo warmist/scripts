@@ -75,8 +75,19 @@ Bring item to depot
 ```````````````````
 
 When the trade depot is selected, a button appears to bring up the DFHack
-enhanced trade goods screen. You'll get a searchable, sortable list of all your
-tradeable items, with options to quickly select or deselect classes of items.
+enhanced move trade goods screen. You'll get a searchable, sortable list of all
+your tradeable items, with hotkeys to quickly select or deselect all visible
+items.
+
+There are filter sliders for selecting items of various condition levels and
+quality. For example, you can quickly trade all your tattered, frayed, and worn
+clothing by setting the condition slider to include from tattered to worn, then
+hitting Ctrl-V to select all.
+
+Click on an item and shift-click on a second item to toggle all items between
+the two that you clicked on. If the one that you shift-clicked on was selected,
+the range of items will be deselected. If the one you shift-clicked on was not
+selected, then the range of items will be selected.
 
 Trade agreement
 ```````````````

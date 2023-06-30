@@ -321,9 +321,9 @@ end
 MoveGoods = defclass(MoveGoods, widgets.Window)
 MoveGoods.ATTRS {
     frame_title='Select trade goods',
-    frame={w=80, h=45},
+    frame={w=83, h=45},
     resizable=true,
-    resize_min={w=50, h=20},
+    resize_min={h=27},
     pending_item_ids=DEFAULT_NIL,
 }
 
@@ -354,17 +354,19 @@ local function sort_by_name_asc(a, b)
 end
 
 local function sort_by_value_desc(a, b)
-    if a.data.real_value == b.data.real_value then
+    local value_field = a.item_id and 'per_item_value' or 'total_value'
+    if a.data[value_field] == b.data[value_field] then
         return sort_by_name_desc(a, b)
     end
-    return a.data.real_value > b.data.real_value
+    return a.data[value_field] > b.data[value_field]
 end
 
 local function sort_by_value_asc(a, b)
-    if a.data.real_value == b.data.real_value then
+    local value_field = a.item_id and 'per_item_value' or 'total_value'
+    if a.data[value_field] == b.data[value_field] then
         return sort_by_name_desc(a, b)
     end
-    return a.data.real_value < b.data.real_value
+    return a.data[value_field] < b.data[value_field]
 end
 
 local function sort_by_quantity_desc(a, b)
@@ -381,10 +383,27 @@ local function sort_by_quantity_asc(a, b)
     return a.data.quantity < b.data.quantity
 end
 
+local function has_export_agreement()
+    -- TODO: where are export agreements stored?
+    return false
+end
+
+local function is_agreement_item(item_type)
+    -- TODO: match export agreement with civs with active caravans
+    return false
+end
+
 -- takes into account trade agreements
 local function get_perceived_value(item)
     -- TODO: take trade agreements into account
-    return dfhack.items.getValue(item)
+    local value = dfhack.items.getValue(item)
+    for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+        value = value + dfhack.items.getValue(contained_item)
+        for _,contained_contained_item in ipairs(dfhack.items.getContainedItems(contained_item)) do
+            value = value + dfhack.items.getValue(contained_contained_item)
+        end
+    end
+    return value
 end
 
 local function get_value_at_depot()
@@ -431,10 +450,10 @@ function MoveGoods:init()
             options={
                 {label='value'..CH_DN, value=sort_by_value_desc},
                 {label='value'..CH_UP, value=sort_by_value_asc},
-                {label='name'..CH_DN, value=sort_by_name_desc},
-                {label='name'..CH_UP, value=sort_by_name_asc},
                 {label='qty'..CH_DN, value=sort_by_quantity_desc},
                 {label='qty'..CH_UP, value=sort_by_quantity_asc},
+                {label='name'..CH_DN, value=sort_by_name_desc},
+                {label='name'..CH_UP, value=sort_by_name_asc},
             },
             initial_option=sort_by_value_desc,
             on_change=self:callback('refresh_list', 'sort'),
@@ -447,14 +466,31 @@ function MoveGoods:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='show_forbidden',
-            frame={t=2, l=0, w=36},
-            label='Include forbidden items',
+            frame={t=2, l=0, w=27},
+            label='Show forbidden items',
             key='CUSTOM_SHIFT_F',
             initial_option=true,
             on_change=function() self:refresh_list() end,
         },
+        widgets.ToggleHotkeyLabel{
+            view_id='show_banned',
+            frame={t=3, l=0, w=43},
+            label='Show items banned by export mandates',
+            key='CUSTOM_SHIFT_B',
+            initial_option=false,
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='only_agreement',
+            frame={t=4, l=0, w=52},
+            label='Show only items requested by export agreement',
+            key='CUSTOM_SHIFT_A',
+            initial_option=false,
+            on_change=function() self:refresh_list() end,
+            enabled=has_export_agreement(),
+        },
         widgets.Panel{
-            frame={t=4, l=0, w=40, h=3},
+            frame={t=6, l=0, w=40, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_condition',
@@ -499,7 +535,7 @@ function MoveGoods:init()
                     end,
                 },
                 widgets.RangeSlider{
-                    frame={l=0, t=2},
+                    frame={l=0, t=3},
                     num_stops=4,
                     get_left_idx_fn=function()
                         return 4 - self.subviews.min_condition:getOptionValue()
@@ -513,7 +549,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=8, l=0, w=40, h=3},
+            frame={t=6, l=41, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality',
@@ -564,7 +600,7 @@ function MoveGoods:init()
                     end,
                 },
                 widgets.RangeSlider{
-                    frame={l=0, t=2},
+                    frame={l=0, t=3},
                     num_stops=7,
                     get_left_idx_fn=function()
                         return self.subviews.min_quality:getOptionValue() + 1
@@ -578,7 +614,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=12, l=0, r=0, b=4},
+            frame={t=11, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_value',
@@ -616,11 +652,13 @@ function MoveGoods:init()
                     frame={l=0, t=2, r=0, b=0},
                     icon_width=2,
                     on_submit=self:callback('toggle_item'),
+                    on_submit2=self:callback('toggle_range'),
+                    on_select=self:callback('select_item'),
                 },
             }
         },
         widgets.Label{
-            frame={l=0, b=2, h=1, r=0},
+            frame={l=0, b=4, h=1, r=0},
             text={
                 'Value of items at trade depot/being brought to depot/total:',
                 {gap=1, text=obfuscate_value(self.value_at_depot)},
@@ -631,7 +669,7 @@ function MoveGoods:init()
             },
         },
         widgets.HotkeyLabel{
-            frame={l=0, b=0},
+            frame={l=0, b=2},
             label='Select all/none',
             key='CUSTOM_CTRL_V',
             on_activate=self:callback('toggle_visible'),
@@ -639,11 +677,15 @@ function MoveGoods:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='disable_buckets',
-            frame={l=26, b=0},
+            frame={l=26, b=2},
             label='Show individual items',
             key='CUSTOM_CTRL_I',
             initial_option=false,
             on_change=function() self:refresh_list() end,
+        },
+        widgets.WrappedLabel{
+            frame={b=0, l=0, r=0},
+            text_to_wrap='Click to mark/unmark for trade. Shift click to mark/unmark a range of items.',
         },
     }
 
@@ -724,10 +766,34 @@ end
 
 local function make_choice_text(desc, value, quantity)
     return {
-        {width=VALUE_COL_WIDTH, rjustify=true, text=value},
+        {width=VALUE_COL_WIDTH, rjustify=true, text=obfuscate_value(value)},
         {gap=2, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
         {gap=2, text=desc},
     }
+end
+
+-- returns true if the item or any contained item is banned
+local function scan_banned(item)
+    if not dfhack.items.checkMandates(item) then return true end
+    for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+        if not dfhack.items.checkMandates(contained_item) then return true end
+    end
+    return false
+end
+
+local function to_title_case(str)
+    str = str:gsub('(%a)([%w_]*)',
+        function (first, rest) return first:upper()..rest:lower() end)
+    str = str:gsub('_', ' ')
+    return str
+end
+
+local function get_item_type_str(item)
+    local str = to_title_case(df.item_type[item:getType()])
+    if str == 'Trapparts' then
+        str = 'Mechanism'
+    end
+    return str
 end
 
 local function get_artifact_name(item)
@@ -735,7 +801,8 @@ local function get_artifact_name(item)
     if not gref then return end
     local artifact = df.artifact_record.find(gref.artifact_id)
     if not artifact then return end
-    return dfhack.TranslateName(artifact.name)
+    local name = dfhack.TranslateName(artifact.name)
+    return ('%s (%s)'):format(name, get_item_type_str(item))
 end
 
 function MoveGoods:cache_choices(disable_buckets)
@@ -750,6 +817,7 @@ function MoveGoods:cache_choices(disable_buckets)
         if value <= 0 then goto continue end
         local is_pending = not not pending[item_id]
         local is_forbidden = item.flags.forbid
+        local is_banned = scan_banned(item)
         local wear_level = item:getWear()
         local desc = item.flags.artifact and get_artifact_name(item) or
             dfhack.items.getDescription(item, 0, true)
@@ -760,23 +828,24 @@ function MoveGoods:cache_choices(disable_buckets)
         local key = ('%s/%d'):format(desc, value)
         if buckets[key] then
             local bucket = buckets[key]
-            bucket.data.items[item_id] = {item=item, pending=is_pending}
+            bucket.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned}
             bucket.data.quantity = bucket.data.quantity + 1
             bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
             bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
+            bucket.data.has_banned = bucket.data.has_banned or is_banned
         else
             local data = {
                 desc=desc,
-                real_value=value,
-                display_value=obfuscate_value(value),
-                items={[item_id]={item=item, pending=is_pending}},
+                per_item_value=value,
+                items={[item_id]={item=item, pending=is_pending, banned=is_banned}},
                 item_type=item:getType(),
                 item_subtype=item:getSubtype(),
                 quantity=1,
-                quality=item:getQuality(),
+                quality=item.flags.artifact and 6 or item:getQuality(),
                 wear=wear_level,
                 selected=is_pending and 1 or 0,
                 has_forbidden=is_forbidden,
+                has_banned=is_banned,
                 dirty=false,
             }
             local entry = {
@@ -795,13 +864,14 @@ function MoveGoods:cache_choices(disable_buckets)
         for item_id in pairs(data.items) do
             local nobucket_choice = copyall(bucket)
             nobucket_choice.icon = curry(get_entry_icon, data, item_id)
-            nobucket_choice.text = make_choice_text(data.desc, data.display_value, 1)
+            nobucket_choice.text = make_choice_text(data.desc, data.per_item_value, 1)
             nobucket_choice.item_id = item_id
             table.insert(nobucket_choices, nobucket_choice)
         end
-        bucket.text = make_choice_text(data.desc, data.display_value, data.quantity)
+        data.total_value = data.per_item_value * data.quantity
+        bucket.text = make_choice_text(data.desc, data.total_value, data.quantity)
         table.insert(bucket_choices, bucket)
-        self.value_pending = self.value_pending + (data.real_value * data.selected)
+        self.value_pending = self.value_pending + (data.per_item_value * data.selected)
     end
 
     self.choices = {}
@@ -814,6 +884,8 @@ function MoveGoods:get_choices()
     local raw_choices = self:cache_choices(self.subviews.disable_buckets:getOptionValue())
     local choices = {}
     local include_forbidden = self.subviews.show_forbidden:getOptionValue()
+    local include_banned = self.subviews.show_banned:getOptionValue()
+    local only_agreement = self.subviews.only_agreement:getOptionValue()
     local min_condition = self.subviews.min_condition:getOptionValue()
     local max_condition = self.subviews.max_condition:getOptionValue()
     local min_quality = self.subviews.min_quality:getOptionValue()
@@ -833,6 +905,18 @@ function MoveGoods:get_choices()
         if max_condition > data.wear then goto continue end
         if min_quality > data.quality then goto continue end
         if max_quality < data.quality then goto continue end
+        if only_agreement and not is_agreement_item(data.item_type) then
+            goto continue
+        end
+        if not include_banned then
+            if choice.item_id then
+                if data.items[choice.item_id].banned then
+                    goto continue
+                end
+            elseif data.has_banned then
+                goto continue
+            end
+        end
         table.insert(choices, choice)
         ::continue::
     end
@@ -840,36 +924,60 @@ function MoveGoods:get_choices()
     return choices
 end
 
-function MoveGoods:toggle_item(_, choice, target_value)
+function MoveGoods:toggle_item_base(choice, target_value)
     if choice.item_id then
         local item_data = choice.data.items[choice.item_id]
         if item_data.pending then
-            self.value_pending = self.value_pending - choice.data.real_value
+            self.value_pending = self.value_pending - choice.data.per_item_value
             choice.data.selected = choice.data.selected - 1
         end
         if target_value == nil then target_value = not item_data.pending end
         item_data.pending = target_value
         if item_data.pending then
-            self.value_pending = self.value_pending + choice.data.real_value
+            self.value_pending = self.value_pending + choice.data.per_item_value
             choice.data.selected = choice.data.selected + 1
         end
     else
-        self.value_pending = self.value_pending - (choice.data.selected * choice.data.real_value)
+        self.value_pending = self.value_pending - (choice.data.selected * choice.data.per_item_value)
         if target_value == nil then target_value = (choice.data.selected ~= choice.data.quantity) end
         for _, item_data in pairs(choice.data.items) do
             item_data.pending = target_value
         end
         choice.data.selected = target_value and choice.data.quantity or 0
-        self.value_pending = self.value_pending + (choice.data.selected * choice.data.real_value)
+        self.value_pending = self.value_pending + (choice.data.selected * choice.data.per_item_value)
     end
     choice.data.dirty = true
     return target_value
 end
 
+function MoveGoods:select_item(idx, choice)
+    if not dfhack.internal.getModifiers().shift then
+        self.prev_list_idx = self.subviews.list.list:getSelected()
+    end
+end
+
+function MoveGoods:toggle_item(idx, choice)
+    self:toggle_item_base(choice)
+end
+
+function MoveGoods:toggle_range(idx, choice)
+    if not self.prev_list_idx then
+        self:toggle_item(idx, choice)
+        return
+    end
+    local choices = self.subviews.list:getVisibleChoices()
+    local list_idx = self.subviews.list.list:getSelected()
+    local target_value
+    for i = list_idx, self.prev_list_idx, list_idx < self.prev_list_idx and 1 or -1 do
+        target_value = self:toggle_item_base(choices[i], target_value)
+    end
+    self.prev_list_idx = list_idx
+end
+
 function MoveGoods:toggle_visible()
     local target_value
-    for _, choice in pairs(self.subviews.list:getVisibleChoices()) do
-        target_value = self:toggle_item(nil, choice, target_value)
+    for _, choice in ipairs(self.subviews.list:getVisibleChoices()) do
+        target_value = self:toggle_item_base(choice, target_value)
     end
 end
 
@@ -921,10 +1029,10 @@ end
 
 MoveGoodsOverlay = defclass(MoveGoodsOverlay, overlay.OverlayWidget)
 MoveGoodsOverlay.ATTRS{
-    default_pos={x=-60, y=10},
+    default_pos={x=-64, y=10},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING/TradeDepot',
-    frame={w=35, h=1},
+    frame={w=31, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -954,7 +1062,7 @@ function MoveGoodsOverlay:init()
     self:addviews{
         widgets.HotkeyLabel{
             frame={t=0, l=0},
-            label='DFHack trade goods helper',
+            label='DFHack move trade goods',
             key='CUSTOM_CTRL_T',
             on_activate=function() MoveGoodsModal{}:show() end,
             enabled=has_trade_depot_and_caravan,
