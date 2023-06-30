@@ -8,6 +8,7 @@
 
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 trader_selected_state = trader_selected_state or {}
@@ -277,9 +278,13 @@ function CaravanTradeOverlay:onInput(keys)
     end
 end
 
+-- -------------------
+-- DiplomacyOverlay
+--
+
 DiplomacyOverlay = defclass(DiplomacyOverlay, overlay.OverlayWidget)
 DiplomacyOverlay.ATTRS{
-    default_pos={x=45,y=-6},
+    default_pos={x=45, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Diplomacy/Requests',
     frame={w=25, h=3},
@@ -309,9 +314,658 @@ function DiplomacyOverlay:init()
     }
 end
 
+-- -------------------
+-- MoveGoods
+--
+
+MoveGoods = defclass(MoveGoods, widgets.Window)
+MoveGoods.ATTRS {
+    frame_title='Select trade goods',
+    frame={w=80, h=45},
+    resizable=true,
+    resize_min={w=50, h=20},
+    pending_item_ids=DEFAULT_NIL,
+}
+
+local VALUE_COL_WIDTH = 8
+local QTY_COL_WIDTH = 6
+
+local function sort_noop(a, b)
+    -- this function is used as a marker and never actually gets called
+    error('sort_noop should not be called')
+end
+
+local function sort_base(a, b)
+    return a.data.desc < b.data.desc
+end
+
+local function sort_by_name_desc(a, b)
+    if a.search_key == b.search_key then
+        return sort_base(a, b)
+    end
+    return a.search_key < b.search_key
+end
+
+local function sort_by_name_asc(a, b)
+    if a.search_key == b.search_key then
+        return sort_base(a, b)
+    end
+    return a.search_key > b.search_key
+end
+
+local function sort_by_value_desc(a, b)
+    if a.data.real_value == b.data.real_value then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.real_value > b.data.real_value
+end
+
+local function sort_by_value_asc(a, b)
+    if a.data.real_value == b.data.real_value then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.real_value < b.data.real_value
+end
+
+local function sort_by_quantity_desc(a, b)
+    if a.data.quantity == b.data.quantity then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.quantity > b.data.quantity
+end
+
+local function sort_by_quantity_asc(a, b)
+    if a.data.quantity == b.data.quantity then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.quantity < b.data.quantity
+end
+
+-- takes into account trade agreements
+local function get_perceived_value(item)
+    -- TODO: take trade agreements into account
+    return dfhack.items.getValue(item)
+end
+
+local function get_value_at_depot()
+    local sum = 0
+    -- if we're here, then the overlay has already determined that this is a depot
+    local depot = dfhack.gui.getSelectedBuilding(true)
+    for _, contained_item in ipairs(depot.contained_items) do
+        if contained_item.use_mode ~= 0 then goto continue end
+        local item = contained_item.item
+        sum = sum + get_perceived_value(item)
+        ::continue::
+    end
+    return sum
+end
+
+-- adapted from https://stackoverflow.com/a/50860705
+local function sig_fig(num, figures)
+    if num <= 0 then return 0 end
+    local x = figures - math.ceil(math.log(num, 10))
+    return math.floor(math.floor(num * 10^x + 0.5) * 10^-x)
+end
+
+local function obfuscate_value(value)
+    -- TODO: respect skill of broker
+    local num_sig_figs = 1
+    local str = tostring(sig_fig(value, num_sig_figs))
+    if #str > num_sig_figs then str = '~' .. str end
+    return str
+end
+
+local CH_UP = string.char(30)
+local CH_DN = string.char(31)
+
+function MoveGoods:init()
+    self.value_at_depot = get_value_at_depot()
+    self.value_pending = 0
+
+    self:addviews{
+        widgets.CycleHotkeyLabel{
+            view_id='sort',
+            frame={l=0, t=0, w=21},
+            label='Sort by:',
+            key='CUSTOM_SHIFT_S',
+            options={
+                {label='value'..CH_DN, value=sort_by_value_desc},
+                {label='value'..CH_UP, value=sort_by_value_asc},
+                {label='name'..CH_DN, value=sort_by_name_desc},
+                {label='name'..CH_UP, value=sort_by_name_asc},
+                {label='qty'..CH_DN, value=sort_by_quantity_desc},
+                {label='qty'..CH_UP, value=sort_by_quantity_asc},
+            },
+            initial_option=sort_by_value_desc,
+            on_change=self:callback('refresh_list', 'sort'),
+        },
+        widgets.EditField{
+            view_id='search',
+            frame={l=26, t=0},
+            label_text='Search: ',
+            on_char=function(ch) return ch:match('[%l -]') end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='show_forbidden',
+            frame={t=2, l=0, w=36},
+            label='Include forbidden items',
+            key='CUSTOM_SHIFT_F',
+            initial_option=true,
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.Panel{
+            frame={t=4, l=0, w=40, h=3},
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='min_condition',
+                    frame={l=0, t=0, w=18},
+                    label='Min condition:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_C',
+                    key='CUSTOM_SHIFT_V',
+                    options={
+                        {label='Tattered (XX)', value=3},
+                        {label='Frayed (X)', value=2},
+                        {label='Worn (x)', value=1},
+                        {label='Pristine', value=0},
+                    },
+                    initial_option=3,
+                    on_change=function(val)
+                        if self.subviews.max_condition:getOptionValue() > val then
+                            self.subviews.max_condition:setOption(val)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='max_condition',
+                    frame={r=1, t=0, w=18},
+                    label='Max condition:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_E',
+                    key='CUSTOM_SHIFT_R',
+                    options={
+                        {label='Tattered (XX)', value=3},
+                        {label='Frayed (X)', value=2},
+                        {label='Worn (x)', value=1},
+                        {label='Pristine', value=0},
+                    },
+                    initial_option=0,
+                    on_change=function(val)
+                        if self.subviews.min_condition:getOptionValue() < val then
+                            self.subviews.min_condition:setOption(val)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.RangeSlider{
+                    frame={l=0, t=2},
+                    num_stops=4,
+                    get_left_idx_fn=function()
+                        return 4 - self.subviews.min_condition:getOptionValue()
+                    end,
+                    get_right_idx_fn=function()
+                        return 4 - self.subviews.max_condition:getOptionValue()
+                    end,
+                    on_left_change=function(idx) self.subviews.min_condition:setOption(4-idx, true) end,
+                    on_right_change=function(idx) self.subviews.max_condition:setOption(4-idx, true) end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=8, l=0, w=40, h=3},
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='min_quality',
+                    frame={l=0, t=0, w=18},
+                    label='Min quality:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_Z',
+                    key='CUSTOM_SHIFT_X',
+                    options={
+                        {label='Ordinary', value=0},
+                        {label='Well Crafted', value=1},
+                        {label='Finely Crafted', value=2},
+                        {label='Superior', value=3},
+                        {label='Exceptional', value=4},
+                        {label='Masterful', value=5},
+                        {label='Artifact', value=6},
+                    },
+                    initial_option=0,
+                    on_change=function(val)
+                        if self.subviews.max_quality:getOptionValue() < val then
+                            self.subviews.max_quality:setOption(val)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='max_quality',
+                    frame={r=1, t=0, w=18},
+                    label='Max quality:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_Q',
+                    key='CUSTOM_SHIFT_W',
+                    options={
+                        {label='Ordinary', value=0},
+                        {label='Well Crafted', value=1},
+                        {label='Finely Crafted', value=2},
+                        {label='Superior', value=3},
+                        {label='Exceptional', value=4},
+                        {label='Masterful', value=5},
+                        {label='Artifact', value=6},
+                    },
+                    initial_option=6,
+                    on_change=function(val)
+                        if self.subviews.min_quality:getOptionValue() > val then
+                            self.subviews.min_quality:setOption(val)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.RangeSlider{
+                    frame={l=0, t=2},
+                    num_stops=7,
+                    get_left_idx_fn=function()
+                        return self.subviews.min_quality:getOptionValue() + 1
+                    end,
+                    get_right_idx_fn=function()
+                        return self.subviews.max_quality:getOptionValue() + 1
+                    end,
+                    on_left_change=function(idx) self.subviews.min_quality:setOption(idx-1, true) end,
+                    on_right_change=function(idx) self.subviews.max_quality:setOption(idx-1, true) end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=12, l=0, r=0, b=4},
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_value',
+                    frame={l=2, t=0, w=7},
+                    options={
+                        {label='value', value=sort_noop},
+                        {label='value'..CH_DN, value=sort_by_value_desc},
+                        {label='value'..CH_UP, value=sort_by_value_asc},
+                    },
+                    initial_option=sort_by_value_desc,
+                    on_change=self:callback('refresh_list', 'sort_value'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_quantity',
+                    frame={l=2+VALUE_COL_WIDTH+2, t=0, w=5},
+                    options={
+                        {label='qty', value=sort_noop},
+                        {label='qty'..CH_DN, value=sort_by_quantity_desc},
+                        {label='qty'..CH_UP, value=sort_by_quantity_asc},
+                    },
+                    on_change=self:callback('refresh_list', 'sort_quantity'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_name',
+                    frame={l=2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, t=0, w=6},
+                    options={
+                        {label='name', value=sort_noop},
+                        {label='name'..CH_DN, value=sort_by_name_desc},
+                        {label='name'..CH_UP, value=sort_by_name_asc},
+                    },
+                    on_change=self:callback('refresh_list', 'sort_name'),
+                },
+                widgets.FilteredList{
+                    view_id='list',
+                    frame={l=0, t=2, r=0, b=0},
+                    icon_width=2,
+                    on_submit=self:callback('toggle_item'),
+                },
+            }
+        },
+        widgets.Label{
+            frame={l=0, b=2, h=1, r=0},
+            text={
+                'Value of items at trade depot/being brought to depot/total:',
+                {gap=1, text=obfuscate_value(self.value_at_depot)},
+                '/',
+                {text=function() return obfuscate_value(self.value_pending) end},
+                '/',
+                {text=function() return obfuscate_value(self.value_pending + self.value_at_depot) end}
+            },
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=0},
+            label='Select all/none',
+            key='CUSTOM_CTRL_V',
+            on_activate=self:callback('toggle_visible'),
+            auto_width=true,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='disable_buckets',
+            frame={l=26, b=0},
+            label='Show individual items',
+            key='CUSTOM_CTRL_I',
+            initial_option=false,
+            on_change=function() self:refresh_list() end,
+        },
+    }
+
+    -- replace the FilteredList's built-in EditField with our own
+    self.subviews.list.list.frame.t = 0
+    self.subviews.list.edit.visible = false
+    self.subviews.list.edit = self.subviews.search
+    self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
+
+    self.subviews.list:setChoices(self:get_choices())
+end
+
+function MoveGoods:refresh_list(sort_widget, sort_fn)
+    sort_widget = sort_widget or 'sort'
+    sort_fn = sort_fn or self.subviews.sort:getOptionValue()
+    if sort_fn == sort_noop then
+        self.subviews[sort_widget]:cycle()
+        return
+    end
+    for _,widget_name in ipairs{'sort', 'sort_value', 'sort_quantity', 'sort_name'} do
+        self.subviews[widget_name]:setOption(sort_fn)
+    end
+    local list = self.subviews.list
+    local saved_filter = list:getFilter()
+    list:setFilter('')
+    list:setChoices(self:get_choices(), list:getSelected())
+    list:setFilter(saved_filter)
+end
+
+local function is_tradeable_item(item)
+    if not item.flags.on_ground or
+        item.flags.hostile or
+        item.flags.in_inventory or
+        item.flags.removed or
+        item.flags.in_building or
+        item.flags.dead_dwarf or
+        item.flags.spider_web or
+        item.flags.construction or
+        item.flags.encased or
+        item.flags.unk12 or
+        item.flags.murder or
+        item.flags.trader or
+        item.flags.owned or
+        item.flags.garbage_collect or
+        item.flags.on_fire or
+        item.flags.in_chest
+    then
+        return false
+    end
+    if item.flags.in_job then
+        local spec_ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
+        if not spec_ref then return true end
+        return spec_ref.data.job.job_type == df.job_type.BringItemToDepot
+    end
+    return true
+end
+
+local function make_search_key(str)
+    local out = ''
+    for c in str:gmatch("[%w%s]") do
+        out = out .. c:lower()
+    end
+    return out
+end
+
+local to_pen = dfhack.pen.parse
+local SOME_PEN = to_pen{ch=':', fg=COLOR_YELLOW}
+local ALL_PEN = to_pen{ch='+', fg=COLOR_LIGHTGREEN}
+
+local function get_entry_icon(data, item_id)
+    if data.selected == 0 then return nil end
+    if item_id then
+        return data.items[item_id].pending and ALL_PEN or nil
+    end
+    if data.quantity == data.selected then return ALL_PEN end
+    return SOME_PEN
+end
+
+local function make_choice_text(desc, value, quantity)
+    return {
+        {width=VALUE_COL_WIDTH, rjustify=true, text=value},
+        {gap=2, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
+        {gap=2, text=desc},
+    }
+end
+
+local function get_artifact_name(item)
+    local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.IS_ARTIFACT)
+    if not gref then return end
+    local artifact = df.artifact_record.find(gref.artifact_id)
+    if not artifact then return end
+    return dfhack.TranslateName(artifact.name)
+end
+
+function MoveGoods:cache_choices(disable_buckets)
+    if self.choices then return self.choices[disable_buckets] end
+
+    local pending = self.pending_item_ids
+    local buckets = {}
+    for _, item in ipairs(df.global.world.items.all) do
+        local item_id = item.id
+        if not item or not is_tradeable_item(item) then goto continue end
+        local value = get_perceived_value(item)
+        if value <= 0 then goto continue end
+        local is_pending = not not pending[item_id]
+        local is_forbidden = item.flags.forbid
+        local wear_level = item:getWear()
+        local desc = item.flags.artifact and get_artifact_name(item) or
+            dfhack.items.getDescription(item, 0, true)
+        if wear_level == 1 then desc = ('x%sx'):format(desc)
+        elseif wear_level == 2 then desc = ('X%sX'):format(desc)
+        elseif wear_level == 3 then desc = ('XX%sXX'):format(desc)
+        end
+        local key = ('%s/%d'):format(desc, value)
+        if buckets[key] then
+            local bucket = buckets[key]
+            bucket.data.items[item_id] = {item=item, pending=is_pending}
+            bucket.data.quantity = bucket.data.quantity + 1
+            bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
+            bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
+        else
+            local data = {
+                desc=desc,
+                real_value=value,
+                display_value=obfuscate_value(value),
+                items={[item_id]={item=item, pending=is_pending}},
+                item_type=item:getType(),
+                item_subtype=item:getSubtype(),
+                quantity=1,
+                quality=item:getQuality(),
+                wear=wear_level,
+                selected=is_pending and 1 or 0,
+                has_forbidden=is_forbidden,
+                dirty=false,
+            }
+            local entry = {
+                search_key=make_search_key(desc),
+                icon=curry(get_entry_icon, data),
+                data=data,
+            }
+            buckets[key] = entry
+        end
+        ::continue::
+    end
+
+    local bucket_choices, nobucket_choices = {}, {}
+    for _, bucket in pairs(buckets) do
+        local data = bucket.data
+        for item_id in pairs(data.items) do
+            local nobucket_choice = copyall(bucket)
+            nobucket_choice.icon = curry(get_entry_icon, data, item_id)
+            nobucket_choice.text = make_choice_text(data.desc, data.display_value, 1)
+            nobucket_choice.item_id = item_id
+            table.insert(nobucket_choices, nobucket_choice)
+        end
+        bucket.text = make_choice_text(data.desc, data.display_value, data.quantity)
+        table.insert(bucket_choices, bucket)
+        self.value_pending = self.value_pending + (data.real_value * data.selected)
+    end
+
+    self.choices = {}
+    self.choices[false] = bucket_choices
+    self.choices[true] = nobucket_choices
+    return self:cache_choices(disable_buckets)
+end
+
+function MoveGoods:get_choices()
+    local raw_choices = self:cache_choices(self.subviews.disable_buckets:getOptionValue())
+    local choices = {}
+    local include_forbidden = self.subviews.show_forbidden:getOptionValue()
+    local min_condition = self.subviews.min_condition:getOptionValue()
+    local max_condition = self.subviews.max_condition:getOptionValue()
+    local min_quality = self.subviews.min_quality:getOptionValue()
+    local max_quality = self.subviews.max_quality:getOptionValue()
+    for _,choice in ipairs(raw_choices) do
+        local data = choice.data
+        if not include_forbidden then
+            if choice.item_id then
+                if data.items[choice.item_id].item.flags.forbid then
+                    goto continue
+                end
+            elseif data.has_forbidden then
+                goto continue
+            end
+        end
+        if min_condition < data.wear then goto continue end
+        if max_condition > data.wear then goto continue end
+        if min_quality > data.quality then goto continue end
+        if max_quality < data.quality then goto continue end
+        table.insert(choices, choice)
+        ::continue::
+    end
+    table.sort(choices, self.subviews.sort:getOptionValue())
+    return choices
+end
+
+function MoveGoods:toggle_item(_, choice, target_value)
+    if choice.item_id then
+        local item_data = choice.data.items[choice.item_id]
+        if item_data.pending then
+            self.value_pending = self.value_pending - choice.data.real_value
+            choice.data.selected = choice.data.selected - 1
+        end
+        if target_value == nil then target_value = not item_data.pending end
+        item_data.pending = target_value
+        if item_data.pending then
+            self.value_pending = self.value_pending + choice.data.real_value
+            choice.data.selected = choice.data.selected + 1
+        end
+    else
+        self.value_pending = self.value_pending - (choice.data.selected * choice.data.real_value)
+        if target_value == nil then target_value = (choice.data.selected ~= choice.data.quantity) end
+        for _, item_data in pairs(choice.data.items) do
+            item_data.pending = target_value
+        end
+        choice.data.selected = target_value and choice.data.quantity or 0
+        self.value_pending = self.value_pending + (choice.data.selected * choice.data.real_value)
+    end
+    choice.data.dirty = true
+    return target_value
+end
+
+function MoveGoods:toggle_visible()
+    local target_value
+    for _, choice in pairs(self.subviews.list:getVisibleChoices()) do
+        target_value = self:toggle_item(nil, choice, target_value)
+    end
+end
+
+MoveGoodsModal = defclass(MoveGoodsModal, gui.ZScreenModal)
+MoveGoodsModal.ATTRS {
+    focus_path='movegoods',
+}
+
+local function get_pending_trade_item_ids()
+    local item_ids = {}
+    for _,job in utils.listpairs(df.global.world.jobs.list) do
+        if job.job_type == df.job_type.BringItemToDepot and #job.items > 0 then
+            item_ids[job.items[0].item.id] = true
+        end
+    end
+    return item_ids
+end
+
+function MoveGoodsModal:init()
+    self.pending_item_ids = get_pending_trade_item_ids()
+    self:addviews{MoveGoods{pending_item_ids=self.pending_item_ids}}
+end
+
+function MoveGoodsModal:onDismiss()
+    -- mark/unmark selected goods for trade
+    local depot = dfhack.gui.getSelectedBuilding(true)
+    if not depot then return end
+    local pending = self.pending_item_ids
+    for _, choice in ipairs(self.subviews.list:getChoices()) do
+        if not choice.data.dirty then goto continue end
+        for item_id, item_data in pairs(choice.data.items) do
+            if item_data.pending and not pending[item_id] then
+                item_data.item.flags.forbid = false
+                dfhack.items.markForTrade(item_data.item, depot)
+            elseif not item_data.pending and pending[item_id] then
+                local spec_ref = dfhack.items.getSpecificRef(item_data.item, df.specific_ref_type.JOB)
+                if spec_ref then
+                    dfhack.job.removeJob(spec_ref.data.job)
+                end
+            end
+        end
+        ::continue::
+    end
+end
+
+-- -------------------
+-- MoveGoodsOverlay
+--
+
+MoveGoodsOverlay = defclass(MoveGoodsOverlay, overlay.OverlayWidget)
+MoveGoodsOverlay.ATTRS{
+    default_pos={x=-60, y=10},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/BUILDING/TradeDepot',
+    frame={w=35, h=1},
+    frame_background=gui.CLEAR_PEN,
+}
+
+local function has_trade_depot_and_caravan()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    if not bld or bld:getBuildStage() < bld:getMaxBuildStage() then
+        return false
+    end
+    if #bld.jobs == 1 and bld.jobs[0].job_type == df.job_type.DestroyBuilding then
+        return false
+    end
+
+    for _, caravan in ipairs(df.global.plotinfo.caravans) do
+        local trade_state = caravan.trade_state
+        local time_remaining = caravan.time_remaining
+        if time_remaining > 0 and
+            (trade_state == df.caravan_state.T_trade_state.Approaching or
+             trade_state == df.caravan_state.T_trade_state.AtDepot)
+        then
+            return true
+        end
+    end
+    return false
+end
+
+function MoveGoodsOverlay:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='DFHack trade goods helper',
+            key='CUSTOM_CTRL_T',
+            on_activate=function() MoveGoodsModal{}:show() end,
+            enabled=has_trade_depot_and_caravan,
+        },
+    }
+end
+
 OVERLAY_WIDGETS = {
     trade=CaravanTradeOverlay,
     diplomacy=DiplomacyOverlay,
+    movegoods=MoveGoodsOverlay,
 }
 
 INTERESTING_FLAGS = {
