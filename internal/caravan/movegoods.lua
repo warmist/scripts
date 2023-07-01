@@ -1,5 +1,6 @@
 --@ module = true
 
+local common = reqscript('internal/caravan/common')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -84,19 +85,6 @@ local function is_agreement_item(item_type)
     return false
 end
 
--- takes into account trade agreements
-local function get_perceived_value(item)
-    -- TODO: take trade agreements into account
-    local value = dfhack.items.getValue(item)
-    for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
-        value = value + dfhack.items.getValue(contained_item)
-        for _,contained_contained_item in ipairs(dfhack.items.getContainedItems(contained_item)) do
-            value = value + dfhack.items.getValue(contained_contained_item)
-        end
-    end
-    return value
-end
-
 local function get_value_at_depot()
     local sum = 0
     -- if we're here, then the overlay has already determined that this is a depot
@@ -104,29 +92,11 @@ local function get_value_at_depot()
     for _, contained_item in ipairs(depot.contained_items) do
         if contained_item.use_mode ~= 0 then goto continue end
         local item = contained_item.item
-        sum = sum + get_perceived_value(item)
+        sum = sum + common.get_perceived_value(item)
         ::continue::
     end
     return sum
 end
-
--- adapted from https://stackoverflow.com/a/50860705
-local function sig_fig(num, figures)
-    if num <= 0 then return 0 end
-    local x = figures - math.ceil(math.log(num, 10))
-    return math.floor(math.floor(num * 10^x + 0.5) * 10^-x)
-end
-
-local function obfuscate_value(value)
-    -- TODO: respect skill of broker
-    local num_sig_figs = 1
-    local str = tostring(sig_fig(value, num_sig_figs))
-    if #str > num_sig_figs then str = '~' .. str end
-    return str
-end
-
-local CH_UP = string.char(30)
-local CH_DN = string.char(31)
 
 function MoveGoods:init()
     self.value_at_depot = get_value_at_depot()
@@ -139,12 +109,12 @@ function MoveGoods:init()
             label='Sort by:',
             key='CUSTOM_SHIFT_S',
             options={
-                {label='value'..CH_DN, value=sort_by_value_desc},
-                {label='value'..CH_UP, value=sort_by_value_asc},
-                {label='qty'..CH_DN, value=sort_by_quantity_desc},
-                {label='qty'..CH_UP, value=sort_by_quantity_asc},
-                {label='name'..CH_DN, value=sort_by_name_desc},
-                {label='name'..CH_UP, value=sort_by_name_asc},
+                {label='value'..common.CH_DN, value=sort_by_value_desc},
+                {label='value'..common.CH_UP, value=sort_by_value_asc},
+                {label='qty'..common.CH_DN, value=sort_by_quantity_desc},
+                {label='qty'..common.CH_UP, value=sort_by_quantity_asc},
+                {label='name'..common.CH_DN, value=sort_by_name_desc},
+                {label='name'..common.CH_UP, value=sort_by_name_asc},
             },
             initial_option=sort_by_value_desc,
             on_change=self:callback('refresh_list', 'sort'),
@@ -312,8 +282,8 @@ function MoveGoods:init()
                     frame={l=2, t=0, w=7},
                     options={
                         {label='value', value=sort_noop},
-                        {label='value'..CH_DN, value=sort_by_value_desc},
-                        {label='value'..CH_UP, value=sort_by_value_asc},
+                        {label='value'..common.CH_DN, value=sort_by_value_desc},
+                        {label='value'..common.CH_UP, value=sort_by_value_asc},
                     },
                     initial_option=sort_by_value_desc,
                     on_change=self:callback('refresh_list', 'sort_value'),
@@ -323,8 +293,8 @@ function MoveGoods:init()
                     frame={l=2+VALUE_COL_WIDTH+2, t=0, w=5},
                     options={
                         {label='qty', value=sort_noop},
-                        {label='qty'..CH_DN, value=sort_by_quantity_desc},
-                        {label='qty'..CH_UP, value=sort_by_quantity_asc},
+                        {label='qty'..common.CH_DN, value=sort_by_quantity_desc},
+                        {label='qty'..common.CH_UP, value=sort_by_quantity_asc},
                     },
                     on_change=self:callback('refresh_list', 'sort_quantity'),
                 },
@@ -333,8 +303,8 @@ function MoveGoods:init()
                     frame={l=2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, t=0, w=6},
                     options={
                         {label='name', value=sort_noop},
-                        {label='name'..CH_DN, value=sort_by_name_desc},
-                        {label='name'..CH_UP, value=sort_by_name_asc},
+                        {label='name'..common.CH_DN, value=sort_by_name_desc},
+                        {label='name'..common.CH_UP, value=sort_by_name_asc},
                     },
                     on_change=self:callback('refresh_list', 'sort_name'),
                 },
@@ -352,11 +322,11 @@ function MoveGoods:init()
             frame={l=0, b=4, h=1, r=0},
             text={
                 'Value of items at trade depot/being brought to depot/total:',
-                {gap=1, text=obfuscate_value(self.value_at_depot)},
+                {gap=1, text=common.obfuscate_value(self.value_at_depot)},
                 '/',
-                {text=function() return obfuscate_value(self.value_pending) end},
+                {text=function() return common.obfuscate_value(self.value_pending) end},
                 '/',
-                {text=function() return obfuscate_value(self.value_pending + self.value_at_depot) end}
+                {text=function() return common.obfuscate_value(self.value_pending + self.value_at_depot) end}
             },
         },
         widgets.HotkeyLabel{
@@ -434,30 +404,18 @@ local function is_tradeable_item(item)
     return true
 end
 
-local function make_search_key(str)
-    local out = ''
-    for c in str:gmatch("[%w%s]") do
-        out = out .. c:lower()
-    end
-    return out
-end
-
-local to_pen = dfhack.pen.parse
-local SOME_PEN = to_pen{ch=':', fg=COLOR_YELLOW}
-local ALL_PEN = to_pen{ch='+', fg=COLOR_LIGHTGREEN}
-
 local function get_entry_icon(data, item_id)
     if data.selected == 0 then return nil end
     if item_id then
-        return data.items[item_id].pending and ALL_PEN or nil
+        return data.items[item_id].pending and common.ALL_PEN or nil
     end
-    if data.quantity == data.selected then return ALL_PEN end
-    return SOME_PEN
+    if data.quantity == data.selected then return common.ALL_PEN end
+    return common.SOME_PEN
 end
 
 local function make_choice_text(desc, value, quantity)
     return {
-        {width=VALUE_COL_WIDTH, rjustify=true, text=obfuscate_value(value)},
+        {width=VALUE_COL_WIDTH, rjustify=true, text=common.obfuscate_value(value)},
         {gap=2, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
         {gap=2, text=desc},
     }
@@ -472,30 +430,6 @@ local function scan_banned(item)
     return false
 end
 
-local function to_title_case(str)
-    str = str:gsub('(%a)([%w_]*)',
-        function (first, rest) return first:upper()..rest:lower() end)
-    str = str:gsub('_', ' ')
-    return str
-end
-
-local function get_item_type_str(item)
-    local str = to_title_case(df.item_type[item:getType()])
-    if str == 'Trapparts' then
-        str = 'Mechanism'
-    end
-    return str
-end
-
-local function get_artifact_name(item)
-    local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.IS_ARTIFACT)
-    if not gref then return end
-    local artifact = df.artifact_record.find(gref.artifact_id)
-    if not artifact then return end
-    local name = dfhack.TranslateName(artifact.name)
-    return ('%s (%s)'):format(name, get_item_type_str(item))
-end
-
 function MoveGoods:cache_choices(disable_buckets)
     if self.choices then return self.choices[disable_buckets] end
 
@@ -504,13 +438,13 @@ function MoveGoods:cache_choices(disable_buckets)
     for _, item in ipairs(df.global.world.items.all) do
         local item_id = item.id
         if not item or not is_tradeable_item(item) then goto continue end
-        local value = get_perceived_value(item)
+        local value = common.get_perceived_value(item)
         if value <= 0 then goto continue end
         local is_pending = not not pending[item_id]
         local is_forbidden = item.flags.forbid
         local is_banned = scan_banned(item)
         local wear_level = item:getWear()
-        local desc = item.flags.artifact and get_artifact_name(item) or
+        local desc = item.flags.artifact and common.get_artifact_name(item) or
             dfhack.items.getDescription(item, 0, true)
         if wear_level == 1 then desc = ('x%sx'):format(desc)
         elseif wear_level == 2 then desc = ('X%sX'):format(desc)
@@ -540,7 +474,7 @@ function MoveGoods:cache_choices(disable_buckets)
                 dirty=false,
             }
             local entry = {
-                search_key=make_search_key(desc),
+                search_key=common.make_search_key(desc),
                 icon=curry(get_entry_icon, data),
                 data=data,
             }
@@ -678,7 +612,7 @@ end
 
 MoveGoodsModal = defclass(MoveGoodsModal, gui.ZScreenModal)
 MoveGoodsModal.ATTRS {
-    focus_path='movegoods',
+    focus_path='caravan/movegoods',
 }
 
 local function get_pending_trade_item_ids()
