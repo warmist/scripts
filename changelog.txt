@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `gui/autodump`: when "include items claimed by jobs" is on, actually cancel the job so the item can be teleported
 
 ## Misc Improvements
 

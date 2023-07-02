@@ -338,14 +338,19 @@ function Autodump:do_dump(pos)
     if not pos then return end
     local tileattrs = df.tiletype.attrs[dfhack.maps.getTileType(pos)]
     local basic_shape = df.tiletype_shape.attrs[tileattrs.shape].basic_shape
-    print(basic_shape, df.tiletype_shape_basic[basic_shape])
     local on_ground = basic_shape == df.tiletype_shape_basic.Floor or
             basic_shape == df.tiletype_shape_basic.Stair or
             basic_shape == df.tiletype_shape_basic.Ramp
     local items = #self.selected_items.list > 0 and self.selected_items.list or self.dump_items
-    print(('dumping %d items at (%d, %d, %d):'):format(#items, pos.x, pos.y, pos.z))
     local mark_as_forbidden = self.subviews.mark_as_forbidden:getOptionValue()
+    print(('teleporting %d items'):format(#items))
     for _,item in ipairs(items) do
+        if item.flags.in_job then
+            local job_ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
+            if job_ref then
+                dfhack.job.removeJob(job_ref.data.job)
+            end
+        end
         if dfhack.items.moveToGround(item, pos) then
             item.flags.dump = false
             item.flags.trader = false
