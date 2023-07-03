@@ -206,7 +206,13 @@ local function walkable(pos)
     end
     local attrs = df.tiletype.attrs[tt]
     local shape_attrs = df.tiletype_shape.attrs[attrs.shape]
-    return shape_attrs.walkable
+
+    if not shape_attrs.walkable then
+        return false
+    end
+
+    local building = dfhack.buildings.findAtTile(pos)
+    return not building or not building.flags.exists or not isImpassable(building)
 end
 
 --- List neighbour coordinates of a position

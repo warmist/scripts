@@ -17,6 +17,8 @@ that repo.
 
 ## Fixes
 
+- `suspendmanager`: take in account already built blocking buildings
+
 ## Misc Improvements
 
 ## Removed
