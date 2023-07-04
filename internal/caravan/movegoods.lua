@@ -175,9 +175,9 @@ function MoveGoods:init()
             label='Elf-safe items:',
             key='CUSTOM_SHIFT_G',
             options={
-                {label='Only', value='only'},
+                {label='Only', value='only', pen=COLOR_GREEN},
                 {label='Show', value='show'},
-                {label='Hide', value='hide'},
+                {label='Hide', value='hide', pen=COLOR_RED},
             },
             initial_option=is_tree_lover_at_depot() and 'only' or 'show',
             on_change=function() self:refresh_list() end,
@@ -598,19 +598,28 @@ end
 
 local function can_trade_to_elves(item)
     if item.flags.container then
-        -- ignore the safety of the container itself (unless the container is empty)
-        -- so items inside can still be traded
-        local has_items = false
-        for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
-            has_items = true
-            if not contained_item:isAnimalProduct() and not has_wood(contained_item) then
-                return true
+        local contained_items = dfhack.items.getContainedItems(item)
+        if df.item_binst:is_instance(item) then
+            -- ignore the safety of the bin itself (unless the bin is empty)
+            -- so items inside can still be traded
+            local has_items = false
+            for _, contained_item in ipairs(contained_items) do
+                has_items = true
+                if not contained_item:isAnimalProduct() and not has_wood(contained_item) then
+                    return true
+                end
             end
-        end
-
-        if has_items then
-            -- no contained items are safe
-            return false
+            if has_items then
+                -- no contained items are safe
+                return false
+            end
+        else
+            -- for other types of containers, any contamination makes it untradeable
+            for _, contained_item in ipairs(contained_items) do
+                if contained_item:isAnimalProduct() or has_wood(contained_item) then
+                    return false
+                end
+            end
         end
     end
 
