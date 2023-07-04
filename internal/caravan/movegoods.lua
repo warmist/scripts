@@ -19,8 +19,9 @@ MoveGoods.ATTRS {
     pending_item_ids=DEFAULT_NIL,
 }
 
+local STATUS_COL_WIDTH = 7
 local VALUE_COL_WIDTH = 8
-local QTY_COL_WIDTH = 6
+local QTY_COL_WIDTH = 5
 
 local function sort_noop(a, b)
     -- this function is used as a marker and never actually gets called
@@ -61,27 +62,49 @@ local function sort_by_value_asc(a, b)
     return a.data[value_field] < b.data[value_field]
 end
 
+local function sort_by_status_desc(a, b)
+    local a_unselected = a.data.selected == 0 or (a.item_id and not a.items[a.item_id].pending)
+    local b_unselected = b.data.selected == 0 or (b.item_id and not b.items[b.item_id].pending)
+    if a_unselected == b_unselected then
+        return sort_by_value_desc(a, b)
+    end
+    return not a_unselected
+end
+
+local function sort_by_status_asc(a, b)
+    local a_unselected = a.data.selected == 0 or (a.item_id and not a.items[a.item_id].pending)
+    local b_unselected = b.data.selected == 0 or (b.item_id and not b.items[b.item_id].pending)
+    if a_unselected == b_unselected then
+        return sort_by_value_desc(a, b)
+    end
+    return not b_unselected
+end
+
 local function sort_by_quantity_desc(a, b)
     if a.data.quantity == b.data.quantity then
-        return sort_by_name_desc(a, b)
+        return sort_by_value_desc(a, b)
     end
     return a.data.quantity > b.data.quantity
 end
 
 local function sort_by_quantity_asc(a, b)
     if a.data.quantity == b.data.quantity then
-        return sort_by_name_desc(a, b)
+        return sort_by_value_desc(a, b)
     end
     return a.data.quantity < b.data.quantity
 end
 
 local function has_export_agreement()
-    -- TODO: where are export agreements stored?
-    return false
-end
-
-local function is_agreement_item(item_type)
-    -- TODO: match export agreement with civs with active caravans
+    for _,caravan in ipairs(df.global.plotinfo.caravans) do
+        local trade_state = caravan.trade_state
+        if caravan.time_remaining > 0 and
+            (trade_state == df.caravan_state.T_trade_state.Approaching or
+             trade_state == df.caravan_state.T_trade_state.AtDepot) and
+            caravan.sell_prices
+        then
+            return true
+        end
+    end
     return false
 end
 
@@ -92,6 +115,7 @@ local function get_value_at_depot()
     for _, contained_item in ipairs(depot.contained_items) do
         if contained_item.use_mode ~= 0 then goto continue end
         local item = contained_item.item
+        if item.flags.trader or not item.flags.in_building then goto continue end
         sum = sum + common.get_perceived_value(item)
         ::continue::
     end
@@ -109,6 +133,8 @@ function MoveGoods:init()
             label='Sort by:',
             key='CUSTOM_SHIFT_S',
             options={
+                {label='status'..common.CH_DN, value=sort_by_status_desc},
+                {label='status'..common.CH_UP, value=sort_by_status_asc},
                 {label='value'..common.CH_DN, value=sort_by_value_desc},
                 {label='value'..common.CH_UP, value=sort_by_value_asc},
                 {label='qty'..common.CH_DN, value=sort_by_quantity_desc},
@@ -116,7 +142,7 @@ function MoveGoods:init()
                 {label='name'..common.CH_DN, value=sort_by_name_desc},
                 {label='name'..common.CH_UP, value=sort_by_name_asc},
             },
-            initial_option=sort_by_value_desc,
+            initial_option=sort_by_status_desc,
             on_change=self:callback('refresh_list', 'sort'),
         },
         widgets.EditField{
@@ -278,34 +304,48 @@ function MoveGoods:init()
             frame={t=11, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
+                    view_id='sort_status',
+                    frame={l=0, t=0, w=7},
+                    options={
+                        {label='status', value=sort_noop},
+                        {label='status'..common.CH_DN, value=sort_by_status_desc},
+                        {label='status'..common.CH_UP, value=sort_by_status_asc},
+                    },
+                    initial_option=sort_by_status_desc,
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_status'),
+                },
+                widgets.CycleHotkeyLabel{
                     view_id='sort_value',
-                    frame={l=2, t=0, w=7},
+                    frame={l=STATUS_COL_WIDTH+2, t=0, w=6},
                     options={
                         {label='value', value=sort_noop},
                         {label='value'..common.CH_DN, value=sort_by_value_desc},
                         {label='value'..common.CH_UP, value=sort_by_value_asc},
                     },
-                    initial_option=sort_by_value_desc,
+                    option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_value'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_quantity',
-                    frame={l=2+VALUE_COL_WIDTH+2, t=0, w=5},
+                    frame={l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2, t=0, w=4},
                     options={
                         {label='qty', value=sort_noop},
                         {label='qty'..common.CH_DN, value=sort_by_quantity_desc},
                         {label='qty'..common.CH_UP, value=sort_by_quantity_asc},
                     },
+                    option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_quantity'),
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_name',
-                    frame={l=2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, t=0, w=6},
+                    frame={l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, t=0, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..common.CH_DN, value=sort_by_name_desc},
                         {label='name'..common.CH_UP, value=sort_by_name_asc},
                     },
+                    option_gap=0,
                     on_change=self:callback('refresh_list', 'sort_name'),
                 },
                 widgets.FilteredList{
@@ -332,7 +372,7 @@ function MoveGoods:init()
         widgets.HotkeyLabel{
             frame={l=0, b=2},
             label='Select all/none',
-            key='CUSTOM_CTRL_V',
+            key='CUSTOM_CTRL_A',
             on_activate=self:callback('toggle_visible'),
             auto_width=true,
         },
@@ -366,7 +406,7 @@ function MoveGoods:refresh_list(sort_widget, sort_fn)
         self.subviews[sort_widget]:cycle()
         return
     end
-    for _,widget_name in ipairs{'sort', 'sort_value', 'sort_quantity', 'sort_name'} do
+    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_value', 'sort_quantity', 'sort_name'} do
         self.subviews[widget_name]:setOption(sort_fn)
     end
     local list = self.subviews.list
@@ -376,12 +416,10 @@ function MoveGoods:refresh_list(sort_widget, sort_fn)
     list:setFilter(saved_filter)
 end
 
-local function is_tradeable_item(item)
-    if not item.flags.on_ground or
-        item.flags.hostile or
+local function is_tradeable_item(item, depot)
+    if item.flags.hostile or
         item.flags.in_inventory or
         item.flags.removed or
-        item.flags.in_building or
         item.flags.dead_dwarf or
         item.flags.spider_web or
         item.flags.construction or
@@ -401,6 +439,14 @@ local function is_tradeable_item(item)
         if not spec_ref then return true end
         return spec_ref.data.job.job_type == df.job_type.BringItemToDepot
     end
+    if item.flags.in_building then
+        if dfhack.items.getHolderBuilding(item) ~= depot then return false end
+        for _, contained_item in ipairs(depot.contained_items) do
+            if contained_item.use_mode == 0 then return true end
+            -- building construction materials
+            if item == contained_item.item then return false end
+        end
+    end
     return true
 end
 
@@ -415,9 +461,9 @@ end
 
 local function make_choice_text(desc, value, quantity)
     return {
-        {width=VALUE_COL_WIDTH, rjustify=true, text=common.obfuscate_value(value)},
-        {gap=2, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
-        {gap=2, text=desc},
+        {width=STATUS_COL_WIDTH+VALUE_COL_WIDTH-3, rjustify=true, text=common.obfuscate_value(value)},
+        {gap=3, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
+        {gap=4, text=desc},
     }
 end
 
@@ -433,16 +479,18 @@ end
 function MoveGoods:cache_choices(disable_buckets)
     if self.choices then return self.choices[disable_buckets] end
 
+    local depot = dfhack.gui.getSelectedBuilding(true)
     local pending = self.pending_item_ids
     local buckets = {}
     for _, item in ipairs(df.global.world.items.all) do
         local item_id = item.id
-        if not item or not is_tradeable_item(item) then goto continue end
+        if not item or not is_tradeable_item(item, depot) then goto continue end
         local value = common.get_perceived_value(item)
         if value <= 0 then goto continue end
-        local is_pending = not not pending[item_id]
+        local is_pending = not not pending[item_id] or item.flags.in_building
         local is_forbidden = item.flags.forbid
         local is_banned = scan_banned(item)
+        local is_requested = dfhack.items.isRequestedTradeGood(item)
         local wear_level = item:getWear()
         local desc = item.flags.artifact and common.get_artifact_name(item) or
             dfhack.items.getDescription(item, 0, true)
@@ -453,16 +501,17 @@ function MoveGoods:cache_choices(disable_buckets)
         local key = ('%s/%d'):format(desc, value)
         if buckets[key] then
             local bucket = buckets[key]
-            bucket.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned}
+            bucket.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned, requested=is_requested}
             bucket.data.quantity = bucket.data.quantity + 1
             bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
             bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
             bucket.data.has_banned = bucket.data.has_banned or is_banned
+            bucket.data.has_requested = bucket.data.has_requested or is_requested
         else
             local data = {
                 desc=desc,
                 per_item_value=value,
-                items={[item_id]={item=item, pending=is_pending, banned=is_banned}},
+                items={[item_id]={item=item, pending=is_pending, banned=is_banned, requested=is_requested}},
                 item_type=item:getType(),
                 item_subtype=item:getSubtype(),
                 quantity=1,
@@ -471,6 +520,7 @@ function MoveGoods:cache_choices(disable_buckets)
                 selected=is_pending and 1 or 0,
                 has_forbidden=is_forbidden,
                 has_banned=is_banned,
+                has_requested=is_requested,
                 dirty=false,
             }
             local entry = {
@@ -530,8 +580,14 @@ function MoveGoods:get_choices()
         if max_condition > data.wear then goto continue end
         if min_quality > data.quality then goto continue end
         if max_quality < data.quality then goto continue end
-        if only_agreement and not is_agreement_item(data.item_type) then
-            goto continue
+        if only_agreement then
+            if choice.item_id then
+                if not data.items[choice.item_id].requested then
+                    goto continue
+                end
+            elseif not data.has_requested then
+                goto continue
+            end
         end
         if not include_banned then
             if choice.item_id then
@@ -638,14 +694,21 @@ function MoveGoodsModal:onDismiss()
     for _, choice in ipairs(self.subviews.list:getChoices()) do
         if not choice.data.dirty then goto continue end
         for item_id, item_data in pairs(choice.data.items) do
+            local item = item_data.item
             if item_data.pending and not pending[item_id] then
-                item_data.item.flags.forbid = false
-                dfhack.items.markForTrade(item_data.item, depot)
+                item.flags.forbid = false
+                if dfhack.items.getHolderBuilding(item) then
+                    item.flags.in_building = true
+                else
+                    dfhack.items.markForTrade(item, depot)
+                end
             elseif not item_data.pending and pending[item_id] then
-                local spec_ref = dfhack.items.getSpecificRef(item_data.item, df.specific_ref_type.JOB)
+                local spec_ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
                 if spec_ref then
                     dfhack.job.removeJob(spec_ref.data.job)
                 end
+            elseif not item_data.pending and item.flags.in_building then
+                item.flags.in_building = false
             end
         end
         ::continue::

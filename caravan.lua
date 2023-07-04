@@ -1,9 +1,9 @@
 -- Adjusts properties of caravans and provides overlays for enhanced trading
 --@ module = true
 
+local movegoods = reqscript('internal/caravan/movegoods')
 local trade = reqscript('internal/caravan/trade')
 local tradeagreement = reqscript('internal/caravan/tradeagreement')
-local movegoods = reqscript('internal/caravan/movegoods')
 
 dfhack.onStateChange.caravanTradeOverlay = function(code)
     if code == SC_WORLD_UNLOADED then

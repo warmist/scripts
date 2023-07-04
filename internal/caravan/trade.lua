@@ -33,7 +33,7 @@ local trade = df.global.game.main_interface.trade
 Trade = defclass(Trade, widgets.Window)
 Trade.ATTRS {
     frame_title='Select trade goods',
-    frame={w=54, h=45},
+    frame={w=78, h=45},
     resizable=true,
     resize_min={h=27},
 }
@@ -104,8 +104,8 @@ function Trade:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='trade_bins',
-            frame={t=2, l=0, w=27},
-            label='Bins',
+            frame={t=2, l=0, w=36},
+            label='Bins:',
             key='CUSTOM_SHIFT_B',
             options={
                 {label='trade bin with contents', value=true},
@@ -163,7 +163,7 @@ function Trade:init()
         widgets.HotkeyLabel{
             frame={l=0, b=2},
             label='Select all/none',
-            key='CUSTOM_CTRL_V',
+            key='CUSTOM_CTRL_A',
             on_activate=self:callback('toggle_visible'),
             auto_width=true,
         },
@@ -264,7 +264,7 @@ function Trade:cache_choices(list_idx, trade_bins)
             dfhack.items.getDescription(item, 0, true)
         local data = {
             desc=desc,
-            value=common.get_perceived_value(item),
+            value=common.get_perceived_value(item, trade.mer, list_idx == 1),
             list_idx=list_idx,
             item_idx=item_idx,
         }
@@ -343,16 +343,22 @@ function Trade:toggle_visible()
 end
 
 -- -------------------
--- TradeModal
+-- TradeScreen
 --
 
-TradeModal = defclass(TradeModal, gui.ZScreenModal)
-TradeModal.ATTRS {
+view = view or nil
+
+TradeScreen = defclass(TradeScreen, gui.ZScreen)
+TradeScreen.ATTRS {
     focus_path='caravan/trade',
 }
 
-function TradeModal:init()
+function TradeScreen:init()
     self:addviews{Trade{}}
+end
+
+function TradeScreen:onDismiss()
+    view = nil
 end
 
 -- -------------------
@@ -525,7 +531,7 @@ TradeOverlay = defclass(TradeOverlay, overlay.OverlayWidget)
 TradeOverlay.ATTRS{
     default_pos={x=-3,y=-12},
     default_enabled=true,
-    viewscreens='dwarfmode/Trade',
+    viewscreens='dwarfmode/Trade/Default',
     frame={w=27, h=15},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
@@ -537,7 +543,7 @@ function TradeOverlay:init()
             frame={t=0, l=0},
             label='DFHack trade UI',
             key='CUSTOM_CTRL_T',
-            on_activate=function() TradeModal{}:show() end,
+            on_activate=function() view = view and view:raise() or TradeScreen{}:show() end,
         },
         widgets.Label{
             frame={t=2, l=0},
@@ -603,6 +609,10 @@ function TradeOverlay:onInput(keys)
         elseif dfhack.internal.getModifiers().ctrl then
             handle_ctrl_click_on_render = true
             copyGoodflagState()
+        end
+    elseif keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+        if view then
+            view:dismiss()
         end
     end
 end
