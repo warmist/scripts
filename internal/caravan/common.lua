@@ -2,6 +2,8 @@
 
 CH_UP = string.char(30)
 CH_DN = string.char(31)
+CH_MONEY = string.char(15)
+CH_EXCEPTIONAL = string.char(240)
 
 local to_pen = dfhack.pen.parse
 SOME_PEN = to_pen{ch=':', fg=COLOR_YELLOW}

@@ -94,36 +94,46 @@ local function sort_by_quantity_asc(a, b)
     return a.data.quantity < b.data.quantity
 end
 
-local function has_export_agreement()
+local function is_active_caravan(caravan)
+    local trade_state = caravan.trade_state
+    return caravan.time_remaining > 0 and
+        (trade_state == df.caravan_state.T_trade_state.Approaching or
+         trade_state == df.caravan_state.T_trade_state.AtDepot)
+end
+
+local function is_tree_lover_caravan(caravan)
+    local caravan_he = df.historical_entity.find(caravan.entity);
+    if not caravan_he then return false end
+    local wood_ethic = caravan_he.entity_raw.ethic[df.ethic_type.KILL_PLANT]
+    return wood_ethic == df.ethic_response.MISGUIDED or
+        wood_ethic == df.ethic_response.SHUN or
+        wood_ethic == df.ethic_response.APPALLING or
+        wood_ethic == df.ethic_response.PUNISH_REPRIMAND or
+        wood_ethic == df.ethic_response.PUNISH_SERIOUS or
+        wood_ethic == df.ethic_response.PUNISH_EXILE or
+        wood_ethic == df.ethic_response.PUNISH_CAPITAL or
+        wood_ethic == df.ethic_response.UNTHINKABLE
+end
+
+local function is_tree_lover_at_depot()
     for _,caravan in ipairs(df.global.plotinfo.caravans) do
-        local trade_state = caravan.trade_state
-        if caravan.time_remaining > 0 and
-            (trade_state == df.caravan_state.T_trade_state.Approaching or
-             trade_state == df.caravan_state.T_trade_state.AtDepot) and
-            caravan.sell_prices
-        then
+        if is_active_caravan(caravan) and is_tree_lover_caravan(caravan) then
             return true
         end
     end
     return false
 end
 
-local function get_value_at_depot()
-    local sum = 0
-    -- if we're here, then the overlay has already determined that this is a depot
-    local depot = dfhack.gui.getSelectedBuilding(true)
-    for _, contained_item in ipairs(depot.contained_items) do
-        if contained_item.use_mode ~= 0 then goto continue end
-        local item = contained_item.item
-        if item.flags.trader or not item.flags.in_building then goto continue end
-        sum = sum + common.get_perceived_value(item)
-        ::continue::
+local function has_export_agreement()
+    for _,caravan in ipairs(df.global.plotinfo.caravans) do
+        if caravan.sell_prices and is_active_caravan(caravan) then
+            return true
+        end
     end
-    return sum
+    return false
 end
 
 function MoveGoods:init()
-    self.value_at_depot = get_value_at_depot()
     self.value_pending = 0
 
     self:addviews{
@@ -159,11 +169,24 @@ function MoveGoods:init()
             initial_option=true,
             on_change=function() self:refresh_list() end,
         },
+        widgets.CycleHotkeyLabel{
+            view_id='elf_safe',
+            frame={t=2, l=32, w=27},
+            label='Elf-safe items:',
+            key='CUSTOM_SHIFT_G',
+            options={
+                {label='Only', value='only'},
+                {label='Show', value='show'},
+                {label='Hide', value='hide'},
+            },
+            initial_option=is_tree_lover_at_depot() and 'only' or 'show',
+            on_change=function() self:refresh_list() end,
+        },
         widgets.ToggleHotkeyLabel{
             view_id='show_banned',
             frame={t=3, l=0, w=43},
             label='Show items banned by export mandates',
-            key='CUSTOM_SHIFT_B',
+            key='CUSTOM_SHIFT_D',
             initial_option=false,
             on_change=function() self:refresh_list() end,
         },
@@ -187,9 +210,9 @@ function MoveGoods:init()
                     key_back='CUSTOM_SHIFT_C',
                     key='CUSTOM_SHIFT_V',
                     options={
-                        {label='Tattered (XX)', value=3},
-                        {label='Frayed (X)', value=2},
-                        {label='Worn (x)', value=1},
+                        {label='XXTatteredXX', value=3},
+                        {label='XFrayedX', value=2},
+                        {label='xWornx', value=1},
                         {label='Pristine', value=0},
                     },
                     initial_option=3,
@@ -208,9 +231,9 @@ function MoveGoods:init()
                     key_back='CUSTOM_SHIFT_E',
                     key='CUSTOM_SHIFT_R',
                     options={
-                        {label='Tattered (XX)', value=3},
-                        {label='Frayed (X)', value=2},
-                        {label='Worn (x)', value=1},
+                        {label='XXTatteredXX', value=3},
+                        {label='XFrayedX', value=2},
+                        {label='xWornx', value=1},
                         {label='Pristine', value=0},
                     },
                     initial_option=0,
@@ -247,11 +270,11 @@ function MoveGoods:init()
                     key='CUSTOM_SHIFT_X',
                     options={
                         {label='Ordinary', value=0},
-                        {label='Well Crafted', value=1},
-                        {label='Finely Crafted', value=2},
-                        {label='Superior', value=3},
-                        {label='Exceptional', value=4},
-                        {label='Masterful', value=5},
+                        {label='-Well Crafted-', value=1},
+                        {label='+Finely Crafted+', value=2},
+                        {label='*Superior*', value=3},
+                        {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
+                        {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
                         {label='Artifact', value=6},
                     },
                     initial_option=0,
@@ -271,11 +294,11 @@ function MoveGoods:init()
                     key='CUSTOM_SHIFT_W',
                     options={
                         {label='Ordinary', value=0},
-                        {label='Well Crafted', value=1},
-                        {label='Finely Crafted', value=2},
-                        {label='Superior', value=3},
-                        {label='Exceptional', value=4},
-                        {label='Masterful', value=5},
+                        {label='-Well Crafted-', value=1},
+                        {label='+Finely Crafted+', value=2},
+                        {label='*Superior*', value=3},
+                        {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
+                        {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
                         {label='Artifact', value=6},
                     },
                     initial_option=6,
@@ -301,7 +324,73 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=11, l=0, r=0, b=6},
+            frame={t=11, l=0, w=40, h=4},
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='min_value',
+                    frame={l=0, t=0, w=18},
+                    label='Min value:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_B',
+                    key='CUSTOM_SHIFT_N',
+                    options={
+                        {label='1'..common.CH_MONEY, value={index=1, value=1}},
+                        {label='20'..common.CH_MONEY, value={index=2, value=20}},
+                        {label='50'..common.CH_MONEY, value={index=3, value=50}},
+                        {label='100'..common.CH_MONEY, value={index=4, value=100}},
+                        {label='500'..common.CH_MONEY, value={index=5, value=500}},
+                        {label='1000'..common.CH_MONEY, value={index=6, value=1000}},
+                        -- max "min" value is less than max "max" value since the range of inf - inf is not useful
+                        {label='5000'..common.CH_MONEY, value={index=7, value=5000}},
+                    },
+                    initial_option=1,
+                    on_change=function(val)
+                        if self.subviews.max_value:getOptionValue().value < val.value then
+                            self.subviews.max_value:setOption(val.index)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='max_value',
+                    frame={r=1, t=0, w=18},
+                    label='Max value:',
+                    label_below=true,
+                    key_back='CUSTOM_SHIFT_T',
+                    key='CUSTOM_SHIFT_Y',
+                    options={
+                        {label='1'..common.CH_MONEY, value={index=1, value=1}},
+                        {label='20'..common.CH_MONEY, value={index=2, value=20}},
+                        {label='50'..common.CH_MONEY, value={index=3, value=50}},
+                        {label='100'..common.CH_MONEY, value={index=4, value=100}},
+                        {label='500'..common.CH_MONEY, value={index=5, value=500}},
+                        {label='1000'..common.CH_MONEY, value={index=6, value=1000}},
+                        {label='Max', value={index=7, value=math.huge}},
+                    },
+                    initial_option=7,
+                    on_change=function(val)
+                        if self.subviews.min_value:getOptionValue().value > val.value then
+                            self.subviews.min_value:setOption(val.index)
+                        end
+                        self:refresh_list()
+                    end,
+                },
+                widgets.RangeSlider{
+                    frame={l=0, t=3},
+                    num_stops=7,
+                    get_left_idx_fn=function()
+                        return self.subviews.min_value:getOptionValue().index
+                    end,
+                    get_right_idx_fn=function()
+                        return self.subviews.max_value:getOptionValue().index
+                    end,
+                    on_left_change=function(idx) self.subviews.min_value:setOption(idx, true) end,
+                    on_right_change=function(idx) self.subviews.max_value:setOption(idx, true) end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=16, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -361,12 +450,9 @@ function MoveGoods:init()
         widgets.Label{
             frame={l=0, b=4, h=1, r=0},
             text={
-                'Value of items at trade depot/being brought to depot/total:',
-                {gap=1, text=common.obfuscate_value(self.value_at_depot)},
-                '/',
-                {text=function() return common.obfuscate_value(self.value_pending) end},
-                '/',
-                {text=function() return common.obfuscate_value(self.value_pending + self.value_at_depot) end}
+                'Total value of trade items:',
+                {gap=1,
+                 text=function() return common.obfuscate_value(self.value_pending) end},
             },
         },
         widgets.HotkeyLabel{
@@ -476,6 +562,61 @@ local function scan_banned(item)
     return false
 end
 
+local function is_wood_based(mat_type, mat_index)
+    if mat_type == df.builtin_mats.LYE or
+        mat_type == df.builtin_mats.GLASS_CLEAR or
+        mat_type == df.builtin_mats.GLASS_CRYSTAL or
+        (mat_type == df.builtin_mats.COAL and mat_index ~= 0) or
+        mat_type == df.builtin_mats.POTASH or
+        mat_type == df.builtin_mats.ASH or
+        mat_type == df.builtin_mats.PEARLASH
+    then
+        return true
+    end
+
+    local mi = dfhack.matinfo.decode(mat_type, mat_index)
+    return mi and mi.material and (mi.material.flags.WOOD or mi.material.flags.SOAP)
+end
+
+local function has_wood(item)
+    if item.flags2.grown then return false end
+
+    if is_wood_based(item:getMaterial(), item:getMaterialIndex()) then
+        return true
+    end
+
+    if item:hasImprovements() then
+        for _, imp in ipairs(item.improvements) do
+            if is_wood_based(imp.mat_type, imp.mat_index) then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function can_trade_to_elves(item)
+    if item.flags.container then
+        -- ignore the safety of the container itself (unless the container is empty)
+        -- so items inside can still be traded
+        local has_items = false
+        for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+            has_items = true
+            if not contained_item:isAnimalProduct() and not has_wood(contained_item) then
+                return true
+            end
+        end
+
+        if has_items then
+            -- no contained items are safe
+            return false
+        end
+    end
+
+    return not item:isAnimalProduct() and not has_wood(item)
+end
+
 function MoveGoods:cache_choices(disable_buckets)
     if self.choices then return self.choices[disable_buckets] end
 
@@ -521,6 +662,7 @@ function MoveGoods:cache_choices(disable_buckets)
                 has_forbidden=is_forbidden,
                 has_banned=is_banned,
                 has_requested=is_requested,
+                elf_safe=can_trade_to_elves(item),
                 dirty=false,
             }
             local entry = {
@@ -561,12 +703,19 @@ function MoveGoods:get_choices()
     local include_forbidden = self.subviews.show_forbidden:getOptionValue()
     local include_banned = self.subviews.show_banned:getOptionValue()
     local only_agreement = self.subviews.only_agreement:getOptionValue()
+    local elf_safe = self.subviews.elf_safe:getOptionValue()
     local min_condition = self.subviews.min_condition:getOptionValue()
     local max_condition = self.subviews.max_condition:getOptionValue()
     local min_quality = self.subviews.min_quality:getOptionValue()
     local max_quality = self.subviews.max_quality:getOptionValue()
+    local min_value = self.subviews.min_value:getOptionValue().value
+    local max_value = self.subviews.max_value:getOptionValue().value
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
+        if elf_safe ~= 'show' then
+            if elf_safe == 'hide' and data.elf_safe then goto continue end
+            if elf_safe == 'only' and not data.elf_safe then goto continue end
+        end
         if not include_forbidden then
             if choice.item_id then
                 if data.items[choice.item_id].item.flags.forbid then
@@ -580,6 +729,8 @@ function MoveGoods:get_choices()
         if max_condition > data.wear then goto continue end
         if min_quality > data.quality then goto continue end
         if max_quality < data.quality then goto continue end
+        if min_value > data.per_item_value then goto continue end
+        if max_value < data.per_item_value then goto continue end
         if only_agreement then
             if choice.item_id then
                 if not data.items[choice.item_id].requested then
