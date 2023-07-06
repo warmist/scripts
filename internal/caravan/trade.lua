@@ -29,175 +29,13 @@ local trade = df.global.game.main_interface.trade
 -- -------------------
 -- Trade
 --
-
 Trade = defclass(Trade, widgets.Window)
 Trade.ATTRS {
     frame_title='Select trade goods',
-    frame={w=78, h=45},
+    frame={w=84, h=45},
     resizable=true,
-    resize_min={h=27},
+    resize_min={w=48, h=27},
 }
-
-local VALUE_COL_WIDTH = 8
-
-local function sort_noop(a, b)
-    -- this function is used as a marker and never actually gets called
-    error('sort_noop should not be called')
-end
-
-local function sort_base(a, b)
-    return a.data.desc < b.data.desc
-end
-
-local function sort_by_name_desc(a, b)
-    if a.search_key == b.search_key then
-        return sort_base(a, b)
-    end
-    return a.search_key < b.search_key
-end
-
-local function sort_by_name_asc(a, b)
-    if a.search_key == b.search_key then
-        return sort_base(a, b)
-    end
-    return a.search_key > b.search_key
-end
-
-local function sort_by_value_desc(a, b)
-    if a.data.value == b.data.value then
-        return sort_by_name_desc(a, b)
-    end
-    return a.data.value > b.data.value
-end
-
-local function sort_by_value_asc(a, b)
-    if a.data.value == b.data.value then
-        return sort_by_name_desc(a, b)
-    end
-    return a.data.value < b.data.value
-end
-
-function Trade:init()
-    self.choices = {[0]={}, [1]={}}
-    self.cur_page = 1
-
-    self:addviews{
-        widgets.CycleHotkeyLabel{
-            view_id='sort',
-            frame={l=0, t=0, w=21},
-            label='Sort by:',
-            key='CUSTOM_SHIFT_S',
-            options={
-                {label='value'..common.CH_DN, value=sort_by_value_desc},
-                {label='value'..common.CH_UP, value=sort_by_value_asc},
-                {label='name'..common.CH_DN, value=sort_by_name_desc},
-                {label='name'..common.CH_UP, value=sort_by_name_asc},
-            },
-            initial_option=sort_by_value_desc,
-            on_change=self:callback('refresh_list', 'sort'),
-        },
-        widgets.EditField{
-            view_id='search',
-            frame={l=26, t=0},
-            label_text='Search: ',
-            on_char=function(ch) return ch:match('[%l -]') end,
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='trade_bins',
-            frame={t=2, l=0, w=36},
-            label='Bins:',
-            key='CUSTOM_SHIFT_B',
-            options={
-                {label='trade bin with contents', value=true},
-                {label='trade contents only', value=false},
-            },
-            initial_option=false,
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.TabBar{
-            frame={t=4, l=0},
-            labels={
-                'Caravan goods',
-                'Fort goods',
-            },
-            on_select=function(idx)
-                self.cur_page = idx
-                self:refresh_list()
-            end,
-            get_cur_page=function() return self.cur_page end,
-        },
-        widgets.Panel{
-            frame={t=6, l=0, r=0, b=4},
-            subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_value',
-                    frame={l=2, t=0, w=7},
-                    options={
-                        {label='value', value=sort_noop},
-                        {label='value'..common.CH_DN, value=sort_by_value_desc},
-                        {label='value'..common.CH_UP, value=sort_by_value_asc},
-                    },
-                    initial_option=sort_by_value_desc,
-                    on_change=self:callback('refresh_list', 'sort_value'),
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='sort_name',
-                    frame={l=2+VALUE_COL_WIDTH+2, t=0, w=6},
-                    options={
-                        {label='name', value=sort_noop},
-                        {label='name'..common.CH_DN, value=sort_by_name_desc},
-                        {label='name'..common.CH_UP, value=sort_by_name_asc},
-                    },
-                    on_change=self:callback('refresh_list', 'sort_name'),
-                },
-                widgets.FilteredList{
-                    view_id='list',
-                    frame={l=0, t=2, r=0, b=0},
-                    icon_width=2,
-                    on_submit=self:callback('toggle_item'),
-                    on_submit2=self:callback('toggle_range'),
-                    on_select=self:callback('select_item'),
-                },
-            }
-        },
-        widgets.HotkeyLabel{
-            frame={l=0, b=2},
-            label='Select all/none',
-            key='CUSTOM_CTRL_A',
-            on_activate=self:callback('toggle_visible'),
-            auto_width=true,
-        },
-        widgets.WrappedLabel{
-            frame={b=0, l=0, r=0},
-            text_to_wrap='Click to mark/unmark for trade. Shift click to mark/unmark a range of items.',
-        },
-    }
-
-    -- replace the FilteredList's built-in EditField with our own
-    self.subviews.list.list.frame.t = 0
-    self.subviews.list.edit.visible = false
-    self.subviews.list.edit = self.subviews.search
-    self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
-
-    self.subviews.list:setChoices(self:get_choices())
-end
-
-function Trade:refresh_list(sort_widget, sort_fn)
-    sort_widget = sort_widget or 'sort'
-    sort_fn = sort_fn or self.subviews.sort:getOptionValue()
-    if sort_fn == sort_noop then
-        self.subviews[sort_widget]:cycle()
-        return
-    end
-    for _,widget_name in ipairs{'sort', 'sort_value', 'sort_name'} do
-        self.subviews[widget_name]:setOption(sort_fn)
-    end
-    local list = self.subviews.list
-    local saved_filter = list:getFilter()
-    list:setFilter('')
-    list:setChoices(self:get_choices(), list:getSelected())
-    list:setFilter(saved_filter)
-end
 
 local TOGGLE_MAP = {
     [GOODFLAG.UNCONTAINED_UNSELECTED] = GOODFLAG.UNCONTAINED_SELECTED,
@@ -242,9 +80,269 @@ local function get_entry_icon(data)
     end
 end
 
-local function make_choice_text(desc, value)
+local function sort_noop(a, b)
+    -- this function is used as a marker and never actually gets called
+    error('sort_noop should not be called')
+end
+
+local function sort_base(a, b)
+    return a.data.desc < b.data.desc
+end
+
+local function sort_by_name_desc(a, b)
+    if a.search_key == b.search_key then
+        return sort_base(a, b)
+    end
+    return a.search_key < b.search_key
+end
+
+local function sort_by_name_asc(a, b)
+    if a.search_key == b.search_key then
+        return sort_base(a, b)
+    end
+    return a.search_key > b.search_key
+end
+
+local function sort_by_value_desc(a, b)
+    if a.data.value == b.data.value then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.value > b.data.value
+end
+
+local function sort_by_value_asc(a, b)
+    if a.data.value == b.data.value then
+        return sort_by_name_desc(a, b)
+    end
+    return a.data.value < b.data.value
+end
+
+local function sort_by_status_desc(a, b)
+    local a_selected = get_entry_icon(a.data)
+    local b_selected = get_entry_icon(b.data)
+    if a_selected == b_selected then
+        return sort_by_value_desc(a, b)
+    end
+    return a_selected
+end
+
+local function sort_by_status_asc(a, b)
+    local a_selected = get_entry_icon(a.data)
+    local b_selected = get_entry_icon(b.data)
+    if a_selected == b_selected then
+        return sort_by_value_desc(a, b)
+    end
+    return b_selected
+end
+
+local STATUS_COL_WIDTH = 7
+local VALUE_COL_WIDTH = 6
+local FILTER_HEIGHT = 15
+
+function Trade:init()
+    self.choices = {[0]={}, [1]={}}
+    self.cur_page = 1
+
+    self.animal_ethics = common.is_animal_lover_caravan(trade.mer)
+    self.wood_ethics = common.is_tree_lover_caravan(trade.mer)
+    self.banned_items = common.get_banned_items()
+    self.risky_items = common.get_risky_items(self.banned_items)
+
+    self:addviews{
+        widgets.CycleHotkeyLabel{
+            view_id='sort',
+            frame={l=0, t=0, w=21},
+            label='Sort by:',
+            key='CUSTOM_SHIFT_S',
+            options={
+                {label='status'..common.CH_DN, value=sort_by_status_desc},
+                {label='status'..common.CH_UP, value=sort_by_status_asc},
+                {label='value'..common.CH_DN, value=sort_by_value_desc},
+                {label='value'..common.CH_UP, value=sort_by_value_asc},
+                {label='name'..common.CH_DN, value=sort_by_name_desc},
+                {label='name'..common.CH_UP, value=sort_by_name_asc},
+            },
+            initial_option=sort_by_status_desc,
+            on_change=self:callback('refresh_list', 'sort'),
+        },
+        widgets.EditField{
+            view_id='search',
+            frame={l=26, t=0},
+            label_text='Search: ',
+            on_char=function(ch) return ch:match('[%l -]') end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='trade_bins',
+            frame={t=2, l=0, w=36},
+            label='Bins:',
+            key='CUSTOM_SHIFT_B',
+            options={
+                {label='trade bin with contents', value=true},
+                {label='trade contents only', value=false},
+            },
+            initial_option=false,
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='filters',
+            frame={t=2, l=40, w=36},
+            label='Show filters:',
+            key='CUSTOM_SHIFT_F',
+            options={
+                {label='Yes', value=true, pen=COLOR_GREEN},
+                {label='No', value=false}
+            },
+            initial_option=false,
+            on_change=function() self:updateLayout() end,
+        },
+        widgets.TabBar{
+            frame={t=4, l=0},
+            labels={
+                'Caravan goods',
+                'Fort goods',
+            },
+            on_select=function(idx)
+                self.cur_page = idx
+                self:refresh_list()
+            end,
+            get_cur_page=function() return self.cur_page end,
+        },
+        widgets.Panel{
+            frame={t=7, l=0, r=0, h=FILTER_HEIGHT},
+            visible=function() return self.subviews.filters:getOptionValue() end,
+            on_layout=function()
+                local panel_frame = self.subviews.list_panel.frame
+                if self.subviews.filters:getOptionValue() then
+                    panel_frame.t = 7 + FILTER_HEIGHT
+                else
+                    panel_frame.t = 7
+                end
+            end,
+            subviews={
+                widgets.Panel{
+                    frame={t=0, l=0, w=38, h=FILTER_HEIGHT},
+                    visible=function() return self.cur_page == 1 end,
+                    subviews=common.get_slider_widgets(self, '1'),
+                },
+                widgets.Panel{
+                    frame={t=0, l=0, w=38, h=FILTER_HEIGHT},
+                    visible=function() return self.cur_page == 2 end,
+                    subviews=common.get_slider_widgets(self, '2'),
+                },
+                widgets.Panel{
+                    frame={t=2, l=40, r=0, h=FILTER_HEIGHT-2},
+                    visible=function() return self.cur_page == 2 end,
+                    subviews=common.get_info_widgets(self, {trade.mer.buy_prices}),
+                },
+            },
+        },
+        widgets.Panel{
+            view_id='list_panel',
+            frame={t=7, l=0, r=0, b=4},
+            subviews={
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_status',
+                    frame={t=0, l=0, w=7},
+                    options={
+                        {label='status', value=sort_noop},
+                        {label='status'..common.CH_DN, value=sort_by_status_desc},
+                        {label='status'..common.CH_UP, value=sort_by_status_asc},
+                    },
+                    initial_option=sort_by_status_desc,
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_status'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_value',
+                    frame={t=0, l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+1-6, w=6},
+                    options={
+                        {label='value', value=sort_noop},
+                        {label='value'..common.CH_DN, value=sort_by_value_desc},
+                        {label='value'..common.CH_UP, value=sort_by_value_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_value'),
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='sort_name',
+                    frame={t=0, l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2, w=5},
+                    options={
+                        {label='name', value=sort_noop},
+                        {label='name'..common.CH_DN, value=sort_by_name_desc},
+                        {label='name'..common.CH_UP, value=sort_by_name_asc},
+                    },
+                    option_gap=0,
+                    on_change=self:callback('refresh_list', 'sort_name'),
+                },
+                widgets.FilteredList{
+                    view_id='list',
+                    frame={l=0, t=2, r=0, b=0},
+                    icon_width=2,
+                    on_submit=self:callback('toggle_item'),
+                    on_submit2=self:callback('toggle_range'),
+                    on_select=self:callback('select_item'),
+                },
+            }
+        },
+        widgets.HotkeyLabel{
+            frame={l=0, b=2},
+            label='Select all/none',
+            key='CUSTOM_CTRL_A',
+            on_activate=self:callback('toggle_visible'),
+            auto_width=true,
+        },
+        widgets.WrappedLabel{
+            frame={b=0, l=0, r=0},
+            text_to_wrap='Click to mark/unmark for trade. Shift click to mark/unmark a range of items.',
+        },
+    }
+
+    -- replace the FilteredList's built-in EditField with our own
+    self.subviews.list.list.frame.t = 0
+    self.subviews.list.edit.visible = false
+    self.subviews.list.edit = self.subviews.search
+    self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
+
+    self.subviews.list:setChoices(self:get_choices())
+end
+
+function Trade:refresh_list(sort_widget, sort_fn)
+    sort_widget = sort_widget or 'sort'
+    sort_fn = sort_fn or self.subviews.sort:getOptionValue()
+    if sort_fn == sort_noop then
+        self.subviews[sort_widget]:cycle()
+        return
+    end
+    for _,widget_name in ipairs{'sort', 'sort_status', 'sort_value', 'sort_name'} do
+        self.subviews[widget_name]:setOption(sort_fn)
+    end
+    local list = self.subviews.list
+    local saved_filter = list:getFilter()
+    list:setFilter('')
+    list:setChoices(self:get_choices(), list:getSelected())
+    list:setFilter(saved_filter)
+end
+
+local function is_ethical_product(item, animal_ethics, wood_ethics)
+    if not animal_ethics and not wood_ethics then return true end
+    -- bin contents are already split out; no need to double-check them
+    if item.flags.container and not df.item_binst:is_instance(item) then
+        for _, contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+            if (animal_ethics and contained_item:isAnimalProduct()) or
+                (wood_ethics and common.has_wood(contained_item))
+            then
+                return false
+            end
+        end
+    end
+
+    return (not animal_ethics or not item:isAnimalProduct()) and
+        (not wood_ethics or not common.has_wood(item))
+end
+
+local function make_choice_text(value, desc)
     return {
-        {width=VALUE_COL_WIDTH, rjustify=true, text=common.obfuscate_value(value)},
+        {width=STATUS_COL_WIDTH+VALUE_COL_WIDTH, rjustify=true, text=common.obfuscate_value(value)},
         {gap=2, text=desc},
     }
 end
@@ -254,30 +352,43 @@ function Trade:cache_choices(list_idx, trade_bins)
 
     local goodflags = trade.goodflag[list_idx]
     local trade_bins_choices, notrade_bins_choices = {}, {}
-    local parent_idx
+    local parent_data
     for item_idx, item in ipairs(trade.good[list_idx]) do
         local goodflag = goodflags[item_idx]
         if goodflag ~= GOODFLAG.CONTAINED_UNSELECTED and goodflag ~= GOODFLAG.CONTAINED_SELECTED then
-            parent_idx = nil
+            parent_data = nil
         end
-        local desc = item.flags.artifact and common.get_artifact_name(item) or
-            dfhack.items.getDescription(item, 0, true)
+        local is_banned, is_risky = common.scan_banned(item, self.risky_items)
+        local is_requested = dfhack.items.isRequestedTradeGood(item, trade.mer)
+        local wear_level = item:getWear()
+        local desc = common.get_item_description(item)
+        local is_ethical = is_ethical_product(item, self.animal_ethics, self.wood_ethics)
         local data = {
             desc=desc,
             value=common.get_perceived_value(item, trade.mer, list_idx == 1),
             list_idx=list_idx,
             item_idx=item_idx,
+            quality=item.flags.artifact and 6 or item:getQuality(),
+            wear=wear_level,
+            has_banned=is_banned,
+            has_risky=is_risky,
+            has_requested=is_requested,
+            ethical=is_ethical,
         }
-        if parent_idx then
+        if parent_data then
             data.update_container_fn = function(from, to)
                 -- TODO
             end
+            parent_data.has_banned = parent_data.has_banned or is_banned
+            parent_data.has_risky = parent_data.has_risky or is_risky
+            parent_data.has_requested = parent_data.has_requested or is_requested
+            parent_data.ethical = parent_data.ethical and is_ethical
         end
         local choice = {
             search_key=common.make_search_key(desc),
             icon=curry(get_entry_icon, data),
             data=data,
-            text=make_choice_text(desc, data.value),
+            text=make_choice_text(data.value, desc),
         }
         local is_container = df.item_binst:is_instance(item)
         if not data.update_container_fn then
@@ -286,7 +397,7 @@ function Trade:cache_choices(list_idx, trade_bins)
         if data.update_container_fn or not is_container then
             table.insert(notrade_bins_choices, choice)
         end
-        if is_container then parent_idx = item_idx end
+        if is_container then parent_data = data end
     end
 
     self.choices[list_idx][true] = trade_bins_choices
@@ -295,7 +406,38 @@ function Trade:cache_choices(list_idx, trade_bins)
 end
 
 function Trade:get_choices()
-    local choices = self:cache_choices(self.cur_page-1, self.subviews.trade_bins:getOptionValue())
+    local raw_choices = self:cache_choices(self.cur_page-1, self.subviews.trade_bins:getOptionValue())
+    local banned = self.cur_page == 1 and 'ignore' or self.subviews.banned:getOptionValue()
+    local only_agreement = self.cur_page == 2 and self.subviews.only_agreement:getOptionValue() or false
+    local ethical = self.cur_page == 1 and 'show' or self.subviews.ethical:getOptionValue()
+    local min_condition = self.subviews['min_condition'..self.cur_page]:getOptionValue()
+    local max_condition = self.subviews['max_condition'..self.cur_page]:getOptionValue()
+    local min_quality = self.subviews['min_quality'..self.cur_page]:getOptionValue()
+    local max_quality = self.subviews['max_quality'..self.cur_page]:getOptionValue()
+    local min_value = self.subviews['min_value'..self.cur_page]:getOptionValue().value
+    local max_value = self.subviews['max_value'..self.cur_page]:getOptionValue().value
+    local choices = {}
+    for _,choice in ipairs(raw_choices) do
+        local data = choice.data
+        if ethical ~= 'show' then
+            if ethical == 'hide' and data.ethical then goto continue end
+            if ethical == 'only' and not data.ethical then goto continue end
+        end
+        if min_condition < data.wear then goto continue end
+        if max_condition > data.wear then goto continue end
+        if min_quality > data.quality then goto continue end
+        if max_quality < data.quality then goto continue end
+        if min_value > data.value then goto continue end
+        if max_value < data.value then goto continue end
+        if only_agreement and not data.has_requested then goto continue end
+        if banned ~= 'ignore' then
+            if data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
+                goto continue
+            end
+        end
+        table.insert(choices, choice)
+        ::continue::
+    end
     table.sort(choices, self.subviews.sort:getOptionValue())
     return choices
 end
@@ -355,6 +497,12 @@ TradeScreen.ATTRS {
 
 function TradeScreen:init()
     self:addviews{Trade{}}
+end
+
+function TradeScreen:onRenderFrame()
+    if not df.global.game.main_interface.trade.open then
+        view:dismiss()
+    end
 end
 
 function TradeScreen:onDismiss()
