@@ -45,10 +45,14 @@ Examples
 ``caravan unload``
     Fix a caravan that got spooked by wildlife and refuses to fully unload.
 
-Overlay
--------
+Overlays
+--------
 
-Additional functionality is provided when the trade screen is open via an `overlay` widget:
+Additional functionality is provided on the various trade-related screens via
+`overlay` widgets.
+
+Trade screen
+````````````
 
 - ``Shift+Click checkbox``: Select all items inside a bin without selecting the
     bin itself
@@ -66,3 +70,27 @@ vanilla game when you hold shift while scrolling (this works everywhere).
 You can turn the overlay on and off in `gui/control-panel`, or you can
 reposition it to your liking with `gui/overlay`. The overlay is named
 ``caravan.tradeScreenExtension``.
+
+Bring item to depot
+```````````````````
+
+When the trade depot is selected, a button appears to bring up the DFHack
+enhanced move trade goods screen. You'll get a searchable, sortable list of all
+your tradeable items, with hotkeys to quickly select or deselect all visible
+items.
+
+There are filter sliders for selecting items of various condition levels and
+quality. For example, you can quickly trade all your tattered, frayed, and worn
+clothing by setting the condition slider to include from tattered to worn, then
+hitting Ctrl-V to select all.
+
+Click on an item and shift-click on a second item to toggle all items between
+the two that you clicked on. If the one that you shift-clicked on was selected,
+the range of items will be deselected. If the one you shift-clicked on was not
+selected, then the range of items will be selected.
+
+Trade agreement
+```````````````
+
+A small panel is shown with a hotkey (``Ctrl-A``) for selecting all/none in the
+currently shown category.
