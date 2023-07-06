@@ -21,7 +21,7 @@ MoveGoods.ATTRS {
 }
 
 local STATUS_COL_WIDTH = 7
-local VALUE_COL_WIDTH = 8
+local VALUE_COL_WIDTH = 6
 local QTY_COL_WIDTH = 5
 
 local function sort_noop(a, b)
@@ -216,7 +216,7 @@ end
 
 local function make_item_description(item_type, subtype)
     local itemdef = dfhack.items.getSubtypeDef(item_type, subtype)
-    return itemdef and string.lower(itemdef.name_plural) or
+    return itemdef and string.lower(itemdef.name) or
         string.lower(df.item_type[item_type]):gsub('_', ' ')
 end
 
@@ -590,7 +590,7 @@ function MoveGoods:init()
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
-                    frame={l=0, t=0, w=7},
+                    frame={t=0, l=STATUS_COL_WIDTH+1-7, w=7},
                     options={
                         {label='status', value=sort_noop},
                         {label='status'..common.CH_DN, value=sort_by_status_desc},
@@ -602,7 +602,7 @@ function MoveGoods:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_value',
-                    frame={l=STATUS_COL_WIDTH+2, t=0, w=6},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+1-6, w=6},
                     options={
                         {label='value', value=sort_noop},
                         {label='value'..common.CH_DN, value=sort_by_value_desc},
@@ -613,7 +613,7 @@ function MoveGoods:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_quantity',
-                    frame={l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2, t=0, w=4},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+1-4, w=4},
                     options={
                         {label='qty', value=sort_noop},
                         {label='qty'..common.CH_DN, value=sort_by_quantity_desc},
@@ -624,7 +624,7 @@ function MoveGoods:init()
                 },
                 widgets.CycleHotkeyLabel{
                     view_id='sort_name',
-                    frame={l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, t=0, w=5},
+                    frame={t=0, l=STATUS_COL_WIDTH+2+VALUE_COL_WIDTH+2+QTY_COL_WIDTH+2, w=5},
                     options={
                         {label='name', value=sort_noop},
                         {label='name'..common.CH_DN, value=sort_by_name_desc},
@@ -746,11 +746,12 @@ local function get_entry_icon(data, item_id)
     return common.SOME_PEN
 end
 
-local function make_choice_text(desc, value, quantity)
+local function make_choice_text(at_depot, value, quantity, desc)
     return {
-        {width=STATUS_COL_WIDTH+VALUE_COL_WIDTH-3, rjustify=true, text=common.obfuscate_value(value)},
-        {gap=3, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
-        {gap=4, text=desc},
+        {width=STATUS_COL_WIDTH-2, text=at_depot and 'depot' or ''},
+        {gap=2, width=VALUE_COL_WIDTH, rjustify=true, text=common.obfuscate_value(value)},
+        {gap=2, width=QTY_COL_WIDTH, rjustify=true, text=quantity},
+        {gap=2, text=desc},
     }
 end
 
@@ -881,6 +882,7 @@ function MoveGoods:cache_choices(disable_buckets)
             bucket.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned, requested=is_requested}
             bucket.data.quantity = bucket.data.quantity + 1
             bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
+            bucket.data.num_at_depot = bucket.data.num_at_depot + (item.flags.in_building and 1 or 0)
             bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
             bucket.data.has_banned = bucket.data.has_banned or is_banned
             bucket.data.has_risky = bucket.data.has_risky or is_risky
@@ -898,6 +900,7 @@ function MoveGoods:cache_choices(disable_buckets)
                 quality=item.flags.artifact and 6 or item:getQuality(),
                 wear=wear_level,
                 selected=is_pending and 1 or 0,
+                num_at_depot=item.flags.in_building and 1 or 0,
                 has_forbidden=is_forbidden,
                 has_banned=is_banned,
                 has_risky=is_risky,
@@ -918,15 +921,15 @@ function MoveGoods:cache_choices(disable_buckets)
     local bucket_choices, nobucket_choices = {}, {}
     for _, bucket in pairs(buckets) do
         local data = bucket.data
-        for item_id in pairs(data.items) do
+        for item_id, item_data in pairs(data.items) do
             local nobucket_choice = copyall(bucket)
             nobucket_choice.icon = curry(get_entry_icon, data, item_id)
-            nobucket_choice.text = make_choice_text(data.desc, data.per_item_value, 1)
+            nobucket_choice.text = make_choice_text(item_data.item.flags.in_building, data.per_item_value, 1, data.desc)
             nobucket_choice.item_id = item_id
             table.insert(nobucket_choices, nobucket_choice)
         end
         data.total_value = data.per_item_value * data.quantity
-        bucket.text = make_choice_text(data.desc, data.total_value, data.quantity)
+        bucket.text = make_choice_text(data.num_at_depot == data.quantity, data.total_value, data.quantity, data.desc)
         table.insert(bucket_choices, bucket)
         self.value_pending = self.value_pending + (data.per_item_value * data.selected)
     end
