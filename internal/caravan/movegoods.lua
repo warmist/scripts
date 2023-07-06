@@ -1,6 +1,7 @@
 --@ module = true
 
 local common = reqscript('internal/caravan/common')
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -13,9 +14,9 @@ local widgets = require('gui.widgets')
 MoveGoods = defclass(MoveGoods, widgets.Window)
 MoveGoods.ATTRS {
     frame_title='Select trade goods',
-    frame={w=83, h=45},
+    frame={w=84, h=45},
     resizable=true,
-    resize_min={h=27},
+    resize_min={h=35},
     pending_item_ids=DEFAULT_NIL,
 }
 
@@ -63,8 +64,8 @@ local function sort_by_value_asc(a, b)
 end
 
 local function sort_by_status_desc(a, b)
-    local a_unselected = a.data.selected == 0 or (a.item_id and not a.items[a.item_id].pending)
-    local b_unselected = b.data.selected == 0 or (b.item_id and not b.items[b.item_id].pending)
+    local a_unselected = a.data.selected == 0 or (a.item_id and not a.data.items[a.item_id].pending)
+    local b_unselected = b.data.selected == 0 or (b.item_id and not b.data.items[b.item_id].pending)
     if a_unselected == b_unselected then
         return sort_by_value_desc(a, b)
     end
@@ -72,8 +73,8 @@ local function sort_by_status_desc(a, b)
 end
 
 local function sort_by_status_asc(a, b)
-    local a_unselected = a.data.selected == 0 or (a.item_id and not a.items[a.item_id].pending)
-    local b_unselected = b.data.selected == 0 or (b.item_id and not b.items[b.item_id].pending)
+    local a_unselected = a.data.selected == 0 or (a.item_id and not a.data.items[a.item_id].pending)
+    local b_unselected = b.data.selected == 0 or (b.item_id and not b.data.items[b.item_id].pending)
     if a_unselected == b_unselected then
         return sort_by_value_desc(a, b)
     end
@@ -115,26 +116,163 @@ local function is_tree_lover_caravan(caravan)
         wood_ethic == df.ethic_response.UNTHINKABLE
 end
 
-local function is_tree_lover_at_depot()
-    for _,caravan in ipairs(df.global.plotinfo.caravans) do
-        if is_active_caravan(caravan) and is_tree_lover_caravan(caravan) then
-            return true
-        end
-    end
-    return false
+local function is_animal_lover_caravan(caravan)
+    local caravan_he = df.historical_entity.find(caravan.entity);
+    if not caravan_he then return false end
+    local animal_ethic = caravan_he.entity_raw.ethic[df.ethic_type.KILL_ANIMAL]
+    return animal_ethic == df.ethic_response.JUSTIFIED_IF_SELF_DEFENSE or
+        animal_ethic == df.ethic_response.JUSTIFIED_IF_EXTREME_REASON or
+        animal_ethic == df.ethic_response.MISGUIDED or
+        animal_ethic == df.ethic_response.SHUN or
+        animal_ethic == df.ethic_response.APPALLING or
+        animal_ethic == df.ethic_response.PUNISH_REPRIMAND or
+        animal_ethic == df.ethic_response.PUNISH_SERIOUS or
+        animal_ethic == df.ethic_response.PUNISH_EXILE or
+        animal_ethic == df.ethic_response.PUNISH_CAPITAL or
+        animal_ethic == df.ethic_response.UNTHINKABLE
 end
 
-local function has_export_agreement()
+local function get_ethics_restrictions()
+    local animal_ethics, wood_ethics = false, false
     for _,caravan in ipairs(df.global.plotinfo.caravans) do
-        if caravan.sell_prices and is_active_caravan(caravan) then
-            return true
+        if is_active_caravan(caravan) then
+            animal_ethics = animal_ethics or is_animal_lover_caravan(caravan)
+            wood_ethics = wood_ethics or is_tree_lover_caravan(caravan)
         end
     end
-    return false
+    return animal_ethics, wood_ethics
+end
+
+local function get_ethics_token(animal_ethics, wood_ethics)
+    local restrictions = {}
+    if animal_ethics or wood_ethics then
+        if animal_ethics then table.insert(restrictions, "Animals") end
+        if wood_ethics then table.insert(restrictions, "Trees") end
+    end
+    return {
+        gap=2,
+        text=#restrictions == 0 and 'None' or table.concat(restrictions, ', '),
+        pen=#restrictions ~= 0 and COLOR_LIGHTRED or COLOR_GREY,
+    }
+end
+
+-- works for both mandates and unit preferences
+-- adds spec to registry, but only if not in filter
+local function register_item_type(registry, spec, filter)
+    if not safe_index(filter, spec.item_type, spec.item_subtype) then
+        ensure_keys(registry, spec.item_type)[spec.item_subtype] = true
+    end
+end
+
+local function get_banned_items()
+    local banned_items = {}
+    for _, mandate in ipairs(df.global.world.mandates) do
+        if mandate.mode == df.mandate.T_mode.Export then
+            register_item_type(banned_items, mandate)
+        end
+    end
+    return banned_items
+end
+
+local function analyze_noble(unit, risky_items, banned_items)
+    for _, preference in ipairs(unit.status.current_soul.preferences) do
+        if preference.type == df.unit_preference.T_type.LikeItem and
+            preference.active
+        then
+            register_item_type(risky_items, preference, banned_items)
+        end
+    end
+end
+
+local function get_mandate_noble_roles()
+    local roles = {}
+    for _, link in ipairs(df.global.world.world_data.active_site[0].entity_links) do
+        local he = df.historical_entity.find(link.entity_id);
+        if not he or
+            (he.type ~= df.historical_entity_type.SiteGovernment and
+             he.type ~= df.historical_entity_type.Civilization)
+        then
+            goto continue
+        end
+        for _, position in ipairs(he.positions.own) do
+            if position.mandate_max > 0 then
+                table.insert(roles, position.code)
+            end
+        end
+        ::continue::
+    end
+    return roles
+end
+
+local function get_risky_items(banned_items)
+    local risky_items = {}
+    for _, role in ipairs(get_mandate_noble_roles()) do
+        for _, unit in ipairs(dfhack.units.getUnitsByNobleRole(role)) do
+            analyze_noble(unit, risky_items, banned_items)
+        end
+    end
+    return risky_items
+end
+
+local function make_item_description(item_type, subtype)
+    -- TODO: get a subtype-specific string
+    local str = string.lower(df.item_type[item_type])
+    -- if subtype ~= -1 then
+    --     str = str .. (' (%d)'):format(subtype)
+    -- end
+    return str
+end
+
+local function get_banned_token(banned_items)
+    if not next(banned_items) then
+        return {
+            gap=2,
+            text='None',
+            pen=COLOR_GREY,
+        }
+    end
+    local strs = {}
+    for item_type, subtypes in pairs(banned_items) do
+        for subtype in pairs(subtypes) do
+            table.insert(strs, make_item_description(item_type, subtype))
+        end
+    end
+    return {
+        gap=2,
+        text=table.concat(strs, ', '),
+        pen=COLOR_LIGHTRED,
+    }
+end
+
+local function get_export_agreements()
+    local export_agreements = {}
+    for _,caravan in ipairs(df.global.plotinfo.caravans) do
+        if caravan.buy_prices and is_active_caravan(caravan) then
+            table.insert(export_agreements, caravan.buy_prices)
+        end
+    end
+    return export_agreements
+end
+
+local function show_export_agreements(export_agreements)
+    local strs = {}
+    for _, agreement in ipairs(export_agreements) do
+        for idx, price in ipairs(agreement.price) do
+            local desc = make_item_description(agreement.items.item_type[idx], agreement.items.item_subtype[idx])
+            local percent = (price * 100) // 256
+            table.insert(strs, ('%20s %d%%'):format(desc..':', percent))
+        end
+    end
+    dialogs.showMessage('Price agreement for exported items', table.concat(strs, '\n'))
 end
 
 function MoveGoods:init()
     self.value_pending = 0
+
+    local export_agreements = get_export_agreements()
+    local animal_ethics, wood_ethics = get_ethics_restrictions()
+    local banned_items = get_banned_items()
+    self.risky_items = get_risky_items(banned_items)
 
     self:addviews{
         widgets.CycleHotkeyLabel{
@@ -162,45 +300,106 @@ function MoveGoods:init()
             on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.ToggleHotkeyLabel{
-            view_id='show_forbidden',
+            view_id='hide_forbidden',
             frame={t=2, l=0, w=27},
-            label='Show forbidden items',
+            label='Hide forbidden items:',
             key='CUSTOM_SHIFT_F',
-            initial_option=true,
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.CycleHotkeyLabel{
-            view_id='elf_safe',
-            frame={t=2, l=32, w=27},
-            label='Elf-safe items:',
-            key='CUSTOM_SHIFT_G',
             options={
-                {label='Only', value='only', pen=COLOR_GREEN},
-                {label='Show', value='show'},
-                {label='Hide', value='hide', pen=COLOR_RED},
+                {label='Yes', value=true, pen=COLOR_GREEN},
+                {label='No', value=false}
             },
-            initial_option=is_tree_lover_at_depot() and 'only' or 'show',
+           initial_option=false,
             on_change=function() self:refresh_list() end,
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='show_banned',
-            frame={t=3, l=0, w=43},
-            label='Show items banned by export mandates',
-            key='CUSTOM_SHIFT_D',
-            initial_option=false,
-            on_change=function() self:refresh_list() end,
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='only_agreement',
-            frame={t=4, l=0, w=52},
-            label='Show only items requested by export agreement',
-            key='CUSTOM_SHIFT_A',
-            initial_option=false,
-            on_change=function() self:refresh_list() end,
-            enabled=has_export_agreement(),
         },
         widgets.Panel{
-            frame={t=6, l=0, w=40, h=4},
+            frame={t=4, l=0, w=41, h=2},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Merchant export agreements:',
+                        {gap=1, text='None', pen=COLOR_GREY},
+                    },
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=28},
+                    key='CUSTOM_SHIFT_H',
+                    label='[details]',
+                    text_pen=COLOR_LIGHTRED,
+                    on_activate=function() show_export_agreements(export_agreements) end,
+                    visible=#export_agreements > 0,
+                },
+                widgets.ToggleHotkeyLabel{
+                    view_id='only_agreement',
+                    frame={t=1, l=0},
+                    label='Show only requested items:',
+                    key='CUSTOM_SHIFT_A',
+                    options={
+                        {label='Yes', value=true, pen=COLOR_GREEN},
+                        {label='No', value=false}
+                    },
+                    initial_option=false,
+                    on_change=function() self:refresh_list() end,
+                    visible=#export_agreements > 0,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=7, l=0, r=40, h=3},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Merchant ethical restrictions:', NEWLINE,
+                        get_ethics_token(animal_ethics, wood_ethics),
+                    },
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='ethical',
+                    frame={t=2, l=0},
+                    key='CUSTOM_SHIFT_G',
+                    options={
+                        {label='Show only ethically acceptable items', value='only', pen=COLOR_GREEN},
+                        {label='Ignore ethical restrictions', value='show'},
+                        {label='Show only ethically unacceptable items', value='hide', pen=COLOR_RED},
+                    },
+                    initial_option='only',
+                    option_gap=0,
+                    visible=animal_ethics or wood_ethics,
+                    on_change=function() self:refresh_list() end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=11, l=0, r=40, h=5},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Items banned by export mandates:', NEWLINE,
+                        get_banned_token(banned_items), NEWLINE,
+                        'Additional items at risk of mandates:', NEWLINE,
+                        get_banned_token(self.risky_items),
+                    },
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='banned',
+                    frame={t=4, l=0},
+                    key='CUSTOM_SHIFT_D',
+                    options={
+                        {label='Hide banned and risky items', value='both', pen=COLOR_GREEN},
+                        {label='Hide banned items', value='banned_only', pen=COLOR_YELLOW},
+                        {label='Ignore mandate restrictions', value='ignore', pen=COLOR_RED},
+                    },
+                    initial_option='both',
+                    option_gap=0,
+                    visible=next(banned_items) or next(self.risky_items),
+                    on_change=function() self:refresh_list() end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=2, r=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_condition',
@@ -259,7 +458,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=6, l=41, w=38, h=4},
+            frame={t=7, r=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality',
@@ -324,7 +523,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=11, l=0, w=40, h=4},
+            frame={t=12, r=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_value',
@@ -390,7 +589,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=16, l=0, r=0, b=6},
+            frame={t=17, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -465,8 +664,12 @@ function MoveGoods:init()
         widgets.ToggleHotkeyLabel{
             view_id='disable_buckets',
             frame={l=26, b=2},
-            label='Show individual items',
+            label='Show individual items:',
             key='CUSTOM_CTRL_I',
+            options={
+                {label='Yes', value=true, pen=COLOR_GREEN},
+                {label='No', value=false}
+            },
             initial_option=false,
             on_change=function() self:refresh_list() end,
         },
@@ -533,7 +736,8 @@ local function is_tradeable_item(item, depot)
             if item == contained_item.item then return false end
         end
     end
-    return true
+    return dfhack.maps.canWalkBetween(xyz2pos(dfhack.items.getPosition(item)),
+        xyz2pos(depot.centerx, depot.centery, depot.z))
 end
 
 local function get_entry_icon(data, item_id)
@@ -553,20 +757,33 @@ local function make_choice_text(desc, value, quantity)
     }
 end
 
--- returns true if the item or any contained item is banned
-local function scan_banned(item)
-    if not dfhack.items.checkMandates(item) then return true end
-    for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
-        if not dfhack.items.checkMandates(contained_item) then return true end
+local function match_risky(item, risky_items)
+    for item_type, subtypes in pairs(risky_items) do
+        for subtype in pairs(subtypes) do
+            if item_type == item:getType() and (subtype == -1 or subtype == item:getSubtype()) then
+                return true
+            end
+        end
     end
     return false
+end
+
+-- returns is_banned, is_risky
+local function scan_banned(item, risky_items)
+    if not dfhack.items.checkMandates(item) then return true, true end
+    if match_risky(item, risky_items) then return false, true end
+    for _,contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+        if not dfhack.items.checkMandates(contained_item) then return true, true end
+        if match_risky(contained_item, risky_items) then return false, true end
+    end
+    return false, false
 end
 
 local function is_wood_based(mat_type, mat_index)
     if mat_type == df.builtin_mats.LYE or
         mat_type == df.builtin_mats.GLASS_CLEAR or
         mat_type == df.builtin_mats.GLASS_CRYSTAL or
-        (mat_type == df.builtin_mats.COAL and mat_index ~= 0) or
+        (mat_type == df.builtin_mats.COAL and mat_index == 1) or
         mat_type == df.builtin_mats.POTASH or
         mat_type == df.builtin_mats.ASH or
         mat_type == df.builtin_mats.PEARLASH
@@ -575,7 +792,10 @@ local function is_wood_based(mat_type, mat_index)
     end
 
     local mi = dfhack.matinfo.decode(mat_type, mat_index)
-    return mi and mi.material and (mi.material.flags.WOOD or mi.material.flags.SOAP)
+    return mi and mi.material and
+        (mi.material.flags.WOOD or
+         mi.material.flags.STRUCTURAL_PLANT_MAT or
+         mi.material.flags.SOAP)
 end
 
 local function has_wood(item)
@@ -596,7 +816,7 @@ local function has_wood(item)
     return false
 end
 
-local function can_trade_to_elves(item)
+local function is_ethical_product(item, fn)
     if item.flags.container then
         local contained_items = dfhack.items.getContainedItems(item)
         if df.item_binst:is_instance(item) then
@@ -626,8 +846,18 @@ local function can_trade_to_elves(item)
     return not item:isAnimalProduct() and not has_wood(item)
 end
 
+local function is_ethical_animal_product(item)
+    return is_ethical_product(item, function(it) return it:isAnimalProduct() end)
+end
+
+local function is_ethical_wood_product(item)
+    return is_ethical_product(item, function(it) return has_wood(it) end)
+end
+
 function MoveGoods:cache_choices(disable_buckets)
     if self.choices then return self.choices[disable_buckets] end
+
+    local animal_ethics, wood_ethics = get_ethics_restrictions()
 
     local depot = dfhack.gui.getSelectedBuilding(true)
     local pending = self.pending_item_ids
@@ -639,7 +869,7 @@ function MoveGoods:cache_choices(disable_buckets)
         if value <= 0 then goto continue end
         local is_pending = not not pending[item_id] or item.flags.in_building
         local is_forbidden = item.flags.forbid
-        local is_banned = scan_banned(item)
+        local is_banned, is_risky = scan_banned(item, self.risky_items)
         local is_requested = dfhack.items.isRequestedTradeGood(item)
         local wear_level = item:getWear()
         local desc = item.flags.artifact and common.get_artifact_name(item) or
@@ -656,12 +886,15 @@ function MoveGoods:cache_choices(disable_buckets)
             bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
             bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
             bucket.data.has_banned = bucket.data.has_banned or is_banned
+            bucket.data.has_risky = bucket.data.has_risky or is_risky
             bucket.data.has_requested = bucket.data.has_requested or is_requested
         else
+            local is_ethical = (not animal_ethics or is_ethical_animal_product(item)) and
+                (not wood_ethics or is_ethical_wood_product(item))
             local data = {
                 desc=desc,
                 per_item_value=value,
-                items={[item_id]={item=item, pending=is_pending, banned=is_banned, requested=is_requested}},
+                items={[item_id]={item=item, pending=is_pending, banned=is_banned, risky=is_risky, requested=is_requested}},
                 item_type=item:getType(),
                 item_subtype=item:getSubtype(),
                 quantity=1,
@@ -670,8 +903,9 @@ function MoveGoods:cache_choices(disable_buckets)
                 selected=is_pending and 1 or 0,
                 has_forbidden=is_forbidden,
                 has_banned=is_banned,
+                has_risky=is_risky,
                 has_requested=is_requested,
-                elf_safe=can_trade_to_elves(item),
+                ethical=is_ethical,
                 dirty=false,
             }
             local entry = {
@@ -709,10 +943,10 @@ end
 function MoveGoods:get_choices()
     local raw_choices = self:cache_choices(self.subviews.disable_buckets:getOptionValue())
     local choices = {}
-    local include_forbidden = self.subviews.show_forbidden:getOptionValue()
-    local include_banned = self.subviews.show_banned:getOptionValue()
+    local include_forbidden = not self.subviews.hide_forbidden:getOptionValue()
+    local banned = self.subviews.banned:getOptionValue()
     local only_agreement = self.subviews.only_agreement:getOptionValue()
-    local elf_safe = self.subviews.elf_safe:getOptionValue()
+    local ethical = self.subviews.ethical:getOptionValue()
     local min_condition = self.subviews.min_condition:getOptionValue()
     local max_condition = self.subviews.max_condition:getOptionValue()
     local min_quality = self.subviews.min_quality:getOptionValue()
@@ -721,9 +955,9 @@ function MoveGoods:get_choices()
     local max_value = self.subviews.max_value:getOptionValue().value
     for _,choice in ipairs(raw_choices) do
         local data = choice.data
-        if elf_safe ~= 'show' then
-            if elf_safe == 'hide' and data.elf_safe then goto continue end
-            if elf_safe == 'only' and not data.elf_safe then goto continue end
+        if ethical ~= 'show' then
+            if ethical == 'hide' and data.ethical then goto continue end
+            if ethical == 'only' and not data.ethical then goto continue end
         end
         if not include_forbidden then
             if choice.item_id then
@@ -749,12 +983,12 @@ function MoveGoods:get_choices()
                 goto continue
             end
         end
-        if not include_banned then
+        if banned ~= 'ignore' then
             if choice.item_id then
-                if data.items[choice.item_id].banned then
+                if data.items[choice.item_id].banned or (banned ~= 'banned_only' and data.items[choice.item_id].risky) then
                     goto continue
                 end
-            elseif data.has_banned then
+            elseif data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
                 goto continue
             end
         end
