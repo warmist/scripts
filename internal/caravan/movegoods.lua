@@ -296,107 +296,8 @@ function MoveGoods:init()
             label_text='Search: ',
             on_char=function(ch) return ch:match('[%l -]') end,
         },
-        widgets.ToggleHotkeyLabel{
-            view_id='hide_forbidden',
-            frame={t=2, l=0, w=27},
-            label='Hide forbidden items:',
-            key='CUSTOM_SHIFT_F',
-            options={
-                {label='Yes', value=true, pen=COLOR_GREEN},
-                {label='No', value=false}
-            },
-           initial_option=false,
-            on_change=function() self:refresh_list() end,
-        },
         widgets.Panel{
-            frame={t=4, l=0, w=41, h=2},
-            subviews={
-                widgets.Label{
-                    frame={t=0, l=0},
-                    text={
-                        'Merchant export agreements:',
-                        {gap=1, text='None', pen=COLOR_GREY},
-                    },
-                },
-                widgets.HotkeyLabel{
-                    frame={t=0, l=28},
-                    key='CUSTOM_SHIFT_H',
-                    label='[details]',
-                    text_pen=COLOR_LIGHTRED,
-                    on_activate=function() show_export_agreements(export_agreements) end,
-                    visible=#export_agreements > 0,
-                },
-                widgets.ToggleHotkeyLabel{
-                    view_id='only_agreement',
-                    frame={t=1, l=0},
-                    label='Show only requested items:',
-                    key='CUSTOM_SHIFT_A',
-                    options={
-                        {label='Yes', value=true, pen=COLOR_GREEN},
-                        {label='No', value=false}
-                    },
-                    initial_option=false,
-                    on_change=function() self:refresh_list() end,
-                    visible=#export_agreements > 0,
-                },
-            },
-        },
-        widgets.Panel{
-            frame={t=7, l=0, r=40, h=3},
-            subviews={
-                widgets.Label{
-                    frame={t=0, l=0},
-                    text={
-                        'Merchant ethical restrictions:', NEWLINE,
-                        get_ethics_token(animal_ethics, wood_ethics),
-                    },
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='ethical',
-                    frame={t=2, l=0},
-                    key='CUSTOM_SHIFT_G',
-                    options={
-                        {label='Show only ethically acceptable items', value='only', pen=COLOR_GREEN},
-                        {label='Ignore ethical restrictions', value='show'},
-                        {label='Show only ethically unacceptable items', value='hide', pen=COLOR_RED},
-                    },
-                    initial_option='only',
-                    option_gap=0,
-                    visible=animal_ethics or wood_ethics,
-                    on_change=function() self:refresh_list() end,
-                },
-            },
-        },
-        widgets.Panel{
-            frame={t=11, l=0, r=40, h=5},
-            subviews={
-                widgets.Label{
-                    frame={t=0, l=0},
-                    text={
-                        'Items banned by export mandates:', NEWLINE,
-                        get_banned_token(banned_items), NEWLINE,
-                        'Additional items at risk of mandates:', NEWLINE,
-                        get_banned_token(self.risky_items),
-                    },
-                },
-                widgets.CycleHotkeyLabel{
-                    view_id='banned',
-                    frame={t=4, l=0},
-                    key='CUSTOM_SHIFT_D',
-                    options={
-                        {label='Hide banned and risky items', value='both', pen=COLOR_GREEN},
-                        {label='Hide banned items', value='banned_only', pen=COLOR_YELLOW},
-                        {label='Ignore mandate restrictions', value='ignore', pen=COLOR_RED},
-                    },
-                    initial_option='both',
-                    option_gap=0,
-                    visible=next(banned_items) or next(self.risky_items),
-                    on_change=function() self:refresh_list() end,
-                },
-            },
-        },
-        widgets.Panel{
-            frame={t=2, r=0, w=38, h=4},
+            frame={t=2, l=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_condition',
@@ -455,7 +356,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=7, r=0, w=38, h=4},
+            frame={t=7, l=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality',
@@ -520,7 +421,7 @@ function MoveGoods:init()
             },
         },
         widgets.Panel{
-            frame={t=12, r=0, w=38, h=4},
+            frame={t=12, l=0, w=38, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_value',
@@ -582,6 +483,105 @@ function MoveGoods:init()
                     end,
                     on_left_change=function(idx) self.subviews.min_value:setOption(idx, true) end,
                     on_right_change=function(idx) self.subviews.max_value:setOption(idx, true) end,
+                },
+            },
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='hide_forbidden',
+            frame={t=2, l=40, w=27},
+            label='Hide forbidden items:',
+            key='CUSTOM_SHIFT_F',
+            options={
+                {label='Yes', value=true, pen=COLOR_GREEN},
+                {label='No', value=false}
+            },
+           initial_option=false,
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.Panel{
+            frame={t=4, l=40, r=0, h=2},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Merchant export agreements:',
+                        {gap=1, text='None', pen=COLOR_GREY},
+                    },
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=28},
+                    key='CUSTOM_SHIFT_H',
+                    label='[details]',
+                    text_pen=COLOR_LIGHTRED,
+                    on_activate=function() show_export_agreements(export_agreements) end,
+                    visible=#export_agreements > 0,
+                },
+                widgets.ToggleHotkeyLabel{
+                    view_id='only_agreement',
+                    frame={t=1, l=0},
+                    label='Show only requested items:',
+                    key='CUSTOM_SHIFT_A',
+                    options={
+                        {label='Yes', value=true, pen=COLOR_GREEN},
+                        {label='No', value=false}
+                    },
+                    initial_option=false,
+                    on_change=function() self:refresh_list() end,
+                    visible=#export_agreements > 0,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=7, l=40, r=0, h=3},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Merchant ethical restrictions:', NEWLINE,
+                        get_ethics_token(animal_ethics, wood_ethics),
+                    },
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='ethical',
+                    frame={t=2, l=0},
+                    key='CUSTOM_SHIFT_G',
+                    options={
+                        {label='Show only ethically acceptable items', value='only', pen=COLOR_GREEN},
+                        {label='Ignore ethical restrictions', value='show'},
+                        {label='Show only ethically unacceptable items', value='hide', pen=COLOR_RED},
+                    },
+                    initial_option='only',
+                    option_gap=0,
+                    visible=animal_ethics or wood_ethics,
+                    on_change=function() self:refresh_list() end,
+                },
+            },
+        },
+        widgets.Panel{
+            frame={t=11, l=40, r=0, h=5},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text={
+                        'Items banned by export mandates:', NEWLINE,
+                        get_banned_token(banned_items), NEWLINE,
+                        'Additional items at risk of mandates:', NEWLINE,
+                        get_banned_token(self.risky_items),
+                    },
+                },
+                widgets.CycleHotkeyLabel{
+                    view_id='banned',
+                    frame={t=4, l=0},
+                    key='CUSTOM_SHIFT_D',
+                    options={
+                        {label='Hide banned and risky items', value='both', pen=COLOR_GREEN},
+                        {label='Hide banned items', value='banned_only', pen=COLOR_YELLOW},
+                        {label='Ignore mandate restrictions', value='ignore', pen=COLOR_RED},
+                    },
+                    initial_option='both',
+                    option_gap=0,
+                    visible=next(banned_items) or next(self.risky_items),
+                    on_change=function() self:refresh_list() end,
                 },
             },
         },
