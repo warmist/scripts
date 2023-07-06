@@ -16,7 +16,7 @@ MoveGoods.ATTRS {
     frame_title='Select trade goods',
     frame={w=84, h=45},
     resizable=true,
-    resize_min={h=35},
+    resize_min={w=81,h=35},
     pending_item_ids=DEFAULT_NIL,
 }
 
@@ -215,12 +215,9 @@ local function get_risky_items(banned_items)
 end
 
 local function make_item_description(item_type, subtype)
-    -- TODO: get a subtype-specific string
-    local str = string.lower(df.item_type[item_type])
-    -- if subtype ~= -1 then
-    --     str = str .. (' (%d)'):format(subtype)
-    -- end
-    return str
+    local itemdef = dfhack.items.getSubtypeDef(item_type, subtype)
+    return itemdef and string.lower(itemdef.name_plural) or
+        string.lower(df.item_type[item_type]):gsub('_', ' ')
 end
 
 local function get_banned_token(banned_items)
