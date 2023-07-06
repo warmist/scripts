@@ -32,7 +32,7 @@ local trade = df.global.game.main_interface.trade
 Trade = defclass(Trade, widgets.Window)
 Trade.ATTRS {
     frame_title='Select trade goods',
-    frame={w=84, h=45},
+    frame={w=84, h=47},
     resizable=true,
     resize_min={w=48, h=27},
 }
