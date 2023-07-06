@@ -9,7 +9,7 @@ rng = rng or dfhack.random.new(nil, 10)
 local target
 --TODO: add more ways to guess what unit you want to edit
 if args[1] ~= nil then
-    target = df.units.find(args[1])
+    target = df.unit.find(args[1])
 else
     target = dfhack.gui.getSelectedUnit(true)
 end
