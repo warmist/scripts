@@ -518,14 +518,6 @@ end
 function MainPanel:onInput(keys)
     if MainPanel.super.onInput(self, keys) then
         return true
-    elseif keys.CUSTOM_CTRL_C then
-        if self.focus_group.cur == self.subviews.editfield then
-            self.subviews.edit:set_text('')
-            self.on_edit_input('')
-        else
-            self.focus_group.cur:setText('')
-        end
-        return true
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
         self.update_autocomplete(get_first_word(self.subviews.editfield.text))
