@@ -226,37 +226,10 @@ local function parse_location_props(props)
     return location_data
 end
 
-local function get_noble_position_id(positions, noble)
-    noble = noble:upper()
-    for _,position in ipairs(positions.own) do
-        if position.code == noble then return position.id end
-    end
-end
-
-local function get_assigned_noble_unit(positions, noble_position_id)
-    for _,assignment in ipairs(positions.assignments) do
-        if assignment.position_id == noble_position_id then
-            local histfig = df.historical_figure.find(assignment.histfig)
-            if not histfig then return end
-            return df.unit.find(histfig.unit_id)
-        end
-    end
-end
-
 local function get_noble_unit(noble)
-    local site = df.global.world.world_data.active_site[0]
-    for _,entity_site_link in ipairs(site.entity_links) do
-        local gov = df.historical_entity.find(entity_site_link.entity_id)
-        if not gov or gov.type ~= df.historical_entity_type.SiteGovernment then goto continue end
-        local noble_position_id = get_noble_position_id(gov.positions, noble)
-        if not noble_position_id then
-            dfhack.printerr(('could not find a noble position for: "%s"'):format(noble))
-            return
-        else
-            return get_assigned_noble_unit(gov.positions, noble_position_id)
-        end
-        ::continue::
-    end
+    local unit = dfhack.units.getUnitByNobleRole(noble)
+    if not unit then log('could not find a noble position for: "%s"', noble) end
+    return unit
 end
 
 local function parse_zone_config(c, props)
