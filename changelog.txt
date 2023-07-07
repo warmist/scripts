@@ -14,11 +14,11 @@ that repo.
 # Future
 
 ## New Scripts
+- `caravan`: new trade screen UI replacements for bringing goods to trade depot and trading
 
 ## Fixes
 - `gui/autodump`: when "include items claimed by jobs" is on, actually cancel the job so the item can be teleported
 - `gui/gm-unit`: fix commandline processing when a unit id is specified
-
 - `suspendmanager`: take in account already built blocking buildings
 
 ## Misc Improvements
