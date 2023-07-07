@@ -160,7 +160,7 @@ function MoveGoods:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='hide_forbidden',
-            frame={t=2, l=40, w=27},
+            frame={t=2, l=40, w=28},
             label='Hide forbidden items:',
             key='CUSTOM_SHIFT_F',
             options={
