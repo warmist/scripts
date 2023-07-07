@@ -371,14 +371,6 @@ UnitSyndromes.ATTRS {
 }
 
 function UnitSyndromes:init()
-    local is_not_main_page = function()
-        return self.subviews.pages:getSelected() > 1
-    end
-
-    local previous_page = function()
-        self.subviews.pages:setSelected(self.subviews.pages:getSelected() - 1)
-    end
-
     self:addviews{
         widgets.Pages{
             view_id = 'pages',
@@ -397,15 +389,15 @@ function UnitSyndromes:init()
                     },
                     on_submit = self:callback('showUnits'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id = 'units',
                     frame = {t = 0, l = 0},
                     row_height = 3,
                     on_submit = self:callback('showUnitSyndromes'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id = 'unit_syndromes',
-                    frame = {t = 0, l = 0},
+                    frame = {t = 0, l = 0, r = 0},
                     on_submit = self:callback('showSyndromeEffects'),
                 },
                 widgets.WrappedLabel{
@@ -422,19 +414,30 @@ function UnitSyndromes:init()
             label='Back',
             auto_width=true,
             key='LEAVESCREEN',
-            on_activate=previous_page,
-            active=is_not_main_page,
-            enabled=is_not_main_page,
+            on_activate=self:callback('previous_page'),
         },
     }
 end
 
+function UnitSyndromes:previous_page()
+    local pages = self.subviews.pages
+    if pages:getSelected() == 1 then
+        view:dismiss()
+        return
+    end
+    if pages:getSelectedPage().view_id == 'syndrome_effects' then
+        pages:setSelected('unit_syndromes')
+    else
+        pages:setSelected(1)
+    end
+end
+
 function UnitSyndromes:onInput(keys)
-    UnitSyndromes.super.onInput(self, keys)
-    if keys._R_MOUSE_DOWN then
+    if keys._MOUSE_R_DOWN then
         self:previous_page()
         return true
     end
+    return UnitSyndromes.super.onInput(self, keys)
 end
 
 function UnitSyndromes:showUnits(index, choice)
@@ -456,6 +459,7 @@ function UnitSyndromes:showUnits(index, choice)
 
         self.subviews.pages:setSelected('unit_syndromes')
         self.subviews.unit_syndromes:setChoices(choices)
+        self.subviews.unit_syndromes.edit:setFocus(true)
 
         return
     end
@@ -475,6 +479,7 @@ function UnitSyndromes:showUnits(index, choice)
 
     self.subviews.pages:setSelected('units')
     self.subviews.units:setChoices(choices)
+    self.subviews.units.edit:setFocus(true)
 end
 
 function UnitSyndromes:showUnitSyndromes(index, choice)

@@ -22,6 +22,7 @@ that repo.
 - `suspendmanager`: take in account already built blocking buildings
 
 ## Misc Improvements
+- `gui/unit-syndromes`: make lists searchable
 
 ## Removed
 
