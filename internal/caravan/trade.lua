@@ -140,8 +140,9 @@ local VALUE_COL_WIDTH = 6
 local FILTER_HEIGHT = 15
 
 function Trade:init()
-    self.choices = {[0]={}, [1]={}}
     self.cur_page = 1
+    self.saved_talkline = trade.talkline
+    self:check_cache()
 
     self.animal_ethics = common.is_animal_lover_caravan(trade.mer)
     self.wood_ethics = common.is_tree_lover_caravan(trade.mer)
@@ -482,6 +483,20 @@ function Trade:toggle_visible()
     for _, choice in ipairs(self.subviews.list:getVisibleChoices()) do
         target_value = toggle_item_base(choice, target_value)
     end
+end
+
+function Trade:check_cache()
+    if self.saved_talkline ~= trade.talkline then
+        self.saved_talkline = trade.talkline
+        -- react to trade button being clicked
+        self.choices = {[0]={}, [1]={}}
+        self:refresh_list()
+    end
+end
+
+function Trade:onRenderFrame(dc, rect)
+    Trade.super.onRenderFrame(self, dc, rect)
+    self:check_cache()
 end
 
 -- -------------------

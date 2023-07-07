@@ -17,6 +17,7 @@ MoveGoods.ATTRS {
     resizable=true,
     resize_min={w=81,h=35},
     pending_item_ids=DEFAULT_NIL,
+    depot=DEFAULT_NIL,
 }
 
 local STATUS_COL_WIDTH = 7
@@ -384,12 +385,11 @@ end
 function MoveGoods:cache_choices(disable_buckets)
     if self.choices then return self.choices[disable_buckets] end
 
-    local depot = dfhack.gui.getSelectedBuilding(true)
     local pending = self.pending_item_ids
     local buckets = {}
     for _, item in ipairs(df.global.world.items.all) do
         local item_id = item.id
-        if not item or not is_tradeable_item(item, depot) then goto continue end
+        if not item or not is_tradeable_item(item, self.depot) then goto continue end
         local value = common.get_perceived_value(item)
         if value <= 0 then goto continue end
         local is_pending = not not pending[item_id] or item.flags.in_building
@@ -584,6 +584,8 @@ end
 MoveGoodsModal = defclass(MoveGoodsModal, gui.ZScreenModal)
 MoveGoodsModal.ATTRS {
     focus_path='caravan/movegoods',
+    depot=DEFAULT_NIL,
+    on_dismiss=DEFAULT_NIL,
 }
 
 local function get_pending_trade_item_ids()
@@ -598,12 +600,18 @@ end
 
 function MoveGoodsModal:init()
     self.pending_item_ids = get_pending_trade_item_ids()
-    self:addviews{MoveGoods{pending_item_ids=self.pending_item_ids}}
+    self.depot = self.depot or dfhack.gui.getSelectedBuilding(true)
+    self:addviews{
+        MoveGoods{
+            pending_item_ids=self.pending_item_ids,
+            depot=self.depot,
+        },
+    }
 end
 
 function MoveGoodsModal:onDismiss()
     -- mark/unmark selected goods for trade
-    local depot = dfhack.gui.getSelectedBuilding(true)
+    local depot = self.depot
     if not depot then return end
     local pending = self.pending_item_ids
     for _, choice in ipairs(self.subviews.list:getChoices()) do
@@ -627,6 +635,9 @@ function MoveGoodsModal:onDismiss()
             end
         end
         ::continue::
+    end
+    if self.on_dismiss then
+        self.on_dismiss(self)
     end
 end
 
@@ -673,6 +684,37 @@ function MoveGoodsOverlay:init()
             key='CUSTOM_CTRL_T',
             on_activate=function() MoveGoodsModal{}:show() end,
             enabled=has_trade_depot_and_caravan,
+        },
+    }
+end
+
+-- -------------------
+-- AssignTradeOverlay
+--
+
+AssignTradeOverlay = defclass(AssignTradeOverlay, overlay.OverlayWidget)
+AssignTradeOverlay.ATTRS{
+    default_pos={x=-3,y=-25},
+    default_enabled=true,
+    viewscreens='dwarfmode/AssignTrade',
+    frame={w=27, h=3},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function AssignTradeOverlay:init()
+    local on_dismiss = function(scr)
+        scr:sendInputToParent('LEAVESCREEN')
+    end
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='DFHack goods UI',
+            key='CUSTOM_CTRL_T',
+            on_activate=function()
+                local depot = df.global.game.main_interface.assign_trade.trade_depot_bld
+                MoveGoodsModal{depot=depot, on_dismiss=on_dismiss}:show()
+            end,
         },
     }
 end

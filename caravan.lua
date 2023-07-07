@@ -18,6 +18,7 @@ OVERLAY_WIDGETS = {
     trade=trade.TradeOverlay,
     tradeagreement=tradeagreement.TradeAgreementOverlay,
     movegoods=movegoods.MoveGoodsOverlay,
+    assigntrade=movegoods.AssignTradeOverlay,
 }
 
 INTERESTING_FLAGS = {
