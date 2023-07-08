@@ -620,7 +620,7 @@ function MoveGoodsModal:onDismiss()
             local item = item_data.item
             if item_data.pending and not pending[item_id] then
                 item.flags.forbid = false
-                if dfhack.items.getHolderBuilding(item) then
+                if dfhack.items.getHolderBuilding(item) == depot then
                     item.flags.in_building = true
                 else
                     dfhack.items.markForTrade(item, depot)
