@@ -705,6 +705,7 @@ function TradeOverlay:init()
             frame={t=0, l=0},
             label='DFHack trade UI',
             key='CUSTOM_CTRL_T',
+            enabled=function() return trade.stillunloading == 0 and trade.havetalker == 1 end,
             on_activate=function() view = view and view:raise() or TradeScreen{}:show() end,
         },
         widgets.Label{
