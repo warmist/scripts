@@ -371,6 +371,8 @@ UnitSyndromes.ATTRS {
 }
 
 function UnitSyndromes:init()
+    self.stack = {}
+
     self:addviews{
         widgets.Pages{
             view_id = 'pages',
@@ -421,15 +423,21 @@ end
 
 function UnitSyndromes:previous_page()
     local pages = self.subviews.pages
-    if pages:getSelected() == 1 then
+    local cur_page = pages:getSelected()
+    if cur_page == 1 then
         view:dismiss()
         return
     end
-    if pages:getSelectedPage().view_id == 'syndrome_effects' then
-        pages:setSelected('unit_syndromes')
-    else
-        pages:setSelected(1)
+
+    local state = table.remove(self.stack, #self.stack)
+    pages:setSelected(state.page)
+    if state.edit then
+        state.edit:setFocus(true)
     end
+end
+
+function UnitSyndromes:push_state()
+    table.insert(self.stack, {page=self.subviews.pages:getSelected(), edit=self.focus_group.cur})
 end
 
 function UnitSyndromes:onInput(keys)
@@ -457,6 +465,7 @@ function UnitSyndromes:showUnits(index, choice)
             :: skipsyndrome ::
         end
 
+        self:push_state()
         self.subviews.pages:setSelected('unit_syndromes')
         self.subviews.unit_syndromes:setChoices(choices)
         self.subviews.unit_syndromes.edit:setFocus(true)
@@ -477,6 +486,7 @@ function UnitSyndromes:showUnits(index, choice)
         })
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('units')
     self.subviews.units:setChoices(choices)
     self.subviews.units.edit:setFocus(true)
@@ -506,12 +516,14 @@ function UnitSyndromes:showUnitSyndromes(index, choice)
         :: skipsyndrome ::
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('unit_syndromes')
     self.subviews.unit_syndromes:setChoices(choices)
+    self.subviews.unit_syndromes.edit:setFocus(true)
 end
 
 function UnitSyndromes:showSyndromeEffects(index, choice)
-    local choices = {}
+    local choices = {'ID: '..tostring(choice.syndrome_type)}
 
     for _, effect in pairs(getSyndromeEffects(choice.syndrome_type)) do
         local effect_name = df.creature_interaction_effect_type[effect:getType()]
@@ -533,6 +545,7 @@ function UnitSyndromes:showSyndromeEffects(index, choice)
         ))
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('syndrome_effects')
     self.subviews.syndrome_effects.text_to_wrap = table.concat(choices, "\n\n")
     self.subviews.syndrome_effects:updateLayout()
