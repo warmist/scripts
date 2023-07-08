@@ -141,8 +141,6 @@ local FILTER_HEIGHT = 15
 
 function Trade:init()
     self.cur_page = 1
-    self.saved_talkline = trade.talkline
-    self:check_cache()
 
     self.animal_ethics = common.is_animal_lover_caravan(trade.mer)
     self.wood_ethics = common.is_tree_lover_caravan(trade.mer)
@@ -304,6 +302,7 @@ function Trade:init()
     self.subviews.list.edit = self.subviews.search
     self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
 
+    self:check_cache()
     self.subviews.list:setChoices(self:get_choices())
 end
 
