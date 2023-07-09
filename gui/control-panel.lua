@@ -74,6 +74,9 @@ local PREFERENCES = {
          desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
         HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
          desc='Don\'t show tools that give you god-like powers wherever DFHack tools are listed.'},
+        SUPPRESS_DUPLICATE_KEYBOARD_EVENTS={label='Prevent duplicate key events',
+         type='bool', default=true,
+         desc='Whether to pass key events through to DF when DFHack keybindings are triggered.'},
     },
     ['gui']={
         DEFAULT_INITIAL_PAUSE={label='DFHack tools autopause game', type='bool', default=true,
