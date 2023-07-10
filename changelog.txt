@@ -23,6 +23,7 @@ that repo.
 - `suspendmanager`: don't consider branches as a suitable access to a build
 
 ## Misc Improvements
+- `gui/unit-syndromes`: make lists searchable
 
 ## Removed
 
