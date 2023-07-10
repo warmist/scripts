@@ -20,6 +20,7 @@ that repo.
 - `gui/autodump`: when "include items claimed by jobs" is on, actually cancel the job so the item can be teleported
 - `gui/gm-unit`: fix commandline processing when a unit id is specified
 - `suspendmanager`: take in account already built blocking buildings
+- `suspendmanager`: don't consider branches as a suitable access to a build
 
 ## Misc Improvements
 
