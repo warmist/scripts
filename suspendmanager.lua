@@ -205,6 +205,12 @@ local function walkable(pos)
         return false
     end
     local attrs = df.tiletype.attrs[tt]
+
+    if attrs.shape == df.tiletype_shape.BRANCH or attrs.shape == df.tiletype_shape.TRUNK_BRANCH then
+        -- Branches can be walked on, but most of the time we can assume that it's not a suitable access.
+        return false
+    end
+
     local shape_attrs = df.tiletype_shape.attrs[attrs.shape]
 
     if not shape_attrs.walkable then
