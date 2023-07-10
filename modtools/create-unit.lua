@@ -396,7 +396,7 @@ function isValidSpawnLocation(pos, locationType)
     end
     return false
   elseif locationType == 'Walkable' then
-    if tileShapeAttrs.walkable and tileShapeAttrs.basic_shape ~= df.tiletype_shape_basic.Open then
+    if tileShapeAttrs.walkable then
       return true
     end
     return false

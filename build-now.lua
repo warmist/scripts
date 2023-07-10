@@ -176,11 +176,8 @@ local function is_good_dump_pos(pos)
     local shape_attrs = df.tiletype_shape.attrs[attrs.shape]
     -- reject hidden tiles
     if flags.hidden then return false, false end
-    -- reject unwalkable or open tiles
+    -- reject unwalkable tiles
     if not shape_attrs.walkable then return false, false end
-    if shape_attrs.basic_shape == df.tiletype_shape_basic.Open then
-        return false, false
-    end
     -- reject footprints within other buildings. this could potentially be
     -- relaxed a bit since we can technically dump items on passable tiles
     -- within other buildings, but that would look messy.
