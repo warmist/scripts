@@ -1,5 +1,5 @@
 fix/empty-wheelbarrows
-=====================
+======================
 
 .. dfhack-tool::
     :summary: Empties stuck items from wheelbarrows
