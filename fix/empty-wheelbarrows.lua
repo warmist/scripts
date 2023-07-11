@@ -18,15 +18,19 @@ end
 local i_count = 0
 local e_count = 0
 
+local function printNotQuiet(str)
+    if (not quiet) then print(str) end
+end
+
 for _,e in ipairs(df.global.world.items.other.TOOL) do
     -- wheelbarrow must be on ground and not in a job
     if ((not e.flags.in_job) and e.flags.on_ground and e:isWheelbarrow()) then
         local items = dfhack.items.getContainedItems(e)
         if #items > 0 then
-            if (not quiet) then print('Emptying wheelbarrow: ' .. dfhack.items.getDescription(e, 0)) end
+            printNotQuiet('Emptying wheelbarrow: ' .. dfhack.items.getDescription(e, 0))
             e_count = e_count + 1
             for _,i in ipairs(items) do
-                if (not quiet) then print('  ' .. dfhack.items.getDescription(i, 0)) end
+                printNotQuiet('  ' .. dfhack.items.getDescription(i, 0))
                 if (not dryrun) then dfhack.items.moveToGround(i, e.pos) end
                 i_count = i_count + 1
             end
@@ -34,4 +38,4 @@ for _,e in ipairs(df.global.world.items.other.TOOL) do
     end
 end
 
-print("fix/empty-wheelbarrows - removed " .. i_count .. " items from " .. e_count .. " wheelbarrows.")
+printNotQuiet("fix/empty-wheelbarrows - removed " .. i_count .. " items from " .. e_count .. " wheelbarrows.")
