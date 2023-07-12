@@ -11,7 +11,7 @@ local dryrun = false
 
 local cmds = argparse.processArgsGetopt(args, {
     {'q', 'quiet', handler=function() quiet = true end},
-    {'n', 'dryrun', handler=function() dryrun = true end},
+    {'d', 'dry-run', handler=function() dryrun = true end},
 })
 
 local i_count = 0
