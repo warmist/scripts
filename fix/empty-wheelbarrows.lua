@@ -2,18 +2,17 @@
 --rocks will occasionally get stuck in wheelbarrows, and accumulate if the wheelbarrow gets used.
 --this script empties all wheelbarrows which have rocks stuck in them.
 
+local argparse = require("argparse")
+
 local args = {...}
 
 local quiet = false
 local dryrun = false
-for i,arg in ipairs(args) do
-    if (arg == "--quiet") then
-        quiet = true
-    end
-    if (arg == "--dryrun") then
-        dryrun = true
-    end
-end
+
+local cmds = argparse.processArgsGetopt(args, {
+    {'q', 'quiet', handler=function() quiet = true end},
+    {'n', 'dryrun', handler=function() dryrun = true end},
+})
 
 local i_count = 0
 local e_count = 0
@@ -38,4 +37,4 @@ for _,e in ipairs(df.global.world.items.other.TOOL) do
     end
 end
 
-printNotQuiet("fix/empty-wheelbarrows - removed " .. i_count .. " items from " .. e_count .. " wheelbarrows.")
+printNotQuiet(("fix/empty-wheelbarrows - removed %d items from %d wheelbarrows."):format(i_count, e_count))
