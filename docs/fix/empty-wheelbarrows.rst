@@ -15,7 +15,7 @@ Usage
 -----
 ::
 
-    fix/empty-wheelbarrows [options]
+    fix/empty-wheelbarrows [<options>]
 
 Examples
 --------
