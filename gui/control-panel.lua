@@ -119,6 +119,8 @@ local REPEATS = {
     ['warn-starving']={
         desc='Show a warning dialog when units are starving or dehydrated.',
         command={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
+    ['empty-wheelbarrows']={
+        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-wheelbarrows', '-q', ']'}},
 }
 local REPEATS_LIST = {}
 for k in pairs(REPEATS) do

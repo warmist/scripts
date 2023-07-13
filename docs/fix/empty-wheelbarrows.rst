@@ -9,7 +9,8 @@ Empties all wheelbarrows which contain rocks that have become 'stuck' in them.
 
 This works around the issue encountered with :bug:`6074`, and should be run
 if you notice wheelbarrows lying around with rocks in them that aren't
-being used in a task.
+being used in a task. This script can also be set to run periodically in
+the background by toggling the Maintenance task in `gui/control-panel`.
 
 Usage
 -----
@@ -26,8 +27,6 @@ Examples
     Lists all wheelbarrows that would be emptied and their contents without performing the action.
 ``fix/empty-wheelbarrows --quiet``
     Does the action while surpressing output to console.
-``repeat --name empty-wheelbarrows --time 1200 command [ fix/empty-wheelbarrows --quiet ]``
-    Runs empty-wheelbarrows quietly every 1200 game ticks, which is once per in-game day.
 
 Options
 -------
