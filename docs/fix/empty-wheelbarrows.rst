@@ -2,7 +2,7 @@ fix/empty-wheelbarrows
 ======================
 
 .. dfhack-tool::
-    :summary: Empties stuck items from wheelbarrows
+    :summary: Empties stuck items from wheelbarrows.
     :tags: fort bugfix items
 
 Empties all wheelbarrows which contain rocks that have become 'stuck' in them.
@@ -25,7 +25,7 @@ Examples
 ``fix/empty-wheelbarrows --dry-run``
     Lists all wheelbarrows that would be emptied and their contents without performing the action.
 ``fix/empty-wheelbarrows --quiet``
-    Does the action while surpressing output to console
+    Does the action while surpressing output to console.
 ``repeat --name empty-wheelbarrows --time 1200 command [ fix/empty-wheelbarrows --quiet ]``
     Runs empty-wheelbarrows quietly every 1200 game ticks, which is once per in-game day.
 
