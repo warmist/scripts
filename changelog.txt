@@ -15,6 +15,7 @@ that repo.
 
 ## New Scripts
 - `caravan`: new trade screen UI replacements for bringing goods to trade depot and trading
+- `fix/empty-wheelbarrows`: new script to empty stuck rocks from all wheelbarrows on the map
 
 ## Fixes
 - `gui/autodump`: when "include items claimed by jobs" is on, actually cancel the job so the item can be teleported
