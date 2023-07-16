@@ -8,6 +8,9 @@ local argparse = require('argparse')
 local eventful = require('plugins.eventful')
 local utils = require('utils')
 local repeatUtil = require('repeat-util')
+local gui = require('gui')
+local overlay = require('plugins.overlay')
+local widgets = require('gui.widgets')
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
     buildingplan = nil
@@ -41,6 +44,15 @@ REASON_TEXT = {
     [REASON.RISK_BLOCKING] = 'blocking',
     [REASON.ERASE_DESIGNATION] = 'designation',
     [REASON.DEADEND] = 'dead end',
+}
+
+--- Description of suspension
+--- This should likely not include description for any of the external
+--- reasons
+REASON_DESCRIPTION = {
+    [REASON.RISK_BLOCKING] = 'Risk blocking another',
+    [REASON.ERASE_DESIGNATION] = 'On a tile designation',
+    [REASON.DEADEND] = 'Blocking a dead-end'
 }
 
 --- Suspension reasons from an external source
@@ -378,6 +390,18 @@ function SuspendManager:shouldStaySuspended(job)
     return self.suspensions[job.id]
 end
 
+function SuspendManager:suspensionDescription(job)
+    if not job then
+        return nil
+    end
+    local reason = self.suspensions[job.id]
+    if not reason then
+        return nil
+    end
+
+    return REASON_DESCRIPTION[reason]
+end
+
 --- Recompute the list of suspended jobs
 function SuspendManager:refresh()
     self.suspensions = {}
@@ -531,3 +555,42 @@ end
 if not dfhack_flags.module then
     main({...})
 end
+
+-- Overlay Widget
+JobOverlay = defclass(JobOverlay, overlay.OverlayWidget)
+JobOverlay.ATTRS{
+    default_pos={x=-41,y=14},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/BUILDING',
+    frame={w=30, h=5},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function JobOverlay:init()
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text='Staying suspended:'
+        },
+        widgets.Label{
+            frame={t=2, l=0},
+            text={'', {text=self:callback('get_reason_string')}}
+        }
+    }
+end
+
+function JobOverlay:get_reason_string()
+    return Instance:suspensionDescription(dfhack.gui.getSelectedJob())
+end
+
+function JobOverlay:render(dc)
+    if not isEnabled() or not self:get_reason_string() then
+        return
+    end
+    JobOverlay.super.render(self, dc)
+end
+
+OVERLAY_WIDGETS = {
+    inspector=JobOverlay
+}
