@@ -47,8 +47,8 @@ REASON_TEXT = {
 }
 
 --- Description of suspension
---- This should likely not include description for any of the external
---- reasons
+--- This only cover the reason where suspendmanager actively
+--- suspend jobs
 REASON_DESCRIPTION = {
     [REASON.RISK_BLOCKING] = 'Risk blocking another',
     [REASON.ERASE_DESIGNATION] = 'On a tile designation',
@@ -390,6 +390,8 @@ function SuspendManager:shouldStaySuspended(job)
     return self.suspensions[job.id]
 end
 
+--- Return a human readable description of why suspendmanager keeps a job suspended
+--- or nil if the job is not kept suspended
 function SuspendManager:suspensionDescription(job)
     if not job then
         return nil
