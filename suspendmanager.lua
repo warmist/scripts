@@ -50,9 +50,9 @@ REASON_TEXT = {
 --- This only cover the reason where suspendmanager actively
 --- suspend jobs
 REASON_DESCRIPTION = {
-    [REASON.RISK_BLOCKING] = 'Risk blocking another',
-    [REASON.ERASE_DESIGNATION] = 'On a tile designation',
-    [REASON.DEADEND] = 'Blocking a dead-end'
+    [REASON.RISK_BLOCKING] = 'May block another build job',
+    [REASON.ERASE_DESIGNATION] = 'Waiting for carve/smooth/engrave on same tile',
+    [REASON.DEADEND] = 'Blocks another build job'
 }
 
 --- Suspension reasons from an external source
@@ -183,6 +183,12 @@ local FILTER_JOB_TYPES = utils.invert{
     df.job_type.RemoveConstruction,
     df.job_type.RemoveStairs,
 }
+
+--- Returns true if the job is a planned job from buildingplan
+local function isBuildingPlanJob(job)
+    local bld = dfhack.job.getHolder(job)
+    return bld and buildingplan and buildingplan.isPlannedBuilding(bld)
+end
 
 --- Check if a building is blocking once constructed
 ---@param building building_constructionst|building
@@ -394,14 +400,15 @@ end
 --- or nil if the job is not kept suspended
 function SuspendManager:suspensionDescription(job)
     if not job then
-        return nil
+        return ''
     end
     local reason = self.suspensions[job.id]
-    if not reason then
-        return nil
-    end
-
-    return REASON_DESCRIPTION[reason]
+    return reason and REASON_DESCRIPTION[reason] or "External interruption"
+--    if not reason then
+--        return "External Interruption"
+--    end
+--
+--    return REASON_DESCRIPTION[reason] or "External Interruption"
 end
 
 --- Recompute the list of suspended jobs
@@ -415,8 +422,7 @@ function SuspendManager:refresh()
                 self.suspensions[job.id]=REASON.UNDER_WATER
             end
 
-            local bld = dfhack.job.getHolder(job)
-            if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
+            if isBuildingPlanJob(job) then
                 self.suspensions[job.id]=REASON.BUILDINGPLAN
             end
         end
@@ -558,41 +564,80 @@ if not dfhack_flags.module then
     main({...})
 end
 
--- Overlay Widget
-JobOverlay = defclass(JobOverlay, overlay.OverlayWidget)
-JobOverlay.ATTRS{
-    default_pos={x=-41,y=14},
+-- Overlay Widgets
+StatusOverlay = defclass(StatusOverlay, overlay.OverlayWidget)
+StatusOverlay.ATTRS{
+    default_pos={x=-39,y=16},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
-    frame={w=30, h=5},
+    frame={w=59, h=3},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
-function JobOverlay:init()
+function StatusOverlay:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text='Staying suspended:'
+            text={
+                {text=self:callback('get_status_string')}
+            }
         },
-        widgets.Label{
-            frame={t=2, l=0},
-            text={'', {text=self:callback('get_reason_string')}}
-        }
     }
 end
 
-function JobOverlay:get_reason_string()
-    return Instance:suspensionDescription(dfhack.gui.getSelectedJob())
+function StatusOverlay:get_status_string()
+    local job = dfhack.gui.getSelectedJob()
+    if job and job.flags.suspend then
+        return "Suspended because: " .. Instance:suspensionDescription(job) .. "."
+    end
+    return "Not suspended."
 end
 
-function JobOverlay:render(dc)
-    if not isEnabled() or not self:get_reason_string() then
+function StatusOverlay:render(dc)
+    local job = dfhack.gui.getSelectedJob()
+    if not job or not isEnabled() or isBuildingPlanJob(job) then
         return
     end
-    JobOverlay.super.render(self, dc)
+    StatusOverlay.super.render(self, dc)
+end
+
+ToggleOverlay = defclass(ToggleOverlay, overlay.OverlayWidget)
+ToggleOverlay.ATTRS{
+    default_pos={x=-57,y=23},
+    default_enabled=true,
+    viewscreens='dwarfmode/ViewSheets/BUILDING',
+    frame={w=40, h=1},
+    frame_background=gui.CLEAR_PEN,
+}
+
+function ToggleOverlay:init()
+    self:addviews{
+        widgets.ToggleHotkeyLabel{
+            view_id="enable_toggle",
+            frame={t=0, l=0, w=34},
+            label="Suspendmanager is",
+            key="CUSTOM_CTRL_M",
+            options={{value=true, label="Enabled"},
+                     {value=false, label="Disabled"}},
+            initial_option = isEnabled(),
+            on_change=function(val) dfhack.run_command{val and "enable" or "disable", "suspendmanager"} end
+        },
+    }
+end
+
+function ToggleOverlay:render(dc)
+    local job = dfhack.gui.getSelectedJob()
+    if not job or isBuildingPlanJob(job) then
+        return
+    end
+    -- Update the option: the "initial_option" value is not up to date since the widget
+    -- is not reinitialized for overlays
+    self.subviews.enable_toggle:setOption(isEnabled(), false)
+    ToggleOverlay.super.render(self, dc)
 end
 
 OVERLAY_WIDGETS = {
-    inspector=JobOverlay
+    status=StatusOverlay,
+    toggle=ToggleOverlay,
 }
