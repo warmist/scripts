@@ -404,11 +404,6 @@ function SuspendManager:suspensionDescription(job)
     end
     local reason = self.suspensions[job.id]
     return reason and REASON_DESCRIPTION[reason] or "External interruption"
---    if not reason then
---        return "External Interruption"
---    end
---
---    return REASON_DESCRIPTION[reason] or "External Interruption"
 end
 
 --- Recompute the list of suspended jobs
