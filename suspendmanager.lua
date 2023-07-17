@@ -588,7 +588,7 @@ end
 
 function StatusOverlay:render(dc)
     local job = dfhack.gui.getSelectedJob()
-    if not job or not isEnabled() or isBuildingPlanJob(job) then
+    if not job or job.job_type ~= df.job_type.ConstructBuilding or not isEnabled() or isBuildingPlanJob(job) then
         return
     end
     StatusOverlay.super.render(self, dc)
@@ -620,7 +620,7 @@ end
 
 function ToggleOverlay:render(dc)
     local job = dfhack.gui.getSelectedJob()
-    if not job or isBuildingPlanJob(job) then
+    if not job or job.job_type ~= df.job_type.ConstructBuilding or isBuildingPlanJob(job) then
         return
     end
     -- Update the option: the "initial_option" value is not up to date since the widget
