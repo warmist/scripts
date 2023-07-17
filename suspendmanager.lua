@@ -397,7 +397,7 @@ function SuspendManager:shouldStaySuspended(job)
 end
 
 --- Return a human readable description of why suspendmanager keeps a job suspended
---- or nil if the job is not kept suspended
+--- or "External interruption" if the job is not kept suspended by suspendmanager
 function SuspendManager:suspensionDescription(job)
     local reason = self.suspensions[job.id]
     return reason and REASON_DESCRIPTION[reason] or "External interruption"
@@ -581,7 +581,7 @@ end
 function StatusOverlay:get_status_string()
     local job = dfhack.gui.getSelectedJob()
     if job and job.flags.suspend then
-        return "Suspended because: " .. Instance:suspensionDescription(job) .. "."
+        return "Suspended because: " .. Instance:suspensionDescription(job) or "External interruption" .. "."
     end
     return "Not suspended."
 end
