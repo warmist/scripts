@@ -399,9 +399,6 @@ end
 --- Return a human readable description of why suspendmanager keeps a job suspended
 --- or nil if the job is not kept suspended
 function SuspendManager:suspensionDescription(job)
-    if not job then
-        return ''
-    end
     local reason = self.suspensions[job.id]
     return reason and REASON_DESCRIPTION[reason] or "External interruption"
 end
