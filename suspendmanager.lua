@@ -51,7 +51,7 @@ REASON_TEXT = {
 --- suspend jobs
 REASON_DESCRIPTION = {
     [REASON.RISK_BLOCKING] = 'May block another build job',
-    [REASON.ERASE_DESIGNATION] = 'Waiting for carve/smooth/engrave on same tile',
+    [REASON.ERASE_DESIGNATION] = 'Waiting for carve/smooth/engrave',
     [REASON.DEADEND] = 'Blocks another build job'
 }
 
