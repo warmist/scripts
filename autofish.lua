@@ -85,7 +85,9 @@ function toggle_fishing_labour(state)
             for _,v2 in ipairs(v.assigned_units) do
                 -- find unit by ID and toggle fishing
                 local unit = df.unit.find(v2)
-                unit.status.labors.FISH = state
+                if unit then
+                    unit.status.labors.FISH = state
+                end
             end
         end
     end
