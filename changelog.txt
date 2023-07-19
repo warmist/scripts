@@ -25,6 +25,7 @@ that repo.
 
 ## Misc Improvements
 - `gui/unit-syndromes`: make lists searchable
+- `suspendmanager`: display the suspension reason when viewing a suspended building
 
 ## Removed
 
