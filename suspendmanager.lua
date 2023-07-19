@@ -581,7 +581,7 @@ end
 function StatusOverlay:get_status_string()
     local job = dfhack.gui.getSelectedJob()
     if job and job.flags.suspend then
-        return "Suspended because: " .. Instance:suspensionDescription(job) or "External interruption" .. "."
+        return "Suspended because: " .. Instance:suspensionDescription(job) .. "."
     end
     return "Not suspended."
 end
