@@ -74,9 +74,6 @@ local PREFERENCES = {
          desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
         HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
          desc='Don\'t show tools that give you god-like powers wherever DFHack tools are listed.'},
-        SUPPRESS_DUPLICATE_KEYBOARD_EVENTS={label='Prevent duplicate key events',
-         type='bool', default=true,
-         desc='Whether to pass key events through to DF when DFHack keybindings are triggered.'},
     },
     ['gui']={
         DEFAULT_INITIAL_PAUSE={label='DFHack tools autopause game', type='bool', default=true,
@@ -91,6 +88,17 @@ local PREFERENCES = {
          desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
         FILTER_FULL_TEXT={label='DFHack list filters search full text', type='bool', default=false,
          desc='Whether to search for a match in the full text (true) or just at the start of words (false).'},
+    },
+}
+local CPP_PREFERENCES = {
+    {
+        label='Prevent duplicate key events',
+        type='bool',
+        default=true,
+        desc='Whether to pass key events through to DF when DFHack keybindings are triggered.',
+        init_fmt=':lua dfhack.internal.setSuppressDuplicateKeyboardEvents(%s)',
+        get_fn=dfhack.internal.getSuppressDuplicateKeyboardEvents,
+        set_fn=dfhack.internal.setSuppressDuplicateKeyboardEvents,
     },
 }
 
@@ -648,24 +656,32 @@ function Preferences:onInput(keys)
     return handled
 end
 
+local function make_preference_text(label, value)
+    return {
+        {tile=BUTTON_PEN_LEFT},
+        {tile=CONFIGURE_PEN_CENTER},
+        {tile=BUTTON_PEN_RIGHT},
+        ' ',
+        ('%s (%s)'):format(label, value),
+    }
+end
+
 function Preferences:refresh()
     if self.subviews.input_dlg.visible then return end
     local choices = {}
     for ctx_name,settings in pairs(PREFERENCES) do
         local ctx_env = require(ctx_name)
         for id,spec in pairs(settings) do
-            local label = ('%s (%s)'):format(spec.label, ctx_env[id])
-            local text = {
-                {tile=BUTTON_PEN_LEFT},
-                {tile=CONFIGURE_PEN_CENTER},
-                {tile=BUTTON_PEN_RIGHT},
-                ' ',
-                label,
-            }
+            local text = make_preference_text(spec.label, ctx_env[id])
             table.insert(choices,
-                {text=text, desc=spec.desc, search_key=label,
+                {text=text, desc=spec.desc, search_key=text[#text],
                  ctx_env=ctx_env, id=id, spec=spec})
         end
+    end
+    for _,spec in ipairs(CPP_PREFERENCES) do
+        local text = make_preference_text(spec.label, spec.get_fn())
+        table.insert(choices,
+            {text=text, desc=spec.desc, search_key=text[#text], spec=spec})
     end
     table.sort(choices, function(a, b) return a.spec.label < b.spec.label end)
     local list = self.subviews.list
@@ -677,7 +693,11 @@ function Preferences:refresh()
 end
 
 local function preferences_set_and_save(self, choice, val)
-    choice.ctx_env[choice.id] = val
+    if choice.spec.set_fn then
+        choice.spec.set_fn(val)
+    else
+        choice.ctx_env[choice.id] = val
+    end
     self:do_save()
     self:refresh()
 end
@@ -685,11 +705,16 @@ end
 function Preferences:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
+    local cur_val
+    if choice.spec.get_fn then
+        cur_val = choice.spec.get_fn()
+    else
+        cur_val = choice.ctx_env[choice.id]
+    end
     if choice.spec.type == 'bool' then
-        preferences_set_and_save(self, choice, not choice.ctx_env[choice.id])
+        preferences_set_and_save(self, choice, not cur_val)
     elseif choice.spec.type == 'int' then
-        self.subviews.input_dlg:show(choice.id, choice.spec,
-                                     choice.ctx_env[choice.id])
+        self.subviews.input_dlg:show(choice.id or choice.spec.label, choice.spec, cur_val)
     end
 end
 
@@ -708,6 +733,10 @@ function Preferences:do_save()
                         ctx_name, id, tostring(ctx_env[id])))
             end
         end
+        for _,spec in ipairs(CPP_PREFERENCES) do
+            local line = spec.init_fmt:format(spec.get_fn())
+            f:write(('%s\n'):format(line))
+        end
     end
     save_file(PREFERENCES_INIT_FILE, save_fn)
 end
@@ -718,6 +747,9 @@ function Preferences:restore_defaults()
         for id,spec in pairs(settings) do
             ctx_env[id] = spec.default
         end
+    end
+    for _,spec in ipairs(CPP_PREFERENCES) do
+        spec.set_fn(spec.default)
     end
     os.remove(PREFERENCES_INIT_FILE)
     self:refresh()
