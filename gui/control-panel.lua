@@ -22,6 +22,7 @@ local FORT_SERVICES = {
     'autolabor',
     'autonestbox',
     'autoslab',
+    'dwarfvet',
     'emigration',
     'fastdwarf',
     'fix/protect-nicks',
