@@ -264,8 +264,13 @@ function EditPanel:reset_history_idx()
     self.history_idx = #history + 1
 end
 
-function EditPanel:set_text(text)
-    self.subviews.editfield:setText(text)
+function EditPanel:set_text(text, inhibit_change_callback)
+    local edit = self.subviews.editfield
+    if inhibit_change_callback then
+        edit.on_change = nil
+    end
+    edit:setText(text)
+    edit.on_change = self.on_change
     self:reset_history_idx()
 end
 
@@ -629,7 +634,7 @@ function LauncherUI:init(args)
 end
 
 function LauncherUI:update_help(text, firstword, show_help)
-    local firstword = firstword or get_first_word(text)
+    firstword = firstword or get_first_word(text)
     if firstword == self.firstword then
         return
     end
@@ -732,7 +737,7 @@ end
 
 function LauncherUI:on_autocomplete(_, option)
     if option then
-        self.subviews.edit:set_text(option.text)
+        self.subviews.edit:set_text(option.text..' ', true)
         self:update_help(option.text)
     end
 end
@@ -773,7 +778,6 @@ function LauncherUI:run_command(reappear, command)
     end
     -- reappear and show the command output
     self.subviews.edit:set_text('')
-    self:on_edit_input('')
     if #output == 0 then
         output = 'Command finished successfully'
     else
