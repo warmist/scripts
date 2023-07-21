@@ -9,6 +9,8 @@ local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_list = reqscript('internal/quickfort/list')
 local quickfort_set = reqscript('internal/quickfort/set')
 
+local GLOBAL_KEY = 'quickfort'
+
 function refresh_scripts()
     -- reqscript all internal files here, even if they're not directly used by this
     -- top-level file. this ensures modified transitive dependencies are properly
@@ -65,9 +67,20 @@ local function do_gui(params)
     dfhack.run_script('gui/quickfort', table.unpack(params))
 end
 
+local function do_reset()
+    quickfort_list.blueprint_dirs = nil
+    quickfort_set.do_reset()
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc == SC_WORLD_LOADED or sc == SC_WORLD_UNLOADED then
+        do_reset()
+    end
+end
+
 local action_switch = {
     set=quickfort_set.do_set,
-    reset=quickfort_set.do_reset,
+    reset=do_reset,
     list=quickfort_list.do_list,
     gui=do_gui,
     run=quickfort_command.do_command,

@@ -22,7 +22,8 @@ paste sections of your fort if you need to.
 There are many ready-to-use blueprints in the
 `blueprint library <blueprint-library-guide>` that is distributed with DFHack,
 so you can use this tool productively even if you haven't created any blueprints
-yourself.
+yourself. Additional library blueprints can be
+`added with mods <modding-guide>` as well.
 
 Usage
 -----

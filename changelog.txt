@@ -26,6 +26,7 @@ that repo.
 ## Misc Improvements
 - `gui/unit-syndromes`: make lists searchable
 - `suspendmanager`: display the suspension reason when viewing a suspended building
+- `quickfort`: blueprint libraries are now moddable -- add a ``blueprints/`` directory to your mod and they'll show up in `quickfort` and `gui/quickfort`!
 
 ## Removed
 

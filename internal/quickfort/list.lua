@@ -5,20 +5,45 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
+local scriptmanager = require('script-manager')
 local utils = require('utils')
 local xlsxreader = require('plugins.xlsxreader')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 local quickfort_set = reqscript('internal/quickfort/set')
 
--- blueprint_name is relative to the blueprints dir
+blueprint_dirs = blueprint_dirs or nil
+
+local function get_blueprint_dirs()
+    if blueprint_dirs then return blueprint_dirs end
+    blueprint_dirs = {}
+    for _,v in ipairs(scriptmanager.get_mod_paths('blueprints')) do
+        blueprint_dirs[v.id] = v.path
+    end
+    return blueprint_dirs
+end
+
 function get_blueprint_filepath(blueprint_name)
-    local is_library = blueprint_name:startswith('library/')
-    if is_library then blueprint_name = blueprint_name:sub(9) end
-    return ('%s/%s'):format(
-            is_library and
-                quickfort_set.get_setting('blueprints_library_dir') or
-                quickfort_set.get_setting('blueprints_user_dir'),
+    local fullpath = ('%s/%s'):format(
+        quickfort_set.get_setting('blueprints_user_dir'),
+        blueprint_name)
+    if dfhack.filesystem.exists(fullpath) then
+        return fullpath
+    end
+    local dirmap = get_blueprint_dirs()
+    local _, _, prefix = blueprint_name:find('^([^/]+)/')
+    if not prefix then
+        return fullpath
+    end
+    blueprint_name = blueprint_name:sub(#prefix + 2)
+    if prefix == 'library' then
+        return ('%s/%s'):format(
+            quickfort_set.get_setting('blueprints_library_dir'),
             blueprint_name)
+    end
+    if not dirmap[prefix] then
+        return fullpath
+    end
+    return ('%s/%s'):format(dirmap[prefix], blueprint_name)
 end
 
 local blueprint_cache = {}
@@ -92,15 +117,16 @@ end
 local blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
 local num_library_blueprints = 0
 
-local function scan_blueprint_dir(bp_dir, is_library)
+local function scan_blueprint_dir(bp_dir, library_prefix)
     local paths = dfhack.filesystem.listdir_recursive(bp_dir, nil, false)
     if not paths then
         dfhack.printerr(('Cannot find blueprints directory: "%s"'):format(bp_dir))
         return
     end
+    local is_library = library_prefix and #library_prefix > 0
     for _, v in ipairs(paths) do
         local file_aliases = {}
-        local path = (is_library and 'library/' or '') .. v.path
+        local path = (library_prefix or '') .. v.path
         if not v.isdir and v.path:lower():endswith('.csv') then
             local modelines, aliases = scan_csv_blueprint(path)
             file_aliases = aliases
@@ -163,8 +189,13 @@ end
 local function scan_blueprints()
     blueprints, blueprint_modes, file_scope_aliases = {}, {}, {}
     num_library_blueprints = 0
-    scan_blueprint_dir(quickfort_set.get_setting('blueprints_user_dir'), false)
-    scan_blueprint_dir(quickfort_set.get_setting('blueprints_library_dir'), true)
+    scan_blueprint_dir(quickfort_set.get_setting('blueprints_user_dir'))
+    scan_blueprint_dir(quickfort_set.get_setting('blueprints_library_dir'), 'library/')
+    for id,path in pairs(get_blueprint_dirs()) do
+        if id ~= 'library' then
+            scan_blueprint_dir(path, id..'/')
+        end
+    end
 end
 
 function get_blueprint_by_number(list_num)
