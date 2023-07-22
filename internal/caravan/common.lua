@@ -50,6 +50,12 @@ local function get_threshold(broker_skill)
     return math.huge
 end
 
+local function estimate(value, round_base, granularity)
+    local rounded = ((value+round_base)//granularity)*granularity
+    local clamped = math.max(rounded, granularity)
+    return clamped
+end
+
 -- If the item's value is below the threshold, it gets shown exactly as-is.
 -- Otherwise, if it's less than or equal to [threshold + 50], it will round to the nearest multiple of 10 as an Estimate
 -- Otherwise, if it's less than or equal to [threshold + 50] * 3, it will round to the nearest multiple of 100
@@ -59,10 +65,10 @@ function obfuscate_value(value)
     local threshold = get_threshold(get_broker_skill())
     if value < threshold then return tostring(value) end
     threshold = threshold + 50
-    if value <= threshold then return ('~%d'):format(((value+5)//10)*10) end
-    if value <= threshold*3 then return ('~%d'):format(((value+50)//100)*100) end
-    if value <= threshold*30 then return ('~%d'):format(((value+500)//1000)*1000) end
-    return ('%d?'):format(((threshold*30 + 999)//1000)*1000)
+    if value <= threshold then return ('~%d'):format(estimate(value, 5, 10)) end
+    if value <= threshold*3 then return ('~%d'):format(estimate(value, 50, 100)) end
+    if value <= threshold*30 then return ('~%d'):format(estimate(value, 500, 1000)) end
+    return ('%d?'):format(estimate(threshold*30, 999, 1000))
 end
 
 local function to_title_case(str)
@@ -396,10 +402,13 @@ function get_risky_items(banned_items)
     return risky_items
 end
 
+local function to_item_type_str(item_type)
+    return string.lower(df.item_type[item_type]):gsub('_', ' ')
+end
+
 local function make_item_description(item_type, subtype)
     local itemdef = dfhack.items.getSubtypeDef(item_type, subtype)
-    return itemdef and string.lower(itemdef.name) or
-        string.lower(df.item_type[item_type]):gsub('_', ' ')
+    return itemdef and string.lower(itemdef.name) or to_item_type_str(item_type)
 end
 
 local function get_banned_token(banned_items)

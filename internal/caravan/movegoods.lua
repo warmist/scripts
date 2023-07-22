@@ -13,9 +13,9 @@ local widgets = require('gui.widgets')
 MoveGoods = defclass(MoveGoods, widgets.Window)
 MoveGoods.ATTRS {
     frame_title='Move goods to/from depot',
-    frame={w=84, h=45},
+    frame={w=84, h=46},
     resizable=true,
-    resize_min={w=81,h=35},
+    resize_min={h=35},
     pending_item_ids=DEFAULT_NIL,
     depot=DEFAULT_NIL,
 }
@@ -96,6 +96,7 @@ local function sort_by_quantity_asc(a, b)
 end
 
 local function is_active_caravan(caravan)
+    if caravan.flags.tribute then return false end
     local trade_state = caravan.trade_state
     return caravan.time_remaining > 0 and
         (trade_state == df.caravan_state.T_trade_state.Approaching or
@@ -414,6 +415,7 @@ function MoveGoods:cache_choices(disable_buckets)
             local data = {
                 desc=desc,
                 per_item_value=value,
+                item=item, -- a representative item that we can use for filtering later
                 items={[item_id]={item=item, pending=is_pending, banned=is_banned, risky=is_risky, requested=is_requested}},
                 item_type=item:getType(),
                 item_subtype=item:getSubtype(),
@@ -650,7 +652,7 @@ MoveGoodsOverlay.ATTRS{
     default_pos={x=-64, y=10},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING/TradeDepot',
-    frame={w=31, h=1},
+    frame={w=33, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -664,6 +666,7 @@ local function has_trade_depot_and_caravan()
     end
 
     for _, caravan in ipairs(df.global.plotinfo.caravans) do
+        if caravan.flags.tribute then goto continue end
         local trade_state = caravan.trade_state
         local time_remaining = caravan.time_remaining
         if time_remaining > 0 and
@@ -672,13 +675,14 @@ local function has_trade_depot_and_caravan()
         then
             return true
         end
+        ::continue::
     end
     return false
 end
 
 function MoveGoodsOverlay:init()
     self:addviews{
-        widgets.HotkeyLabel{
+        widgets.TextButton{
             frame={t=0, l=0},
             label='DFHack move trade goods',
             key='CUSTOM_CTRL_T',
@@ -694,11 +698,10 @@ end
 
 AssignTradeOverlay = defclass(AssignTradeOverlay, overlay.OverlayWidget)
 AssignTradeOverlay.ATTRS{
-    default_pos={x=-3,y=-25},
+    default_pos={x=-41,y=-5},
     default_enabled=true,
     viewscreens='dwarfmode/AssignTrade',
-    frame={w=27, h=3},
-    frame_style=gui.MEDIUM_FRAME,
+    frame={w=33, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -707,9 +710,9 @@ function AssignTradeOverlay:init()
         scr:sendInputToParent('LEAVESCREEN')
     end
     self:addviews{
-        widgets.HotkeyLabel{
+        widgets.TextButton{
             frame={t=0, l=0},
-            label='DFHack goods UI',
+            label='DFHack move trade goods',
             key='CUSTOM_CTRL_T',
             on_activate=function()
                 local depot = df.global.game.main_interface.assign_trade.trade_depot_bld
