@@ -303,8 +303,7 @@ function Trade:init()
     self.subviews.list.edit = self.subviews.search
     self.subviews.search.on_change = self.subviews.list:callback('onFilterChange')
 
-    self:check_cache()
-    self.subviews.list:setChoices(self:get_choices())
+    self:reset_cache()
 end
 
 function Trade:refresh_list(sort_widget, sort_fn)
@@ -319,9 +318,11 @@ function Trade:refresh_list(sort_widget, sort_fn)
     end
     local list = self.subviews.list
     local saved_filter = list:getFilter()
+    local saved_top = list.list.page_top
     list:setFilter('')
     list:setChoices(self:get_choices(), list:getSelected())
     list:setFilter(saved_filter)
+    list.list:on_scrollbar(math.max(0, saved_top - list.list.page_top))
 end
 
 local function is_ethical_product(item, animal_ethics, wood_ethics)
@@ -486,18 +487,9 @@ function Trade:toggle_visible()
     end
 end
 
-function Trade:check_cache()
-    if self.saved_talkline ~= trade.talkline then
-        self.saved_talkline = trade.talkline
-        -- react to trade button being clicked
-        self.choices = {[0]={}, [1]={}}
-        self:refresh_list()
-    end
-end
-
-function Trade:onRenderFrame(dc, rect)
-    Trade.super.onRenderFrame(self, dc, rect)
-    self:check_cache()
+function Trade:reset_cache()
+    self.choices = {[0]={}, [1]={}}
+    self:refresh_list()
 end
 
 -- -------------------
@@ -512,12 +504,26 @@ TradeScreen.ATTRS {
 }
 
 function TradeScreen:init()
-    self:addviews{Trade{}}
+    self.trade_window = Trade{}
+    self:addviews{self.trade_window}
+end
+
+function TradeScreen:onInput(keys)
+    if self.reset_pending then return false end
+    local handled = TradeScreen.super.onInput(self, keys)
+    if keys._MOUSE_L_DOWN and not self.trade_window:getMouseFramePos() then
+        -- "trade" or "offer" buttons may have been clicked and we need to reset the cache
+        self.reset_pending = true
+    end
+    return handled
 end
 
 function TradeScreen:onRenderFrame()
     if not df.global.game.main_interface.trade.open then
         view:dismiss()
+    elseif self.reset_pending then
+        self.reset_pending = nil
+        self.trade_window:reset_cache()
     end
 end
 
