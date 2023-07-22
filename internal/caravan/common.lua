@@ -1,6 +1,7 @@
 --@ module = true
 
 local dialogs = require('gui.dialogs')
+local scriptmanager = require('script-manager')
 local widgets = require('gui.widgets')
 
 CH_UP = string.char(30)
@@ -50,6 +51,12 @@ local function get_threshold(broker_skill)
     return math.huge
 end
 
+local function estimate(value, round_base, granularity)
+    local rounded = ((value+round_base)//granularity)*granularity
+    local clamped = math.max(rounded, granularity)
+    return clamped
+end
+
 -- If the item's value is below the threshold, it gets shown exactly as-is.
 -- Otherwise, if it's less than or equal to [threshold + 50], it will round to the nearest multiple of 10 as an Estimate
 -- Otherwise, if it's less than or equal to [threshold + 50] * 3, it will round to the nearest multiple of 100
@@ -59,10 +66,10 @@ function obfuscate_value(value)
     local threshold = get_threshold(get_broker_skill())
     if value < threshold then return tostring(value) end
     threshold = threshold + 50
-    if value <= threshold then return ('~%d'):format(((value+5)//10)*10) end
-    if value <= threshold*3 then return ('~%d'):format(((value+50)//100)*100) end
-    if value <= threshold*30 then return ('~%d'):format(((value+500)//1000)*1000) end
-    return ('%d?'):format(((threshold*30 + 999)//1000)*1000)
+    if value <= threshold then return ('~%d'):format(estimate(value, 5, 10)) end
+    if value <= threshold*3 then return ('~%d'):format(estimate(value, 50, 100)) end
+    if value <= threshold*30 then return ('~%d'):format(estimate(value, 500, 1000)) end
+    return ('%d?'):format(estimate(threshold*30, 999, 1000))
 end
 
 local function to_title_case(str)
@@ -175,7 +182,7 @@ function get_slider_widgets(self, suffix)
             },
         },
         widgets.Panel{
-            frame={t=5, l=0, r=0, h=4},
+            frame={t=6, l=0, r=0, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality'..suffix,
@@ -240,7 +247,7 @@ function get_slider_widgets(self, suffix)
             },
         },
         widgets.Panel{
-            frame={t=10, l=0, r=0, h=4},
+            frame={t=12, l=0, r=0, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_value'..suffix,
@@ -396,10 +403,13 @@ function get_risky_items(banned_items)
     return risky_items
 end
 
+local function to_item_type_str(item_type)
+    return string.lower(df.item_type[item_type]):gsub('_', ' ')
+end
+
 local function make_item_description(item_type, subtype)
     local itemdef = dfhack.items.getSubtypeDef(item_type, subtype)
-    return itemdef and string.lower(itemdef.name) or
-        string.lower(df.item_type[item_type]):gsub('_', ' ')
+    return itemdef and string.lower(itemdef.name) or to_item_type_str(item_type)
 end
 
 local function get_banned_token(banned_items)
@@ -448,7 +458,96 @@ local function get_ethics_token(animal_ethics, wood_ethics)
     }
 end
 
-function get_info_widgets(self, export_agreements)
+local PREDICATE_LIBRARY = {
+    {name='weapons-grade metal', match=function(item)
+        if item.mat_type ~= 0 then return false end
+        local flags = df.global.world.raws.inorganics[item.mat_index].material.flags
+        return flags.IS_METAL and
+            (flags.ITEMS_METAL or flags.ITEMS_WEAPON or flags.ITEMS_WEAPON_RANGED or flags.ITEMS_AMMO or flags.ITEMS_ARMOR)
+    end},
+}
+for _,item_type in ipairs(df.item_type) do
+    table.insert(PREDICATE_LIBRARY, {
+        name=to_item_type_str(item_type),
+        group='item type',
+        match=function(item) return item_type == item:getType() end,
+    })
+end
+
+local PREDICATES_VAR = 'PREDICATES'
+
+local function get_user_predicates()
+    local user_predicates = {}
+    local load_user_predicates = function(env_name, env)
+        local predicates = env[PREDICATES_VAR]
+        if not predicates then return end
+        if type(predicates) ~= 'table' then
+            dfhack.printerr(
+                    ('error loading predicates from "%s": %s map is malformed')
+                    :format(env_name, PREDICATES_VAR))
+            return
+        end
+        for i,predicate in ipairs(predicates) do
+            if type(predicate) ~= 'table' then
+                dfhack.printerr(('error loading predicate %s:%d (must be a table)'):format(env_name, i))
+                goto continue
+            end
+            if type(predicate.name) ~= 'string' or #predicate.name == 0 then
+                dfhack.printerr(('error loading predicate %s:%d (must have a string "name" field)'):format(env_name, i))
+                goto continue
+            end
+            if type(predicate.match) ~= 'function' then
+                dfhack.printerr(('error loading predicate %s:%d (must have a function "match" field)'):format(env_name, i))
+                goto continue
+            end
+            table.insert(user_predicates, {id=('%s:%s'):format(env_name, predicate.name), name=predicate.name, match=predicate.match})
+            ::continue::
+        end
+    end
+    scriptmanager.foreach_module_script(load_user_predicates)
+    return user_predicates
+end
+
+local function customize_predicates(predicates, on_close)
+    local user_predicates = get_user_predicates()
+    local predicate = nil
+    if #user_predicates > 0 then
+        predicate = user_predicates[1]
+    else
+        predicate = PREDICATE_LIBRARY[1]
+    end
+    predicates[predicate.name] = {match=predicate.match, show=true}
+    on_close()
+end
+
+local function make_predicate_str(predicates)
+    local preset, names = nil, {}
+    for name, predicate in pairs(predicates) do
+        if not preset then
+            preset = predicate.preset or ''
+        end
+        if #preset > 0 and preset ~= predicate.preset then
+            preset = ''
+        end
+        table.insert(names, name)
+    end
+    if preset and #preset > 0 then
+        return preset
+    end
+    if #names > 0 then
+        return table.concat(names, ', ')
+    end
+    return 'All'
+end
+
+local function get_context_predicates(context)
+    return {}
+end
+
+function get_info_widgets(self, export_agreements, context)
+    self.predicates = get_context_predicates(context)
+    local predicate_str = make_predicate_str(self.predicates)
+
     return {
         widgets.Panel{
             frame={t=0, l=0, r=0, h=2},
@@ -537,7 +636,56 @@ function get_info_widgets(self, export_agreements)
                 },
             },
         },
+        widgets.Panel{
+            frame={t=13, l=0, r=0, h=2},
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text='Advanced filter:',
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=18, w=9},
+                    key='CUSTOM_SHIFT_J',
+                    label='[edit]',
+                    on_activate=function()
+                        customize_predicates(self.predicates,
+                            function()
+                                predicate_str = make_predicate_str(self.predicates)
+                                self:refresh_list()
+                            end)
+                    end,
+                },
+                widgets.HotkeyLabel{
+                    frame={t=0, l=34, w=10},
+                    key='CUSTOM_SHIFT_K',
+                    label='[clear]',
+                    text_pen=COLOR_LIGHTRED,
+                    on_activate=function()
+                        self.predicates = {}
+                        predicate_str = make_predicate_str(self.predicates)
+                        self:refresh_list()
+                    end,
+                    enabled=function() return next(self.predicates) end,
+                },
+                widgets.Label{
+                    frame={t=1, l=2},
+                    text={{text=function() return predicate_str end}},
+                    text_pen=COLOR_GREEN,
+                },
+            },
+        },
     }
+end
+
+function pass_predicates(item, predicates)
+    local has_show = false
+    for _,predicate in pairs(predicates) do
+        local matches = predicate.match(item)
+        has_show = has_show or predicate.show
+        if matches and predicate.show then return true end
+        if not matches and predicate.hide then return false end
+    end
+    return not has_show
 end
 
 local function match_risky(item, risky_items)

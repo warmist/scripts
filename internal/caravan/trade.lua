@@ -29,6 +29,7 @@ local trade = df.global.game.main_interface.trade
 -- -------------------
 -- Trade
 --
+
 Trade = defclass(Trade, widgets.Window)
 Trade.ATTRS {
     frame_title='Select trade goods',
@@ -367,6 +368,7 @@ function Trade:cache_choices(list_idx, trade_bins)
             desc=desc,
             value=common.get_perceived_value(item, trade.mer, list_idx == 1),
             list_idx=list_idx,
+            item=item,
             item_idx=item_idx,
             quality=item.flags.artifact and 6 or item:getQuality(),
             wear=wear_level,
@@ -434,6 +436,9 @@ function Trade:get_choices()
             if data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
                 goto continue
             end
+        end
+        if not common.pass_predicates(data.item, self.predicates) then
+            goto continue
         end
         table.insert(choices, choice)
         ::continue::
@@ -694,22 +699,15 @@ TradeOverlay.ATTRS{
     default_pos={x=-3,y=-12},
     default_enabled=true,
     viewscreens='dwarfmode/Trade/Default',
-    frame={w=27, h=15},
+    frame={w=27, h=13},
     frame_style=gui.MEDIUM_FRAME,
     frame_background=gui.CLEAR_PEN,
 }
 
 function TradeOverlay:init()
     self:addviews{
-        widgets.HotkeyLabel{
-            frame={t=0, l=0},
-            label='DFHack trade UI',
-            key='CUSTOM_CTRL_T',
-            enabled=function() return trade.stillunloading == 0 and trade.havetalker == 1 end,
-            on_activate=function() view = view and view:raise() or TradeScreen{}:show() end,
-        },
         widgets.Label{
-            frame={t=2, l=0},
+            frame={t=0, l=0},
             text={
                 {text='Shift+Click checkbox', pen=COLOR_LIGHTGREEN}, ':',
                 NEWLINE,
@@ -717,7 +715,7 @@ function TradeOverlay:init()
             },
         },
         widgets.Label{
-            frame={t=5, l=0},
+            frame={t=3, l=0},
             text={
                 {text='Ctrl+Click checkbox', pen=COLOR_LIGHTGREEN}, ':',
                 NEWLINE,
@@ -725,24 +723,24 @@ function TradeOverlay:init()
             },
         },
         widgets.HotkeyLabel{
-            frame={t=8, l=0},
+            frame={t=6, l=0},
             label='collapse bins',
             key='CUSTOM_CTRL_C',
             on_activate=collapseAllContainers,
         },
         widgets.HotkeyLabel{
-            frame={t=9, l=0},
+            frame={t=7, l=0},
             label='collapse all',
             key='CUSTOM_CTRL_X',
             on_activate=collapseEverything,
         },
         widgets.Label{
-            frame={t=11, l=0},
+            frame={t=9, l=0},
             text = 'Shift+Scroll',
             text_pen=COLOR_LIGHTGREEN,
         },
         widgets.Label{
-            frame={t=11, l=12},
+            frame={t=9, l=12},
             text = ': fast scroll',
         },
     }
@@ -773,7 +771,38 @@ function TradeOverlay:onInput(keys)
             handle_ctrl_click_on_render = true
             copyGoodflagState()
         end
-    elseif keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+    end
+end
+
+-- -------------------
+-- TradeBannerOverlay
+--
+
+TradeBannerOverlay = defclass(TradeBannerOverlay, overlay.OverlayWidget)
+TradeBannerOverlay.ATTRS{
+    default_pos={x=-31,y=-7},
+    default_enabled=true,
+    viewscreens='dwarfmode/Trade/Default',
+    frame={w=25, h=1},
+    frame_background=gui.CLEAR_PEN,
+}
+
+function TradeBannerOverlay:init()
+    self:addviews{
+        widgets.TextButton{
+            frame={t=0, l=0},
+            label='DFHack trade UI',
+            key='CUSTOM_CTRL_T',
+            enabled=function() return trade.stillunloading == 0 and trade.havetalker == 1 end,
+            on_activate=function() view = view and view:raise() or TradeScreen{}:show() end,
+        },
+    }
+end
+
+function TradeBannerOverlay:onInput(keys)
+    if TradeBannerOverlay.super.onInput(self, keys) then return true end
+
+    if keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
         if view then
             view:dismiss()
         end

@@ -13,9 +13,9 @@ local widgets = require('gui.widgets')
 MoveGoods = defclass(MoveGoods, widgets.Window)
 MoveGoods.ATTRS {
     frame_title='Move goods to/from depot',
-    frame={w=84, h=45},
+    frame={w=84, h=46},
     resizable=true,
-    resize_min={w=81,h=35},
+    resize_min={h=35},
     pending_item_ids=DEFAULT_NIL,
     depot=DEFAULT_NIL,
 }
@@ -96,6 +96,7 @@ local function sort_by_quantity_asc(a, b)
 end
 
 local function is_active_caravan(caravan)
+    if caravan.flags.tribute then return false end
     local trade_state = caravan.trade_state
     return caravan.time_remaining > 0 and
         (trade_state == df.caravan_state.T_trade_state.Approaching or
@@ -156,7 +157,7 @@ function MoveGoods:init()
             on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Panel{
-            frame={t=2, l=0, w=38, h=14},
+            frame={t=2, l=0, w=38, h=16},
             subviews=common.get_slider_widgets(self),
         },
         widgets.ToggleHotkeyLabel{
@@ -172,11 +173,11 @@ function MoveGoods:init()
             on_change=function() self:refresh_list() end,
         },
         widgets.Panel{
-            frame={t=4, l=40, r=0, h=12},
+            frame={t=4, l=40, r=0, h=15},
             subviews=common.get_info_widgets(self, get_export_agreements()),
         },
         widgets.Panel{
-            frame={t=17, l=0, r=0, b=6},
+            frame={t=19, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -414,6 +415,7 @@ function MoveGoods:cache_choices(disable_buckets)
             local data = {
                 desc=desc,
                 per_item_value=value,
+                item=item, -- a representative item that we can use for filtering later
                 items={[item_id]={item=item, pending=is_pending, banned=is_banned, risky=is_risky, requested=is_requested}},
                 item_type=item:getType(),
                 item_subtype=item:getSubtype(),
@@ -512,6 +514,9 @@ function MoveGoods:get_choices()
             elseif data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
                 goto continue
             end
+        end
+        if not common.pass_predicates(data.item, self.predicates) then
+            goto continue
         end
         table.insert(choices, choice)
         ::continue::
@@ -650,7 +655,7 @@ MoveGoodsOverlay.ATTRS{
     default_pos={x=-64, y=10},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING/TradeDepot',
-    frame={w=31, h=1},
+    frame={w=33, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -664,6 +669,7 @@ local function has_trade_depot_and_caravan()
     end
 
     for _, caravan in ipairs(df.global.plotinfo.caravans) do
+        if caravan.flags.tribute then goto continue end
         local trade_state = caravan.trade_state
         local time_remaining = caravan.time_remaining
         if time_remaining > 0 and
@@ -672,13 +678,14 @@ local function has_trade_depot_and_caravan()
         then
             return true
         end
+        ::continue::
     end
     return false
 end
 
 function MoveGoodsOverlay:init()
     self:addviews{
-        widgets.HotkeyLabel{
+        widgets.TextButton{
             frame={t=0, l=0},
             label='DFHack move trade goods',
             key='CUSTOM_CTRL_T',
