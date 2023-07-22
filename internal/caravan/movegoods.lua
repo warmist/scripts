@@ -698,11 +698,10 @@ end
 
 AssignTradeOverlay = defclass(AssignTradeOverlay, overlay.OverlayWidget)
 AssignTradeOverlay.ATTRS{
-    default_pos={x=-3,y=-25},
+    default_pos={x=-41,y=-5},
     default_enabled=true,
     viewscreens='dwarfmode/AssignTrade',
-    frame={w=27, h=3},
-    frame_style=gui.MEDIUM_FRAME,
+    frame={w=33, h=1},
     frame_background=gui.CLEAR_PEN,
 }
 
@@ -711,9 +710,9 @@ function AssignTradeOverlay:init()
         scr:sendInputToParent('LEAVESCREEN')
     end
     self:addviews{
-        widgets.HotkeyLabel{
+        widgets.TextButton{
             frame={t=0, l=0},
-            label='DFHack goods UI',
+            label='DFHack move trade goods',
             key='CUSTOM_CTRL_T',
             on_activate=function()
                 local depot = df.global.game.main_interface.assign_trade.trade_depot_bld
