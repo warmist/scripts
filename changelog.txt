@@ -14,6 +14,16 @@ that repo.
 # Future
 
 ## New Scripts
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.09-r2
+
+## New Scripts
 - `caravan`: new trade screen UI replacements for bringing goods to trade depot and trading
 - `fix/empty-wheelbarrows`: new script to empty stuck rocks from all wheelbarrows on the map
 
@@ -21,14 +31,12 @@ that repo.
 - `gui/autodump`: when "include items claimed by jobs" is on, actually cancel the job so the item can be teleported
 - `gui/gm-unit`: fix commandline processing when a unit id is specified
 - `suspendmanager`: take in account already built blocking buildings
-- `suspendmanager`: don't consider branches as a suitable access to a build
+- `suspendmanager`: don't consider tree branches as a suitable access path to a building
 
 ## Misc Improvements
 - `gui/unit-syndromes`: make lists searchable
 - `suspendmanager`: display the suspension reason when viewing a suspended building
 - `quickfort`: blueprint libraries are now moddable -- add a ``blueprints/`` directory to your mod and they'll show up in `quickfort` and `gui/quickfort`!
-
-## Removed
 
 # 50.09-r1
 
