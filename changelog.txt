@@ -18,6 +18,7 @@ that repo.
 ## Fixes
 
 ## Misc Improvements
+- `suspendmanager`: display a different color for jobs suspended by suspendmanager
 
 ## Removed
 
