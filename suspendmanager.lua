@@ -92,6 +92,17 @@ function preventBlockingEnabled()
     return Instance.preventBlocking
 end
 
+--- Returns true if the job is maintained suspended by suspendmanager
+---@param job job
+function isKeptSuspended(job)
+    if not isEnabled() or not preventBlockingEnabled() then
+        return false
+    end
+
+    local reason = Instance.suspensions[job.id]
+    return reason and not EXTERNAL_REASONS[reason]
+end
+
 local function persist_state()
     persist.GlobalTable[GLOBAL_KEY] = json.encode({
         enabled=enabled,
