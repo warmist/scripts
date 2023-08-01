@@ -16,6 +16,7 @@ that repo.
 ## New Scripts
 
 ## Fixes
+- `suspendmanager`: Fix the overlay enabling/disabling `suspendmanager` unexpectedly
 
 ## Misc Improvements
 

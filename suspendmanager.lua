@@ -618,15 +618,26 @@ function ToggleOverlay:init()
     }
 end
 
-function ToggleOverlay:render(dc)
+function ToggleOverlay:shouldRender()
     local job = dfhack.gui.getSelectedJob()
-    if not job or job.job_type ~= df.job_type.ConstructBuilding or isBuildingPlanJob(job) then
+    return job and job.job_type == df.job_type.ConstructBuilding and not isBuildingPlanJob(job)
+end
+
+function ToggleOverlay:render(dc)
+    if not self:shouldRender() then
         return
     end
     -- Update the option: the "initial_option" value is not up to date since the widget
     -- is not reinitialized for overlays
     self.subviews.enable_toggle:setOption(isEnabled(), false)
     ToggleOverlay.super.render(self, dc)
+end
+
+function ToggleOverlay:onInput(keys)
+    if not self:shouldRender() then
+        return
+    end
+    ToggleOverlay.super.onInput(self, keys)
 end
 
 OVERLAY_WIDGETS = {
