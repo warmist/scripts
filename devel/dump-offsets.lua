@@ -188,9 +188,9 @@ local data = ms.get_data_segment() or qerror('Could not find data segment')
 
 local search
 if dfhack.getArchitecture() == 64 then
-    search = {0x1234567812345678, 0x8765432187654321}
+    search = {0x1234567812345678, 0x8765432187654321, 0x89abcdef89abcdef}
 else
-    search = {0x12345678, 0x87654321}
+    search = {0x12345678, 0x87654321, 0x89abcdef}
 end
 
 local addrs = {}
@@ -202,15 +202,27 @@ function save_addr(name, addr)
     addrs[name] = addr
 end
 
+local extended = false
 local start = data.intptr_t:find_one(search)
+if start then
+    extended = true
+else
+    -- try searching for a non-extended table
+    table.remove(search, #search)
+    start = data.intptr_t:find_one(search)
+end
+if not start then
+    qerror('Could not find global table header')
+end
 
 local index = 1
+local entry_size = (extended and 3 or 2)
 while true do
-    local p_name = data.intptr_t[start + (index * 2)]
+    local p_name = data.intptr_t[start + (index * entry_size)]
     if p_name == 0 then
         break
     end
-    local g_addr = data.intptr_t[start + (index * 2) + 1]
+    local g_addr = data.intptr_t[start + (index * entry_size) + 1]
     local df_name = read_cstr(p_name)
     local g_name = GLOBALS[df_name]
     if df_name:find('^index[12]_') then
