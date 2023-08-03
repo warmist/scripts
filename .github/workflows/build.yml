@@ -3,6 +3,13 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+  test:
+    uses: DFHack/dfhack/.github/workflows/test.yml
+    with:
+      dfhack_ref: develop
+      scripts_ref: ${{ github.ref }}
+    secrets: inherit
+
   docs:
     uses: DFHack/dfhack/.github/workflows/build-linux.yml
     with:
