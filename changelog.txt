@@ -19,6 +19,7 @@ that repo.
 - `suspendmanager`: Fix the overlay enabling/disabling `suspendmanager` unexpectedly
 
 ## Misc Improvements
+- `devel/lsmem`: added support for filtering by memory addresses and filenames
 - `suspendmanager`: display a different color for jobs suspended by suspendmanager
 
 ## Removed
