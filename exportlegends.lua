@@ -50,9 +50,13 @@ step_percent = -1
 progress_percent = progress_percent or -1
 last_update_ms = 0
 
+-- should be frequent enough so that user can still effectively use
+-- the vanilla legends UI to browse while export is in progress
+local YIELD_TIMEOUT_MS = 10
+
 local function yield_if_timeout()
     local now_ms = dfhack.getTickCount()
-    if now_ms - last_update_ms > 10 then
+    if now_ms - last_update_ms > YIELD_TIMEOUT_MS then
         script.sleep(1, 'frames')
         last_update_ms = dfhack.getTickCount()
     end
@@ -65,7 +69,6 @@ local function progress_ipairs(vector, desc, interval)
     local cb = ipairs(vector)
     return function(vector, k, ...)
         if k then
-            local prev_progress_percent = progress_percent
             progress_percent = math.max(progress_percent, step_percent + ((k * step_size) // #vector))
             if #vector >= interval and (k % interval == 0 or k == #vector - 1) then
                 print(('        %s %i/%i (%0.f%%)'):format(desc, k, #vector, (k * 100) / #vector))
