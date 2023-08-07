@@ -1034,7 +1034,7 @@ LegendsOverlay.ATTRS{
     default_pos={x=2, y=2},
     default_enabled=true,
     viewscreens='legends/Default',
-    frame={w=70, h=5},
+    frame={w=55, h=5},
 }
 
 function LegendsOverlay:init()
@@ -1043,18 +1043,18 @@ function LegendsOverlay:init()
             view_id='button_mask',
             frame={t=0, l=0, w=15, h=3},
         },
-        widgets.Panel{
+        widgets.BannerPanel{
             frame={b=0, l=0, r=0, h=1},
             subviews={
                 widgets.ToggleHotkeyLabel{
                     view_id='do_export',
-                    frame={t=0, l=0, w=48},
-                    label='Also export extended legends data:',
+                    frame={t=0, l=1, w=53},
+                    label='Also export DFHack extended legends data:',
                     key='CUSTOM_CTRL_D',
                     visible=function() return progress_percent < 0 end,
                 },
                 widgets.Label{
-                    frame={t=0, l=0},
+                    frame={t=0, l=1},
                     text={
                         'Exporting ',
                         {text=function() return progress_item end},
