@@ -66,6 +66,7 @@ EXTERNAL_REASONS = {
 ---@class SuspendManager
 ---@field preventBlocking boolean
 ---@field suspensions table<integer, reason>
+---@field leadsToDeadend table<integer, boolean>
 ---@field lastAutoRunTick integer
 SuspendManager = defclass(SuspendManager)
 SuspendManager.ATTRS {
@@ -75,6 +76,9 @@ SuspendManager.ATTRS {
 
     --- Current job suspensions with their reasons
     suspensions = {},
+
+    --- Current job that are part of a dead-end, not worth considering as an exit
+    leadsToDeadend = {},
 
     --- Last tick where it was run automatically
     lastAutoRunTick = -1,
@@ -316,11 +320,6 @@ function SuspendManager:suspendDeadend(start_job)
     if not building then return end
     local pos = {x=building.centerx,y=building.centery,z=building.z}
 
-    -- visited building ids of this potential dead end
-    local visited = {
-        [building.id] = true
-    }
-
     --- Support dead ends of a maximum length of 1000
     for _=0,1000 do
         -- building plan on the way to the exit
@@ -338,7 +337,7 @@ function SuspendManager:suspendDeadend(start_job)
                 return
             end
 
-            if visited[impassablePlan.id] then
+            if self.leadsToDeadend[impassablePlan.id] then
                 -- already visited, not an exit
                 goto continue
             end
@@ -356,14 +355,19 @@ function SuspendManager:suspendDeadend(start_job)
 
         if not exit then return end
 
-        -- exit is the single exit point of this corridor, suspend its construction job
+        -- exit is the single exit point of this corridor, suspend its construction job,
+        -- mark the current tile of the corridor as leading to a dead-end
         -- and continue the exploration from its position
         for _,job in ipairs(exit.jobs) do
             if job.job_type == df.job_type.ConstructBuilding then
                 self.suspensions[job.id] = REASON.DEADEND
             end
         end
-        visited[exit.id] = true
+        local building = dfhack.buildings.findAtTile(pos)
+        if building then
+            self.leadsToDeadend[building.id] = true
+        end
+
         pos = {x=exit.centerx,y=exit.centery,z=exit.z}
     end
 end
@@ -417,6 +421,7 @@ end
 --- Recompute the list of suspended jobs
 function SuspendManager:refresh()
     self.suspensions = {}
+    self.leadsToDeadend = {}
 
     for _,job in utils.listpairs(df.global.world.jobs.list) do
         -- External reasons to suspend a job
