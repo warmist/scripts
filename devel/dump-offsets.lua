@@ -203,7 +203,7 @@ function save_addr(name, addr)
 end
 
 local extended = false
-local start = data.intptr_t:find_one(search)
+local start, start_addr = data.intptr_t:find_one(search)
 if start then
     extended = true
 else
@@ -213,6 +213,11 @@ else
 end
 if not start then
     qerror('Could not find global table header')
+end
+
+if extended then
+    -- structures only has types for an extended global table
+    save_addr('global_table', start_addr + (#search * data.intptr_t.esize))
 end
 
 local index = 1
@@ -236,3 +241,5 @@ while true do
     end
     index = index + 1
 end
+
+print('global table length:', index)
