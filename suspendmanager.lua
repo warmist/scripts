@@ -58,9 +58,9 @@ REASON_DESCRIPTION = {
 --- Suspension reasons from an external source
 --- SuspendManager does not actively suspend such jobs, but
 --- will not unsuspend them
-EXTERNAL_REASONS = {
-    [REASON.UNDER_WATER]=true,
-    [REASON.BUILDINGPLAN]=true,
+EXTERNAL_REASONS = utils.invert{
+    REASON.UNDER_WATER,
+    REASON.BUILDINGPLAN,
 }
 
 ---@class SuspendManager
@@ -156,25 +156,25 @@ function foreach_construction_job(fn)
     end
 end
 
-local CONSTRUCTION_IMPASSABLE = {
-    [df.construction_type.Wall]=true,
-    [df.construction_type.Fortification]=true,
+local CONSTRUCTION_IMPASSABLE = utils.invert{
+    df.construction_type.Wall,
+    df.construction_type.Fortification,
 }
 
-local BUILDING_IMPASSABLE = {
-    [df.building_type.Floodgate]=true,
-    [df.building_type.Statue]=true,
-    [df.building_type.WindowGlass]=true,
-    [df.building_type.WindowGem]=true,
-    [df.building_type.GrateWall]=true,
-    [df.building_type.BarsVertical]=true,
+local BUILDING_IMPASSABLE = utils.invert{
+    df.building_type.Floodgate,
+    df.building_type.Statue,
+    df.building_type.WindowGlass,
+    df.building_type.WindowGem,
+    df.building_type.GrateWall,
+    df.building_type.BarsVertical,
 }
 
 --- Designation job type that are erased if a building is built on top of it
-local ERASABLE_DESIGNATION = {
-    [df.job_type.CarveTrack]=true,
-    [df.job_type.SmoothFloor]=true,
-    [df.job_type.DetailFloor]=true,
+local ERASABLE_DESIGNATION = utils.invert{
+    df.job_type.CarveTrack,
+    df.job_type.SmoothFloor,
+    df.job_type.DetailFloor,
 }
 
 --- Job types that impact suspendmanager
@@ -363,11 +363,9 @@ function SuspendManager:suspendDeadend(start_job)
                 self.suspensions[job.id] = REASON.DEADEND
             end
         end
-        local building = dfhack.buildings.findAtTile(pos)
-        if building then
-            self.leadsToDeadend[building.id] = true
-        end
+        self.leadsToDeadend[building.id] = true
 
+        building = exit
         pos = {x=exit.centerx,y=exit.centery,z=exit.z}
     end
 end
