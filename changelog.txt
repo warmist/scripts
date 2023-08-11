@@ -29,6 +29,9 @@ Template for new versions:
 ## New Features
 - `exportlegends`: new overlay that integrates with the vanilla "Export XML" button. Now you can generate both the vanilla export and the extended data export with a single click!
 
+## New Scripts
+- `devel/scan-vtables`: Scan and dump likely vtable addresses (for memory research)
+
 ## Fixes
 - `suspendmanager`: Fix the overlay enabling/disabling `suspendmanager` unexpectedly
 - `caravan`: Correct price adjustment values in trade agreement details screen
