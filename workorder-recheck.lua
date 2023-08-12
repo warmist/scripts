@@ -1,11 +1,4 @@
 -- Resets the selected work order to the `Checking` state
---[====[
-
-workorder-recheck
-=================
-Sets the status to ``Checking`` (from ``Active``) of the selected work order.
-This makes the manager reevaluate its conditions.
-]====]
 
 --@ module = true
 
