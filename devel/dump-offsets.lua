@@ -167,6 +167,8 @@ GLOBALS = {
     next_unit_global_id = "unit_next_id",
     next_vehicle_global_id = "vehicle_next_id",
     next_written_content_global_id = "written_content_next_id",
+    next_divination_set_global_id = "divination_set_next_id",
+    next_image_set_global_id = "image_set_next_id",
 }
 
 function read_cstr(addr)
