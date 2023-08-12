@@ -3,18 +3,66 @@
 
 workorder-recheck
 =================
-Sets the status to ``Checking`` (from ``Active``) of the selected work order (in the ``j-m`` or ``u-m`` screens).
+Sets the status to ``Checking`` (from ``Active``) of the selected work order.
 This makes the manager reevaluate its conditions.
 ]====]
-local scr = dfhack.gui.getCurViewscreen()
-if df.viewscreen_jobmanagementst:is_instance(scr) then
-    local orders = df.global.world.manager_orders
-    local idx = scr.sel_idx
-    if idx < #orders then
-        orders[idx].status.active = false
+
+--@ module = true
+
+local gui = require('gui')
+local widgets = require('gui.widgets')
+local overlay = require('plugins.overlay')
+
+local function set_current_inactive()
+    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    if scrConditions.open then
+        local order = scrConditions.wq
+        order.status.active = false
     else
-        qerror("Invalid order selected")
+        qerror("Order conditions is not open")
     end
-else
-    qerror('Must be called on the manager screen (j-m or u-m)')
 end
+
+-- -------------------
+-- RecheckOverlay
+--
+
+local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions'
+
+RecheckOverlay = defclass(RecheckOverlay, overlay.OverlayWidget)
+RecheckOverlay.ATTRS{
+    default_pos={x=6,y=2},
+    default_enabled=true,
+    viewscreens=focusString,
+    frame={w=17, h=3},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+function RecheckOverlay:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='recheck',
+            key='CUSTOM_CTRL_A',
+            on_activate=set_current_inactive,
+        },
+    }
+end
+
+-- -------------------
+
+OVERLAY_WIDGETS = {
+    recheck=RecheckOverlay,
+}
+
+if dfhack_flags.module then
+    return
+end
+
+-- Check if on correct screen and perform the action if so
+if not dfhack.gui.matchFocusString(focusString) then
+    qerror('workorder-recheck must be run from the manager order conditions view')
+end
+
+set_current_inactive()
