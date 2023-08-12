@@ -438,6 +438,9 @@ function Trade:get_choices()
                 goto continue
             end
         end
+        if not common.pass_predicates(data.item, self.predicates) then
+            goto continue
+        end
         table.insert(choices, choice)
         ::continue::
     end
