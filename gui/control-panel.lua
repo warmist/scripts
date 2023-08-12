@@ -153,12 +153,10 @@ local function save_file(path, save_fn)
 end
 
 local function get_icon_pens()
-    local start = dfhack.textures.getControlPanelTexposStart()
-    local valid = start > 0
-    start = start + 10
-
-    local function tp(offset)
-        return valid and start + offset or nil
+    local tp = function(offset)
+        local texpos = dfhack.textures.getAsset("hack/data/art/control-panel.png", offset + 10)
+        if texpos == -1 then return nil end
+        return texpos
     end
 
     local enabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,

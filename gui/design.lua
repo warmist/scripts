@@ -115,31 +115,33 @@ end
 -- Utilities
 
 local function get_icon_pens()
-    local start = dfhack.textures.getControlPanelTexposStart()
-    local valid = start > 0
-    start = start + 10
+    local tp = function(offset)
+        local texpos = dfhack.textures.getAsset("hack/data/art/control-panel.png", offset + 10)
+        if texpos == -1 then return nil end
+        return texpos
+    end
 
     local enabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 0) or nil, ch = string.byte('[') }
+        tile = tp(0) or nil, ch = string.byte('[') }
     local enabled_pen_center = dfhack.pen.parse { fg = COLOR_LIGHTGREEN,
-        tile = valid and (start + 1) or nil, ch = 251 } -- check
+        tile = tp(1) or nil, ch = 251 } -- check
     local enabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 2) or nil, ch = string.byte(']') }
+        tile = tp(2) or nil, ch = string.byte(']') }
     local disabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 3) or nil, ch = string.byte('[') }
+        tile = tp(3) or nil, ch = string.byte('[') }
     local disabled_pen_center = dfhack.pen.parse { fg = COLOR_RED,
-        tile = valid and (start + 4) or nil, ch = string.byte('x') }
+        tile = tp(4) or nil, ch = string.byte('x') }
     local disabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 5) or nil, ch = string.byte(']') }
+        tile = tp(5) or nil, ch = string.byte(']') }
     local button_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 6) or nil, ch = string.byte('[') }
+        tile = tp(6) or nil, ch = string.byte('[') }
     local button_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 7) or nil, ch = string.byte(']') }
+        tile = tp(7) or nil, ch = string.byte(']') }
     local help_pen_center = dfhack.pen.parse {
-        tile = valid and (start + 8) or nil, ch = string.byte('?')
+        tile = tp(8) or nil, ch = string.byte('?')
     }
     local configure_pen_center = dfhack.pen.parse {
-        tile = valid and (start + 9) or nil, ch = 15
+        tile = tp(9) or nil, ch = 15
     } -- gear/masterwork symbol
     return enabled_pen_left, enabled_pen_center, enabled_pen_right,
         disabled_pen_left, disabled_pen_center, disabled_pen_right,
