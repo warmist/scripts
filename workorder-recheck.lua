@@ -15,6 +15,12 @@ local function set_current_inactive()
     end
 end
 
+local function is_current_active()
+    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    local order = scrConditions.wq
+    return order.status.active
+end
+
 -- -------------------
 -- RecheckOverlay
 --
@@ -26,7 +32,8 @@ RecheckOverlay.ATTRS{
     default_pos={x=6,y=8},
     default_enabled=true,
     viewscreens=focusString,
-    frame={w=19, h=3},
+    -- width is the sum of lengths of `[` + `Ctrl+A` + `: ` + button.label + `]`
+    frame={w=1 + 6 + 2 + 16 + 1, h=3},
 }
 
 local function areTabsInTwoRows()
@@ -55,9 +62,10 @@ function RecheckOverlay:init()
         widgets.TextButton{
             view_id = 'button',
             -- frame={t=0, l=0, r=0, h=1}, -- is set in `updateTextButtonFrame()`
-            label='recheck',
+            label='request re-check',
             key='CUSTOM_CTRL_A',
             on_activate=set_current_inactive,
+            enabled=is_current_active,
         },
     }
 
