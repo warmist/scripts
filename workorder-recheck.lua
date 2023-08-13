@@ -76,7 +76,7 @@ function RecheckOverlay:onRenderBody(dc)
         end
     end
 
-    RecheckOverlay.super.onRenderBody(dc)
+    RecheckOverlay.super.onRenderBody(self, dc)
 end
 
 -- -------------------
