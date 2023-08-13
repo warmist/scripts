@@ -137,8 +137,7 @@ end
 
 local tp = function(offset)
     local texpos = dfhack.textures.getAsset('hack/data/art/unsuspend', offset)
-    if texpos == -1 then return nil end
-    return texpos
+    return texpos >= 0 and texpos or nil
 end
 
 function SuspendOverlay:render_marker(dc, bld, screen_pos)

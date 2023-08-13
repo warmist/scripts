@@ -8,8 +8,7 @@ local to_pen = dfhack.pen.parse
 
 local tp = function(offset)
     local texpos = dfhack.textures.getAsset('hack/data/art/border-thin.png', offset)
-    if texpos == -1 then return nil end
-    return texpos
+    return texpos >= 0 and texpos or nil
 end
 
 local function get_key_pens(ch)

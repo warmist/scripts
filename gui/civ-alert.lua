@@ -124,8 +124,7 @@ local function get_button_pen(idx)
 
     local tp = function(offset)
         local texpos = dfhack.textures.getAsset('hack/data/art/control-panel.png', offset)
-        if texpos == -1 then return nil end
-        return texpos
+        return texpos >= 0 and texpos or nil
     end
 
     CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=tp(6), ch=string.byte('[')}
