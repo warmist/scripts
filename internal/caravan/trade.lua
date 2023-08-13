@@ -8,6 +8,7 @@
 local common = reqscript('internal/caravan/common')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local predicates = reqscript('internal/caravan/predicates')
 local widgets = require('gui.widgets')
 
 trader_selected_state = trader_selected_state or {}
@@ -438,7 +439,7 @@ function Trade:get_choices()
                 goto continue
             end
         end
-        if not common.pass_predicates(data.item, self.predicates) then
+        if not predicates.pass_predicates(data.item, self.predicates) then
             goto continue
         end
         table.insert(choices, choice)
