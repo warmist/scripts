@@ -116,7 +116,7 @@ end
 
 local function get_icon_pens()
     local tp = function(offset)
-        local texpos = dfhack.textures.getAsset("hack/data/art/control-panel.png", offset + 10)
+        local texpos = dfhack.textures.getAsset('hack/data/art/control-panel.png', offset + 10)
         if texpos == -1 then return nil end
         return texpos
     end

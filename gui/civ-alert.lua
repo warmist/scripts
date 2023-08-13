@@ -118,12 +118,12 @@ end
 last_tp_start = last_tp_start or 0
 CONFIG_BUTTON_PENS = CONFIG_BUTTON_PENS or {}
 local function get_button_pen(idx)
-    local start = dfhack.textures.getAsset("hack/data/art/control-panel.png", 0)
+    local start = dfhack.textures.getAsset('hack/data/art/control-panel.png', 0)
     if last_tp_start == start then return CONFIG_BUTTON_PENS[idx] end
     last_tp_start = start
 
     local tp = function(offset)
-        local texpos = dfhack.textures.getAsset("hack/data/art/control-panel.png", offset)
+        local texpos = dfhack.textures.getAsset('hack/data/art/control-panel.png', offset)
         if texpos == -1 then return nil end
         return texpos
     end

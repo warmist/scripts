@@ -136,7 +136,7 @@ function SuspendOverlay:refresh_screen_buildings()
 end
 
 local tp = function(offset)
-    local texpos = dfhack.textures.getAsset("hack/data/art/unsuspend", offset)
+    local texpos = dfhack.textures.getAsset('hack/data/art/unsuspend', offset)
     if texpos == -1 then return nil end
     return texpos
 end

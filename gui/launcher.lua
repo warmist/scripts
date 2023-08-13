@@ -474,13 +474,13 @@ function MainPanel:postUpdateLayout()
 end
 
 local tp_thin = function(offset)
-    local texpos = dfhack.textures.getAsset("hack/data/art/border-thin.png", offset)
+    local texpos = dfhack.textures.getAsset('hack/data/art/border-thin.png', offset)
     if texpos == -1 then return nil end
     return texpos
 end
 
 local tp_window = function(offset)
-    local texpos = dfhack.textures.getAsset("hack/data/art/border-window.png", offset)
+    local texpos = dfhack.textures.getAsset('hack/data/art/border-window.png', offset)
     if texpos == -1 then return nil end
     return texpos
 end
