@@ -27,8 +27,6 @@ RecheckOverlay.ATTRS{
     default_enabled=true,
     viewscreens=focusString,
     frame={w=19, h=3},
-    -- frame_style=gui.MEDIUM_FRAME,
-    -- frame_background=gui.CLEAR_PEN,
 }
 
 local function areTabsInTwoRows()
