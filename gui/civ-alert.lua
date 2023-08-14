@@ -122,9 +122,9 @@ local function get_button_pen(idx)
     if last_tp_start == start then return CONFIG_BUTTON_PENS[idx] end
     last_tp_start = start
 
-    CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=gui.tp_control_panel(7), ch=string.byte('[')}
-    CONFIG_BUTTON_PENS[2] = to_pen{tile=gui.tp_control_panel(10), ch=15} -- gear/masterwork symbol
-    CONFIG_BUTTON_PENS[3] = to_pen{fg=COLOR_CYAN, tile=gui.tp_control_panel(8), ch=string.byte(']')}
+    CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=curry(gui.tp_control_panel, 7), ch=string.byte('[')}
+    CONFIG_BUTTON_PENS[2] = to_pen{tile=curry(gui.tp_control_panel, 10), ch=15} -- gear/masterwork symbol
+    CONFIG_BUTTON_PENS[3] = to_pen{fg=COLOR_CYAN, tile=curry(gui.tp_control_panel, 8), ch=string.byte(']')}
 
     return CONFIG_BUTTON_PENS[idx]
 end

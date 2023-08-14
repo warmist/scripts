@@ -8,21 +8,21 @@ local to_pen = dfhack.pen.parse
 
 local function get_key_pens(ch)
     return {
-        lt=to_pen{tile=gui.tp_border_thin(1), write_to_lower=true},
-        t=to_pen{tile=gui.tp_border_thin(2), ch=ch, write_to_lower=true, top_of_text=true},
+        lt=to_pen{tile=curry(gui.tp_border_thin, 1), write_to_lower=true},
+        t=to_pen{tile=curry(gui.tp_border_thin, 2), ch=ch, write_to_lower=true, top_of_text=true},
         t_ascii=to_pen{ch=32},
-        rt=to_pen{tile=gui.tp_border_thin(3), write_to_lower=true},
-        lb=to_pen{tile=gui.tp_border_thin(15), write_to_lower=true},
-        b=to_pen{tile=gui.tp_border_thin(16), ch=ch, write_to_lower=true, bottom_of_text=true},
-        rb=to_pen{tile=gui.tp_border_thin(17), write_to_lower=true},
+        rt=to_pen{tile=curry(gui.tp_border_thin, 3), write_to_lower=true},
+        lb=to_pen{tile=curry(gui.tp_border_thin, 15), write_to_lower=true},
+        b=to_pen{tile=curry(gui.tp_border_thin, 16), ch=ch, write_to_lower=true, bottom_of_text=true},
+        rb=to_pen{tile=curry(gui.tp_border_thin, 17), write_to_lower=true},
     }
 end
 
 local function get_key_hover_pens(ch)
     return {
-        t=to_pen{tile=gui.tp_border_thin(2), fg=COLOR_WHITE, bg=COLOR_RED, ch=ch, write_to_lower=true, top_of_text=true},
+        t=to_pen{tile=curry(gui.tp_border_thin, 2), fg=COLOR_WHITE, bg=COLOR_RED, ch=ch, write_to_lower=true, top_of_text=true},
         t_ascii=to_pen{fg=COLOR_WHITE, bg=COLOR_RED, ch=ch == 0 and 0 or 32},
-        b=to_pen{tile=gui.tp_border_thin(16), fg=COLOR_WHITE, bg=COLOR_RED, ch=ch, write_to_lower=true, bottom_of_text=true},
+        b=to_pen{tile=curry(gui.tp_border_thin, 16), fg=COLOR_WHITE, bg=COLOR_RED, ch=ch, write_to_lower=true, bottom_of_text=true},
     }
 end
 

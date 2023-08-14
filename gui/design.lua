@@ -116,26 +116,26 @@ end
 
 local function get_icon_pens()
     local enabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(1) or nil, ch = string.byte('[') }
+        tile = curry(gui.tp_control_panel, 1) or nil, ch = string.byte('[') }
     local enabled_pen_center = dfhack.pen.parse { fg = COLOR_LIGHTGREEN,
-        tile = gui.tp_control_panel(2) or nil, ch = 251 } -- check
+        tile = curry(gui.tp_control_panel, 2) or nil, ch = 251 } -- check
     local enabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(3) or nil, ch = string.byte(']') }
+        tile = curry(gui.tp_control_panel, 3) or nil, ch = string.byte(']') }
     local disabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(4) or nil, ch = string.byte('[') }
+        tile = curry(gui.tp_control_panel, 4) or nil, ch = string.byte('[') }
     local disabled_pen_center = dfhack.pen.parse { fg = COLOR_RED,
-        tile = gui.tp_control_panel(5) or nil, ch = string.byte('x') }
+        tile = curry(gui.tp_control_panel, 5) or nil, ch = string.byte('x') }
     local disabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(6) or nil, ch = string.byte(']') }
+        tile = curry(gui.tp_control_panel, 6) or nil, ch = string.byte(']') }
     local button_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(7) or nil, ch = string.byte('[') }
+        tile = curry(gui.tp_control_panel, 7) or nil, ch = string.byte('[') }
     local button_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = gui.tp_control_panel(8) or nil, ch = string.byte(']') }
+        tile = curry(gui.tp_control_panel, 8) or nil, ch = string.byte(']') }
     local help_pen_center = dfhack.pen.parse {
-        tile = gui.tp_control_panel(9) or nil, ch = string.byte('?')
+        tile = curry(gui.tp_control_panel, 9) or nil, ch = string.byte('?')
     }
     local configure_pen_center = dfhack.pen.parse {
-        tile = gui.tp_control_panel(10) or nil, ch = 15
+        tile = curry(gui.tp_control_panel, 10) or nil, ch = 15
     } -- gear/masterwork symbol
     return enabled_pen_left, enabled_pen_center, enabled_pen_right,
         disabled_pen_left, disabled_pen_center, disabled_pen_right,
