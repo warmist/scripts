@@ -12,6 +12,8 @@ if not ok then
     buildingplan = nil
 end
 
+local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32)
+
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
     viewscreens='dwarfmode',
@@ -136,8 +138,7 @@ function SuspendOverlay:refresh_screen_buildings()
 end
 
 local tp = function(offset)
-    local texpos = dfhack.textures.getAsset('hack/data/art/unsuspend', offset)
-    return texpos >= 0 and texpos or nil
+    return dfhack.textures.getTexposByHandle(textures[offset])
 end
 
 function SuspendOverlay:render_marker(dc, bld, screen_pos)
@@ -149,13 +150,13 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
             or not job.flags.suspend then
         return
     end
-    local color, ch, texpos = COLOR_YELLOW, 'x', tp(1)
+    local color, ch, texpos = COLOR_YELLOW, 'x', tp(2)
     if buildingplan and buildingplan.isPlannedBuilding(bld) then
-        color, ch, texpos = COLOR_GREEN, 'P', tp(3)
+        color, ch, texpos = COLOR_GREEN, 'P', tp(4)
     elseif suspendmanager and suspendmanager.isKeptSuspended(job) then
-        color, ch, texpos = COLOR_WHITE, 'x', tp(2)
+        color, ch, texpos = COLOR_WHITE, 'x', tp(1)
     elseif data.suspend_count > 1 then
-        color, ch, texpos = COLOR_RED, 'X', tp(0)
+        color, ch, texpos = COLOR_RED, 'X', tp(1)
     end
     dc:seek(screen_pos.x, screen_pos.y):tile(ch, texpos, color)
 end

@@ -153,31 +153,26 @@ local function save_file(path, save_fn)
 end
 
 local function get_icon_pens()
-    local tp = function(offset)
-        local texpos = dfhack.textures.getAsset('hack/data/art/control-panel.png', offset + 10)
-        return texpos >= 0 and texpos or nil
-    end
-
     local enabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(0), ch=string.byte('[')}
+            tile=gui.tp_control_panel(1), ch=string.byte('[')}
     local enabled_pen_center = dfhack.pen.parse{fg=COLOR_LIGHTGREEN,
-            tile=tp(1) or nil, ch=251} -- check
+            tile=gui.tp_control_panel(2) or nil, ch=251} -- check
     local enabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(2) or nil, ch=string.byte(']')}
+            tile=gui.tp_control_panel(3) or nil, ch=string.byte(']')}
     local disabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(3) or nil, ch=string.byte('[')}
+            tile=gui.tp_control_panel(4) or nil, ch=string.byte('[')}
     local disabled_pen_center = dfhack.pen.parse{fg=COLOR_RED,
-            tile=tp(4) or nil, ch=string.byte('x')}
+            tile=gui.tp_control_panel(5) or nil, ch=string.byte('x')}
     local disabled_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(5) or nil, ch=string.byte(']')}
+            tile=gui.tp_control_panel(6) or nil, ch=string.byte(']')}
     local button_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(6) or nil, ch=string.byte('[')}
+            tile=gui.tp_control_panel(7) or nil, ch=string.byte('[')}
     local button_pen_right = dfhack.pen.parse{fg=COLOR_CYAN,
-            tile=tp(7) or nil, ch=string.byte(']')}
+            tile=gui.tp_control_panel(8) or nil, ch=string.byte(']')}
     local help_pen_center = dfhack.pen.parse{
-            tile=tp(8) or nil, ch=string.byte('?')}
+            tile=gui.tp_control_panel(9) or nil, ch=string.byte('?')}
     local configure_pen_center = dfhack.pen.parse{
-            tile=tp(9) or nil, ch=15} -- gear/masterwork symbol
+            tile=gui.tp_control_panel(10) or nil, ch=15} -- gear/masterwork symbol
     return enabled_pen_left, enabled_pen_center, enabled_pen_right,
             disabled_pen_left, disabled_pen_center, disabled_pen_right,
             button_pen_left, button_pen_right,
