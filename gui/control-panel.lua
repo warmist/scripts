@@ -62,6 +62,7 @@ local SYSTEM_SERVICES = {
 -- these are fully controlled by the user
 local SYSTEM_USER_SERVICES = {
     'faststart',
+    'tutorials-be-gone',
     'work-now',
 }
 for _,v in ipairs(SYSTEM_USER_SERVICES) do
