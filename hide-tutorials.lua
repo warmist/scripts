@@ -4,7 +4,7 @@
 local gui = require('gui')
 local utils = require('utils')
 
-local GLOBAL_KEY = 'tutorials-be-gone'
+local GLOBAL_KEY = 'hide-tutorials'
 
 enabled = enabled or false
 
@@ -76,5 +76,5 @@ elseif args[1] == "disable" then
 elseif is_fort_map_loaded() then
     hide_all_popups()
 else
-    qerror('tutorials-be-gone needs a loaded fortress map to work')
+    qerror('hide-tutorials needs a loaded fortress map to work')
 end
