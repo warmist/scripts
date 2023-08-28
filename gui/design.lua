@@ -35,6 +35,7 @@
 -- END TODOS ================
 
 local gui = require("gui")
+local textures = require("gui.textures")
 local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
 local quickfort = reqscript("quickfort")
@@ -115,31 +116,27 @@ end
 -- Utilities
 
 local function get_icon_pens()
-    local start = dfhack.textures.getControlPanelTexposStart()
-    local valid = start > 0
-    start = start + 10
-
     local enabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 0) or nil, ch = string.byte('[') }
+        tile = curry(textures.tp_control_panel, 1) or nil, ch = string.byte('[') }
     local enabled_pen_center = dfhack.pen.parse { fg = COLOR_LIGHTGREEN,
-        tile = valid and (start + 1) or nil, ch = 251 } -- check
+        tile = curry(textures.tp_control_panel, 2) or nil, ch = 251 } -- check
     local enabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 2) or nil, ch = string.byte(']') }
+        tile = curry(textures.tp_control_panel, 3) or nil, ch = string.byte(']') }
     local disabled_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 3) or nil, ch = string.byte('[') }
+        tile = curry(textures.tp_control_panel, 4) or nil, ch = string.byte('[') }
     local disabled_pen_center = dfhack.pen.parse { fg = COLOR_RED,
-        tile = valid and (start + 4) or nil, ch = string.byte('x') }
+        tile = curry(textures.tp_control_panel, 5) or nil, ch = string.byte('x') }
     local disabled_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 5) or nil, ch = string.byte(']') }
+        tile = curry(textures.tp_control_panel, 6) or nil, ch = string.byte(']') }
     local button_pen_left = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 6) or nil, ch = string.byte('[') }
+        tile = curry(textures.tp_control_panel, 7) or nil, ch = string.byte('[') }
     local button_pen_right = dfhack.pen.parse { fg = COLOR_CYAN,
-        tile = valid and (start + 7) or nil, ch = string.byte(']') }
+        tile = curry(textures.tp_control_panel, 8) or nil, ch = string.byte(']') }
     local help_pen_center = dfhack.pen.parse {
-        tile = valid and (start + 8) or nil, ch = string.byte('?')
+        tile = curry(textures.tp_control_panel, 9) or nil, ch = string.byte('?')
     }
     local configure_pen_center = dfhack.pen.parse {
-        tile = valid and (start + 9) or nil, ch = 15
+        tile = curry(textures.tp_control_panel, 10) or nil, ch = 15
     } -- gear/masterwork symbol
     return enabled_pen_left, enabled_pen_center, enabled_pen_right,
         disabled_pen_left, disabled_pen_center, disabled_pen_right,

@@ -1,6 +1,7 @@
 --@ module=true
 
 local gui = require('gui')
+local textures = require('gui.textures')
 local widgets = require('gui.widgets')
 local overlay = require('plugins.overlay')
 
@@ -118,18 +119,13 @@ end
 last_tp_start = last_tp_start or 0
 CONFIG_BUTTON_PENS = CONFIG_BUTTON_PENS or {}
 local function get_button_pen(idx)
-    local start = dfhack.textures.getControlPanelTexposStart()
+    local start = textures.tp_control_panel(1)
     if last_tp_start == start then return CONFIG_BUTTON_PENS[idx] end
     last_tp_start = start
 
-    local tp = function(offset)
-        if start == -1 then return nil end
-        return start + offset
-    end
-
-    CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=tp(6), ch=string.byte('[')}
-    CONFIG_BUTTON_PENS[2] = to_pen{tile=tp(9), ch=15} -- gear/masterwork symbol
-    CONFIG_BUTTON_PENS[3] = to_pen{fg=COLOR_CYAN, tile=tp(7), ch=string.byte(']')}
+    CONFIG_BUTTON_PENS[1] = to_pen{fg=COLOR_CYAN, tile=curry(textures.tp_control_panel, 7), ch=string.byte('[')}
+    CONFIG_BUTTON_PENS[2] = to_pen{tile=curry(textures.tp_control_panel, 10), ch=15} -- gear/masterwork symbol
+    CONFIG_BUTTON_PENS[3] = to_pen{fg=COLOR_CYAN, tile=curry(textures.tp_control_panel, 8), ch=string.byte(']')}
 
     return CONFIG_BUTTON_PENS[idx]
 end

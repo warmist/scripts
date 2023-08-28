@@ -3,6 +3,7 @@
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local textures = require('gui.textures')
 local helpdb = require('helpdb')
 local json = require('json')
 local utils = require('utils')
@@ -474,21 +475,12 @@ function MainPanel:postUpdateLayout()
     config:write(self.frame)
 end
 
-local texpos = dfhack.textures.getThinBordersTexposStart()
-local tp = function(offset)
-    if texpos == -1 then return nil end
-    return texpos + offset
-end
-
-local H_SPLIT_PEN = dfhack.pen.parse{tile=tp(5), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{tile=tp(4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.t_frame_pen.tile,
-        ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.b_frame_pen.tile,
-        ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.l_frame_pen.tile,
-        ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=tp(17), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
+local H_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 6), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 5), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,2), ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,16), ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,8), ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 18), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
 
 -- paint autocomplete panel border
 local function paint_vertical_border(rect)
