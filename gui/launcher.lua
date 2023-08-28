@@ -43,6 +43,7 @@ end
 
 -- removes duplicate existing history lines and adds the given line to the front
 local function add_history(hist, hist_set, line)
+    line = line:trim()
     if hist_set[line] then
         for i,v in ipairs(hist) do
             if v == line then
@@ -586,6 +587,12 @@ function LauncherUI:init(args)
             new_frame = config.data
             if not next(new_frame) then
                 new_frame = {w=110, h=36}
+            else
+                for k,v in pairs(new_frame) do
+                    if v < 0 then
+                        new_frame[k] = 0
+                    end
+                end
             end
         end
         main_panel.frame = new_frame

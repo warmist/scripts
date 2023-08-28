@@ -113,6 +113,12 @@ end
 function GmEditorUi:init(args)
     if not next(self.frame) then
         self.frame = {w=80, h=50}
+    else
+        for k,v in pairs(self.frame) do
+            if v < 0 then
+                self.frame[k] = 0
+            end
+        end
     end
 
     -- don't appear directly over the current window
