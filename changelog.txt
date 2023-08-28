@@ -40,6 +40,7 @@ Template for new versions:
 - `suspendmanager`: Improve the detection on "T" and "+" shaped high walls
 - `starvingdead`: ensure sieges end properly when undead siegers starve
 - `fix/retrieve-units`: fix retrieved units sometimes becoming duplicated on the map
+- `gui/launcher`, `gui/gm-editor`: recover gracefully when the saved frame position is now offscreen
 
 ## Misc Improvements
 - `devel/lsmem`: added support for filtering by memory addresses and filenames
