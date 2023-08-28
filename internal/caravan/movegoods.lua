@@ -130,6 +130,7 @@ function MoveGoods:init()
     self.animal_ethics, self.wood_ethics = get_ethics_restrictions()
     self.banned_items = common.get_banned_items()
     self.risky_items = common.get_risky_items(self.banned_items)
+    self.choices_cache = {}
 
     self:addviews{
         widgets.CycleHotkeyLabel{
@@ -250,9 +251,21 @@ function MoveGoods:init()
             auto_width=true,
         },
         widgets.ToggleHotkeyLabel{
-            view_id='disable_buckets',
-            frame={l=26, b=2},
-            label='Show individual items:',
+            view_id='group_items',
+            frame={l=25, b=2, w=24},
+            label='Group items:',
+            key='CUSTOM_CTRL_G',
+            options={
+                {label='Yes', value=true, pen=COLOR_GREEN},
+                {label='No', value=false}
+            },
+            initial_option=true,
+            on_change=function() self:refresh_list() end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='inside_bins',
+            frame={l=51, b=2, w=28},
+            label='See inside bins:',
             key='CUSTOM_CTRL_I',
             options={
                 {label='Yes', value=true, pen=COLOR_GREEN},
@@ -295,7 +308,6 @@ end
 
 local function is_tradeable_item(item, depot)
     if item.flags.hostile or
-        item.flags.in_inventory or
         item.flags.removed or
         item.flags.dead_dwarf or
         item.flags.spider_web or
@@ -310,6 +322,15 @@ local function is_tradeable_item(item, depot)
         item.flags.in_chest
     then
         return false
+    end
+    if item.flags.in_inventory then
+        local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINED_IN_ITEM)
+        if gref then
+            local container = df.item.find(gref.item_id)
+            if container and not df.item_binst:is_instance(container) then
+                return false
+            end
+        end
     end
     if item.flags.in_job then
         local spec_ref = dfhack.items.getSpecificRef(item, df.specific_ref_type.JOB)
@@ -383,14 +404,44 @@ local function is_ethical_product(item, animal_ethics, wood_ethics)
         (not wood_ethics or not common.has_wood(item))
 end
 
-function MoveGoods:cache_choices(disable_buckets)
-    if self.choices then return self.choices[disable_buckets] end
+local function add_words(words, str)
+    for word in str:gmatch("[%w]+") do
+        table.insert(words, word:lower())
+    end
+end
+
+local function make_bin_search_key(item, desc)
+    local words = {}
+    add_words(words, desc)
+    for _, contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+        add_words(words, common.get_item_description(contained_item))
+    end
+    return table.concat(words, ' ')
+end
+
+local function get_cache_index(group_items, inside_bins)
+    local val = 1
+    if group_items then val = val + 1 end
+    if inside_bins then val = val + 2 end
+    return val
+end
+
+function MoveGoods:cache_choices(group_items, inside_bins)
+    local cache_idx = get_cache_index(group_items, inside_bins)
+    if self.choices_cache[cache_idx] then return self.choices_cache[cache_idx] end
 
     local pending = self.pending_item_ids
-    local buckets = {}
+    local groups = {}
     for _, item in ipairs(df.global.world.items.all) do
         local item_id = item.id
         if not item or not is_tradeable_item(item, self.depot) then goto continue end
+        if inside_bins and df.item_binst:is_instance(item) and
+            dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINS_ITEM)
+        then
+            goto continue
+        elseif not inside_bins and item.flags.in_inventory then
+            goto continue
+        end
         local value = common.get_perceived_value(item)
         if value <= 0 then goto continue end
         local is_pending = not not pending[item_id] or item.flags.in_building
@@ -400,16 +451,16 @@ function MoveGoods:cache_choices(disable_buckets)
         local wear_level = item:getWear()
         local desc = common.get_item_description(item)
         local key = ('%s/%d'):format(desc, value)
-        if buckets[key] then
-            local bucket = buckets[key]
-            bucket.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned, requested=is_requested}
-            bucket.data.quantity = bucket.data.quantity + 1
-            bucket.data.selected = bucket.data.selected + (is_pending and 1 or 0)
-            bucket.data.num_at_depot = bucket.data.num_at_depot + (item.flags.in_building and 1 or 0)
-            bucket.data.has_forbidden = bucket.data.has_forbidden or is_forbidden
-            bucket.data.has_banned = bucket.data.has_banned or is_banned
-            bucket.data.has_risky = bucket.data.has_risky or is_risky
-            bucket.data.has_requested = bucket.data.has_requested or is_requested
+        if groups[key] then
+            local group = groups[key]
+            group.data.items[item_id] = {item=item, pending=is_pending, banned=is_banned, requested=is_requested}
+            group.data.quantity = group.data.quantity + 1
+            group.data.selected = group.data.selected + (is_pending and 1 or 0)
+            group.data.num_at_depot = group.data.num_at_depot + (item.flags.in_building and 1 or 0)
+            group.data.has_forbidden = group.data.has_forbidden or is_forbidden
+            group.data.has_banned = group.data.has_banned or is_banned
+            group.data.has_risky = group.data.has_risky or is_risky
+            group.data.has_requested = group.data.has_requested or is_requested
         else
             local is_ethical = is_ethical_product(item, self.animal_ethics, self.wood_ethics)
             local data = {
@@ -431,40 +482,46 @@ function MoveGoods:cache_choices(disable_buckets)
                 ethical=is_ethical,
                 dirty=false,
             }
+            local search_key
+            if not inside_bins and df.item_binst:is_instance(item) then
+                search_key = make_bin_search_key(item, desc)
+            else
+                search_key = common.make_search_key(desc)
+            end
             local entry = {
-                search_key=common.make_search_key(desc),
+                search_key=search_key,
                 icon=curry(get_entry_icon, data),
                 data=data,
             }
-            buckets[key] = entry
+            groups[key] = entry
         end
         ::continue::
     end
 
-    local bucket_choices, nobucket_choices = {}, {}
-    for _, bucket in pairs(buckets) do
-        local data = bucket.data
+    local group_choices, nogroup_choices = {}, {}
+    for _, group in pairs(groups) do
+        local data = group.data
         for item_id, item_data in pairs(data.items) do
-            local nobucket_choice = copyall(bucket)
-            nobucket_choice.icon = curry(get_entry_icon, data, item_id)
-            nobucket_choice.text = make_choice_text(item_data.item.flags.in_building, data.per_item_value, 1, data.desc)
-            nobucket_choice.item_id = item_id
-            table.insert(nobucket_choices, nobucket_choice)
+            local nogroup_choice = copyall(group)
+            nogroup_choice.icon = curry(get_entry_icon, data, item_id)
+            nogroup_choice.text = make_choice_text(item_data.item.flags.in_building, data.per_item_value, 1, data.desc)
+            nogroup_choice.item_id = item_id
+            table.insert(nogroup_choices, nogroup_choice)
         end
         data.total_value = data.per_item_value * data.quantity
-        bucket.text = make_choice_text(data.num_at_depot == data.quantity, data.total_value, data.quantity, data.desc)
-        table.insert(bucket_choices, bucket)
+        group.text = make_choice_text(data.num_at_depot == data.quantity, data.total_value, data.quantity, data.desc)
+        table.insert(group_choices, group)
         self.value_pending = self.value_pending + (data.per_item_value * data.selected)
     end
 
-    self.choices = {}
-    self.choices[false] = bucket_choices
-    self.choices[true] = nobucket_choices
-    return self:cache_choices(disable_buckets)
+    self.choices_cache[get_cache_index(true, inside_bins)] = group_choices
+    self.choices_cache[get_cache_index(false, inside_bins)] = nogroup_choices
+    return self.choices_cache[cache_idx]
 end
 
 function MoveGoods:get_choices()
-    local raw_choices = self:cache_choices(self.subviews.disable_buckets:getOptionValue())
+    local raw_choices = self:cache_choices(self.subviews.group_items:getOptionValue(),
+            self.subviews.inside_bins:getOptionValue())
     local choices = {}
     local include_forbidden = not self.subviews.hide_forbidden:getOptionValue()
     local banned = self.subviews.banned:getOptionValue()
