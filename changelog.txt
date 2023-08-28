@@ -46,6 +46,7 @@ Template for new versions:
 ## Misc Improvements
 - `devel/lsmem`: added support for filtering by memory addresses and filenames
 - `suspendmanager`: display a different color for jobs suspended by suspendmanager
+- `caravan`: optionally display items within bins in bring goods to depot screen
 
 ## Removed
 
