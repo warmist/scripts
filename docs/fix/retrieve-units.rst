@@ -16,7 +16,7 @@ forces them to enter. This can fix issues such as:
 .. note::
     For caravans that are missing entirely, this script may retrieve the
     merchants but not the items. Using `fix/stuck-merchants` to dismiss the
-    caravan followed by `force Caravan` to create a new one may work better.
+    caravan followed by ``force Caravan`` to create a new one may work better.
 
 Usage
 -----
