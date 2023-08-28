@@ -17,6 +17,9 @@ Specifically, this tool hides:
 - Popups displayed the first time you open the labor, burrows, justice, and
   other similar screens in a new fort
 
+Note that only unsolicited tutorial popups are hidden. If you directly request
+a tutorial page from the help, then it will still function normally.
+
 Usage
 -----
 
