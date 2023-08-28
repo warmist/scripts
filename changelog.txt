@@ -29,6 +29,7 @@ Template for new versions:
 ## New Tools
 - `devel/scan-vtables`: Scan and dump likely vtable addresses (for memory research)
 - `hide-interface`: hide the vanilla UI elements for clean screenshots or laid-back fortress observing
+- `hide-tutorials`: hide the DF tutorial popups; enable in the System tab of `gui/control-panel`
 
 ## New Features
 - `exportlegends`: new overlay that integrates with the vanilla "Export XML" button. Now you can generate both the vanilla export and the extended data export with a single click!
