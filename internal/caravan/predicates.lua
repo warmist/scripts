@@ -1,6 +1,8 @@
 --@ module = true
 
+local gui = require('gui')
 local scriptmanager = require('script-manager')
+local widgets = require('gui.widgets')
 
 local function to_item_type_str(item_type)
     return string.lower(df.item_type[item_type]):gsub('_', ' ')
@@ -8,8 +10,8 @@ end
 
 local PREDICATE_LIBRARY = {
     {name='weapons-grade metal', match=function(item)
-        if item.mat_type ~= 0 then return false end
-        local flags = df.global.world.raws.inorganics[item.mat_index].material.flags
+        if item:getMaterial() ~= 0 then return false end
+        local flags = df.global.world.raws.inorganics[item:getMaterialIndex()].material.flags
         return flags.IS_METAL and
             (flags.ITEMS_METAL or flags.ITEMS_WEAPON or flags.ITEMS_WEAPON_RANGED or flags.ITEMS_AMMO or flags.ITEMS_ARMOR)
     end},
@@ -56,18 +58,6 @@ local function get_user_predicates()
     return user_predicates
 end
 
-function customize_predicates(context, on_close)
-    local user_predicates = get_user_predicates()
-    local predicate = nil
-    if #user_predicates > 0 then
-        predicate = user_predicates[1]
-    else
-        predicate = PREDICATE_LIBRARY[1]
-    end
-    context.predicates[predicate.name] = {match=predicate.match, show=true}
-    on_close()
-end
-
 function make_predicate_str(context)
     local preset, names = nil, {}
     for name, predicate in pairs(context.predicates) do
@@ -89,19 +79,47 @@ function make_predicate_str(context)
 end
 
 function init_context_predicates(context)
-    -- TODO: init according to context.name
+    -- TODO: init according to saved preferences associated with context.name
     context.predicates = {}
 end
 
 function pass_predicates(context, item)
-    local has_show = false
     for _,predicate in pairs(context.predicates) do
         local ok, matches = safecall(predicate.match, item)
         if not ok then goto continue end
-        has_show = has_show or predicate.show
-        if matches and predicate.show then return true end
-        if not matches and predicate.hide then return false end
+        if matches ~= predicate.invert then return false end
         ::continue::
     end
-    return not has_show
+    return true
+end
+
+AdvancedFilter = defclass(AdvancedFilter, widgets.Window)
+AdvancedFilter.ATTRS {
+    frame_title='Advanced item filters',
+    frame={w=50, h=45},
+    resizable=true,
+    resize_min={w=50, h=20},
+    context=DEFAULT_NIL,
+    on_change=DEFAULT_NIL,
+}
+
+function AdvancedFilter:init()
+    self:addviews{
+    }
+end
+
+AdvancedFilterScreen = defclass(AdvancedFilterScreen, gui.ZScreenModal)
+AdvancedFilterScreen.ATTRS {
+    focus_path='advanced_item_filter',
+    context=DEFAULT_NIL,
+    on_change=DEFAULT_NIL,
+}
+
+function AdvancedFilterScreen:init()
+    self:addviews{AdvancedFilter{context=self.context, on_change=self.on_change}}
+end
+
+function customize_predicates(context, on_change)
+    context.user_predicates = context.user_predicates or get_user_predicates()
+    AdvancedFilterScreen{context=context, on_change=on_change}:show()
 end
