@@ -458,10 +458,48 @@ local function get_ethics_token(animal_ethics, wood_ethics)
     }
 end
 
-function get_info_widgets(self, export_agreements, context)
-    self.predicates = predicates.get_context_predicates(context)
-    local predicate_str = predicates.make_predicate_str(self.predicates)
+function get_advanced_filter_widgets(self, context)
+    predicates.init_context_predicates(context)
+    local predicate_str = predicates.make_predicate_str(context)
 
+    return {
+        widgets.Label{
+            frame={t=0, l=0},
+            text='Advanced filter:',
+        },
+        widgets.HotkeyLabel{
+            frame={t=0, l=18, w=9},
+            key='CUSTOM_SHIFT_J',
+            label='[edit]',
+            on_activate=function()
+                predicates.customize_predicates(context,
+                    function()
+                        predicate_str = predicates.make_predicate_str(context)
+                        self:refresh_list()
+                    end)
+            end,
+        },
+        widgets.HotkeyLabel{
+            frame={t=0, l=29, w=10},
+            key='CUSTOM_SHIFT_K',
+            label='[clear]',
+            text_pen=COLOR_LIGHTRED,
+            on_activate=function()
+                context.predicates = {}
+                predicate_str = predicates.make_predicate_str(context)
+                self:refresh_list()
+            end,
+            enabled=function() return next(context) end,
+        },
+        widgets.Label{
+            frame={t=1, l=2},
+            text={{text=function() return predicate_str end}},
+            text_pen=COLOR_GREEN,
+        },
+    }
+end
+
+function get_info_widgets(self, export_agreements, context)
     return {
         widgets.Panel{
             frame={t=0, l=0, r=0, h=2},
@@ -552,41 +590,7 @@ function get_info_widgets(self, export_agreements, context)
         },
         widgets.Panel{
             frame={t=13, l=0, r=0, h=2},
-            subviews={
-                widgets.Label{
-                    frame={t=0, l=0},
-                    text='Advanced filter:',
-                },
-                widgets.HotkeyLabel{
-                    frame={t=0, l=18, w=9},
-                    key='CUSTOM_SHIFT_J',
-                    label='[edit]',
-                    on_activate=function()
-                        predicates.customize_predicates(self.predicates,
-                            function()
-                                predicate_str = predicates.make_predicate_str(self.predicates)
-                                self:refresh_list()
-                            end)
-                    end,
-                },
-                widgets.HotkeyLabel{
-                    frame={t=0, l=34, w=10},
-                    key='CUSTOM_SHIFT_K',
-                    label='[clear]',
-                    text_pen=COLOR_LIGHTRED,
-                    on_activate=function()
-                        self.predicates = {}
-                        predicate_str = predicates.make_predicate_str(self.predicates)
-                        self:refresh_list()
-                    end,
-                    enabled=function() return next(self.predicates) end,
-                },
-                widgets.Label{
-                    frame={t=1, l=2},
-                    text={{text=function() return predicate_str end}},
-                    text_pen=COLOR_GREEN,
-                },
-            },
+            subviews=get_advanced_filter_widgets(self, context),
         },
     }
 end

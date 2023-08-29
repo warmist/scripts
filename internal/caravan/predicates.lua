@@ -22,7 +22,7 @@ for _,item_type in ipairs(df.item_type) do
     })
 end
 
-local PREDICATES_VAR = 'PREDICATES'
+local PREDICATES_VAR = 'ITEM_PREDICATES'
 
 local function get_user_predicates()
     local user_predicates = {}
@@ -56,7 +56,7 @@ local function get_user_predicates()
     return user_predicates
 end
 
-function customize_predicates(predicates, on_close)
+function customize_predicates(context, on_close)
     local user_predicates = get_user_predicates()
     local predicate = nil
     if #user_predicates > 0 then
@@ -64,13 +64,13 @@ function customize_predicates(predicates, on_close)
     else
         predicate = PREDICATE_LIBRARY[1]
     end
-    predicates[predicate.name] = {match=predicate.match, show=true}
+    context.predicates[predicate.name] = {match=predicate.match, show=true}
     on_close()
 end
 
-function make_predicate_str(predicates)
+function make_predicate_str(context)
     local preset, names = nil, {}
-    for name, predicate in pairs(predicates) do
+    for name, predicate in pairs(context.predicates) do
         if not preset then
             preset = predicate.preset or ''
         end
@@ -88,17 +88,20 @@ function make_predicate_str(predicates)
     return 'All'
 end
 
-function get_context_predicates(context)
-    return {}
+function init_context_predicates(context)
+    -- TODO: init according to context.name
+    context.predicates = {}
 end
 
-function pass_predicates(item, predicates)
+function pass_predicates(context, item)
     local has_show = false
-    for _,predicate in pairs(predicates) do
-        local matches = predicate.match(item)
+    for _,predicate in pairs(context.predicates) do
+        local ok, matches = safecall(predicate.match, item)
+        if not ok then goto continue end
         has_show = has_show or predicate.show
         if matches and predicate.show then return true end
         if not matches and predicate.hide then return false end
+        ::continue::
     end
     return not has_show
 end
