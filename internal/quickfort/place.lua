@@ -347,6 +347,7 @@ function get_stockpiles_by_name()
         if #pile.name > 0 then
             table.insert(ensure_key(piles, pile.name), pile)
         end
+        piles[pile.id] = pile
     end
     return piles
 end
@@ -357,6 +358,7 @@ local function get_workshops_by_name()
         if #shop.name > 0 then
             table.insert(ensure_key(shops, shop.name), shop)
         end
+        shops[shop.id] = shop
     end
     return shops
 end
@@ -364,12 +366,12 @@ end
 local function get_pile_targets(name, peer_piles, all_piles)
     if peer_piles[name] then return peer_piles[name], all_piles end
     all_piles = all_piles or get_stockpiles_by_name()
-    return all_piles[name], all_piles
+    return all_piles[name] or (all_piles[tonumber(name)] and {all_piles[tonumber(name)]}), all_piles
 end
 
 local function get_shop_targets(name, all_shops)
     all_shops = all_shops or get_workshops_by_name()
-    return all_shops[name], all_shops
+    return all_shops[name] or (all_shops[tonumber(name)] and {all_shops[tonumber(name)]}), all_shops
 end
 
 -- will link to stockpiles created in this blueprint
@@ -394,7 +396,7 @@ local function link_stockpiles(link_data)
                         utils.insert_sorted(node.to.links.take_from_workshop, from, 'id')
                     end
                 else
-                    dfhack.printerr(('cannot find stockpile or workshop named "%s" to take from'):format(name))
+                    dfhack.printerr(('cannot find stockpile or workshop with name or id "%s" to take from'):format(name))
                 end
             end
         elseif type(node.to) == 'string' then
@@ -413,7 +415,7 @@ local function link_stockpiles(link_data)
                         utils.insert_sorted(to.profile.links.take_from_pile, node.from, 'id')
                     end
                 else
-                    dfhack.printerr(('cannot find stockpile or workshop named "%s" to give to'):format(name))
+                    dfhack.printerr(('cannot find stockpile or workshop with name or id "%s" to give to'):format(name))
                 end
             end
         end

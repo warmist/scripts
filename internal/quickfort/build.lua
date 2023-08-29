@@ -313,10 +313,13 @@ local function do_trackstop_adjust(db_entry, bld)
         local from_names = {}
         for _,from_name in ipairs(db_entry.route.from_names) do
             from_names[from_name:lower()] = true
+            if tonumber(from_name) then
+                from_names[tonumber(from_name)] = true
+            end
         end
         for _, pile in ipairs(df.global.world.buildings.other.STOCKPILE) do
             local name = string.lower(pile.name)
-            if from_names[name] then
+            if from_names[name] or from_names[pile.id] then
                 stop.stockpiles:insert('#', {
                     new=df.route_stockpile_link,
                     building_id=pile.id,
@@ -1146,8 +1149,12 @@ local function create_building(b, cache, dry_run)
                 utils.insert_sorted(bld.profile.links.give_to_pile, to, 'id')
                 utils.insert_sorted(to.links.take_from_workshop, bld, 'id')
             end
+        elseif cache.piles[tonumber(recipient)] then
+            local to = cache.piles[tonumber(recipient)]
+            utils.insert_sorted(bld.profile.links.give_to_pile, to, 'id')
+            utils.insert_sorted(to.links.take_from_workshop, bld, 'id')
         else
-            dfhack.printerr(('cannot find stockpile named "%s" to give to'):format(recipient))
+            dfhack.printerr(('cannot find stockpile with name or id "%s" to give to'):format(recipient))
         end
     end
     for _,supplier in ipairs(db_entry.links.take_from) do
@@ -1157,8 +1164,12 @@ local function create_building(b, cache, dry_run)
                 utils.insert_sorted(bld.profile.links.take_from_pile, from, 'id')
                 utils.insert_sorted(from.links.give_to_workshop, bld, 'id')
             end
+        elseif cache.piles[tonumber(supplier)] then
+            local from = cache.piles[tonumber(supplier)]
+            utils.insert_sorted(bld.profile.links.take_from_pile, from, 'id')
+            utils.insert_sorted(from.links.give_to_workshop, bld, 'id')
         else
-            dfhack.printerr(('cannot find stockpile named "%s" to take from'):format(supplier))
+            dfhack.printerr(('cannot find stockpile with name or id "%s" to take from'):format(supplier))
         end
     end
     if buildingplan and buildingplan.isEnabled() and
