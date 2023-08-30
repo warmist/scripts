@@ -515,6 +515,9 @@ function GmEditorUi:onInput(keys)
     if GmEditorUi.super.onInput(self, keys) then return true end
 
     if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+        if dfhack.internal.getModifiers().shift then
+            return false
+        end
         if self.subviews.pages:getSelected()==2 then
             self.subviews.pages:setSelected(1)
         else

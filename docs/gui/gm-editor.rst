@@ -11,6 +11,12 @@ This editor allows you to inspect or modify almost anything in DF. Press
 If you just want to browse without fear of accidentally changing anything, hit
 :kbd:`Ctrl`:kbd:`D` to toggle read-only mode.
 
+Click on fields to edit them or, for structured fields, to inspect their
+contents. Right click or hit :kbd:`Esc` to go back to the previous structure
+you were inspecting. Right clicking when viewing the structure you started with
+will exit the tool. Hold down :kbd:`Shift` and right click to exit, even if you
+are inspecting a substructure.
+
 Usage
 -----
 
