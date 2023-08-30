@@ -161,7 +161,7 @@ function MoveGoods:init()
             on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Panel{
-            frame={t=2, l=0, w=38, h=16},
+            frame={t=2, l=0, w=38, h=14},
             subviews=common.get_slider_widgets(self),
         },
         widgets.ToggleHotkeyLabel{
@@ -177,11 +177,11 @@ function MoveGoods:init()
             on_change=function() self:refresh_list() end,
         },
         widgets.Panel{
-            frame={t=4, l=40, r=0, h=15},
+            frame={t=4, l=40, r=0, h=12},
             subviews=common.get_info_widgets(self, get_export_agreements(), self.predicate_context),
         },
         widgets.Panel{
-            frame={t=19, l=0, r=0, b=6},
+            frame={t=17, l=0, r=0, b=6},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',

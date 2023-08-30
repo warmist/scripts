@@ -182,7 +182,7 @@ function get_slider_widgets(self, suffix)
             },
         },
         widgets.Panel{
-            frame={t=6, l=0, r=0, h=4},
+            frame={t=5, l=0, r=0, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_quality'..suffix,
@@ -247,7 +247,7 @@ function get_slider_widgets(self, suffix)
             },
         },
         widgets.Panel{
-            frame={t=12, l=0, r=0, h=4},
+            frame={t=10, l=0, r=0, h=4},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='min_value'..suffix,
@@ -463,6 +463,7 @@ function get_advanced_filter_widgets(self, context)
     local predicate_str = predicates.make_predicate_str(context)
 
     return {
+        --[[
         widgets.Label{
             frame={t=0, l=0},
             text='Advanced filter:',
@@ -496,6 +497,7 @@ function get_advanced_filter_widgets(self, context)
             text={{text=function() return predicate_str end}},
             text_pen=COLOR_GREEN,
         },
+        --]]
     }
 end
 

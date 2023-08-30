@@ -139,7 +139,7 @@ end
 
 local STATUS_COL_WIDTH = 7
 local VALUE_COL_WIDTH = 6
-local FILTER_HEIGHT = 17
+local FILTER_HEIGHT = 15
 
 function Trade:init()
     self.cur_page = 1
