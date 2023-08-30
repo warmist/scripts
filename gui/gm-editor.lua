@@ -533,6 +533,7 @@ function GmEditorUi:onInput(keys)
         return true
     elseif keys[keybindings.autoupdate.key] then
         self.autoupdate = not self.autoupdate
+        self:updateTitles()
         return true
     elseif keys[keybindings.offset.key] then
         local trg=self:currentTarget()
@@ -601,17 +602,19 @@ end
 function GmEditorUi:updateTitles()
     local title = "GameMaster's Editor"
     if self.read_only then
-        title = title.." (Read Only)"
+        title = title.." (Read only)"
     end
     for view,_ in pairs(views) do
-        view.subviews[1].frame_title = title
+        local window = view.subviews[1]
+        window.read_only = self.read_only
+        window.frame_title = title .. (window.autoupdate and ' (Live updates)' or '')
     end
-    self.frame_title = title
     save_config({read_only = self.read_only})
 end
 function GmEditorUi:updateTarget(preserve_pos,reindex)
     self:verifyStack()
     local trg=self:currentTarget()
+    if not trg then return end
     local filter=self.subviews.filter_input.text:lower()
 
     if reindex then

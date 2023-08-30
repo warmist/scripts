@@ -48,6 +48,7 @@ Template for new versions:
 - `quickfort`: linked stockpiles and workshops can now be specified by ID instead of only by name. this is mostly useful when dynamically generating blueprints and applying them via the `quickfort` API
 - `suspendmanager`: display a different color for jobs suspended by suspendmanager
 - `caravan`: optionally display items within bins in bring goods to depot screen
+- `gui/gm-editor`: display in the title bar whether the editor window is scanning for live updates
 
 ## Removed
 
