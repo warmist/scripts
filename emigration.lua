@@ -56,6 +56,34 @@ function desert(u,method,civ)
         dfhack.buildings.setOwner(temp_bld, nil)
     end
 
+    -- remove from workshop profiles
+    for _, bld in ipairs(df.global.world.buildings.other.WORKSHOP_ANY) do
+        for k, v in ipairs(bld.profile.permitted_workers) do
+            if v == u.id then
+                bld.profile.permitted_workers:erase(k)
+                break
+            end
+        end
+    end
+    for _, bld in ipairs(df.global.world.buildings.other.FURNACE_ANY) do
+        for k, v in ipairs(bld.profile.permitted_workers) do
+            if v == u.id then
+                bld.profile.permitted_workers:erase(k)
+                break
+            end
+        end
+    end
+
+    -- disassociate from work details
+    for _, detail in ipairs(df.global.plotinfo.hauling.work_details) do
+        for k, v in ipairs(detail.assigned_units) do
+            if v == u.id then
+                detail.assigned_units:erase(k)
+                break
+            end
+        end
+    end
+
     -- erase the unit from the fortress entity
     for k,v in ipairs(fort_ent.histfig_ids) do
         if v == hf_id then
@@ -99,6 +127,7 @@ function desert(u,method,civ)
 
         -- try to find a new site for the unit to join
         for k,v in ipairs(df.global.world.entities.all[hf.civ_id].site_links) do
+            local site_id = df.global.plotinfo.site_id
             if v.type == df.entity_site_link_type.Claim and v.target ~= site_id then
                 newsite_id = v.target
                 break
@@ -116,7 +145,7 @@ function desert(u,method,civ)
             df.global.world.history.events:insert("#", {new = df.history_event_change_hf_statest, year = df.global.cur_year, seconds = df.global.cur_year_tick, id = hf_event_id, hfid = hf_id, state = 1, reason = -1, site = newsite_id})
         end
     end
-    print(line)
+    print(dfhack.df2console(line))
     dfhack.gui.showAnnouncement(line, COLOR_WHITE)
 end
 
@@ -210,6 +239,7 @@ if args[1] == "enable" then
 elseif args[1] == "disable" then
     enabled = false
 else
+    print('emigration is ' .. (enabled and 'enabled' or 'not enabled'))
     return
 end
 
