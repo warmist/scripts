@@ -43,6 +43,7 @@ Template for new versions:
 - `suspendmanager`: Improve the detection on "T" and "+" shaped high walls
 - `starvingdead`: ensure sieges end properly when undead siegers starve
 - `fix/retrieve-units`: fix retrieved units sometimes becoming duplicated on the map
+- `quickfort`: cancel old dig jobs that point to a tile when a new designation is applied to the tile
 - `gui/launcher`, `gui/gm-editor`: recover gracefully when the saved frame position is now offscreen
 
 ## Misc Improvements
