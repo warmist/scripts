@@ -3,6 +3,7 @@
 local common = reqscript('internal/caravan/common')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local predicates = reqscript('internal/caravan/predicates')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -132,6 +133,8 @@ function MoveGoods:init()
     self.risky_items = common.get_risky_items(self.banned_items)
     self.choices_cache = {}
 
+    self.predicate_context = {name='movegoods'}
+
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='sort',
@@ -175,7 +178,7 @@ function MoveGoods:init()
         },
         widgets.Panel{
             frame={t=4, l=40, r=0, h=12},
-            subviews=common.get_info_widgets(self, get_export_agreements()),
+            subviews=common.get_info_widgets(self, get_export_agreements(), self.predicate_context),
         },
         widgets.Panel{
             frame={t=17, l=0, r=0, b=6},
@@ -571,6 +574,9 @@ function MoveGoods:get_choices()
             elseif data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
                 goto continue
             end
+        end
+        if not predicates.pass_predicates(self.predicate_context, data.item) then
+            goto continue
         end
         table.insert(choices, choice)
         ::continue::

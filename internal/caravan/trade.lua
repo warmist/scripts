@@ -8,6 +8,7 @@
 local common = reqscript('internal/caravan/common')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local predicates = reqscript('internal/caravan/predicates')
 local widgets = require('gui.widgets')
 
 trader_selected_state = trader_selected_state or {}
@@ -142,6 +143,8 @@ local FILTER_HEIGHT = 15
 
 function Trade:init()
     self.cur_page = 1
+    self.filters = {'', ''}
+    self.predicate_contexts = {{name='trade_caravan'}, {name='trade_fort'}}
 
     self.animal_ethics = common.is_animal_lover_caravan(trade.mer)
     self.wood_ethics = common.is_tree_lover_caravan(trade.mer)
@@ -151,7 +154,7 @@ function Trade:init()
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='sort',
-            frame={l=0, t=0, w=21},
+            frame={t=0, l=0, w=21},
             label='Sort by:',
             key='CUSTOM_SHIFT_S',
             options={
@@ -165,15 +168,9 @@ function Trade:init()
             initial_option=sort_by_status_desc,
             on_change=self:callback('refresh_list', 'sort'),
         },
-        widgets.EditField{
-            view_id='search',
-            frame={l=26, t=0},
-            label_text='Search: ',
-            on_char=function(ch) return ch:match('[%l -]') end,
-        },
         widgets.ToggleHotkeyLabel{
             view_id='trade_bins',
-            frame={t=2, l=0, w=36},
+            frame={t=0, l=26, w=36},
             label='Bins:',
             key='CUSTOM_SHIFT_B',
             options={
@@ -183,9 +180,24 @@ function Trade:init()
             initial_option=false,
             on_change=function() self:refresh_list() end,
         },
+        widgets.TabBar{
+            frame={t=2, l=0},
+            labels={
+                'Caravan goods',
+                'Fort goods',
+            },
+            on_select=function(idx)
+                local list = self.subviews.list
+                self.filters[self.cur_page] = list:getFilter()
+                list:setFilter(self.filters[idx])
+                self.cur_page = idx
+                self:refresh_list()
+            end,
+            get_cur_page=function() return self.cur_page end,
+        },
         widgets.ToggleHotkeyLabel{
             view_id='filters',
-            frame={t=2, l=40, w=36},
+            frame={t=5, l=0, w=36},
             label='Show filters:',
             key='CUSTOM_SHIFT_F',
             options={
@@ -195,17 +207,11 @@ function Trade:init()
             initial_option=false,
             on_change=function() self:updateLayout() end,
         },
-        widgets.TabBar{
-            frame={t=4, l=0},
-            labels={
-                'Caravan goods',
-                'Fort goods',
-            },
-            on_select=function(idx)
-                self.cur_page = idx
-                self:refresh_list()
-            end,
-            get_cur_page=function() return self.cur_page end,
+        widgets.EditField{
+            view_id='search',
+            frame={t=5, l=40},
+            label_text='Search: ',
+            on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Panel{
             frame={t=7, l=0, r=0, h=FILTER_HEIGHT},
@@ -230,9 +236,14 @@ function Trade:init()
                     subviews=common.get_slider_widgets(self, '2'),
                 },
                 widgets.Panel{
+                    frame={b=0, l=40, r=0, h=2},
+                    visible=function() return self.cur_page == 1 end,
+                    subviews=common.get_advanced_filter_widgets(self, self.predicate_contexts[1]),
+                },
+                widgets.Panel{
                     frame={t=2, l=40, r=0, h=FILTER_HEIGHT-2},
                     visible=function() return self.cur_page == 2 end,
-                    subviews=common.get_info_widgets(self, {trade.mer.buy_prices}),
+                    subviews=common.get_info_widgets(self, {trade.mer.buy_prices}, self.predicate_contexts[2]),
                 },
             },
         },
@@ -437,6 +448,9 @@ function Trade:get_choices()
             if data.has_banned or (banned ~= 'banned_only' and data.has_risky) then
                 goto continue
             end
+        end
+        if not predicates.pass_predicates(self.predicate_contexts[self.cur_page], data.item) then
+            goto continue
         end
         table.insert(choices, choice)
         ::continue::
