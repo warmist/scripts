@@ -2,7 +2,6 @@
 --@ module = true
 
 local gui = require('gui')
-local guidm = require('gui.dwarfmode')
 local widgets = require('gui.widgets')
 
 local overlay = require('plugins.overlay')
@@ -11,7 +10,7 @@ local DIALOG_WIDTH = 59
 local LIST_HEIGHT = 14
 local HIGHLIGHT_TILE = df.global.init.load_bar_texpos[1]
 
-local SHADOW_FRAME = copyall(gui.PANEL_FRAME)
+local SHADOW_FRAME = gui.PANEL_FRAME()
 SHADOW_FRAME.signature_pen = false
 
 local to_pen = dfhack.pen.parse
