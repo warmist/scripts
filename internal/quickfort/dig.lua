@@ -109,8 +109,6 @@ local function clear_designation(flags, occupancy)
     occupancy.carve_track_west = 0
 end
 
-local values = nil
-
 local values_run = {
     dig_default=df.tile_dig_designation.Default,
     dig_channel=df.tile_dig_designation.Channel,
@@ -163,6 +161,8 @@ local values_undo = {
     traffic_high=0,
     traffic_restricted=0,
 }
+
+local values = values_run
 
 -- these functions return a function if a designation needs to be made; else nil
 local function do_mine(digctx)
@@ -731,9 +731,20 @@ local function get_track_direction(x, y, width, height)
     return {north=north, east=east, south=south, west=west}
 end
 
+local function get_dig_job_map()
+    local job_map = {}
+    for _, job in utils.listpairs(df.global.world.jobs.list) do
+        if df.job_type.attrs[job.job_type].is_designation then
+            ensure_keys(job_map, job.pos.z, job.pos.y)[job.pos.x] = job
+        end
+    end
+    return job_map
+end
+
 local function do_run_impl(zlevel, grid, ctx)
     local stats = ctx.stats
     ctx.bounds = ctx.bounds or quickfort_map.MapBoundsChecker{}
+    local job_map = get_dig_job_map()
     for y, row in pairs(grid) do
         for x, cell_and_text in pairs(row) do
             local cell, text = cell_and_text.cell, cell_and_text.text
@@ -820,7 +831,14 @@ local function do_run_impl(zlevel, grid, ctx)
                             stats.dig_protected_engraving.value =
                                     stats.dig_protected_engraving.value + 1
                         else
-                            if not ctx.dry_run then action_fn() end
+                            if not ctx.dry_run then
+                                local existing_dig_job = safe_index(job_map, extent_pos.z, extent_pos.y, extent_pos.x)
+                                if existing_dig_job then
+                                    print(('removing existing job at %d, %d, %d'):format(extent_pos.x, extent_pos.y, extent_pos.z))
+                                    dfhack.job.removeJob(existing_dig_job)
+                                end
+                                action_fn()
+                            end
                             stats.dig_designated.value =
                                     stats.dig_designated.value + 1
                         end
