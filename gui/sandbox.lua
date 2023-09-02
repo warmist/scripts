@@ -317,12 +317,14 @@ local function scan_organic(cat, vec, start_idx, base, do_insert)
     local indexes = MAT_TABLE.organic_indexes[cat]
     for idx = start_idx,#indexes-1 do
         local matindex = indexes[idx]
+        if #vec <= matindex then goto continue end
         local organic = vec[matindex]
         for offset, mat in ipairs(organic.material) do
             if do_insert(mat, base + offset, matindex) then
                 return matindex
             end
         end
+        ::continue::
     end
     return 0
 end
