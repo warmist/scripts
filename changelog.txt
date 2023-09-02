@@ -47,6 +47,7 @@ Template for new versions:
 - `fix/retrieve-units`: fix retrieved units sometimes becoming duplicated on the map
 - `quickfort`: cancel old dig jobs that point to a tile when a new designation is applied to the tile
 - `gui/launcher`, `gui/gm-editor`: recover gracefully when the saved frame position is now offscreen
+- `gui/sandbox`: correctly load equipment materials in modded games that categorize non-wood plants as wood
 
 ## Misc Improvements
 - `devel/lsmem`: added support for filtering by memory addresses and filenames
