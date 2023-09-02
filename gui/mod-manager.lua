@@ -171,7 +171,9 @@ local function load_preset(idx)
         for _, v in ipairs(failures) do
             failures_str = failures_str .. v .. "\n"
         end
-        dialogs.showMessage("Warning", "Failed to load some mods", COLOR_LIGHTRED)
+        dialogs.showMessage("Warning",
+            "Failed to load some mods. Please re-create your default preset.",
+            COLOR_LIGHTRED)
     end
 end
 
