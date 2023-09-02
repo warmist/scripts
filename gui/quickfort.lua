@@ -46,12 +46,12 @@ BlueprintDetails.ATTRS{
 -- adds hint about left arrow being a valid "exit" key for this dialog
 function BlueprintDetails:onRenderFrame(dc, rect)
     BlueprintDetails.super.onRenderFrame(self, dc, rect)
-    dc:seek(rect.x1+2, rect.y2):string('Left arrow', dc.cur_key_pen):
+    dc:seek(rect.x1+2, rect.y2):string('Ctrl+D', dc.cur_key_pen):
             string(': Back', COLOR_GREY)
 end
 
 function BlueprintDetails:onInput(keys)
-    if keys.KEYBOARD_CURSOR_LEFT or keys.SELECT
+    if keys.CUSTOM_CTRL_D or keys.SELECT
             or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
         self:dismiss()
     end
@@ -367,9 +367,7 @@ function Quickfort:init()
 end
 
 function Quickfort:get_summary_label()
-    if self.mode == 'config' then
-        return 'Blueprint configures game, not map.'
-    elseif self.mode == 'notes' then
+    if self.mode == 'notes' then
         return 'Blueprint shows help text.'
     end
     return 'Reposition with the mouse.'

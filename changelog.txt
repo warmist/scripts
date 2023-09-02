@@ -52,6 +52,7 @@ Template for new versions:
 - `devel/lsmem`: added support for filtering by memory addresses and filenames
 - `gui/gm-editor`: hold down shift and right click to exit, regardless of how many substructures deep you are
 - `quickfort`: linked stockpiles and workshops can now be specified by ID instead of only by name. this is mostly useful when dynamically generating blueprints and applying them via the `quickfort` API
+- `gui/quickfort`: blueprint details screen can now be closed with Ctrl-D (the same hotkey used to open the details)
 - `suspendmanager`: display a different color for jobs suspended by suspendmanager
 - `caravan`: optionally display items within bins in bring goods to depot screen
 - `gui/gm-editor`: display in the title bar whether the editor window is scanning for live updates
