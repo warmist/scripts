@@ -895,7 +895,7 @@ function GenericOptionsPanel:init()
         },
         widgets.ToggleHotkeyLabel {
             view_id = "autocommit_designation_label",
-            key = "CUSTOM_C",
+            key = "CUSTOM_ALT_C",
             label = "Auto-Commit: ",
             active = true,
             enabled = function() return self.design_panel.shape.max_points end,

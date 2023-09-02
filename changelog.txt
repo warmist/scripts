@@ -54,6 +54,7 @@ Template for new versions:
 - `suspendmanager`: display a different color for jobs suspended by suspendmanager
 - `caravan`: optionally display items within bins in bring goods to depot screen
 - `gui/gm-editor`: display in the title bar whether the editor window is scanning for live updates
+- `gui/design`: change "auto commit" hotkey from ``c`` to ``Alt-c`` to avoid conflict with the default keybinding for z-level down
 
 ## Removed
 
