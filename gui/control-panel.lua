@@ -73,9 +73,9 @@ table.sort(SYSTEM_SERVICES)
 
 local PREFERENCES = {
     ['dfhack']={
-        HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup', type='bool', default=true,
+        HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup (MS Windows only)', type='bool', default=true,
          desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
-        HIDE_ARMOK_TOOLS={label='Hide "armok" tools in command lists', type='bool', default=false,
+        HIDE_ARMOK_TOOLS={label='Mortal mode: hide "armok" tools', type='bool', default=false,
          desc='Don\'t show tools that give you god-like powers wherever DFHack tools are listed.'},
     },
     ['gui']={
@@ -98,7 +98,7 @@ local CPP_PREFERENCES = {
         label='Prevent duplicate key events',
         type='bool',
         default=true,
-        desc='Whether to pass key events through to DF when DFHack keybindings are triggered.',
+        desc='Whether to additionally pass key events through to DF when DFHack keybindings are triggered.',
         init_fmt=':lua dfhack.internal.setSuppressDuplicateKeyboardEvents(%s)',
         get_fn=dfhack.internal.getSuppressDuplicateKeyboardEvents,
         set_fn=dfhack.internal.setSuppressDuplicateKeyboardEvents,
