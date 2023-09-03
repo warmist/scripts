@@ -17,3 +17,9 @@ Usage
 ::
 
     workorder-recheck
+
+Overlay
+-------
+
+The position of the "request re-check" text that appears when a workorder
+conditions window is open is configurable via `gui/overlay`.
