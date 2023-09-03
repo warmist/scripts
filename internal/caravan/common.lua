@@ -13,12 +13,16 @@ local to_pen = dfhack.pen.parse
 SOME_PEN = to_pen{ch=':', fg=COLOR_YELLOW}
 ALL_PEN = to_pen{ch='+', fg=COLOR_LIGHTGREEN}
 
-function make_search_key(str)
-    local out = ''
-    for c in str:gmatch("[%w%s]") do
-        out = out .. c:lower()
+function add_words(words, str)
+    for word in str:gmatch("[%w]+") do
+        table.insert(words, word:lower())
     end
-    return out
+end
+
+function make_search_key(str)
+    local words = {}
+    add_words(words, str)
+    return table.concat(words, ' ')
 end
 
 local function get_broker_skill()
