@@ -59,6 +59,7 @@ Template for new versions:
 - `gui/gm-editor`: display in the title bar whether the editor window is scanning for live updates
 - `gui/design`: change "auto commit" hotkey from ``c`` to ``Alt-c`` to avoid conflict with the default keybinding for z-level down
 - `gui/liquids`: support removing river sources by converting them into stone floors
+- `necronomicon`: report on secrets of life and death contained in scrolls
 
 ## Removed
 
