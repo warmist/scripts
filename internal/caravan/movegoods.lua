@@ -407,17 +407,11 @@ local function is_ethical_product(item, animal_ethics, wood_ethics)
         (not wood_ethics or not common.has_wood(item))
 end
 
-local function add_words(words, str)
-    for word in str:gmatch("[%w]+") do
-        table.insert(words, word:lower())
-    end
-end
-
 local function make_bin_search_key(item, desc)
     local words = {}
-    add_words(words, desc)
+    common.add_words(words, desc)
     for _, contained_item in ipairs(dfhack.items.getContainedItems(item)) do
-        add_words(words, common.get_item_description(contained_item))
+        common.add_words(words, common.get_item_description(contained_item))
     end
     return table.concat(words, ' ')
 end
