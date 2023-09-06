@@ -26,7 +26,7 @@ Usage
     on hand in your fortress. Fishing will be disabled when the amount of fish
     goes above this value.
 
-    ``min`` (default: 50) controls the minimum fish you want before restarting
+    ``min`` (default: 75) controls the minimum fish you want before restarting
     fishing.
 
     Use ``--toggle-raw``(``-r``) (default: on) to toggle letting the script
