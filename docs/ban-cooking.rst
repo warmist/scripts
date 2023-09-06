@@ -34,6 +34,7 @@ Usage
 -----
 
 ::
+
     ban-cooking <type|all> [<type> ...] [<options>]
 
 Valid types are ``booze``, ``brew`` (brewable plants), ``fruit``, ``honey``,
