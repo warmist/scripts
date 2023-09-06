@@ -27,7 +27,19 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `devel/scan-vtables`: Scan and dump likely vtable addresses (for memory research)
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.09-r3
+
+## New Tools
+- `devel/scan-vtables`: scan and dump likely vtable addresses (for memory research)
 - `hide-interface`: hide the vanilla UI elements for clean screenshots or laid-back fortress observing
 - `hide-tutorials`: hide the DF tutorial popups; enable in the System tab of `gui/control-panel`
 - `set-orientation`: tinker with romantic inclinations (reinstated from back catalog of tools)
@@ -37,12 +49,12 @@ Template for new versions:
 
 ## Fixes
 - `suspendmanager`: Fix the overlay enabling/disabling `suspendmanager` unexpectedly
-- `caravan`: Correct price adjustment values in trade agreement details screen
-- `caravan`: Apply both import and export trade agreement price adjustments to items being both bought or sold to align with how vanilla DF calculates prices
+- `caravan`: correct price adjustment values in trade agreement details screen
+- `caravan`: apply both import and export trade agreement price adjustments to items being both bought or sold to align with how vanilla DF calculates prices
 - `caravan`: cancel any active TradeAtDepot jobs if all caravans are instructed to leave
 - `emigration`: fix errors loading forts after dwarves assigned to work details or workshops have emigrated
 - `emigration`: fix citizens sometimes "emigrating" to the fortress site
-- `suspendmanager`: Improve the detection on "T" and "+" shaped high walls
+- `suspendmanager`: improve the detection on "T" and "+" shaped high walls
 - `starvingdead`: ensure sieges end properly when undead siegers starve
 - `fix/retrieve-units`: fix retrieved units sometimes becoming duplicated on the map
 - `quickfort`: cancel old dig jobs that point to a tile when a new designation is applied to the tile
@@ -59,13 +71,6 @@ Template for new versions:
 - `gui/gm-editor`: display in the title bar whether the editor window is scanning for live updates
 - `gui/design`: change "auto commit" hotkey from ``c`` to ``Alt-c`` to avoid conflict with the default keybinding for z-level down
 - `gui/liquids`: support removing river sources by converting them into stone floors
-- `necronomicon`: report on secrets of life and death contained in scrolls
-- `ban-cooking`: add ``--unban`` option for removing kitchen bans
-
-## Documentation
-- `makeown`: note that ``makeown`` fixes DF bug 10921, where you request workers from your holdings but they come as merchants and are not functional citizens
-
-## Removed
 
 # 50.09-r2
 
