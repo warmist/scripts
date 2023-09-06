@@ -1,5 +1,5 @@
 -- handles automatic fishing jobs to limit the number of fish the fortress keeps on hand
--- autofish [enable | disable] <max> [min] [--include-raw | -r]
+-- autofish [enable | disable] <max> [min] <options>
 
 --@ enable=true
 --@ module=true
@@ -206,10 +206,21 @@ if dfhack_flags and dfhack_flags.enable then
     args = {dfhack_flags.enable_state and "enable" or "disable"}
 end
 
--- find flags in args:
+-- lookup to convert arguments to bool values.
+local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,
+              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false}
+
 local positionals = argparse.processArgsGetopt(args,
-    {{"r", "toggle-raw",
-    handler=function() s_useRaw = not s_useRaw end}
+    {{"r", "raw", hasArg=true,
+    handler=function(optArg)
+        optArg=string.lower(optArg)
+        if toBool[optArg] ~= nil then
+            set_useRaw(toBool[optArg])
+        else
+            qerror("Invalid argument to --raw \"".. optArg .."\". expected boolean")
+            return
+        end
+    end}
 })
 
 load_state()
@@ -226,8 +237,9 @@ elseif positionals[1] == "status" then
     print_status()
     return
 
+-- positionals is an empty table if no positional arguments are set
 elseif positionals ~= nil then
-    -- positionals is a number?
+    -- check to see if passed args are numbers
     if positionals[1] and tonumber(positionals[1]) then
         -- assume we're changing setting:
         local newval = tonumber(positionals[1])
@@ -235,9 +247,6 @@ elseif positionals ~= nil then
         if not positionals[2] then
             set_minFish(math.floor(newval * 0.75))
         end
-    else
-        -- invalid or no argument
-        return
     end
 
     if positionals[2] and tonumber(positionals[2]) then

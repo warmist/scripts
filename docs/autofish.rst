@@ -37,9 +37,9 @@ Positional Parameters
 Options
 -------
 
-``-r``, ``--toggle-raw``
-    (default: on) to toggle letting the script also count your raw fish as part
-    of your quota. Use it a second time to disable this.
+``r``, ``--raw <true | false>``
+    (default: on) Set whether or not raw fish should be counted in the running
+    total of fish in your fortress.
 
 Examples
 --------
