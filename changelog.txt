@@ -60,6 +60,7 @@ Template for new versions:
 - `gui/design`: change "auto commit" hotkey from ``c`` to ``Alt-c`` to avoid conflict with the default keybinding for z-level down
 - `gui/liquids`: support removing river sources by converting them into stone floors
 - `necronomicon`: report on secrets of life and death contained in scrolls
+- `ban-cooking`: add ``--unban`` option for removing kitchen bans
 
 ## Documentation
 - `makeown`: note that ``makeown`` fixes DF bug 10921, where you request workers from your holdings but they come as merchants and are not functional citizens
