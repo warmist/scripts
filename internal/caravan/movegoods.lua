@@ -328,11 +328,10 @@ local function is_tradeable_item(item, depot)
     end
     if item.flags.in_inventory then
         local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINED_IN_ITEM)
-        if gref then
-            local container = df.item.find(gref.item_id)
-            if container and not df.item_binst:is_instance(container) then
-                return false
-            end
+        if not gref then return false end
+        local container = df.item.find(gref.item_id)
+        if not container or not df.item_binst:is_instance(container) then
+            return false
         end
     end
     if item.flags.in_job then
