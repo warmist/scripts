@@ -37,16 +37,16 @@ Positional Parameters
 Options
 -------
 
-``-r``, ``--toggle-raw``
-    (default: on) to toggle letting the script also count your raw fish as part
-    of your quota. Use it a second time to disable this.
+``r``, ``--raw (true | false)``
+    (default: ``true``) Set whether or not raw fish should be counted in the running
+    total of fish in your fortress.
 
 Examples
 --------
 
 ``enable autofish``
     Enables the script.
-``autofish -r 150``
+``autofish 150 -r true``
     Sets your maximum fish to 150, and enables counting raw fish.
 ``autofish 300 250``
     Sets your maximum fish to 300 and minimum to 250.
