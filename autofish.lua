@@ -218,7 +218,6 @@ local positionals = argparse.processArgsGetopt(args,
             set_useRaw(toBool[optArg])
         else
             qerror("Invalid argument to --raw \"".. optArg .."\". expected boolean")
-            return
         end
     end}
 })
