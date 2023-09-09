@@ -46,7 +46,7 @@ Examples
 
 ``enable autofish``
     Enables the script.
-``autofish -r 150``
+``autofish 150 -r true``
     Sets your maximum fish to 150, and enables counting raw fish.
 ``autofish 300 250``
     Sets your maximum fish to 300 and minimum to 250.
