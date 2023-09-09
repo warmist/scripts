@@ -37,7 +37,7 @@ Positional Parameters
 Options
 -------
 
-``r``, ``--raw <true | false>``
+``r``, ``--raw (true | false)``
     (default: on) Set whether or not raw fish should be counted in the running
     total of fish in your fortress.
 
