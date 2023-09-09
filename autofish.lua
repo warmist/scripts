@@ -1,5 +1,5 @@
 -- handles automatic fishing jobs to limit the number of fish the fortress keeps on hand
--- autofish [enable | disable] <max> [min] <options>
+-- autofish [enable | disable] <max> [min] [<options>]
 
 --@ enable=true
 --@ module=true
