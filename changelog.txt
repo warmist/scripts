@@ -33,7 +33,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
-- ``autofish``: changed ``--raw`` argument format to allow explicit setting
+- `autofish`: changed ``--raw`` argument format to allow explicit setting to on or off
 
 ## Removed
 
