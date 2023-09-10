@@ -35,6 +35,7 @@ Template for new versions:
 ## Misc Improvements
 - `autofish`: changed ``--raw`` argument format to allow explicit setting to on or off
 - `caravan`: move goods to depot screen can now see/search/trade items inside of barrels and pots
+- `gui/launcher`: show tagged tools in the autocomplete list when a tag name is typed
 
 ## Removed
 
