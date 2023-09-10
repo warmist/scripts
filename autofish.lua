@@ -206,23 +206,16 @@ if dfhack_flags and dfhack_flags.enable then
     args = {dfhack_flags.enable_state and "enable" or "disable"}
 end
 
--- lookup to convert arguments to bool values.
-local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,
-              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false}
-
+-- handle options flags
 local positionals = argparse.processArgsGetopt(args,
     {{"r", "raw", hasArg=true,
     handler=function(optArg)
-        optArg=string.lower(optArg)
-        if toBool[optArg] ~= nil then
-            set_useRaw(toBool[optArg])
-        else
-            qerror("Invalid argument to --raw \"".. optArg .."\". expected boolean")
-        end
+       return argparse.boolean(optArg, "raw")
     end}
 })
 
 load_state()
+-- handle the rest of the arguments
 if positionals[1] == "enable" then
     enabled = true
 
