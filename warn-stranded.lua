@@ -179,17 +179,11 @@ function doCheck()
   local citizens = dfhack.units.getCitizens()
 
   -- Pathability group calculation is from gui/pathable
-  for _, unit in pairs(citizens) do
+  for _, unit in ipairs(citizens) do
     local target = unit.pos
     local block = dfhack.maps.getTileBlock(target)
     local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
-    local groupTable = grouped[walkGroup]
-
-    if groupTable == nil then
-      grouped[walkGroup] = { unit }
-    else
-      table.insert(groupTable, unit)
-    end
+    table.insert(ensure_key(grouped, walkGroup), unit)
   end
 
   local strandedUnits = {}

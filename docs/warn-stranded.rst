@@ -5,7 +5,7 @@ warn-stranded
     :summary: Reports citizens that are stranded and can't reach any other unit
     :tags: fort units
 
-If any (live) units are stranded the game will pause and you'll get a warning dialog telling you
+If any (live) units are stranded, the game will pause and you'll get a warning dialog telling you
 which units are isolated. This gives you a chance to rescue them before
 they get overly stressed or start starving.
 
@@ -27,8 +27,3 @@ Examples
 ``warn-stranded clear``
    Clear all ignored units and then check for ones that are stranded.
 
-Options
--------
-
-``clear``
-  Will clear all ignored units so that warnings will be displayed again.
