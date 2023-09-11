@@ -2,7 +2,7 @@ warn-stranded
 =============
 
 .. dfhack-tool::
-    :summary: Reports citizens that are stranded and can't reach any other unit
+    :summary: Reports citizens that are stranded and can't reach any other unit.
     :tags: fort units
 
 If any (live) units are stranded, the game will pause and you'll get a warning dialog telling you
@@ -26,4 +26,3 @@ Examples
 
 ``warn-stranded clear``
    Clear all ignored units and then check for ones that are stranded.
-

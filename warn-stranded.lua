@@ -13,58 +13,58 @@ local function clear()
    dfhack.persistent.delete('warnStrandedIgnore')
 end
 
-local args = utils.invert({...})
-if args.clear then
-   clear()
-end
-
-
-warning = defclass(warning, gui.ZScreen)
-warning.ATTRS = {
-    focus_path='warn-stranded',
-    force_pause=true,
-    pass_mouse_clicks=false,
-}
+warning = defclass(warning, gui.ZScreenModal)
 
 function warning:init(info)
-    self:addviews{
-       widgets.Window{
-          view_id = 'main',
-          frame={w=80, h=18},
-          frame_title='Stranded Citizen Warning',
-          resizable=true,
-          subviews = {
-             widgets.Label{
-                frame = { l = 0, t = 0},
-                text_pen = COLOR_CYAN,
-                text = 'Number Stranded: '..#info.units,
-             },
-             widgets.List{
-                view_id = 'list',
-                frame = { t = 3, b = 5 },
-                text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-                cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
-             },
-             widgets.Label{
-                view_id = 'bottom_ui',
-                frame = { b = 0, h = 1 },
-                text = 'filled by updateBottom()'
-             }
-          }
-       }
-    }
+   self:addviews{
+      widgets.Window{
+         view_id = 'main',
+         frame={w=80, h=18},
+         frame_title='Stranded Citizen Warning',
+         resizable=true,
+         subviews = {
+            widgets.Label{
+               frame = { l=0, t=0},
+               text_pen = COLOR_CYAN,
+               text = 'Number Stranded: '..#info.units,
+            },
+            widgets.List{
+               view_id = 'list',
+               frame = { t = 3, l=0 },
+               text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
+               cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
+            },
+            widgets.HotkeyLabel{
+               frame = { b=3, l=0},
+               key='SELECT',
+               label='Toggle Ignore',
+               on_activate=self:callback('onIgnore'),
+            },
+            widgets.HotkeyLabel{
+               frame = { b=2, l=0 },
+               key = 'CUSTOM_SHIFT_I',
+               label = 'Ignore All',
+               on_activate = self:callback('onIgnoreAll') },
+            widgets.HotkeyLabel{
+               frame = { b=1, l=0 },
+               key = 'CUSTOM_SHIFT_C',
+               label = 'Clear All Ignored',
+               on_activate = self:callback('onClear'),
+            },
+         }
+      }
+   }
 
-    self.units = info.units
-    self:initListChoices()
-    self:updateBottom()
+   self.units = info.units
+   self:initListChoices()
 end
 
 local function getSexString(sex)
-  local sym = df.pronoun_type.attrs[sex].symbol
-  if not sym then
-    return ""
-  end
-  return "("..sym..")"
+   local sym = df.pronoun_type.attrs[sex].symbol
+   if not sym then
+      return ""
+   end
+   return "("..sym..")"
 end
 
 local function getUnitDescription(unit)
@@ -98,8 +98,8 @@ local function toggleUnitIgnore(unit)
    else
       local index = 1
       for v in string.gmatch(currentIgnore['value'], '%d+') do
-        tbl[index] = v
-        index = index + 1
+         tbl[index] = v
+         index = index + 1
       end
    end
 
@@ -118,10 +118,8 @@ end
 
 function warning:initListChoices()
    local choices = {}
-   for _, unit in pairs(self.units) do
+   for _, unit in ipairs(self.units) do
       local text = ''
-
-      dfhack.printerr('Ignored: ', unitIgnored(unit))
 
       if unitIgnored(unit) then
          text = '[IGNORED] '
@@ -132,16 +130,6 @@ function warning:initListChoices()
    end
    local list = self.subviews.list
    list:setChoices(choices, 1)
-end
-
-function warning:updateBottom()
-   self.subviews.bottom_ui:setText(
-      {
-         { key = 'SELECT', text = ': Toggle ignore unit', on_activate = self:callback('onIgnore') }, ' ',
-         { key = 'CUSTOM_SHIFT_I', text = ': Ignore all', on_activate = self:callback('onIgnoreAll') }, ' ',
-         { key = 'CUSTOM_SHIFT_C', text = ': Clear all ignored', on_activate = self:callback('onClear') },
-      }
-   )
 end
 
 function warning:onIgnore()
@@ -155,7 +143,7 @@ end
 function warning:onIgnoreAll()
    local choices = self.subviews.list:getChoices()
 
-   for _, choice in pairs(choices) do
+   for _, choice in ipairs(choices) do
       if not unitIgnored(choice.unit) then
          toggleUnitIgnore(choice.unit)
       end
@@ -167,45 +155,49 @@ end
 function warning:onClear()
    clear()
    self:initListChoices()
-   self:updateBottom()
 end
 
 function warning:onDismiss()
-    view = nil
+   view = nil
 end
 
 function doCheck()
-  local grouped = {}
-  local citizens = dfhack.units.getCitizens()
+   local grouped = {}
+   local citizens = dfhack.units.getCitizens()
 
-  -- Pathability group calculation is from gui/pathable
-  for _, unit in ipairs(citizens) do
-    local target = unit.pos
-    local block = dfhack.maps.getTileBlock(target)
-    local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
-    table.insert(ensure_key(grouped, walkGroup), unit)
-  end
+   -- Pathability group calculation is from gui/pathable
+   for _, unit in ipairs(citizens) do
+      local target = xyz2pos(dfhack.units.getPosition(unit))
+      local block = dfhack.maps.getTileBlock(target)
+      local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
+      table.insert(ensure_key(grouped, walkGroup), unit)
+   end
 
-  local strandedUnits = {}
+   local strandedUnits = {}
 
 
-  for _, units in pairs(grouped) do
-    if #units == 1 and not unitIgnored(units[1]) then
-      table.insert(strandedUnits, units[1])
-    end
-  end
+   for _, units in pairs(grouped) do
+      if #units == 1 and not unitIgnored(units[1]) then
+         table.insert(strandedUnits, units[1])
+      end
+   end
 
-  if #strandedUnits > 0 then
-    return warning{units=strandedUnits}:show()
+   if #strandedUnits > 0 then
+      return warning{units=strandedUnits}:show()
    end
 end
 
 if dfhack_flags.module then
-    return
+   return
 end
 
 if not dfhack.isMapLoaded() then
-    qerror('warn-stranded requires a map to be loaded')
+   qerror('warn-stranded requires a map to be loaded')
+end
+
+local args = utils.invert({...})
+if args.clear then
+   clear()
 end
 
 view = view and view:raise() or doCheck()
