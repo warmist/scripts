@@ -30,6 +30,9 @@ Template for new versions:
 
 ## New Features
 
+## New Scripts
+- `warn-stranded`: new repeatable maintenance script to check for stranded units, based off warn-starving
+
 ## Fixes
 - `suspendmanager`: fix errors when constructing near the map edge
 - `gui/sandbox`: fix scrollbar moving double distance on click
