@@ -1,8 +1,6 @@
 -- Detects and alerts when a citizen is stranded
--- by Azrazalea
 -- Logic heavily based off of warn-starving
 -- GUI heavily based off of autobutcher
--- Thanks myk002 for telling me about pathability groups!
 --@ module = true
 
 local gui = require 'gui'
