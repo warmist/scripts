@@ -21,39 +21,40 @@ function warning:init(info)
             frame_title='Stranded Citizen Warning',
             resizable=true,
             subviews = {
-                widgets.Label{
-                    frame = { l=0, t=0},
-                    text_pen = COLOR_CYAN,
-                    text = 'Number Stranded: '..#info.units,
-                },
                 widgets.List{
                     view_id = 'list',
-                    frame = { t = 3, l=0 },
+                    frame = { t = 1, l=0 },
                     text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
                     cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
                 },
                 widgets.HotkeyLabel{
-                    frame = { b=3, l=0},
+                    frame = { b=4, l=0},
                     key='SELECT',
                     label='Toggle Ignore',
                     on_activate=self:callback('onIgnore'),
                 },
                 widgets.HotkeyLabel{
-                    frame = { b=2, l=0 },
+                    frame = { b=3, l=0 },
                     key = 'CUSTOM_SHIFT_I',
                     label = 'Ignore All',
                     on_activate = self:callback('onIgnoreAll') },
                 widgets.HotkeyLabel{
-                    frame = { b=1, l=0 },
+                    frame = { b=2, l=0 },
                     key = 'CUSTOM_SHIFT_C',
                     label = 'Clear All Ignored',
                     on_activate = self:callback('onClear'),
                 },
+                widgets.HotkeyLabel{
+                    frame = { b=1, l=0},
+                    key = 'CUSTOM_Z',
+                    label = 'Zoom to unit',
+                    on_activate = self:callback('onZoom'),
+                }
             }
         }
     }
 
-    self.units = info.units
+    self.groups = info.groups
     self:initListChoices()
 end
 
@@ -116,23 +117,35 @@ end
 
 function warning:initListChoices()
     local choices = {}
-    for _, unit in ipairs(self.units) do
-        local text = ''
 
-        if unitIgnored(unit) then
-            text = '[IGNORED] '
+    for groupIndex, group in ipairs(self.groups) do
+        local groupDesignation = nil
+
+        if group['mainGroup'] then
+            groupDesignation = ' (Main Group)'
+        else
+            groupDesignation = ' (Group '..groupIndex..')'
         end
 
-        text = text..getUnitDescription(unit)
-        table.insert(choices, { text = text, unit = unit })
+        for _, unit in ipairs(group['units']) do
+            local text = ''
+
+            if unitIgnored(unit) then
+                text = '[IGNORED] '
+            end
+
+            text = text..getUnitDescription(unit)..groupDesignation
+            table.insert(choices, { text = text, data = {unit = unit, group = index} })
+        end
     end
+
     local list = self.subviews.list
     list:setChoices(choices, 1)
 end
 
 function warning:onIgnore()
     local index, choice = self.subviews.list:getSelected()
-    local unit = choice.unit
+    local unit = choice.data['unit']
 
     toggleUnitIgnore(unit)
     self:initListChoices()
@@ -142,8 +155,8 @@ function warning:onIgnoreAll()
     local choices = self.subviews.list:getChoices()
 
     for _, choice in ipairs(choices) do
-        if not unitIgnored(choice.unit) then
-            toggleUnitIgnore(choice.unit)
+        if not unitIgnored(choice.data['unit']) then
+            toggleUnitIgnore(choice.data['unit'])
         end
     end
 
@@ -155,33 +168,106 @@ function warning:onClear()
     self:initListChoices()
 end
 
+function warning:onZoom()
+    local index, choice = self.subviews.list:getSelected()
+    local unit = choice.data['unit']
+
+    local target = xyz2pos(dfhack.units.getPosition(unit))
+    dfhack.gui.revealInDwarfmodeMap(target, true)
+end
+
 function warning:onDismiss()
     view = nil
 end
 
-function doCheck()
-    local grouped = {}
+local function compareGroups(group_one, group_two)
+    return #group_one['units'] > #group_two['units']
+end
+
+local function getStrandedUnits()
+    local grouped = { n = 0 }
     local citizens = dfhack.units.getCitizens()
+
+    -- Don't use ignored units to determine if there are any stranded units
+    -- but keep them to display later
+    local ignoredGroup = {}
 
     -- Pathability group calculation is from gui/pathable
     for _, unit in ipairs(citizens) do
         local target = xyz2pos(dfhack.units.getPosition(unit))
         local block = dfhack.maps.getTileBlock(target)
         local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
-        table.insert(ensure_key(grouped, walkGroup), unit)
-    end
 
-    local strandedUnits = {}
-
-
-    for _, units in pairs(grouped) do
-        if #units == 1 and not unitIgnored(units[1]) then
-            table.insert(strandedUnits, units[1])
+        if unitIgnored(unit) then
+            table.insert(ensure_key(ignoredGroup, walkGroup), unit)
+        else
+            table.insert(ensure_key(grouped, walkGroup), unit)
+            grouped['n'] = grouped['n'] + 1
         end
     end
 
-    if #strandedUnits > 0 then
-        return warning{units=strandedUnits}:show()
+    -- No one is stranded, so stop here
+    if grouped['n'] <= 1 then
+        return false, {}
+    end
+
+    -- We needed the table for easy grouping
+    -- Now let us get an array so we can sort easily
+    local rawGroups = {}
+    for index, units in pairs(grouped) do
+        if not (index == 'n') then
+            table.insert(rawGroups, { units = units, walkGroup = index })
+        end
+    end
+
+    -- This data structure is super easy to sort from biggest to smallest
+    -- Our group number is just the array index and is sorted for us
+    table.sort(rawGroups, compareGroups)
+
+    -- The biggest group is not stranded
+    mainGroup = rawGroups[1]['walkGroup']
+    table.remove(rawGroups, 1)
+
+    -- Merge ignoredGroup with grouped
+    for index, units in pairs(ignoredGroup) do
+        local groupIndex = nil
+
+        -- Handle ignored units in mainGroup by shifting other groups down
+        -- We need to list them so they can be toggled
+        if index == mainGroup then
+            table.insert(rawGroups, 1, { units = {}, walkGroup = mainGroup, mainGroup = true })
+            groupIndex = 1
+        end
+
+        -- Find matching group
+        for i, group in ipairs(rawGroups) do
+            if group[walkGroup] == index then
+                groupIndex = i
+            end
+        end
+
+        -- No matching group
+        if groupIndex == nil then
+            table.insert(rawGroups, { units = {}, walkGroup = index })
+        end
+
+        -- Put all the units in the appropriate group
+        for _, unit in ipairs(units) do
+            table.insert(rawGroups[groupIndex]['units'], unit)
+        end
+    end
+
+    -- Key = group number (not pathability group number)
+    -- Value = { units = <array of units>, walkGroup = <pathability group>, mainGroup = <is this ignored units from the main group?> }
+    return true, rawGroups
+end
+
+
+function doCheck()
+    local result, strandedGroups = getStrandedUnits()
+
+    if result then
+        return warning{groups=strandedGroups}:show()
     end
 end
 
