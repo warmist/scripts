@@ -185,7 +185,8 @@ local function compareGroups(group_one, group_two)
 end
 
 local function getStrandedUnits()
-    local grouped = { n = 0 }
+    local groupCount = 0
+    local grouped = {}
     local citizens = dfhack.units.getCitizens()
 
     -- Don't use ignored units to determine if there are any stranded units
@@ -202,12 +203,14 @@ local function getStrandedUnits()
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
-            grouped['n'] = grouped['n'] + 1
+            if #grouped[walkGroup] == 1 then
+                groupCount = groupCount + 1
+            end
         end
     end
 
     -- No one is stranded, so stop here
-    if grouped['n'] <= 1 then
+    if groupCount <= 1 then
         return false, {}
     end
 
