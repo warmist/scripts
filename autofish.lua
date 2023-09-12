@@ -210,7 +210,8 @@ end
 local positionals = argparse.processArgsGetopt(args,
     {{"r", "raw", hasArg=true,
     handler=function(optArg)
-       return argparse.boolean(optArg, "raw")
+       local val = argparse.boolean(optArg, "raw")
+       set_useRaw(val)
     end}
 })
 
