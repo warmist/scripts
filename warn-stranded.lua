@@ -6,11 +6,125 @@
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
+local args = nil
 
+-- ===============================================
+--              Utility Functions
+-- ===============================================
+
+-- Clear the ignore list
 local function clear()
     dfhack.persistent.delete('warnStrandedIgnore')
 end
 
+-- Taken from warn-starving
+local function getSexString(sex)
+    local sym = df.pronoun_type.attrs[sex].symbol
+
+    if sym then
+        return "("..sym..")"
+    else
+        return ""
+    end
+end
+
+-- Partially taken from warn-starving
+local function getUnitDescription(unit)
+    return '['..dfhack.units.getProfessionName(unit)..'] '..dfhack.TranslateName(dfhack.units.getVisibleName(unit))..
+        ' '..getSexString(unit.sex)..' Stress category: '..dfhack.units.getStressCategory(unit)
+end
+
+-- Use group data, index, and command arguments to generate a group
+--   designation string.
+local function getGroupDesignation(group, groupIndex)
+    local groupDesignation = ''
+
+    if group['mainGroup'] then
+        groupDesignation = ' (Main Group)'
+    else
+        groupDesignation = ' (Group '..groupIndex..')'
+    end
+
+    if args.walk_groups then
+        groupDesignation = groupDesignation..' {'..group.walkGroup..'}'
+    end
+
+    return groupDesignation
+end
+
+-- Check for and potentially add unit.id to text. Controlled by command args.
+local function addId(text, unit)
+    if args.ids then
+        return text..'|'..unit.id..'| '
+    else
+        return text
+    end
+end
+
+-- Uses persistent API. Low-level, deserializes 'warnStrandedIgnored' key and
+--   will return an initialized empty warnStrandedIgnored table if needed.
+-- Performance characterstics unknown of persistent API
+local function deserializeIgnoredUnits()
+    local currentIgnore = dfhack.persistent.get('warnStrandedIgnore')
+    if currentIgnore == nil then return {} end
+
+    local tbl = {}
+
+    for v in string.gmatch(currentIgnore['value'], '%d+') do
+        table.insert(tbl, v)
+    end
+
+    return tbl
+end
+
+-- Uses persistent API. Deserializes 'warnStrandedIgnore' key to determine if unit is ignored
+--   deserializedIgnores is optional but allows us to only call deserialize once like an explicit cache.
+local function unitIgnored(unit, deserializedIgnores)
+    local ignores = deserializedIgnores or deserializeIgnoredUnits()
+
+    for index, id in ipairs(ignores) do
+        if tonumber(id) == unit.id then
+            return true, index
+        end
+    end
+
+    return false
+end
+
+-- Check for and potentially add [IGNORED] to text. Controlled by command args.
+--   Optional deserializedIgnores allows us to call deserialize once for a group of operations
+local function addIgnored(text, unit, deserializedIgnores)
+    if unitIgnored(unit, deserializedIgnores) then
+        return text..'[IGNORED] '
+    end
+
+    return text
+end
+
+-- Uses persistent API. Toggles a unit's ignored status by deserializing 'warnStrandedIgnore' key
+--   then serializing the resulting table after the toggle.
+-- Optional cache parameter could affect data integrity. Make sure you don't need data reloaded
+--   before using it. Calling several times in a row can use the return result of the function
+--   as input to the next call.
+local function toggleUnitIgnore(unit, deserializedIgnores)
+    local ignores = deserializedIgnores or deserializeIgnoredUnits()
+    local is_ignored, index = unitIgnored(unit, ignores)
+
+    if is_ignored then
+        table.remove(ignores, index)
+    else
+        table.insert(ignores, unit.id)
+    end
+
+    dfhack.persistent.delete('warnStrandedIgnore')
+    dfhack.persistent.save({key = 'warnStrandedIgnore', value = table.concat(ignores, ' ')})
+
+    return ignores
+end
+
+-- ===============================================================
+--                   Graphical Interface
+-- ===============================================================
 warning = defclass(warning, gui.ZScreenModal)
 
 function warning:init(info)
@@ -58,83 +172,21 @@ function warning:init(info)
     self:initListChoices()
 end
 
-local function getSexString(sex)
-    local sym = df.pronoun_type.attrs[sex].symbol
-    if not sym then
-        return ""
-    end
-    return "("..sym..")"
-end
-
-local function getUnitDescription(unit)
-    return '['..dfhack.units.getProfessionName(unit)..'] '..dfhack.TranslateName(dfhack.units.getVisibleName(unit))..
-        ' '..getSexString(unit.sex)..' Stress category: '..dfhack.units.getStressCategory(unit)
-end
-
-
-local function unitIgnored(unit)
-    local currentIgnore = dfhack.persistent.get('warnStrandedIgnore')
-    if currentIgnore == nil then return false end
-
-    local tbl = string.gmatch(currentIgnore['value'], '%d+')
-    local index = 1
-    for id in tbl do
-        if tonumber(id) == unit.id then
-            return true, index
-        end
-        index = index + 1
-    end
-
-    return false
-end
-
-local function toggleUnitIgnore(unit)
-    local currentIgnore = dfhack.persistent.get('warnStrandedIgnore')
-    local tbl = {}
-
-    if currentIgnore == nil then
-        currentIgnore = { key = 'warnStrandedIgnore' }
-    else
-        local index = 1
-        for v in string.gmatch(currentIgnore['value'], '%d+') do
-            tbl[index] = v
-            index = index + 1
-        end
-    end
-
-    local ignored, index = unitIgnored(unit)
-
-    if ignored then
-        table.remove(tbl, index)
-    else
-        table.insert(tbl, unit.id)
-    end
-
-    dfhack.persistent.delete('warnStrandedIgnore')
-    currentIgnore.value = table.concat(tbl, ' ')
-    dfhack.persistent.save(currentIgnore)
-end
 
 function warning:initListChoices()
     local choices = {}
 
     for groupIndex, group in ipairs(self.groups) do
-        local groupDesignation = nil
-
-        if group['mainGroup'] then
-            groupDesignation = ' (Main Group)'
-        else
-            groupDesignation = ' (Group '..groupIndex..')'
-        end
+        local groupDesignation = getGroupDesignation(group, groupIndex)
+        local ignoresCache = deserializeIgnoredUnits()
 
         for _, unit in ipairs(group['units']) do
             local text = ''
 
-            if unitIgnored(unit) then
-                text = '[IGNORED] '
-            end
-
+            text = addIgnored(text, unit, ignoresCache)
+            text = addId(text, unit)
             text = text..getUnitDescription(unit)..groupDesignation
+
             table.insert(choices, { text = text, data = {unit = unit, group = index} })
         end
     end
@@ -153,10 +205,12 @@ end
 
 function warning:onIgnoreAll()
     local choices = self.subviews.list:getChoices()
+    local ignoresCache = deserializeIgnoredUnits()
 
     for _, choice in ipairs(choices) do
-        if not unitIgnored(choice.data['unit']) then
-            toggleUnitIgnore(choice.data['unit'])
+        -- We don't want to flip ignored units to unignored
+        if not unitIgnored(choice.data['unit'], ignoresCache) then
+            ignoresCache = toggleUnitIgnore(choice.data['unit'], ignoresCache)
         end
     end
 
@@ -180,6 +234,10 @@ function warning:onDismiss()
     view = nil
 end
 
+-- ======================================================================
+--                         Core Logic
+-- ======================================================================
+
 local function compareGroups(group_one, group_two)
     return #group_one['units'] < #group_two['units']
 end
@@ -192,6 +250,7 @@ local function getStrandedUnits()
     -- Don't use ignored units to determine if there are any stranded units
     -- but keep them to display later
     local ignoredGroup = {}
+    local ignoresCache = deserializeIgnoredUnits()
 
     -- Pathability group calculation is from gui/pathable
     for _, unit in ipairs(citizens) do
@@ -199,10 +258,12 @@ local function getStrandedUnits()
         local block = dfhack.maps.getTileBlock(target)
         local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
 
-        if unitIgnored(unit) then
+        if unitIgnored(unit, ignoresCache) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
+
+            -- Count each new group
             if #grouped[walkGroup] == 1 then
                 groupCount = groupCount + 1
             end
@@ -281,69 +342,58 @@ if not dfhack.isMapLoaded() then
     qerror('warn-stranded requires a map to be loaded')
 end
 
-local args = utils.invert({...})
+-- =========================================================================
+--                       Command Line Interface
+-- =========================================================================
 
-if args.clear or args.all then
+args = utils.invert({...})
+
+if args.clear then
     clear()
 end
 
 if args.status then
     local result, strandedGroups = getStrandedUnits()
 
-    if not result then
-        print('No citizens are currently stranded.')
+    if result then
+        local ignoresCache = deserializeIgnoredUnits()
 
-        -- We have some ignored citizens
-        if not (next(strandedGroups) == nil) then
-            print('\nIgnored citizens:')
+        for groupIndex, group in ipairs(strandedGroups) do
+            local groupDesignation = getGroupDesignation(group, groupIndex)
 
-            for walkGroup, units in pairs(strandedGroups) do
-                for _, unit in ipairs(units) do
-                    local text = ''
+            for _, unit in ipairs(group['units']) do
+                local text = ''
 
-                    if args.ids then
-                        text = text..'|'..unit.id..'| '
-                    end
+                text = addIgnored(text, unit, ignoresCache)
+                text = addId(text, unit)
 
-                    text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
-                    print(text)
-                end
+                print(text..getUnitDescription(unit)..groupDesignation)
             end
         end
 
-        return false
+        return true
     end
 
-    for groupIndex, group in ipairs(strandedGroups) do
-        local groupDesignation = nil
 
-        if group['mainGroup'] then
-            groupDesignation = ' (Main Group)'
-        else
-            groupDesignation = ' (Group '..groupIndex..')'
-        end
+    print('No citizens are currently stranded.')
 
-        if args.walk_groups then
-            groupDesignation = groupDesignation..' {'..group.walkGroup..'}'
-        end
+    -- We have some ignored citizens
+    if not (next(strandedGroups) == nil) then
+        print('\nIgnored citizens:')
 
-        for _, unit in ipairs(group['units']) do
-            local text = ''
+        for walkGroup, units in pairs(strandedGroups) do
+            for _, unit in ipairs(units) do
+                local text = ''
 
-            if unitIgnored(unit) then
-                text = '[IGNORED] '
+                text = addId(text, unit)
+
+                text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
+                print(text)
             end
-
-            if args.ids then
-                text = text..'|'..unit.id..'| '
-            end
-
-            text = text..getUnitDescription(unit)..groupDesignation
-            print(text)
         end
     end
 
-    return true
+    return false
 end
 
 view = view and view:raise() or doCheck()
