@@ -181,7 +181,7 @@ function warning:onDismiss()
 end
 
 local function compareGroups(group_one, group_two)
-    return #group_one['units'] > #group_two['units']
+    return #group_one['units'] < #group_two['units']
 end
 
 local function getStrandedUnits()
@@ -227,7 +227,7 @@ local function getStrandedUnits()
 
     -- The biggest group is not stranded
     mainGroup = rawGroups[1]['walkGroup']
-    table.remove(rawGroups, 1)
+    table.remove(rawGroups, #rawGroups)
 
     -- Merge ignoredGroup with grouped
     for index, units in pairs(ignoredGroup) do
