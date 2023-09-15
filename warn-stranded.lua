@@ -211,16 +211,14 @@ local function getStrandedUnits()
 
     -- No one is stranded, so stop here
     if groupCount <= 1 then
-        return false, {}
+        return false, ignoredGroup
     end
 
     -- We needed the table for easy grouping
     -- Now let us get an array so we can sort easily
     local rawGroups = {}
     for index, units in pairs(grouped) do
-        if not (index == 'n') then
-            table.insert(rawGroups, { units = units, walkGroup = index })
-        end
+        table.insert(rawGroups, { units = units, walkGroup = index })
     end
 
     -- This data structure is super easy to sort from biggest to smallest
@@ -244,7 +242,7 @@ local function getStrandedUnits()
 
         -- Find matching group
         for i, group in ipairs(rawGroups) do
-            if group[walkGroup] == index then
+            if group.walkGroup == index then
                 groupIndex = i
             end
         end
@@ -252,6 +250,7 @@ local function getStrandedUnits()
         -- No matching group
         if groupIndex == nil then
             table.insert(rawGroups, { units = {}, walkGroup = index })
+            groupIndex = #rawGroups
         end
 
         -- Put all the units in the appropriate group
@@ -283,8 +282,68 @@ if not dfhack.isMapLoaded() then
 end
 
 local args = utils.invert({...})
-if args.clear then
+
+if args.clear or args.all then
     clear()
+end
+
+if args.status then
+    local result, strandedGroups = getStrandedUnits()
+
+    if not result then
+        print('No citizens are currently stranded.')
+
+        -- We have some ignored citizens
+        if not (next(strandedGroups) == nil) then
+            print('\nIgnored citizens:')
+
+            for walkGroup, units in pairs(strandedGroups) do
+                for _, unit in ipairs(units) do
+                    local text = ''
+
+                    if args.ids then
+                        text = text..'|'..unit.id..'| '
+                    end
+
+                    text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
+                    print(text)
+                end
+            end
+        end
+
+        return false
+    end
+
+    for groupIndex, group in ipairs(strandedGroups) do
+        local groupDesignation = nil
+
+        if group['mainGroup'] then
+            groupDesignation = ' (Main Group)'
+        else
+            groupDesignation = ' (Group '..groupIndex..')'
+        end
+
+        if args.walk_groups then
+            groupDesignation = groupDesignation..' {'..group.walkGroup..'}'
+        end
+
+        for _, unit in ipairs(group['units']) do
+            local text = ''
+
+            if unitIgnored(unit) then
+                text = '[IGNORED] '
+            end
+
+            if args.ids then
+                text = text..'|'..unit.id..'| '
+            end
+
+            text = text..getUnitDescription(unit)..groupDesignation
+            print(text)
+        end
+    end
+
+    return true
 end
 
 view = view and view:raise() or doCheck()
