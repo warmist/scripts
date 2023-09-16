@@ -11,7 +11,6 @@ local function fix_seeds(quiet)
             if bld and bld:isFarmPlot() then
                 v.flags.in_building = true
                 for _,i in ipairs(bld.contained_items) do
-                    print (('%d %d'):format(i.item.id, v.id))
                     if i.item.id == v.id then
                         i.use_mode = 2
                     end
