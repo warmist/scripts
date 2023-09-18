@@ -6,7 +6,9 @@
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
-local args = nil
+local argparse = require 'argparse'
+local args = {...}
+local args_walk_groups, args_ids, args_clear, args_group = false, false, false, false
 
 -- ===============================================
 --              Utility Functions
@@ -45,7 +47,7 @@ local function getGroupDesignation(group, groupIndex)
         groupDesignation = ' (Group '..groupIndex..')'
     end
 
-    if args.walk_groups then
+    if args_walk_groups then
         groupDesignation = groupDesignation..' {'..group.walkGroup..'}'
     end
 
@@ -54,7 +56,7 @@ end
 
 -- Check for and potentially add unit.id to text. Controlled by command args.
 local function addId(text, unit)
-    if args.ids then
+    if args_ids then
         return text..'|'..unit.id..'| '
     else
         return text
@@ -325,6 +327,64 @@ local function getStrandedUnits()
     return true, rawGroups
 end
 
+local function findCitizen(unitId)
+    local citizens = dfhack.units.getCitizens()
+
+    for _, citizen in ipairs(citizens) do
+        if citizen.id == unitId then return citizen end
+    end
+
+    return nil
+end
+
+local function ignoreGroup(groups, groupNumber)
+    local ignored = deserializeIgnoredUnits()
+
+    if groupNumber > #groups then
+        print('Group '..groupNumber..' does not exist')
+        return false
+    end
+
+    if groups[groupNumber]['mainGroup'] then
+        print('Group '..groupNumber..' is the main group of dwarves. Not ignoring.')
+        return false
+    end
+
+    for _, unit in ipairs(groups[groupNumber]['units']) do
+        if unitIgnored(unit, ignored) then
+            print('Unit '..unit.id..' already ignored, doing nothing to them.')
+        else
+            print('Ignoring unit '..unit.id)
+            toggleUnitIgnore(unit, ignored)
+        end
+    end
+
+    return true
+end
+
+local function unignoreGroup(groups, groupNumber)
+    local ignored = deserializeIgnoredUnits()
+
+    if groupNumber > #groups then
+        print('Group '..groupNumber..' does not exist')
+        return false
+    end
+
+    if group[groupNumber]['mainGroup'] then
+        print('Group '..groupNumber..' is the main group of dwarves. Unignoring.')
+    end
+
+    for _, unit in ipairs(groups[groupNumber]['units']) do
+        if unitIgnored(unit, ignored) then
+            print('Unignoring unit '..unit.id)
+            toggleUnitIgnore(unit, ignored)
+        else
+            print('Unit '..unit.id..' not already ignored, doing nothing to them.')
+        end
+    end
+
+    return true
+end
 
 function doCheck()
     local result, strandedGroups = getStrandedUnits()
@@ -346,13 +406,19 @@ end
 --                       Command Line Interface
 -- =========================================================================
 
-args = utils.invert({...})
+local positionals = argparse.processArgsGetopt(args, {
+                                                   {'w', 'walkgroups', handler=function() args_walk_groups = true end},
+                                                   {'i', 'ids', handler=function() args_ids = true end},
+                                                   {'c', 'clear', handler=function() args_clear = true end},
+                                                   {'g', 'group', handler=function() args_group = true end},
+})
 
-if args.clear then
+if args_clear then
+    print('Clearing unit ignore list.')
     clear()
 end
 
-if args.status then
+if positionals[1] == 'status' then
     local result, strandedGroups = getStrandedUnits()
 
     if result then
@@ -391,6 +457,68 @@ if args.status then
                 print(text)
             end
         end
+    end
+
+    return false
+end
+
+if positionals[1] == 'ignore' then
+    local parameter = tonumber(positionals[2])
+
+    if parameter and not args_group then
+        local citizen = findCitizen(parameter)
+
+        if citizen == nil then
+            print('No citizen with unit id '..parameter..' found in the fortress')
+            return false
+
+        end
+
+        if unitIgnored(citizen) then
+            print('Unit '..parameter..' is already ignored. You may want to use the unignore command.')
+            return false
+        end
+
+        print('Ignoring unit '..parameter)
+        toggleUnitIgnore(citizen)
+        return true
+    elseif parameter and args_group then
+        print('Ignoring group '..parameter)
+        local _, strandedCitizens = getStrandedUnits()
+        return ignoreGroup(strandedCitizens, parameter)
+    else
+        print('Must provide unit or group id to the ignore command.')
+    end
+
+    return false
+end
+
+if positionals[1] == 'unignore' then
+    local parameter = tonumber(positionals[2])
+
+    if parameter and not args_group then
+        local citizen = findCitizen(parameter)
+
+        if citizen == nil then
+            print('No citizen with unit id '..parameter..' found in the fortress')
+            return false
+
+        end
+
+        if unitIgnored(citizen) == false then
+            print('Unit '..parameter..' is not ignored. You may want to use the ignore command.')
+            return false
+        end
+
+        print('Unignoring unit '..parameter)
+        toggleUnitIgnore(citizen)
+        return true
+    elseif parameter and args_group then
+        print('Unignoring group '..parameter)
+        local _, strandedCitizens = getStrandedUnits()
+        return unignoreGroup(strandedCitizens, parameter)
+    else
+        print('Must provide unit id to ignore command.')
     end
 
     return false
