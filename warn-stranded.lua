@@ -133,39 +133,45 @@ function warning:init(info)
     self:addviews{
         widgets.Window{
             view_id = 'main',
-            frame={w=80, h=18},
+            frame={w=80, h=25},
+            min_size={w=60, h=25},
             frame_title='Stranded Citizen Warning',
             resizable=true,
+            autoarrange_subviews=true,
             subviews = {
                 widgets.List{
+                    frame={h=15},
                     view_id = 'list',
-                    frame = { t = 1, l=0 },
                     text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
                     cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
+                    on_submit=self:callback('onIgnore'),
                 },
-                widgets.HotkeyLabel{
-                    frame = { b=4, l=0},
-                    key='SELECT',
-                    label='Toggle Ignore',
-                    on_activate=self:callback('onIgnore'),
+                widgets.Panel{
+                    frame={h=5},
+                    autoarrange_subviews=true,
+                    subviews = {
+                        widgets.HotkeyLabel{
+                            key='SELECT',
+                            label='Toggle Ignore',
+                        },
+                        widgets.HotkeyLabel{
+                            key = 'CUSTOM_SHIFT_I',
+                            label = 'Ignore All',
+                            on_activate = self:callback('onIgnoreAll'),
+                        },
+                        widgets.HotkeyLabel{
+                            key = 'CUSTOM_SHIFT_C',
+                            label = 'Clear All Ignored',
+                            on_activate = self:callback('onClear'),
+                        },
+                        widgets.HotkeyLabel{
+                            key = 'CUSTOM_Z',
+                            label = 'Zoom to unit',
+                            on_activate = self:callback('onZoom'),
+                        }
+                    }
                 },
-                widgets.HotkeyLabel{
-                    frame = { b=3, l=0 },
-                    key = 'CUSTOM_SHIFT_I',
-                    label = 'Ignore All',
-                    on_activate = self:callback('onIgnoreAll') },
-                widgets.HotkeyLabel{
-                    frame = { b=2, l=0 },
-                    key = 'CUSTOM_SHIFT_C',
-                    label = 'Clear All Ignored',
-                    on_activate = self:callback('onClear'),
-                },
-                widgets.HotkeyLabel{
-                    frame = { b=1, l=0},
-                    key = 'CUSTOM_Z',
-                    label = 'Zoom to unit',
-                    on_activate = self:callback('onZoom'),
-                }
+
             }
         }
     }
@@ -197,8 +203,7 @@ function warning:initListChoices()
     list:setChoices(choices, 1)
 end
 
-function warning:onIgnore()
-    local index, choice = self.subviews.list:getSelected()
+function warning:onIgnore(_, choice)
     local unit = choice.data['unit']
 
     toggleUnitIgnore(unit)
