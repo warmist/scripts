@@ -124,6 +124,44 @@ local function toggleUnitIgnore(unit, deserializedIgnores)
     return ignores
 end
 
+-- Does the usual GUI pattern when groups can be in a partial state
+--   Will ignore everything, unless all units in group are already ignored
+--   If all units in the group are ignored, then it will unignore all of them
+local function toggleGroup(groups, groupNumber)
+    local ignored = deserializeIgnoredUnits()
+
+    if groupNumber > #groups then
+        print('Group '..groupNumber..' does not exist')
+        return false
+    end
+
+    if groups[groupNumber]['mainGroup'] then
+        print('Group '..groupNumber..' is the main group of dwarves. Cannot toggle.')
+        return false
+    end
+
+    local group = groups[groupNumber]
+
+    local allIgnored = true
+    for _, unit in ipairs(group['units']) do
+        if not unitIgnored(unit, ignored) then
+            allIgnored = false
+            goto process
+        end
+    end
+    ::process::
+
+    for _, unit in ipairs(group['units']) do
+        local isIgnored = unitIgnored(unit, ignored)
+
+        if allIgnored == isIgnored then
+            toggleUnitIgnore(unit, ignored)
+        end
+    end
+
+    return true
+end
+
 -- ===============================================================
 --                   Graphical Interface
 -- ===============================================================
@@ -153,6 +191,11 @@ function warning:init(info)
                         widgets.HotkeyLabel{
                             key='SELECT',
                             label='Toggle Ignore',
+                        },
+                        widgets.HotkeyLabel{
+                            key='CUSTOM_G',
+                            label='Toggle Group',
+                            on_activate = self:callback('onToggleGroup'),
                         },
                         widgets.HotkeyLabel{
                             key = 'CUSTOM_SHIFT_I',
@@ -195,7 +238,7 @@ function warning:initListChoices()
             text = addId(text, unit)
             text = text..getUnitDescription(unit)..groupDesignation
 
-            table.insert(choices, { text = text, data = {unit = unit, group = index} })
+            table.insert(choices, { text = text, data = {unit = unit, group = groupIndex} })
         end
     end
 
@@ -235,6 +278,14 @@ function warning:onZoom()
 
     local target = xyz2pos(dfhack.units.getPosition(unit))
     dfhack.gui.revealInDwarfmodeMap(target, true)
+end
+
+function warning:onToggleGroup()
+    local index, choice = self.subviews.list:getSelected()
+    local group = choice.data['group']
+
+    toggleGroup(self.groups, group)
+    self:initListChoices()
 end
 
 function warning:onDismiss()
@@ -411,12 +462,13 @@ end
 --                       Command Line Interface
 -- =========================================================================
 
-local positionals = argparse.processArgsGetopt(args, {
-                                                   {'w', 'walkgroups', handler=function() args_walk_groups = true end},
-                                                   {'i', 'ids', handler=function() args_ids = true end},
-                                                   {'c', 'clear', handler=function() args_clear = true end},
-                                                   {'g', 'group', handler=function() args_group = true end},
-})
+local options = {
+    {'w', 'walkgroups', handler=function() args_walk_groups = true end},
+    {'i', 'ids', handler=function() args_ids = true end},
+    {'c', 'clear', handler=function() args_clear = true end},
+    {'g', 'group', handler=function() args_group = true end},
+}
+local positionals = argparse.processArgsGetopt(args, options)
 
 if args_clear then
     print('Clearing unit ignore list.')
