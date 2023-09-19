@@ -345,7 +345,7 @@ local function getStrandedUnits()
     table.sort(rawGroups, compareGroups)
 
     -- The biggest group is not stranded
-    mainGroup = rawGroups[1]['walkGroup']
+    mainGroup = rawGroups[#rawGroups]['walkGroup']
     table.remove(rawGroups, #rawGroups)
 
     -- Merge ignoredGroup with grouped
