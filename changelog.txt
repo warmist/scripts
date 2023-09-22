@@ -36,6 +36,11 @@ Template for new versions:
 
 ## Removed
 
+# 50.10-r1
+
+## Fixes
+- 'fix/general-strike: fix issue where too many seeds were getting planted in farm plots
+
 # 50.09-r4
 
 ## Misc Improvements
