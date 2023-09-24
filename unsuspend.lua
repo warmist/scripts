@@ -12,7 +12,7 @@ if not ok then
     buildingplan = nil
 end
 
-local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32)
+local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32, true)
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
