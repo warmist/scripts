@@ -172,7 +172,7 @@ local CONSTRUCTION_WALL_SUPPORT = utils.invert{
 }
 
 local CONSTRUCTION_FLOOR_SUPPORT = utils.invert{
-    df.construction_type.FLOOR,
+    df.construction_type.Floor,
     df.construction_type.DownStair,
     df.construction_type.Ramp,
     df.construction_type.TrackN,
@@ -447,7 +447,7 @@ local function constructionIsUnsupported(job)
     local wall_would_support = {}
     local floor_would_support = {}
     local supportbld_would_support = {}
-    
+
     if CONSTRUCTION_FLOOR_SUPPORT[constr_type] then
         wall_would_support = neighboursWallSupportsFloor(pos)
         floor_would_support = neighboursFloorSupportsFloor(pos)
