@@ -409,6 +409,13 @@ local function neighboursFloorSupportsFloor(pos)
     }
 end
 
+local function hasWalkableNeighbour(pos)
+    for _,n in pairs(neighbours(pos)) do
+        if (walkable(n)) then return true end
+    end
+    return false
+end
+
 local function tileHasSupportWall(pos)
     local tt = dfhack.maps.getTileType(pos)
     if tt then
@@ -442,6 +449,10 @@ local function constructionIsUnsupported(job)
     if not building or building:getType() ~= df.building_type.Construction then return false end
 
     local pos = {x=building.centerx, y=building.centery,z=building.z}
+
+    -- if no neighbour is walkable it can't be constructed now anyways,
+    -- this early return helps reduce "spam"
+    if not hasWalkableNeighbour(pos) then return false end
 
     -- find out what type of construction
     local constr_type = building:getSubtype()
