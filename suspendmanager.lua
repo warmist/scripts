@@ -452,7 +452,7 @@ local function constructionIsUnsupported(job)
 
     -- if no neighbour is walkable it can't be constructed now anyways,
     -- this early return helps reduce "spam"
-    if not hasWalkableNeighbour(pos) then return false end
+    -- if not hasWalkableNeighbour(pos) then return false end -- commented out pending `walkable()` fix
 
     -- find out what type of construction
     local constr_type = building:getSubtype()
