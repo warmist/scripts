@@ -346,20 +346,20 @@ end
 ---@return table<number, coord>
 local function neighboursWallSupportsWall(pos)
     return {
-        {x=pos.x-1, y=pos.y, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
         {x=pos.x+1, y=pos.y, z=pos.z},
         {x=pos.x, y=pos.y-1, z=pos.z},
         {x=pos.x, y=pos.y+1, z=pos.z},
-        {x=pos.x-1, y=pos.y, z=pos.z-1},
+        {x=pos.x-1, y=pos.y, z=pos.z-1}, -- orthogonal level below
         {x=pos.x+1, y=pos.y, z=pos.z-1},
         {x=pos.x, y=pos.y-1, z=pos.z-1},
         {x=pos.x, y=pos.y+1, z=pos.z-1},
-        {x=pos.x-1, y=pos.y, z=pos.z+1},
+        {x=pos.x-1, y=pos.y, z=pos.z+1}, -- orthogonal level above
         {x=pos.x+1, y=pos.y, z=pos.z+1},
         {x=pos.x, y=pos.y-1, z=pos.z+1},
         {x=pos.x, y=pos.y+1, z=pos.z+1},
-        {x=pos.x, y=pos.y, z=pos.z-1},
-        {x=pos.x, y=pos.y, z=pos.z+1},
+        {x=pos.x, y=pos.y, z=pos.z-1}, -- directly below
+        {x=pos.x, y=pos.y, z=pos.z+1}, -- directly above
     }
 end
 
@@ -368,12 +368,12 @@ end
 ---@return table<number, coord>
 local function neighboursFloorSupportsWall(pos)
     return {
-        {x=pos.x-1, y=pos.y, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
         {x=pos.x+1, y=pos.y, z=pos.z},
         {x=pos.x, y=pos.y-1, z=pos.z},
         {x=pos.x, y=pos.y+1, z=pos.z},
-        {x=pos.x, y=pos.y, z=pos.z+1},
-        {x=pos.x-1, y=pos.y, z=pos.z+1},
+        {x=pos.x, y=pos.y, z=pos.z+1}, -- directly above
+        {x=pos.x-1, y=pos.y, z=pos.z+1}, --orthogonal level above
         {x=pos.x+1, y=pos.y, z=pos.z+1},
         {x=pos.x, y=pos.y-1, z=pos.z+1},
         {x=pos.x, y=pos.y+1, z=pos.z+1},
@@ -385,10 +385,15 @@ end
 ---@return table<number, coord>
 local function neighboursWallSupportsFloor(pos)
     return {
-        {x=pos.x-1, y=pos.y, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
         {x=pos.x+1, y=pos.y, z=pos.z},
         {x=pos.x, y=pos.y-1, z=pos.z},
         {x=pos.x, y=pos.y+1, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z-1}, -- orthogonal level below
+        {x=pos.x+1, y=pos.y, z=pos.z-1},
+        {x=pos.x, y=pos.y-1, z=pos.z-1},
+        {x=pos.x, y=pos.y+1, z=pos.z-1},
+        {x=pos.x, y=pos.y, z=pos.z-1}, -- directly below
     }
 end
 
@@ -397,15 +402,10 @@ end
 ---@return table<number, coord>
 local function neighboursFloorSupportsFloor(pos)
     return {
-        {x=pos.x-1, y=pos.y, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
         {x=pos.x+1, y=pos.y, z=pos.z},
         {x=pos.x, y=pos.y-1, z=pos.z},
         {x=pos.x, y=pos.y+1, z=pos.z},
-        {x=pos.x, y=pos.y, z=pos.z+1},
-        {x=pos.x-1, y=pos.y, z=pos.z+1},
-        {x=pos.x+1, y=pos.y, z=pos.z+1},
-        {x=pos.x, y=pos.y-1, z=pos.z+1},
-        {x=pos.x, y=pos.y+1, z=pos.z+1},
     }
 end
 
