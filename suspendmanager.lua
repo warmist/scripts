@@ -408,6 +408,23 @@ local function neighboursFloorSupportsFloor(pos)
     }
 end
 
+local function tileHasSupportWall(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if tt then
+        local attrs = df.tiletype.attrs[tt]
+        if TILETYPE_SHAPE_WALL_SUPPORT[attrs.shape] then return true end
+    end
+    return false
+end
+
+local function tileHasSupportFloor(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if tt then
+        local attrs = df.tiletype.attrs[tt]
+        if TILETYPE_SHAPE_FLOOR_SUPPORT[attrs.shape] then return true end
+    end
+end
+
 local function tileHasSupportBuilding(pos)
     local bld = dfhack.buildings.findAtTile(pos)
     if bld then
@@ -427,45 +444,32 @@ local function constructionIsUnsupported(job)
 
     -- find out what type of construction
     local constr_type = building:getSubtype()
+    local wall_would_support = {}
+    local floor_would_support = {}
+    local supportbld_would_support = {}
+    
     if CONSTRUCTION_FLOOR_SUPPORT[constr_type] then
-        for _,n in pairs(neighboursWallSupportsFloor(pos)) do
-            local tt = dfhack.maps.getTileType(n)
-            if tt then
-                local attrs = df.tiletype.attrs[tt]
-                if TILETYPE_SHAPE_WALL_SUPPORT[attrs.shape] then  return false end
-            end
-        end
-        for _,n in pairs(neighboursFloorSupportsFloor(pos)) do
-            local tt = dfhack.maps.getTileType(n)
-            if tt then
-                local attrs = df.tiletype.attrs[tt]
-                if TILETYPE_SHAPE_FLOOR_SUPPORT[attrs.shape] then return false end
-            end
-        end
-        -- check for a support building below the tile
-        if tileHasSupportBuilding({x=pos.x, y=pos.y, z=pos.z-1}) then return false end
-        return true
+        wall_would_support = neighboursWallSupportsFloor(pos)
+        floor_would_support = neighboursFloorSupportsFloor(pos)
+        supportbld_would_support = {{x=pos.x, y=pos.y, z=pos.z-1}}
     elseif CONSTRUCTION_WALL_SUPPORT[constr_type] then
-        for _,n in pairs(neighboursWallSupportsWall(pos)) do
-            local tt = dfhack.maps.getTileType(n)
-            if tt then
-                local attrs = df.tiletype.attrs[tt]
-                if TILETYPE_SHAPE_WALL_SUPPORT[attrs.shape] then  return false end
-            end
-        end
-        for _,n in pairs(neighboursFloorSupportsWall(pos)) do
-            local tt = dfhack.maps.getTileType(n)
-            if tt then
-                local attrs = df.tiletype.attrs[tt]
-                if TILETYPE_SHAPE_FLOOR_SUPPORT[attrs.shape] then return false end
-            end
-        end
-        -- check for a support building below and above the tile
-        if tileHasSupportBuilding({x=pos.x, y=pos.y, z=pos.z-1}) then return false end
-        if tileHasSupportBuilding({x=pos.x, y=pos.y, z=pos.z+1}) then return false end
-        return true
+        wall_would_support = neighboursWallSupportsWall(pos)
+        floor_would_support = neighboursFloorSupportsWall(pos)
+        supportbld_would_support = {{x=pos.x, y=pos.y, z=pos.z-1}, {x=pos.x, y=pos.y, z=pos.z+1}}
+    else return false -- some unknown construction - don't suspend
     end
-    return false
+
+    for _,n in pairs(wall_would_support) do
+        if tileHasSupportWall(n) then return false end
+    end
+    for _,n in pairs(floor_would_support) do
+        if tileHasSupportFloor(n) then return false end
+    end
+    -- check for a support building below the tile
+    for _,n in pairs(supportbld_would_support) do
+        if tileHasSupportBuilding(n) then return false end
+    end
+    return true
 end
 
 --- Get the amount of risk a tile is to be blocked
