@@ -56,7 +56,7 @@ REASON_DESCRIPTION = {
     [REASON.RISK_BLOCKING] = 'May block another build job',
     [REASON.ERASE_DESIGNATION] = 'Waiting for carve/smooth/engrave',
     [REASON.DEADEND] = 'Blocks another build job',
-    [REASON.UNSUPPORTED] = 'Construction is unsupported'
+    [REASON.UNSUPPORTED] = 'Would collapse immediately'
 }
 
 --- Suspension reasons from an external source
