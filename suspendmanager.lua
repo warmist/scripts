@@ -36,6 +36,7 @@ REASON = {
     ERASE_DESIGNATION = 4,
     --- Blocks a dead end (either a corridor or on top of a wall)
     DEADEND = 5,
+    --- Would cave in immediately on completion
     UNSUPPORTED = 6,
 }
 
