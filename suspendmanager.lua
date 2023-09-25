@@ -639,16 +639,18 @@ function SuspendManager:refresh()
             end
         end
 
-        -- Check for construction jobs which may be unsupported
-        if constructionIsUnsupported(job) then
-            self.suspensions[job.id]=REASON.UNSUPPORTED
-        end
+
 
         if not self.preventBlocking then goto continue end
 
         -- Internal reasons to suspend a job
         if riskBlocking(job) then
             self.suspensions[job.id]=REASON.RISK_BLOCKING
+        end
+
+        -- Check for construction jobs which may be unsupported
+        if constructionIsUnsupported(job) then
+            self.suspensions[job.id]=REASON.UNSUPPORTED
         end
 
         -- If this job is a dead end, mark jobs leading to it as dead end
