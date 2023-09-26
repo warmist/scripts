@@ -154,7 +154,7 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
     if buildingplan and buildingplan.isPlannedBuilding(bld) then
         color, ch, texpos = COLOR_GREEN, 'P', tp(4)
     elseif suspendmanager and suspendmanager.isKeptSuspended(job) then
-        color, ch, texpos = COLOR_WHITE, 'x', tp(1)
+        color, ch, texpos = COLOR_WHITE, 'x', tp(3)
     elseif data.suspend_count > 1 then
         color, ch, texpos = COLOR_RED, 'X', tp(1)
     end
