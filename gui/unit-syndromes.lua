@@ -441,7 +441,7 @@ function UnitSyndromes:push_state()
 end
 
 function UnitSyndromes:onInput(keys)
-    if keys._MOUSE_R_DOWN then
+    if keys._MOUSE_R then
         self:previous_page()
         return true
     end

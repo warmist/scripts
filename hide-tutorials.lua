@@ -29,7 +29,7 @@ function skip_tutorial_prompt(scr)
         df.global.gps.mouse_y = 18
         df.global.enabler.mouse_lbut = 1
         df.global.enabler.mouse_lbut_down = 1
-        gui.simulateInput(scr, '_MOUSE_L_DOWN')
+        gui.simulateInput(scr, '_MOUSE_L')
     end
 end
 

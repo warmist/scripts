@@ -325,7 +325,7 @@ function Inspect:onInput(keys)
     if Inspect.super.onInput(self, keys) then
         return true
     end
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         self.subviews.freeze:cycle()
         return true
     end

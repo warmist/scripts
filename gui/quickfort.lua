@@ -52,7 +52,7 @@ end
 
 function BlueprintDetails:onInput(keys)
     if keys.CUSTOM_CTRL_D or keys.SELECT
-            or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+            or keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
     end
 end
@@ -211,7 +211,7 @@ function BlueprintDialog:onInput(keys)
         details:show()
         -- for testing
         self._details = details
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         if self.on_cancel then
             self.on_cancel()
@@ -606,7 +606,7 @@ function Quickfort:onInput(keys)
         return true
     end
 
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         local pos = dfhack.gui.getMousePos()
         if pos then
             self:commit()
