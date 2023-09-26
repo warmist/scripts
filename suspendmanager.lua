@@ -308,25 +308,19 @@ end
 --- Check if the tile can be walked on
 ---@param pos coord
 local function walkable(pos)
-    local tt = dfhack.maps.getTileType(pos)
-    if not tt then
-        return false
-    end
-    local attrs = df.tiletype.attrs[tt]
+    return dfhack.maps.getTileBlock(pos).walkable[pos.x % 16][pos.y % 16] > 0
+end
 
+--- Check if the tile is suitable tile to stand on for construction (walkable & not a tree branch)
+---@param pos coord
+local function isSuitableAccess(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    local attrs = df.tiletype.attrs[tt]
     if attrs.shape == df.tiletype_shape.BRANCH or attrs.shape == df.tiletype_shape.TRUNK_BRANCH then
         -- Branches can be walked on, but most of the time we can assume that it's not a suitable access.
         return false
     end
-
-    local shape_attrs = df.tiletype_shape.attrs[attrs.shape]
-
-    if not shape_attrs.walkable then
-        return false
-    end
-
-    local building = dfhack.buildings.findAtTile(pos)
-    return not building or not building.flags.exists or not isImpassable(building)
+    return walkable(pos)
 end
 
 --- List neighbour coordinates of a position
@@ -452,7 +446,7 @@ local function constructionIsUnsupported(job)
 
     -- if no neighbour is walkable it can't be constructed now anyways,
     -- this early return helps reduce "spam"
-    -- if not hasWalkableNeighbour(pos) then return false end -- commented out pending `walkable()` fix
+    if not hasWalkableNeighbour(pos) then return false end
 
     -- find out what type of construction
     local constr_type = building:getSubtype()
@@ -516,7 +510,7 @@ local function riskBlocking(job)
     local pos = {x=building.centerx,y=building.centery,z=building.z}
 
     -- The construction is on a non walkable tile, it can't get worst
-    if not walkable(pos) then return false end
+    if not isSuitableAccess(pos) then return false end
 
     --- Get self risk of being blocked
     local risk = riskOfStuckConstructionAt(pos)
@@ -544,7 +538,7 @@ function SuspendManager:suspendDeadend(start_job)
         ---@type building?
         local exit = nil
         for _,neighbourPos in pairs(neighbours(pos)) do
-            if not walkable(neighbourPos) then
+            if not isSuitableAccess(neighbourPos) then
                 -- non walkable neighbour, not an exit
                 goto continue
             end
