@@ -525,7 +525,7 @@ end
 function TradeScreen:onInput(keys)
     if self.reset_pending then return false end
     local handled = TradeScreen.super.onInput(self, keys)
-    if keys._MOUSE_L_DOWN and not self.trade_window:getMouseFramePos() then
+    if keys._MOUSE_L and not self.trade_window:getMouseFramePos() then
         -- "trade" or "offer" buttons may have been clicked and we need to reset the cache
         self.reset_pending = true
     end
@@ -780,7 +780,7 @@ end
 function TradeOverlay:onInput(keys)
     if TradeOverlay.super.onInput(self, keys) then return true end
 
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         if dfhack.internal.getModifiers().shift then
             handle_shift_click_on_render = true
             copyGoodflagState()
@@ -819,7 +819,7 @@ end
 function TradeBannerOverlay:onInput(keys)
     if TradeBannerOverlay.super.onInput(self, keys) then return true end
 
-    if keys._MOUSE_R_DOWN or keys.LEAVESCREEN then
+    if keys._MOUSE_R or keys.LEAVESCREEN then
         if view then
             view:dismiss()
         end

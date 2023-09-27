@@ -121,7 +121,7 @@ function Sandbox:init()
                     key='CUSTOM_SHIFT_U',
                     label="Spawn unit",
                     on_activate=function()
-                        df.global.enabler.mouse_lbut = 0
+                        df.global.enabler.mouse_lbut_down = 0
                         clear_arena_action()
                         view:sendInputToParent{ARENA_CREATE_CREATURE=true}
                         df.global.game.main_interface.arena_unit.editing_filter = true
@@ -162,7 +162,7 @@ function Sandbox:init()
                     key='CUSTOM_SHIFT_T',
                     label="Spawn tree",
                     on_activate=function()
-                        df.global.enabler.mouse_lbut = 0
+                        df.global.enabler.mouse_lbut_down = 0
                         clear_arena_action()
                         view:sendInputToParent{ARENA_CREATE_TREE=true}
                         df.global.game.main_interface.arena_tree.editing_filter = true
@@ -189,11 +189,11 @@ function Sandbox:init()
 end
 
 function Sandbox:onInput(keys)
-    if keys._MOUSE_R_DOWN and self:getMouseFramePos() then
+    if keys._MOUSE_R and self:getMouseFramePos() then
         clear_arena_action()
         return false
     end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if is_arena_action_in_progress() then
             clear_arena_action()
             return true
@@ -204,7 +204,7 @@ function Sandbox:onInput(keys)
     if Sandbox.super.onInput(self, keys) then
         return true
     end
-    if keys._MOUSE_L then
+    if keys._MOUSE_L_DOWN then
         if self:getMouseFramePos() then return true end
         for _,mask_panel in ipairs(self.interface_masks) do
             if mask_panel:getMousePos() then return true end
@@ -252,7 +252,7 @@ InterfaceMask.ATTRS{
 }
 
 function InterfaceMask:onInput(keys)
-    return keys._MOUSE_L and self:getMousePos()
+    return keys._MOUSE_L_DOWN and self:getMousePos()
 end
 
 ---------------------

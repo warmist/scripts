@@ -175,7 +175,7 @@ end
 function MassRemove:onInput(keys)
     if MassRemove.super.onInput(self, keys) then return true end
 
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if self.mark then
             self.mark = nil
             self:updateLayout()
@@ -185,7 +185,7 @@ function MassRemove:onInput(keys)
     end
 
     local pos = nil
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         pos = dfhack.gui.getMousePos()
     end
     if not pos then return false end
