@@ -162,7 +162,7 @@ local function check_container(obj, path)
                             --print ('  OK')
                         else
                             bold (t)
-                            err ('  NOT OK '.. s .. ' ' .. s2)
+                            err ('  NOT OK '.. s .. ' ' .. s2 .. ' at ' .. path .. '.' .. k)
                         end
                     end
 
