@@ -127,7 +127,7 @@ local function check_container(obj, path)
         if df.isvalid(v) == 'ref' then
             local s, a = v:sizeof()
 
-            if v and v._kind == 'container' and k ~= 'bad' then
+            if v and v._kind == 'container' and k ~= 'bad' and k ~= 'temp_save' then
                 if tostring(v._type):sub(1,6) == 'vector' and check_vectors and not is_valid_vector(a) then
                     local key = tostring(obj._type) .. '.' .. k
                     if not checkedp[key] then
