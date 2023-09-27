@@ -27,8 +27,10 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `startdwarf`: (reinstated) set number of starting dwarves
 
 ## New Features
+- `startdwarf`: overlay scrollbar so you can scroll through your starting dwarves if they don't all fit on the screen
 
 ## Fixes
 
