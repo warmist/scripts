@@ -31,6 +31,7 @@ Template for new versions:
 
 ## New Features
 - `startdwarf`: overlay scrollbar so you can scroll through your starting dwarves if they don't all fit on the screen
+- A new searchable, sortable, filterable dialog for selecting items for display on pedestals and display cases
 
 ## Fixes
 - `suspendmanager`: fixed a bug where floor grates, bars, bridges etc. wouldn't be recognised as walkable, leading to unnecessary suspensions in certain cases.
