@@ -26,7 +26,7 @@ end
 AssignItems = defclass(AssignItems, widgets.Window)
 AssignItems.ATTRS {
     frame_title='Assign items for display',
-    frame={w=80, h=46},
+    frame={w=74, h=46},
     resizable=true,
     resize_min={h=25},
     frame_inset={l=1, t=1, b=1, r=0},
@@ -192,84 +192,90 @@ function AssignItems:init()
             on_char=function(ch) return ch:match('[%l -]') end,
         },
         widgets.Panel{
-            frame={t=2, l=0, w=38, h=4},
+            frame={t=2, l=0, w=70, h=6},
+            frame_style=gui.FRAME_INTERIOR,
             subviews={
-                widgets.CycleHotkeyLabel{
-                    view_id='min_quality',
-                    frame={l=0, t=0, w=18},
-                    label='Min quality:',
-                    label_below=true,
-                    key_back='CUSTOM_SHIFT_Z',
-                    key='CUSTOM_SHIFT_X',
-                    options={
-                        {label='Ordinary', value=0},
-                        {label='-Well Crafted-', value=1},
-                        {label='+Finely Crafted+', value=2},
-                        {label='*Superior*', value=3},
-                        {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
-                        {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
-                        {label='Artifact', value=6},
+                widgets.Panel{
+                    frame={t=0, l=0, w=38, h=4},
+                    subviews={
+                        widgets.CycleHotkeyLabel{
+                            view_id='min_quality',
+                            frame={l=0, t=0, w=18},
+                            label='Min quality:',
+                            label_below=true,
+                            key_back='CUSTOM_SHIFT_Z',
+                            key='CUSTOM_SHIFT_X',
+                            options={
+                                {label='Ordinary', value=0},
+                                {label='-Well Crafted-', value=1},
+                                {label='+Finely Crafted+', value=2},
+                                {label='*Superior*', value=3},
+                                {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
+                                {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
+                                {label='Artifact', value=6},
+                            },
+                            initial_option=0,
+                            on_change=function(val)
+                                if self.subviews.max_quality:getOptionValue() < val then
+                                    self.subviews.max_quality:setOption(val)
+                                end
+                                self:refresh_list()
+                            end,
+                        },
+                        widgets.CycleHotkeyLabel{
+                            view_id='max_quality',
+                            frame={r=1, t=0, w=18},
+                            label='Max quality:',
+                            label_below=true,
+                            key_back='CUSTOM_SHIFT_Q',
+                            key='CUSTOM_SHIFT_W',
+                            options={
+                                {label='Ordinary', value=0},
+                                {label='-Well Crafted-', value=1},
+                                {label='+Finely Crafted+', value=2},
+                                {label='*Superior*', value=3},
+                                {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
+                                {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
+                                {label='Artifact', value=6},
+                            },
+                            initial_option=6,
+                            on_change=function(val)
+                                if self.subviews.min_quality:getOptionValue() > val then
+                                    self.subviews.min_quality:setOption(val)
+                                end
+                                self:refresh_list()
+                            end,
+                        },
+                        widgets.RangeSlider{
+                            frame={l=0, t=3},
+                            num_stops=7,
+                            get_left_idx_fn=function()
+                                return self.subviews.min_quality:getOptionValue() + 1
+                            end,
+                            get_right_idx_fn=function()
+                                return self.subviews.max_quality:getOptionValue() + 1
+                            end,
+                            on_left_change=function(idx) self.subviews.min_quality:setOption(idx-1, true) end,
+                            on_right_change=function(idx) self.subviews.max_quality:setOption(idx-1, true) end,
+                        },
                     },
-                    initial_option=0,
-                    on_change=function(val)
-                        if self.subviews.max_quality:getOptionValue() < val then
-                            self.subviews.max_quality:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
                 },
-                widgets.CycleHotkeyLabel{
-                    view_id='max_quality',
-                    frame={r=1, t=0, w=18},
-                    label='Max quality:',
-                    label_below=true,
-                    key_back='CUSTOM_SHIFT_Q',
-                    key='CUSTOM_SHIFT_W',
+                widgets.ToggleHotkeyLabel{
+                    view_id='hide_forbidden',
+                    frame={t=0, l=40, w=28},
+                    label='Hide forbidden items:',
+                    key='CUSTOM_SHIFT_F',
                     options={
-                        {label='Ordinary', value=0},
-                        {label='-Well Crafted-', value=1},
-                        {label='+Finely Crafted+', value=2},
-                        {label='*Superior*', value=3},
-                        {label=common.CH_EXCEPTIONAL..'Exceptional'..common.CH_EXCEPTIONAL, value=4},
-                        {label=common.CH_MONEY..'Masterful'..common.CH_MONEY, value=5},
-                        {label='Artifact', value=6},
+                        {label='Yes', value=true, pen=COLOR_GREEN},
+                        {label='No', value=false}
                     },
-                    initial_option=6,
-                    on_change=function(val)
-                        if self.subviews.min_quality:getOptionValue() > val then
-                            self.subviews.min_quality:setOption(val)
-                        end
-                        self:refresh_list()
-                    end,
-                },
-                widgets.RangeSlider{
-                    frame={l=0, t=3},
-                    num_stops=7,
-                    get_left_idx_fn=function()
-                        return self.subviews.min_quality:getOptionValue() + 1
-                    end,
-                    get_right_idx_fn=function()
-                        return self.subviews.max_quality:getOptionValue() + 1
-                    end,
-                    on_left_change=function(idx) self.subviews.min_quality:setOption(idx-1, true) end,
-                    on_right_change=function(idx) self.subviews.max_quality:setOption(idx-1, true) end,
+                    initial_option=false,
+                    on_change=function() self:refresh_list() end,
                 },
             },
-        },
-        widgets.ToggleHotkeyLabel{
-            view_id='hide_forbidden',
-            frame={t=2, l=40, w=28},
-            label='Hide forbidden items:',
-            key='CUSTOM_SHIFT_F',
-            options={
-                {label='Yes', value=true, pen=COLOR_GREEN},
-                {label='No', value=false}
-            },
-            initial_option=false,
-            on_change=function() self:refresh_list() end,
         },
         widgets.Panel{
-            frame={t=7, l=0, r=0, b=7},
+            frame={t=9, l=0, r=0, b=7},
             subviews={
                 widgets.CycleHotkeyLabel{
                     view_id='sort_status',
@@ -353,7 +359,7 @@ function AssignItems:init()
         },
         widgets.WrappedLabel{
             frame={b=0, l=0, r=0},
-            text_to_wrap='Click to assign/unassign. Shift click to assign/unassign a range of items.',
+            text_to_wrap='Click to assign/unassign. Shift click to assign/unassign a range.',
         },
     }
 
