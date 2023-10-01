@@ -34,9 +34,6 @@ function skip_tutorial_prompt(scr)
     if help.context == df.help_context_type.EMBARK_MESSAGE then
         df.global.gps.mouse_x = df.global.gps.dimx // 2
         df.global.gps.mouse_y = mouse_y
-        df.global.enabler.tracking_on = 1
-        df.global.enabler.mouse_lbut = 1
-        df.global.enabler.mouse_lbut_down = 1
         gui.simulateInput(scr, '_MOUSE_L')
     end
 end

@@ -122,7 +122,6 @@ function Sandbox:init()
                     label="Spawn unit",
                     on_activate=function()
                         clear_arena_action()
-                        gui.markMouseClicksHandled{_MOUSE_L=true}
                         view:sendInputToParent{ARENA_CREATE_CREATURE=true}
                         df.global.game.main_interface.arena_unit.editing_filter = true
                     end,
@@ -163,7 +162,6 @@ function Sandbox:init()
                     label="Spawn tree",
                     on_activate=function()
                         clear_arena_action()
-                        gui.markMouseClicksHandled{_MOUSE_L=true}
                         view:sendInputToParent{ARENA_CREATE_TREE=true}
                         df.global.game.main_interface.arena_tree.editing_filter = true
                     end,
