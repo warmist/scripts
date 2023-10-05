@@ -32,6 +32,7 @@ Template for new versions:
 
 ## Fixes
 - `suspendmanager`: fix errors when constructing near the map edge
+- `gui/sandbox`: fix scrollbar moving double distance on click
 
 ## Misc Improvements
 

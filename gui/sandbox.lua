@@ -209,6 +209,7 @@ function Sandbox:onInput(keys)
         end
     end
     view:sendInputToParent(keys)
+    return true
 end
 
 function Sandbox:find_zombie_syndrome()
