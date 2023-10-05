@@ -30,6 +30,7 @@ local FORT_SERVICES = {
     'hermit',
     'misery',
     'nestboxes',
+    'preserve-tombs',
     'prioritize',
     'seedwatch',
     'starvingdead',
