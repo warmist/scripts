@@ -207,7 +207,7 @@ function warning:init(info)
                         },
                         widgets.WrappedLabel{
                             frame={b=0, l=0, r=0},
-                            text_to_wrap='Click to ignore/unignore unit. Shift doubleclick to ignore/unignore a group of units.',
+                            text_to_wrap='Click to toggle unit ignore. Shift doubleclick to toggle a group.',
                         },
                     }
                 },
@@ -458,7 +458,7 @@ end
 --                       Command Line Interface
 -- =========================================================================
 
-local positionals = argparse.processArgsGetopt(args, options)
+local positionals = argparse.processArgsGetopt(args, {})
 
 if positionals[1] == 'clear' then
     print('Clearing unit ignore list.')
