@@ -422,7 +422,7 @@ local function unignoreGroup(groups, groupNumber)
         return false
     end
 
-    if group[groupNumber]['mainGroup'] then
+    if groups[groupNumber]['mainGroup'] then
         print('Group '..groupNumber..' is the main group of dwarves. Unignoring.')
     end
 
