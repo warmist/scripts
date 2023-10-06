@@ -46,6 +46,7 @@ local FORT_AUTOSTART = {
     'ban-cooking all',
     'buildingplan set boulders false',
     'buildingplan set logs false',
+    'drain-aquifer --top 2',
     'fix/blood-del fort',
     'light-aquifers-only fort',
 }
