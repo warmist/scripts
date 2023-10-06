@@ -239,7 +239,7 @@ function warning:initListChoices()
     end
 
     local list = self.subviews.list
-    list:setChoices(choices, 1)
+    list:setChoices(choices)
 end
 
 function warning:onIgnore(_, choice)
