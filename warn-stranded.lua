@@ -8,7 +8,6 @@ local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local argparse = require 'argparse'
 local args = {...}
-local args_walk_groups, args_ids, args_clear, args_group = false, false, false, false
 
 -- ===============================================
 --              Utility Functions
@@ -38,7 +37,7 @@ end
 
 -- Use group data, index, and command arguments to generate a group
 --   designation string.
-local function getGroupDesignation(group, groupIndex)
+local function getGroupDesignation(group, groupIndex, walkGroup)
     local groupDesignation = ''
 
     if group['mainGroup'] then
@@ -47,20 +46,16 @@ local function getGroupDesignation(group, groupIndex)
         groupDesignation = ' (Group '..groupIndex..')'
     end
 
-    if args_walk_groups then
+    if walkGroup then
         groupDesignation = groupDesignation..' {'..group.walkGroup..'}'
     end
 
     return groupDesignation
 end
 
--- Check for and potentially add unit.id to text. Controlled by command args.
+-- Add unit.id to text
 local function addId(text, unit)
-    if args_ids then
-        return text..'|'..unit.id..'| '
-    else
-        return text
-    end
+    return text..'|'..unit.id..'| '
 end
 
 -- Uses persistent API. Low-level, deserializes 'warnStrandedIgnored' key and
@@ -93,7 +88,7 @@ local function unitIgnored(unit, deserializedIgnores)
     return false
 end
 
--- Check for and potentially add [IGNORED] to text. Controlled by command args.
+-- Check for and potentially add [IGNORED] to text.
 --   Optional deserializedIgnores allows us to call deserialize once for a group of operations
 local function addIgnored(text, unit, deserializedIgnores)
     if unitIgnored(unit, deserializedIgnores) then
@@ -155,7 +150,7 @@ local function toggleGroup(groups, groupNumber)
         local isIgnored = unitIgnored(unit, ignored)
 
         if allIgnored == isIgnored then
-            toggleUnitIgnore(unit, ignored)
+            ignored = toggleUnitIgnore(unit, ignored)
         end
     end
 
@@ -183,6 +178,9 @@ function warning:init(info)
                     text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
                     cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
                     on_submit=self:callback('onIgnore'),
+                    on_select=self:callback('onZoom'),
+                    on_double_click=self:callback('onIgnore'),
+                    on_double_click2=self:callback('onToggleGroup'),
                 },
                 widgets.Panel{
                     frame={h=5},
@@ -190,28 +188,27 @@ function warning:init(info)
                     subviews = {
                         widgets.HotkeyLabel{
                             key='SELECT',
-                            label='Toggle Ignore',
+                            label='Toggle ignore',
                         },
                         widgets.HotkeyLabel{
                             key='CUSTOM_G',
-                            label='Toggle Group',
+                            label='Toggle group',
                             on_activate = self:callback('onToggleGroup'),
                         },
                         widgets.HotkeyLabel{
                             key = 'CUSTOM_SHIFT_I',
-                            label = 'Ignore All',
+                            label = 'Ignore all',
                             on_activate = self:callback('onIgnoreAll'),
                         },
                         widgets.HotkeyLabel{
                             key = 'CUSTOM_SHIFT_C',
-                            label = 'Clear All Ignored',
+                            label = 'Clear all ignored',
                             on_activate = self:callback('onClear'),
                         },
-                        widgets.HotkeyLabel{
-                            key = 'CUSTOM_Z',
-                            label = 'Zoom to unit',
-                            on_activate = self:callback('onZoom'),
-                        }
+                        widgets.WrappedLabel{
+                            frame={b=0, l=0, r=0},
+                            text_to_wrap='Click to ignore/unignore unit. Shift doubleclick to ignore/unignore a group of units.',
+                        },
                     }
                 },
 
@@ -235,7 +232,6 @@ function warning:initListChoices()
             local text = ''
 
             text = addIgnored(text, unit, ignoresCache)
-            text = addId(text, unit)
             text = text..getUnitDescription(unit)..groupDesignation
 
             table.insert(choices, { text = text, data = {unit = unit, group = groupIndex} })
@@ -433,7 +429,7 @@ local function unignoreGroup(groups, groupNumber)
     for _, unit in ipairs(groups[groupNumber]['units']) do
         if unitIgnored(unit, ignored) then
             print('Unignoring unit '..unit.id)
-            toggleUnitIgnore(unit, ignored)
+            ignored = toggleUnitIgnore(unit, ignored)
         else
             print('Unit '..unit.id..' not already ignored, doing nothing to them.')
         end
@@ -462,18 +458,14 @@ end
 --                       Command Line Interface
 -- =========================================================================
 
-local options = {
-    {'w', 'walkgroups', handler=function() args_walk_groups = true end},
-    {'i', 'ids', handler=function() args_ids = true end},
-    {'c', 'clear', handler=function() args_clear = true end},
-    {'g', 'group', handler=function() args_group = true end},
-}
 local positionals = argparse.processArgsGetopt(args, options)
 
-if args_clear then
+if positionals[1] == 'clear' then
     print('Clearing unit ignore list.')
-    clear()
+    return clear()
 end
+
+local parameter = tonumber(positionals[2])
 
 if positionals[1] == 'status' then
     local result, strandedGroups = getStrandedUnits()
@@ -482,7 +474,7 @@ if positionals[1] == 'status' then
         local ignoresCache = deserializeIgnoredUnits()
 
         for groupIndex, group in ipairs(strandedGroups) do
-            local groupDesignation = getGroupDesignation(group, groupIndex)
+            local groupDesignation = getGroupDesignation(group, groupIndex, true)
 
             for _, unit in ipairs(group['units']) do
                 local text = ''
@@ -509,8 +501,8 @@ if positionals[1] == 'status' then
                 local text = ''
 
                 text = addId(text, unit)
-
                 text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
+
                 print(text)
             end
         end
@@ -520,65 +512,70 @@ if positionals[1] == 'status' then
 end
 
 if positionals[1] == 'ignore' then
-    local parameter = tonumber(positionals[2])
-
-    if parameter and not args_group then
-        local citizen = findCitizen(parameter)
-
-        if citizen == nil then
-            print('No citizen with unit id '..parameter..' found in the fortress')
-            return false
-
-        end
-
-        if unitIgnored(citizen) then
-            print('Unit '..parameter..' is already ignored. You may want to use the unignore command.')
-            return false
-        end
-
-        print('Ignoring unit '..parameter)
-        toggleUnitIgnore(citizen)
-        return true
-    elseif parameter and args_group then
-        print('Ignoring group '..parameter)
-        local _, strandedCitizens = getStrandedUnits()
-        return ignoreGroup(strandedCitizens, parameter)
-    else
-        print('Must provide unit or group id to the ignore command.')
+    if not parameter then
+        print('Must provide unit id to the ignore command.')
+        return false
     end
 
-    return false
+    local citizen = findCitizen(parameter)
+
+    if citizen == nil then
+        print('No citizen with unit id '..parameter..' found in the fortress')
+        return false
+    end
+
+    if unitIgnored(citizen) then
+        print('Unit '..parameter..' is already ignored. You may want to use the unignore command.')
+        return false
+    end
+
+    print('Ignoring unit '..parameter)
+    toggleUnitIgnore(citizen)
+    return true
+end
+
+if positionals[1] == 'ignoregroup' then
+    if not parameter then
+        print('Must provide group id to the ignoregroup command.')
+    end
+
+    print('Ignoring group '..parameter)
+    local _, strandedCitizens = getStrandedUnits()
+    return ignoreGroup(strandedCitizens, parameter)
 end
 
 if positionals[1] == 'unignore' then
-    local parameter = tonumber(positionals[2])
-
-    if parameter and not args_group then
-        local citizen = findCitizen(parameter)
-
-        if citizen == nil then
-            print('No citizen with unit id '..parameter..' found in the fortress')
-            return false
-
-        end
-
-        if unitIgnored(citizen) == false then
-            print('Unit '..parameter..' is not ignored. You may want to use the ignore command.')
-            return false
-        end
-
-        print('Unignoring unit '..parameter)
-        toggleUnitIgnore(citizen)
-        return true
-    elseif parameter and args_group then
-        print('Unignoring group '..parameter)
-        local _, strandedCitizens = getStrandedUnits()
-        return unignoreGroup(strandedCitizens, parameter)
-    else
-        print('Must provide unit id to ignore command.')
+    if not parameter then
+        print('Must provide unit id to unignore command.')
+        return false
     end
 
-    return false
+    local citizen = findCitizen(parameter)
+
+    if citizen == nil then
+        print('No citizen with unit id '..parameter..' found in the fortress')
+        return false
+    end
+
+    if unitIgnored(citizen) == false then
+        print('Unit '..parameter..' is not ignored. You may want to use the ignore command.')
+        return false
+    end
+
+    print('Unignoring unit '..parameter)
+    toggleUnitIgnore(citizen)
+    return true
+end
+
+if positionals[1] == 'unignoregroup' then
+    if not parameter then
+        print('Must provide group id to unignoregroup command.')
+        return false
+    end
+
+    print('Unignoring group '..parameter)
+    local _, strandedCitizens = getStrandedUnits()
+    return unignoreGroup(strandedCitizens, parameter)
 end
 
 view = view and view:raise() or doCheck()
