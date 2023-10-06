@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `add-recipe`: (reinstated) add reactions to your civ (e.g. for high boots if your civ didn't start with the ability to make high boots)
 
 ## New Features
 
