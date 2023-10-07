@@ -8,7 +8,7 @@ local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local argparse = require 'argparse'
 local args = {...}
-local scriptPrefix <const> = 'warn-stranded'
+local scriptPrefix = 'warn-stranded'
 local ignoresCache = {}
 
 -- ===============================================
