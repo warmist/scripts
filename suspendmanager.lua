@@ -36,6 +36,8 @@ REASON = {
     ERASE_DESIGNATION = 4,
     --- Blocks a dead end (either a corridor or on top of a wall)
     DEADEND = 5,
+    --- Would cave in immediately on completion
+    UNSUPPORTED = 6,
 }
 
 REASON_TEXT = {
@@ -44,6 +46,7 @@ REASON_TEXT = {
     [REASON.RISK_BLOCKING] = 'blocking',
     [REASON.ERASE_DESIGNATION] = 'designation',
     [REASON.DEADEND] = 'dead end',
+    [REASON.UNSUPPORTED] = 'unsupported',
 }
 
 --- Description of suspension
@@ -52,7 +55,8 @@ REASON_TEXT = {
 REASON_DESCRIPTION = {
     [REASON.RISK_BLOCKING] = 'May block another build job',
     [REASON.ERASE_DESIGNATION] = 'Waiting for carve/smooth/engrave',
-    [REASON.DEADEND] = 'Blocks another build job'
+    [REASON.DEADEND] = 'Blocks another build job',
+    [REASON.UNSUPPORTED] = 'Would collapse immediately'
 }
 
 --- Suspension reasons from an external source
@@ -161,6 +165,77 @@ local CONSTRUCTION_IMPASSABLE = utils.invert{
     df.construction_type.Fortification,
 }
 
+local CONSTRUCTION_WALL_SUPPORT = utils.invert{
+    df.construction_type.Wall,
+    df.construction_type.Fortification,
+    df.construction_type.UpStair,
+    df.construction_type.UpDownStair,
+}
+
+local CONSTRUCTION_FLOOR_SUPPORT = utils.invert{
+    df.construction_type.Floor,
+    df.construction_type.DownStair,
+    df.construction_type.Ramp,
+    df.construction_type.TrackN,
+    df.construction_type.TrackS,
+    df.construction_type.TrackE,
+    df.construction_type.TrackW,
+    df.construction_type.TrackNS,
+    df.construction_type.TrackNE,
+    df.construction_type.TrackSE,
+    df.construction_type.TrackSW,
+    df.construction_type.TrackEW,
+    df.construction_type.TrackNSE,
+    df.construction_type.TrackNSW,
+    df.construction_type.TrackNEW,
+    df.construction_type.TrackSEW,
+    df.construction_type.TrackNSEW,
+    df.construction_type.TrackRampN,
+    df.construction_type.TrackRampS,
+    df.construction_type.TrackRampE,
+    df.construction_type.TrackRampW,
+    df.construction_type.TrackRampNS,
+    df.construction_type.TrackRampNE,
+    df.construction_type.TrackRampNW,
+    df.construction_type.TrackRampSE,
+    df.construction_type.TrackRampSW,
+    df.construction_type.TrackRampEW,
+    df.construction_type.TrackRampNSE,
+    df.construction_type.TrackRampNSW,
+    df.construction_type.TrackRampNEW,
+    df.construction_type.TrackRampSEW,
+    df.construction_type.TrackRampNSEW,
+}
+
+-- all the tiletype shapes which provide support as if a wall
+-- note that these shapes act as if there is a floor above them,
+-- (including an up stair with no down stair above) which then connects
+-- orthogonally at that level.
+-- see: https://dwarffortresswiki.org/index.php/DF2014:Cave-in
+local TILETYPE_SHAPE_WALL_SUPPORT = utils.invert{
+    df.tiletype_shape.WALL,
+    df.tiletype_shape.FORTIFICATION,
+    df.tiletype_shape.STAIR_UP,
+    df.tiletype_shape.STAIR_UPDOWN,
+}
+
+-- all the tiletype shapes which provide support as if it were a floor.
+-- Tested as of v50.10 - YES, twigs do provide orthogonal support like a floor.
+local TILETYPE_SHAPE_FLOOR_SUPPORT = utils.invert{
+    df.tiletype_shape.FLOOR,
+    df.tiletype_shape.STAIR_DOWN,
+    df.tiletype_shape.RAMP,
+    df.tiletype_shape.BOULDER,
+    df.tiletype_shape.PEBBLES,
+    df.tiletype_shape.SAPLING,
+    df.tiletype_shape.BROOK_BED,
+    df.tiletype_shape.BROOK_TOP,
+    df.tiletype_shape.SHRUB,
+    df.tiletype_shape.TWIG,
+    df.tiletype_shape.BRANCH,
+    df.tiletype_shape.TRUNK_BRANCH,
+}
+
 local BUILDING_IMPASSABLE = utils.invert{
     df.building_type.Floodgate,
     df.building_type.Statue,
@@ -233,25 +308,26 @@ end
 --- Check if the tile can be walked on
 ---@param pos coord
 local function walkable(pos)
+    local tileblock = dfhack.maps.getTileBlock(pos)
+    return tileblock and tileblock.walkable[pos.x % 16][pos.y % 16] > 0
+end
+
+--- Check if the tile is suitable tile to stand on for construction (walkable & not a tree branch)
+---@param pos coord
+local function isSuitableAccess(pos)
     local tt = dfhack.maps.getTileType(pos)
+
     if not tt then
+        -- no tiletype, likely out of bound
         return false
     end
-    local attrs = df.tiletype.attrs[tt]
 
+    local attrs = df.tiletype.attrs[tt]
     if attrs.shape == df.tiletype_shape.BRANCH or attrs.shape == df.tiletype_shape.TRUNK_BRANCH then
         -- Branches can be walked on, but most of the time we can assume that it's not a suitable access.
         return false
     end
-
-    local shape_attrs = df.tiletype_shape.attrs[attrs.shape]
-
-    if not shape_attrs.walkable then
-        return false
-    end
-
-    local building = dfhack.buildings.findAtTile(pos)
-    return not building or not building.flags.exists or not isImpassable(building)
+    return walkable(pos)
 end
 
 --- List neighbour coordinates of a position
@@ -264,6 +340,150 @@ local function neighbours(pos)
         {x=pos.x, y=pos.y-1, z=pos.z},
         {x=pos.x, y=pos.y+1, z=pos.z},
     }
+end
+
+--- list neighbour coordinates of pos which if is a Wall, will support a Wall at pos
+---@param pos coord
+---@return table<number, coord>
+local function neighboursWallSupportsWall(pos)
+    return {
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
+        {x=pos.x+1, y=pos.y, z=pos.z},
+        {x=pos.x, y=pos.y-1, z=pos.z},
+        {x=pos.x, y=pos.y+1, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z-1}, -- orthogonal level below
+        {x=pos.x+1, y=pos.y, z=pos.z-1},
+        {x=pos.x, y=pos.y-1, z=pos.z-1},
+        {x=pos.x, y=pos.y+1, z=pos.z-1},
+        {x=pos.x-1, y=pos.y, z=pos.z+1}, -- orthogonal level above
+        {x=pos.x+1, y=pos.y, z=pos.z+1},
+        {x=pos.x, y=pos.y-1, z=pos.z+1},
+        {x=pos.x, y=pos.y+1, z=pos.z+1},
+        {x=pos.x, y=pos.y, z=pos.z-1}, -- directly below
+        {x=pos.x, y=pos.y, z=pos.z+1}, -- directly above
+    }
+end
+
+--- list neighbour coordinates of pos which if is a Floor, will support a Wall at pos
+---@param pos coord
+---@return table<number, coord>
+local function neighboursFloorSupportsWall(pos)
+    return {
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
+        {x=pos.x+1, y=pos.y, z=pos.z},
+        {x=pos.x, y=pos.y-1, z=pos.z},
+        {x=pos.x, y=pos.y+1, z=pos.z},
+        {x=pos.x, y=pos.y, z=pos.z+1}, -- directly above
+        {x=pos.x-1, y=pos.y, z=pos.z+1}, --orthogonal level above
+        {x=pos.x+1, y=pos.y, z=pos.z+1},
+        {x=pos.x, y=pos.y-1, z=pos.z+1},
+        {x=pos.x, y=pos.y+1, z=pos.z+1},
+    }
+end
+
+--- list neighbour coordinates of pos which if is a Wall, will support a Floor at pos
+---@param pos coord
+---@return table<number, coord>
+local function neighboursWallSupportsFloor(pos)
+    return {
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
+        {x=pos.x+1, y=pos.y, z=pos.z},
+        {x=pos.x, y=pos.y-1, z=pos.z},
+        {x=pos.x, y=pos.y+1, z=pos.z},
+        {x=pos.x-1, y=pos.y, z=pos.z-1}, -- orthogonal level below
+        {x=pos.x+1, y=pos.y, z=pos.z-1},
+        {x=pos.x, y=pos.y-1, z=pos.z-1},
+        {x=pos.x, y=pos.y+1, z=pos.z-1},
+        {x=pos.x, y=pos.y, z=pos.z-1}, -- directly below
+    }
+end
+
+--- list neighbour coordinates of pos which if is a Floor, will support a Floor at pos
+---@param pos coord
+---@return table<number, coord>
+local function neighboursFloorSupportsFloor(pos)
+    return {
+        {x=pos.x-1, y=pos.y, z=pos.z}, -- orthogonal same level
+        {x=pos.x+1, y=pos.y, z=pos.z},
+        {x=pos.x, y=pos.y-1, z=pos.z},
+        {x=pos.x, y=pos.y+1, z=pos.z},
+    }
+end
+
+local function hasWalkableNeighbour(pos)
+    for _,n in pairs(neighbours(pos)) do
+        if (walkable(n)) then return true end
+    end
+    return false
+end
+
+local function tileHasSupportWall(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if tt then
+        local attrs = df.tiletype.attrs[tt]
+        if TILETYPE_SHAPE_WALL_SUPPORT[attrs.shape] then return true end
+    end
+    return false
+end
+
+local function tileHasSupportFloor(pos)
+    local tt = dfhack.maps.getTileType(pos)
+    if tt then
+        local attrs = df.tiletype.attrs[tt]
+        if TILETYPE_SHAPE_FLOOR_SUPPORT[attrs.shape] then return true end
+    end
+    return false
+end
+
+local function tileHasSupportBuilding(pos)
+    local bld = dfhack.buildings.findAtTile(pos)
+    if bld then
+        return bld:getType() == df.building_type.Support and bld.flags.exists
+    end
+    return false
+end
+
+---
+local function constructionIsUnsupported(job)
+    if job.job_type ~= df.job_type.ConstructBuilding then return false end
+
+    local building = dfhack.job.getHolder(job)
+    if not building or building:getType() ~= df.building_type.Construction then return false end
+
+    local pos = {x=building.centerx, y=building.centery,z=building.z}
+
+    -- if no neighbour is walkable it can't be constructed now anyways,
+    -- this early return helps reduce "spam"
+    if not hasWalkableNeighbour(pos) then return false end
+
+    -- find out what type of construction
+    local constr_type = building:getSubtype()
+    local wall_would_support = {}
+    local floor_would_support = {}
+    local supportbld_would_support = {}
+
+    if CONSTRUCTION_FLOOR_SUPPORT[constr_type] then
+        wall_would_support = neighboursWallSupportsFloor(pos)
+        floor_would_support = neighboursFloorSupportsFloor(pos)
+        supportbld_would_support = {{x=pos.x, y=pos.y, z=pos.z-1}}
+    elseif CONSTRUCTION_WALL_SUPPORT[constr_type] then
+        wall_would_support = neighboursWallSupportsWall(pos)
+        floor_would_support = neighboursFloorSupportsWall(pos)
+        supportbld_would_support = {{x=pos.x, y=pos.y, z=pos.z-1}, {x=pos.x, y=pos.y, z=pos.z+1}}
+    else return false -- some unknown construction - don't suspend
+    end
+
+    for _,n in pairs(wall_would_support) do
+        if tileHasSupportWall(n) then return false end
+    end
+    for _,n in pairs(floor_would_support) do
+        if tileHasSupportFloor(n) then return false end
+    end
+    -- check for a support building below the tile
+    for _,n in pairs(supportbld_would_support) do
+        if tileHasSupportBuilding(n) then return false end
+    end
+    return true
 end
 
 --- Get the amount of risk a tile is to be blocked
@@ -298,7 +518,7 @@ local function riskBlocking(job)
     local pos = {x=building.centerx,y=building.centery,z=building.z}
 
     -- The construction is on a non walkable tile, it can't get worst
-    if not walkable(pos) then return false end
+    if not isSuitableAccess(pos) then return false end
 
     --- Get self risk of being blocked
     local risk = riskOfStuckConstructionAt(pos)
@@ -326,7 +546,7 @@ function SuspendManager:suspendDeadend(start_job)
         ---@type building?
         local exit = nil
         for _,neighbourPos in pairs(neighbours(pos)) do
-            if not walkable(neighbourPos) then
+            if not isSuitableAccess(neighbourPos) then
                 -- non walkable neighbour, not an exit
                 goto continue
             end
@@ -433,11 +653,18 @@ function SuspendManager:refresh()
             end
         end
 
+
+
         if not self.preventBlocking then goto continue end
 
         -- Internal reasons to suspend a job
         if riskBlocking(job) then
             self.suspensions[job.id]=REASON.RISK_BLOCKING
+        end
+
+        -- Check for construction jobs which may be unsupported
+        if constructionIsUnsupported(job) then
+            self.suspensions[job.id]=REASON.UNSUPPORTED
         end
 
         -- If this job is a dead end, mark jobs leading to it as dead end

@@ -30,6 +30,7 @@ local FORT_SERVICES = {
     'hermit',
     'misery',
     'nestboxes',
+    'preserve-tombs',
     'prioritize',
     'seedwatch',
     'starvingdead',
@@ -127,6 +128,9 @@ local REPEATS = {
     ['orders-sort']={
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
         command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
+    ['orders-reevaluate']={
+        desc='Invalidates work orders once a month, allowing conditions to be rechecked.',
+        command={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
     ['warn-starving']={
         desc='Show a warning dialog when units are starving or dehydrated.',
         command={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
@@ -250,7 +254,7 @@ end
 
 function ConfigPanel:onInput(keys)
     local handled = ConfigPanel.super.onInput(self, keys)
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
         if idx then
@@ -603,7 +607,7 @@ function IntegerInputDialog:onInput(keys)
     if keys.SELECT then
         self:hide(self.subviews.input_edit.text)
         return true
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    elseif keys.LEAVESCREEN or keys._MOUSE_R then
         self:hide()
         return true
     end
@@ -638,7 +642,7 @@ end
 function Preferences:onInput(keys)
     -- call grandparent's onInput since we don't want ConfigPanel's processing
     local handled = Preferences.super.super.onInput(self, keys)
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
         if idx then
@@ -787,7 +791,7 @@ end
 function RepeatAutostart:onInput(keys)
     -- call grandparent's onInput since we don't want ConfigPanel's processing
     local handled = RepeatAutostart.super.super.onInput(self, keys)
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
         if idx then

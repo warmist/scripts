@@ -52,7 +52,7 @@ end
 
 function BlueprintDetails:onInput(keys)
     if keys.CUSTOM_CTRL_D or keys.SELECT
-            or keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+            or keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
     end
 end
@@ -211,13 +211,7 @@ function BlueprintDialog:onInput(keys)
         details:show()
         -- for testing
         self._details = details
-    elseif keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
-        self:dismiss()
-        if self.on_cancel then
-            self.on_cancel()
-        end
-    else
-        self:inputToSubviews(keys)
+    elseif BlueprintDialog.super.onInput(self, keys) then
         local prev_filter_text = filter_text
         -- save the filter if it was updated so we always have the most recent
         -- text for the next invocation of the dialog
@@ -229,6 +223,7 @@ function BlueprintDialog:onInput(keys)
             -- otherwise, save the new selected item
             save_selection(self.subviews.list)
         end
+        return true
     end
 end
 
@@ -606,7 +601,7 @@ function Quickfort:onInput(keys)
         return true
     end
 
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         local pos = dfhack.gui.getMousePos()
         if pos then
             self:commit()

@@ -27,14 +27,14 @@ if args.sane then
     checkOnlySane = true
 end
 
-warning = defclass(warning, gui.ZScreen)
-warning.ATTRS = {
+Warning = defclass(Warning, gui.ZScreen)
+Warning.ATTRS = {
     focus_path='warn-starving',
     force_pause=true,
     pass_mouse_clicks=false,
 }
 
-function warning:init(info)
+function Warning:init(info)
     local main = widgets.Window{
         frame={w=80, h=18},
         frame_title='Warning',
@@ -51,7 +51,7 @@ function warning:init(info)
     self:addviews{main}
 end
 
-function warning:onDismiss()
+function Warning:onDismiss()
     view = nil
 end
 
@@ -111,7 +111,7 @@ function doCheck()
             print(dfhack.df2console(msg))
         end
         dfhack.color()
-        return warning{messages=messages}:show()
+        return Warning{messages=messages}:show()
     end
 end
 

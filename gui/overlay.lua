@@ -57,7 +57,7 @@ DraggablePanel.ATTRS{
 }
 
 function DraggablePanel:onInput(keys)
-    if keys._MOUSE_L_DOWN then
+    if keys._MOUSE_L then
         local rect = self.frame_rect
         local x,y = self:getMousePos(gui.ViewRect{rect=rect})
         if x then
@@ -281,7 +281,7 @@ function OverlayConfig:onInput(keys)
             return true
         end
     end
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:dismiss()
         return true
     end

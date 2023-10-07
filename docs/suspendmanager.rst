@@ -14,6 +14,8 @@ This tool will watch your active jobs and:
 - suspend construction jobs on top of a smoothing, engraving or track carving
   designation. This prevents the construction job from being completed first,
   which would erase the designation.
+- suspend construction jobs that would cave in immediately on completion,
+  such as when building walls or floors next to grates/bars.
 
 Usage
 -----

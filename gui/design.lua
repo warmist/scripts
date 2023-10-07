@@ -1386,7 +1386,7 @@ function Design:onInput(keys)
     --     return
     -- end
 
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         -- Close help window if open
         if view.help_window.visible then self:dismiss_help() return true end
 
@@ -1438,7 +1438,7 @@ function Design:onInput(keys)
 
 
     local pos = nil
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         pos = getMousePoint()
         if not pos then return true end
         guidm.setCursorPos(dfhack.gui.getMousePos())
@@ -1446,7 +1446,7 @@ function Design:onInput(keys)
         pos = Point(guidm.getCursorPos())
     end
 
-    if keys._MOUSE_L_DOWN and pos then
+    if keys._MOUSE_L and pos then
         -- TODO Refactor this a bit
         if self.shape.max_points and #self.marks == self.shape.max_points and self.placing_mark.active then
             self.marks[self.placing_mark.index] = pos

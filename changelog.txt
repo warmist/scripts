@@ -31,11 +31,40 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `suspendmanager`: fix errors when constructing near the map edge
+- `gui/sandbox`: fix scrollbar moving double distance on click
+
+## Misc Improvements
+
+## Removed
+
+# 50.11-r1
+
+## New Tools
+- `startdwarf`: (reinstated) set number of starting dwarves
+
+## New Features
+- `startdwarf`: overlay scrollbar so you can scroll through your starting dwarves if they don't all fit on the screen
+- A new searchable, sortable, filterable dialog for selecting items for display on pedestals and display cases
+
+## Fixes
+- `suspendmanager`: fixed a bug where floor grates, bars, bridges etc. wouldn't be recognised as walkable, leading to unnecessary suspensions in certain cases.
+
+## Misc Improvements
+- `devel/inspect-screen`: display total grid size for UI and map layers
+- `suspendmanager`: now suspends constructions that would cave-in immediately on completion
+
+# 50.10-r1
+
+## Fixes
+- 'fix/general-strike: fix issue where too many seeds were getting planted in farm plots
+
+# 50.09-r4
 
 ## Misc Improvements
 - `autofish`: changed ``--raw`` argument format to allow explicit setting to on or off
-
-## Removed
+- `caravan`: move goods to depot screen can now see/search/trade items inside of barrels and pots
+- `gui/launcher`: show tagged tools in the autocomplete list when a tag name is typed
 
 # 50.09-r3
 

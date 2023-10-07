@@ -414,7 +414,7 @@ function HelpPanel:add_output(output)
     if text_len > SCROLLBACK_CHARS then
         text = text:sub(-SCROLLBACK_CHARS)
         local text_diff = text_len - #text
-        HelpPanel_update_label(label, label.text_to_wrap:sub(text_len - #text))
+        HelpPanel_update_label(label, label.text_to_wrap:sub(text_diff))
         text_height = label:getTextHeight()
         label:scroll('end')
         line_num = label.start_line_num
@@ -699,30 +699,36 @@ local function add_top_related_entries(entries, entry, n)
 end
 
 function LauncherUI:update_autocomplete(firstword)
+    local includes = {{str=firstword, types='command'}}
     local excludes
+    if helpdb.is_tag(firstword) then
+        table.insert(includes, {tag=firstword, types='command'})
+    end
     if not dev_mode then
         excludes = {tag={'dev', 'unavailable'}}
-        if dfhack.getHideArmokTools() then
+        if dfhack.getHideArmokTools() and firstword ~= 'armok' then
             table.insert(excludes.tag, 'armok')
         end
     end
-    local entries = helpdb.search_entries({str=firstword, types='command'}, excludes)
+    local entries = helpdb.search_entries(includes, excludes)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a dev script that we masked out) to show that it's a valid
     -- command
-    local found = extract_entry(entries,firstword) or helpdb.is_entry(firstword)
+    local found = extract_entry(entries, firstword) or helpdb.is_entry(firstword)
     sort_by_freq(entries)
-    if found then
+    if helpdb.is_tag(firstword) then
+        self.subviews.autocomplete_label:setText("Tagged tools")
+    elseif found then
         table.insert(entries, 1, firstword)
-        self.subviews.autocomplete_label:setText("Similar scripts")
+        self.subviews.autocomplete_label:setText("Similar tools")
         add_top_related_entries(entries, firstword, 20)
     else
         self.subviews.autocomplete_label:setText("Suggestions")
     end
 
     if #firstword == 0 then
-        self.subviews.autocomplete_label:setText("All scripts")
+        self.subviews.autocomplete_label:setText("All tools")
     end
 
     self.subviews.autocomplete:set_options(entries, found)
