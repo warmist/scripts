@@ -73,7 +73,7 @@ end
 function toggle_fishing_labour(state)
     -- pass true to state to turn on, otherwise disable
     -- find all work details that have fishing enabled:
-    local work_details = df.global.plotinfo.labor_info.work_details
+    local work_details = df.global.plotinfo.hauling.labor_info.work_details
     for _,v in pairs(work_details) do
         if v.allowed_labors.FISH then
             -- set limited to true just in case a custom work detail is being
