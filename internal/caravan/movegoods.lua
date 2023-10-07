@@ -14,9 +14,10 @@ local widgets = require('gui.widgets')
 MoveGoods = defclass(MoveGoods, widgets.Window)
 MoveGoods.ATTRS {
     frame_title='Move goods to/from depot',
-    frame={w=84, h=46},
+    frame={w=85, h=46},
     resizable=true,
     resize_min={h=35},
+    frame_inset={l=1, t=1, b=1, r=0},
     pending_item_ids=DEFAULT_NIL,
     depot=DEFAULT_NIL,
 }
@@ -177,7 +178,7 @@ function MoveGoods:init()
             on_change=function() self:refresh_list() end,
         },
         widgets.Panel{
-            frame={t=4, l=40, r=0, h=12},
+            frame={t=4, l=40, r=1, h=12},
             subviews=common.get_info_widgets(self, get_export_agreements(), self.predicate_context),
         },
         widgets.Panel{
@@ -241,7 +242,7 @@ function MoveGoods:init()
         widgets.Label{
             frame={l=0, b=4, h=1, r=0},
             text={
-                'Total value of trade items:',
+                'Total value of items marked for trade:',
                 {gap=1,
                  text=function() return common.obfuscate_value(self.value_pending) end},
             },
@@ -266,9 +267,9 @@ function MoveGoods:init()
             on_change=function() self:refresh_list() end,
         },
         widgets.ToggleHotkeyLabel{
-            view_id='inside_bins',
-            frame={l=51, b=2, w=28},
-            label='See inside bins:',
+            view_id='inside_containers',
+            frame={l=51, b=2, w=30},
+            label='Inside containers:',
             key='CUSTOM_CTRL_I',
             options={
                 {label='Yes', value=true, pen=COLOR_GREEN},
@@ -309,6 +310,13 @@ function MoveGoods:refresh_list(sort_widget, sort_fn)
     list:setFilter(saved_filter)
 end
 
+local function is_container(item)
+    return item and (
+        df.item_binst:is_instance(item) or
+        item:isFoodStorage()
+    )
+end
+
 local function is_tradeable_item(item, depot)
     if item.flags.hostile or
         item.flags.removed or
@@ -329,8 +337,7 @@ local function is_tradeable_item(item, depot)
     if item.flags.in_inventory then
         local gref = dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINED_IN_ITEM)
         if not gref then return false end
-        local container = df.item.find(gref.item_id)
-        if not container or not df.item_binst:is_instance(container) then
+        if not is_container(df.item.find(gref.item_id)) or item:isLiquidPowder() then
             return false
         end
     end
@@ -406,7 +413,7 @@ local function is_ethical_product(item, animal_ethics, wood_ethics)
         (not wood_ethics or not common.has_wood(item))
 end
 
-local function make_bin_search_key(item, desc)
+local function make_container_search_key(item, desc)
     local words = {}
     common.add_words(words, desc)
     for _, contained_item in ipairs(dfhack.items.getContainedItems(item)) do
@@ -415,15 +422,22 @@ local function make_bin_search_key(item, desc)
     return table.concat(words, ' ')
 end
 
-local function get_cache_index(group_items, inside_bins)
+local function get_cache_index(group_items, inside_containers)
     local val = 1
     if group_items then val = val + 1 end
-    if inside_bins then val = val + 2 end
+    if inside_containers then val = val + 2 end
     return val
 end
 
-function MoveGoods:cache_choices(group_items, inside_bins)
-    local cache_idx = get_cache_index(group_items, inside_bins)
+local function contains_non_liquid_powder(container)
+    for _, item in ipairs(dfhack.items.getContainedItems(container)) do
+        if not item:isLiquidPowder() then return true end
+    end
+    return false
+end
+
+function MoveGoods:cache_choices(group_items, inside_containers)
+    local cache_idx = get_cache_index(group_items, inside_containers)
     if self.choices_cache[cache_idx] then return self.choices_cache[cache_idx] end
 
     local pending = self.pending_item_ids
@@ -431,11 +445,9 @@ function MoveGoods:cache_choices(group_items, inside_bins)
     for _, item in ipairs(df.global.world.items.all) do
         local item_id = item.id
         if not item or not is_tradeable_item(item, self.depot) then goto continue end
-        if inside_bins and df.item_binst:is_instance(item) and
-            dfhack.items.getGeneralRef(item, df.general_ref_type.CONTAINS_ITEM)
-        then
+        if inside_containers and is_container(item) and contains_non_liquid_powder(item) then
             goto continue
-        elseif not inside_bins and item.flags.in_inventory then
+        elseif not inside_containers and item.flags.in_inventory then
             goto continue
         end
         local value = common.get_perceived_value(item)
@@ -479,8 +491,8 @@ function MoveGoods:cache_choices(group_items, inside_bins)
                 dirty=false,
             }
             local search_key
-            if not inside_bins and df.item_binst:is_instance(item) then
-                search_key = make_bin_search_key(item, desc)
+            if not inside_containers and is_container(item) then
+                search_key = make_container_search_key(item, desc)
             else
                 search_key = common.make_search_key(desc)
             end
@@ -510,14 +522,14 @@ function MoveGoods:cache_choices(group_items, inside_bins)
         self.value_pending = self.value_pending + (data.per_item_value * data.selected)
     end
 
-    self.choices_cache[get_cache_index(true, inside_bins)] = group_choices
-    self.choices_cache[get_cache_index(false, inside_bins)] = nogroup_choices
+    self.choices_cache[get_cache_index(true, inside_containers)] = group_choices
+    self.choices_cache[get_cache_index(false, inside_containers)] = nogroup_choices
     return self.choices_cache[cache_idx]
 end
 
 function MoveGoods:get_choices()
     local raw_choices = self:cache_choices(self.subviews.group_items:getOptionValue(),
-            self.subviews.inside_bins:getOptionValue())
+            self.subviews.inside_containers:getOptionValue())
     local choices = {}
     local include_forbidden = not self.subviews.hide_forbidden:getOptionValue()
     local banned = self.subviews.banned:getOptionValue()

@@ -1070,7 +1070,7 @@ function LegendsOverlay:init()
 end
 
 function LegendsOverlay:onInput(keys)
-    if keys._MOUSE_L_DOWN and progress_percent < 0 and
+    if keys._MOUSE_L and progress_percent < 0 and
         self.subviews.button_mask:getMousePos() and
         self.subviews.do_export:getOptionValue()
     then
@@ -1102,7 +1102,7 @@ end
 
 function DoneMaskOverlay:onInput(keys)
     if progress_percent >= 0 then
-        if keys.LEAVESCREEN or (keys._MOUSE_L_DOWN and self:getMousePos()) then
+        if keys.LEAVESCREEN or (keys._MOUSE_L and self:getMousePos()) then
             return true
         end
     end
