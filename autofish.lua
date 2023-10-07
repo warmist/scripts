@@ -73,15 +73,15 @@ end
 function toggle_fishing_labour(state)
     -- pass true to state to turn on, otherwise disable
     -- find all work details that have fishing enabled:
-    local work_details = df.global.plotinfo.hauling.labor_info.work_details
+    local work_details = df.global.plotinfo.labor_info.work_details
     for _,v in pairs(work_details) do
         if v.allowed_labors.FISH then
-            -- set limited to true just in case a custom work detail is being
-            -- changed, to prevent *all* dwarves from fishing.
-            v.work_detail_flags.limited = true
-            v.work_detail_flags.enabled = state
+            v.work_detail_flags.mode = state and
+                df.work_detail_mode.OnlySelectedDoesThis or df.work_detail_mode.NobodyDoesThis
 
-            -- workaround to actually enable labours
+            -- since the work details are not actually applied unless a button
+            -- is clicked on the work details screen, we have to manually set
+            -- unit labours
             for _,v2 in ipairs(v.assigned_units) do
                 -- find unit by ID and toggle fishing
                 local unit = df.unit.find(v2)
