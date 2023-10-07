@@ -31,7 +31,7 @@ Template for new versions:
 ## New Features
 
 ## New Scripts
-- `warn-stranded`: new repeatable maintenance script to check for stranded units, based off `warn-starving`
+- `warn-stranded`: new repeatable maintenance script to check for stranded units, similar to `warn-starving`
 
 ## Fixes
 - `suspendmanager`: fix errors when constructing near the map edge
