@@ -1,15 +1,15 @@
 -- Detects and alerts when a citizen is stranded
 -- Logic heavily based off of warn-starving
 -- GUI heavily based off of autobutcher
---@ module = true
+--@module = true
 
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local argparse = require 'argparse'
 local args = {...}
-local scriptPrefix = 'warn-stranded'
-local ignoresCache = {}
+scriptPrefix = 'warn-stranded'
+ignoresCache = ignoresCache or {}
 
 -- ===============================================
 --              Utility Functions
@@ -17,7 +17,10 @@ local ignoresCache = {}
 
 -- Clear the ignore list
 local function clear()
-    dfhack.persistent.delete(scriptPrefix)
+    for index, entry in pairs(ignoresCache) do
+        entry:delete()
+        ignoresCache[index] = nil
+    end
 end
 
 -- Taken from warn-starving
@@ -76,6 +79,8 @@ local function getIgnoredUnits()
     ignoresCache = {}
 
     for _, entry in ipairs(ignores) do
+        print(entry)
+        printall(ignoresCache)
         unit_id = entry.ints[1]
         ignoresCache[unit_id] = entry
     end
@@ -109,10 +114,10 @@ local function toggleUnitIgnore(unit, refresh)
 
     if entry then
         entry:delete()
-        table.remove(ignoresCache, unit.id)
+        ignoresCache[unit.id] = nil
         return true
     else
-        entry = dfhack.persistent.save({key = scriptPrefix, ints = {unit.id}})
+        entry = dfhack.persistent.save({key = scriptPrefix, ints = {unit.id}}, true)
         ignoresCache[unit.id] = entry
         return false
     end
@@ -145,9 +150,10 @@ local function toggleGroup(groups, groupNumber)
 
     for _, unit in ipairs(group['units']) do
         local isIgnored = unitIgnored(unit)
+        if isIgnored then isIgnored = true else isIgnored = false end
 
         if allIgnored == isIgnored then
-            ignored = toggleUnitIgnore(unit)
+            toggleUnitIgnore(unit)
         end
     end
 
@@ -166,7 +172,7 @@ WarningWindow.ATTRS{
     autoarrange_subviews=true,
 }
 
-function WarningWindow:init()
+function WarningWindow:init(info)
     self:addviews{
         widgets.List{
             frame={h=15},
@@ -218,12 +224,11 @@ function WarningWindow:initListChoices()
 
     for groupIndex, group in ipairs(self.groups) do
         local groupDesignation = getGroupDesignation(group, groupIndex)
-        local ignoresCache = deserializeIgnoredUnits()
 
         for _, unit in ipairs(group['units']) do
             local text = ''
 
-            text = addIgnored(text, unit, ignoresCache)
+            text = addIgnored(text, unit)
             text = text..getUnitDescription(unit)..groupDesignation
 
             table.insert(choices, { text = text, data = {unit = unit, group = groupIndex} })
@@ -251,7 +256,7 @@ function WarningWindow:onIgnoreAll()
         end
     end
 
-    self:dismiss()
+    self:initListChoices()
 end
 
 function WarningWindow:onClear()
@@ -278,7 +283,7 @@ end
 WarningScreen = defclass(WarningScreen, gui.ZScreenModal)
 
 function WarningScreen:init(info)
-    self:addviews{WarningWindow{info}}
+    self:addviews{WarningWindow{groups=info.groups}}
 end
 
 function WarningScreen:onDismiss()
@@ -438,6 +443,16 @@ function doCheck()
     end
 end
 
+-- Load ignores list on save game load
+-- WARNING: This has to be above `dfhack_flags.module` or it will not work as intended on first game load
+dfhack.onStateChange[scriptPrefix] = function(state_change)
+    if state_change ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+
+    getIgnoredUnits()
+end
+
 if dfhack_flags.module then
     return
 end
@@ -474,6 +489,8 @@ elseif positionals[1] == 'status' then
             end
         end
 
+        printall(dfhack.persistent.get_all(scriptPrefix))
+        print(dfhack.persistent.get_all(scriptPrefix))
         return true
     end
 
@@ -539,7 +556,7 @@ elseif positionals[1] == 'unignore' then
         return false
     end
 
-    if unitIgnored(citizen) == false then
+    if not unitIgnored(citizen) then
         print('Unit '..parameter..' is not ignored. You may want to use the ignore command.')
         return false
     end
@@ -559,13 +576,4 @@ elseif positionals[1] == 'unignoregroup' then
     unignoreGroup(strandedCitizens, parameter)
 else
     view = view and view:raise() or doCheck()
-end
-
--- Load ignores list on save game load
-dfhack.onStateChange[scriptPrefix] = function(state_change)
-    if state_change ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        return
-    end
-
-    getIgnoredUnits()
 end
