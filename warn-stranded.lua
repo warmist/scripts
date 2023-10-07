@@ -79,8 +79,6 @@ local function getIgnoredUnits()
     ignoresCache = {}
 
     for _, entry in ipairs(ignores) do
-        print(entry)
-        printall(ignoresCache)
         unit_id = entry.ints[1]
         ignoresCache[unit_id] = entry
     end
@@ -489,8 +487,6 @@ elseif positionals[1] == 'status' then
             end
         end
 
-        printall(dfhack.persistent.get_all(scriptPrefix))
-        print(dfhack.persistent.get_all(scriptPrefix))
         return true
     end
 
