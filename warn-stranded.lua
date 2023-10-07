@@ -8,6 +8,8 @@ local utils = require 'utils'
 local widgets = require 'gui.widgets'
 local argparse = require 'argparse'
 local args = {...}
+local scriptPrefix <const> = 'warn-stranded'
+local ignoresCache = {}
 
 -- ===============================================
 --              Utility Functions
@@ -15,7 +17,7 @@ local args = {...}
 
 -- Clear the ignore list
 local function clear()
-    dfhack.persistent.delete('warnStrandedIgnore')
+    dfhack.persistent.delete(scriptPrefix)
 end
 
 -- Taken from warn-starving
@@ -31,8 +33,9 @@ end
 
 -- Partially taken from warn-starving
 local function getUnitDescription(unit)
-    return '['..dfhack.units.getProfessionName(unit)..'] '..dfhack.TranslateName(dfhack.units.getVisibleName(unit))..
-        ' '..getSexString(unit.sex)..' Stress category: '..dfhack.units.getStressCategory(unit)
+    return ('[%s] %s %s'):format(dfhack.units.getProfessionName(unit),
+                                 dfhack.TranslateName(dfhack.units.getVisibleName(unit)),
+                                 getSexString(unit.sex))
 end
 
 -- Use group data, index, and command arguments to generate a group
@@ -58,73 +61,67 @@ local function addId(text, unit)
     return text..'|'..unit.id..'| '
 end
 
--- Uses persistent API. Low-level, deserializes 'warnStrandedIgnored' key and
---   will return an initialized empty warnStrandedIgnored table if needed.
--- Performance characterstics unknown of persistent API
-local function deserializeIgnoredUnits()
-    local currentIgnore = dfhack.persistent.get('warnStrandedIgnore')
-    if currentIgnore == nil then return {} end
+-- ===============================================
+--              Persistence API
+-- ===============================================
+-- Optional refresh parameter forces us to load from API instead of using cache
 
-    local tbl = {}
+-- Uses persistent API. Low-level, gets all entries currently in our persistent table
+--   will return an empty array if needed. Clears and adds entries to our cache.
+-- Returns the new global ignoresCache value
+local function getIgnoredUnits()
+    local ignores = dfhack.persistent.get_all(scriptPrefix)
+    if ignores == nil then return {} end
 
-    for v in string.gmatch(currentIgnore['value'], '%d+') do
-        table.insert(tbl, v)
+    ignoresCache = {}
+
+    for _, entry in ipairs(ignores) do
+        unit_id = entry.ints[1]
+        ignoresCache[unit_id] = entry
     end
 
-    return tbl
+    return ignoresCache
 end
 
--- Uses persistent API. Deserializes 'warnStrandedIgnore' key to determine if unit is ignored
---   deserializedIgnores is optional but allows us to only call deserialize once like an explicit cache.
-local function unitIgnored(unit, deserializedIgnores)
-    local ignores = deserializedIgnores or deserializeIgnoredUnits()
+-- Uses persistent API. Optional refresh parameter forces us to load from API,
+--   instead of using our cache.
+-- Returns the persistent entry or nil
+local function unitIgnored(unit, refresh)
+    if refresh then getIgnoredUnits() end
 
-    for index, id in ipairs(ignores) do
-        if tonumber(id) == unit.id then
-            return true, index
-        end
-    end
-
-    return false
+    return ignoresCache[unit.id]
 end
 
 -- Check for and potentially add [IGNORED] to text.
---   Optional deserializedIgnores allows us to call deserialize once for a group of operations
-local function addIgnored(text, unit, deserializedIgnores)
-    if unitIgnored(unit, deserializedIgnores) then
+local function addIgnored(text, unit, refresh)
+    if unitIgnored(unit, refresh) then
         return text..'[IGNORED] '
     end
 
     return text
 end
 
--- Uses persistent API. Toggles a unit's ignored status by deserializing 'warnStrandedIgnore' key
---   then serializing the resulting table after the toggle.
--- Optional cache parameter could affect data integrity. Make sure you don't need data reloaded
---   before using it. Calling several times in a row can use the return result of the function
---   as input to the next call.
-local function toggleUnitIgnore(unit, deserializedIgnores)
-    local ignores = deserializedIgnores or deserializeIgnoredUnits()
-    local is_ignored, index = unitIgnored(unit, ignores)
+-- Uses persistent API. Toggles a unit's ignored status by deleting the entry from the persistence API
+--   and from the ignoresCache table.
+-- Returns true if the unit was already ignored, false if it wasn't.
+local function toggleUnitIgnore(unit, refresh)
+    local entry = unitIgnored(unit, refresh)
 
-    if is_ignored then
-        table.remove(ignores, index)
+    if entry then
+        entry:delete()
+        table.remove(ignoresCache, unit.id)
+        return true
     else
-        table.insert(ignores, unit.id)
+        entry = dfhack.persistent.save({key = scriptPrefix, ints = {unit.id}})
+        ignoresCache[unit.id] = entry
+        return false
     end
-
-    dfhack.persistent.delete('warnStrandedIgnore')
-    dfhack.persistent.save({key = 'warnStrandedIgnore', value = table.concat(ignores, ' ')})
-
-    return ignores
 end
 
 -- Does the usual GUI pattern when groups can be in a partial state
 --   Will ignore everything, unless all units in group are already ignored
 --   If all units in the group are ignored, then it will unignore all of them
 local function toggleGroup(groups, groupNumber)
-    local ignored = deserializeIgnoredUnits()
-
     if groupNumber > #groups then
         print('Group '..groupNumber..' does not exist')
         return false
@@ -139,7 +136,7 @@ local function toggleGroup(groups, groupNumber)
 
     local allIgnored = true
     for _, unit in ipairs(group['units']) do
-        if not unitIgnored(unit, ignored) then
+        if not unitIgnored(unit) then
             allIgnored = false
             goto process
         end
@@ -147,10 +144,10 @@ local function toggleGroup(groups, groupNumber)
     ::process::
 
     for _, unit in ipairs(group['units']) do
-        local isIgnored = unitIgnored(unit, ignored)
+        local isIgnored = unitIgnored(unit)
 
         if allIgnored == isIgnored then
-            ignored = toggleUnitIgnore(unit, ignored)
+            ignored = toggleUnitIgnore(unit)
         end
     end
 
@@ -160,68 +157,63 @@ end
 -- ===============================================================
 --                   Graphical Interface
 -- ===============================================================
-warning = defclass(warning, gui.ZScreenModal)
+WarningWindow = defclass(WarningWindow, widgets.Window)
+WarningWindow.ATTRS{
+    frame={w=80, h=25},
+    min_size={w=60, h=25},
+    frame_title='Stranded Citizen Warning',
+    resizable=true,
+    autoarrange_subviews=true,
+}
 
-function warning:init(info)
+function WarningWindow:init()
     self:addviews{
-        widgets.Window{
-            view_id = 'main',
-            frame={w=80, h=25},
-            min_size={w=60, h=25},
-            frame_title='Stranded Citizen Warning',
-            resizable=true,
+        widgets.List{
+            frame={h=15},
+            view_id = 'list',
+            text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
+            cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
+            on_submit=self:callback('onIgnore'),
+            on_select=self:callback('onZoom'),
+            on_double_click=self:callback('onIgnore'),
+            on_double_click2=self:callback('onToggleGroup'),
+        },
+        widgets.Panel{
+            frame={h=5},
             autoarrange_subviews=true,
             subviews = {
-                widgets.List{
-                    frame={h=15},
-                    view_id = 'list',
-                    text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-                    cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
-                    on_submit=self:callback('onIgnore'),
-                    on_select=self:callback('onZoom'),
-                    on_double_click=self:callback('onIgnore'),
-                    on_double_click2=self:callback('onToggleGroup'),
+                widgets.HotkeyLabel{
+                    key='SELECT',
+                    label='Toggle ignore',
                 },
-                widgets.Panel{
-                    frame={h=5},
-                    autoarrange_subviews=true,
-                    subviews = {
-                        widgets.HotkeyLabel{
-                            key='SELECT',
-                            label='Toggle ignore',
-                        },
-                        widgets.HotkeyLabel{
-                            key='CUSTOM_G',
-                            label='Toggle group',
-                            on_activate = self:callback('onToggleGroup'),
-                        },
-                        widgets.HotkeyLabel{
-                            key = 'CUSTOM_SHIFT_I',
-                            label = 'Ignore all',
-                            on_activate = self:callback('onIgnoreAll'),
-                        },
-                        widgets.HotkeyLabel{
-                            key = 'CUSTOM_SHIFT_C',
-                            label = 'Clear all ignored',
-                            on_activate = self:callback('onClear'),
-                        },
-                        widgets.WrappedLabel{
-                            frame={b=0, l=0, r=0},
-                            text_to_wrap='Click to toggle unit ignore. Shift doubleclick to toggle a group.',
-                        },
-                    }
+                widgets.HotkeyLabel{
+                    key='CUSTOM_G',
+                    label='Toggle group',
+                    on_activate = self:callback('onToggleGroup'),
                 },
-
+                widgets.HotkeyLabel{
+                    key = 'CUSTOM_SHIFT_I',
+                    label = 'Ignore all',
+                    on_activate = self:callback('onIgnoreAll'),
+                },
+                widgets.HotkeyLabel{
+                    key = 'CUSTOM_SHIFT_C',
+                    label = 'Clear all ignored',
+                    on_activate = self:callback('onClear'),
+                },
+                widgets.WrappedLabel{
+                    frame={b=0, l=0, r=0},
+                    text_to_wrap='Click to toggle unit ignore. Shift doubleclick to toggle a group.',
+                },
             }
-        }
+        },
     }
 
     self.groups = info.groups
     self:initListChoices()
 end
 
-
-function warning:initListChoices()
+function WarningWindow:initListChoices()
     local choices = {}
 
     for groupIndex, group in ipairs(self.groups) do
@@ -242,33 +234,32 @@ function warning:initListChoices()
     list:setChoices(choices)
 end
 
-function warning:onIgnore(_, choice)
+function WarningWindow:onIgnore(_, choice)
     local unit = choice.data['unit']
 
     toggleUnitIgnore(unit)
     self:initListChoices()
 end
 
-function warning:onIgnoreAll()
+function WarningWindow:onIgnoreAll()
     local choices = self.subviews.list:getChoices()
-    local ignoresCache = deserializeIgnoredUnits()
 
     for _, choice in ipairs(choices) do
         -- We don't want to flip ignored units to unignored
-        if not unitIgnored(choice.data['unit'], ignoresCache) then
-            ignoresCache = toggleUnitIgnore(choice.data['unit'], ignoresCache)
+        if not unitIgnored(choice.data['unit']) then
+            toggleUnitIgnore(choice.data['unit'])
         end
     end
 
     self:dismiss()
 end
 
-function warning:onClear()
+function WarningWindow:onClear()
     clear()
     self:initListChoices()
 end
 
-function warning:onZoom()
+function WarningWindow:onZoom()
     local index, choice = self.subviews.list:getSelected()
     local unit = choice.data['unit']
 
@@ -276,7 +267,7 @@ function warning:onZoom()
     dfhack.gui.revealInDwarfmodeMap(target, true)
 end
 
-function warning:onToggleGroup()
+function WarningWindow:onToggleGroup()
     local index, choice = self.subviews.list:getSelected()
     local group = choice.data['group']
 
@@ -284,7 +275,13 @@ function warning:onToggleGroup()
     self:initListChoices()
 end
 
-function warning:onDismiss()
+WarningScreen = defclass(WarningScreen, gui.ZScreenModal)
+
+function WarningScreen:init(info)
+    self:addviews{WarningWindow{info}}
+end
+
+function WarningScreen:onDismiss()
     view = nil
 end
 
@@ -304,7 +301,6 @@ local function getStrandedUnits()
     -- Don't use ignored units to determine if there are any stranded units
     -- but keep them to display later
     local ignoredGroup = {}
-    local ignoresCache = deserializeIgnoredUnits()
 
     -- Pathability group calculation is from gui/pathable
     for _, unit in ipairs(citizens) do
@@ -312,7 +308,7 @@ local function getStrandedUnits()
         local block = dfhack.maps.getTileBlock(target)
         local walkGroup = block and block.walkable[target.x % 16][target.y % 16] or 0
 
-        if unitIgnored(unit, ignoresCache) then
+        if unitIgnored(unit) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
@@ -390,8 +386,6 @@ local function findCitizen(unitId)
 end
 
 local function ignoreGroup(groups, groupNumber)
-    local ignored = deserializeIgnoredUnits()
-
     if groupNumber > #groups then
         print('Group '..groupNumber..' does not exist')
         return false
@@ -403,11 +397,11 @@ local function ignoreGroup(groups, groupNumber)
     end
 
     for _, unit in ipairs(groups[groupNumber]['units']) do
-        if unitIgnored(unit, ignored) then
+        if unitIgnored(unit) then
             print('Unit '..unit.id..' already ignored, doing nothing to them.')
         else
             print('Ignoring unit '..unit.id)
-            toggleUnitIgnore(unit, ignored)
+            toggleUnitIgnore(unit)
         end
     end
 
@@ -415,8 +409,6 @@ local function ignoreGroup(groups, groupNumber)
 end
 
 local function unignoreGroup(groups, groupNumber)
-    local ignored = deserializeIgnoredUnits()
-
     if groupNumber > #groups then
         print('Group '..groupNumber..' does not exist')
         return false
@@ -427,9 +419,9 @@ local function unignoreGroup(groups, groupNumber)
     end
 
     for _, unit in ipairs(groups[groupNumber]['units']) do
-        if unitIgnored(unit, ignored) then
+        if unitIgnored(unit) then
             print('Unignoring unit '..unit.id)
-            ignored = toggleUnitIgnore(unit, ignored)
+            ignored = toggleUnitIgnore(unit)
         else
             print('Unit '..unit.id..' not already ignored, doing nothing to them.')
         end
@@ -442,7 +434,7 @@ function doCheck()
     local result, strandedGroups = getStrandedUnits()
 
     if result then
-        return warning{groups=strandedGroups}:show()
+        return WarningScreen{groups=strandedGroups}:show()
     end
 end
 
@@ -459,27 +451,23 @@ end
 -- =========================================================================
 
 local positionals = argparse.processArgsGetopt(args, {})
+local parameter = tonumber(positionals[2])
 
 if positionals[1] == 'clear' then
     print('Clearing unit ignore list.')
-    return clear()
-end
+    clear()
 
-local parameter = tonumber(positionals[2])
-
-if positionals[1] == 'status' then
+elseif positionals[1] == 'status' then
     local result, strandedGroups = getStrandedUnits()
 
     if result then
-        local ignoresCache = deserializeIgnoredUnits()
-
         for groupIndex, group in ipairs(strandedGroups) do
             local groupDesignation = getGroupDesignation(group, groupIndex, true)
 
             for _, unit in ipairs(group['units']) do
                 local text = ''
 
-                text = addIgnored(text, unit, ignoresCache)
+                text = addIgnored(text, unit)
                 text = addId(text, unit)
 
                 print(text..getUnitDescription(unit)..groupDesignation)
@@ -508,10 +496,7 @@ if positionals[1] == 'status' then
         end
     end
 
-    return false
-end
-
-if positionals[1] == 'ignore' then
+elseif positionals[1] == 'ignore' then
     if not parameter then
         print('Must provide unit id to the ignore command.')
         return false
@@ -531,20 +516,17 @@ if positionals[1] == 'ignore' then
 
     print('Ignoring unit '..parameter)
     toggleUnitIgnore(citizen)
-    return true
-end
 
-if positionals[1] == 'ignoregroup' then
+elseif positionals[1] == 'ignoregroup' then
     if not parameter then
         print('Must provide group id to the ignoregroup command.')
     end
 
     print('Ignoring group '..parameter)
     local _, strandedCitizens = getStrandedUnits()
-    return ignoreGroup(strandedCitizens, parameter)
-end
+    ignoreGroup(strandedCitizens, parameter)
 
-if positionals[1] == 'unignore' then
+elseif positionals[1] == 'unignore' then
     if not parameter then
         print('Must provide unit id to unignore command.')
         return false
@@ -564,18 +546,26 @@ if positionals[1] == 'unignore' then
 
     print('Unignoring unit '..parameter)
     toggleUnitIgnore(citizen)
-    return true
-end
 
-if positionals[1] == 'unignoregroup' then
+elseif positionals[1] == 'unignoregroup' then
     if not parameter then
         print('Must provide group id to unignoregroup command.')
         return false
     end
 
     print('Unignoring group '..parameter)
+
     local _, strandedCitizens = getStrandedUnits()
-    return unignoreGroup(strandedCitizens, parameter)
+    unignoreGroup(strandedCitizens, parameter)
+else
+    view = view and view:raise() or doCheck()
 end
 
-view = view and view:raise() or doCheck()
+-- Load ignores list on save game load
+dfhack.onStateChange[scriptPrefix] = function(state_change)
+    if state_change ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
+    end
+
+    getIgnoredUnits()
+end
