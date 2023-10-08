@@ -10,7 +10,10 @@ scanning the announcements for the correct attack verb, so the attack verb
 must be specified in the interaction. It includes an option to suppress this
 announcement after it finds it.
 
-Usage::
+Usage
+-----
+
+::
 
     -clear
         unregisters all triggers
