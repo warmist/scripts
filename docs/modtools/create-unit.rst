@@ -5,7 +5,12 @@ modtools/create-unit
     :summary: Create arbitrary units.
     :tags: unavailable dev
 
-Creates a unit.  Usage::
+Creates a unit.
+
+Usage
+-----
+
+::
 
     -race raceName
         (obligatory)

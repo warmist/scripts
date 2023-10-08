@@ -6,7 +6,12 @@ modtools/reaction-product-trigger
     :tags: unavailable dev
 
 This triggers dfhack commands when reaction products are produced, once per
-product.  Usage::
+product.
+
+Usage
+-----
+
+::
 
     -clear
         unregister all reaction hooks
