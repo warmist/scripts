@@ -116,6 +116,23 @@ Command options
 ``-d``, ``--dry-run``
     Go through all the motions and print statistics on what would be done, but
     don't actually change any game state.
+``-m``, ``--marker``
+    Use marker mode for the ``#dig`` blueprint that you are applying.
+``--order-materials <spec>``
+    When generating manager orders, use materials according to the given spec
+    instead of the default "rock,wood,cloth,iron". Valid values are: rock, wood,
+    cloth, silk, yarn, leather, glass, and the names of any metals. You can
+    additionally override the materials preference for specific types of items
+    by adding comma-separated elements to the spec in the format
+    ``<type>=<material``. For example, ``BOX=leather`` will produce leather bags
+    instead of the default rock coffers when a container is specified on a
+    blueprint.
+``-p``, ``--priority <num>``
+    Set the priority to the given number (1-7) for tiles designated by the
+    ``#dig`` blueprint that you are applying. That is, tiles that normally have
+    a priority of ``4`` will instead have the priority you specify. If the
+    blueprint uses other explicit priorities, they will be shifted up or down
+    accordingly.
 ``--preserve-engravings <quality>``
     Don't designate tiles for digging/carving if they have an engraving with at
     least the specified quality. Valid values for ``quality`` are: ``None``,
