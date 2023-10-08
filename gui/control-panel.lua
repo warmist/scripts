@@ -91,8 +91,10 @@ local PREFERENCES = {
          desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
         SCROLL_DELAY_MS={label='Mouse scroll repeat delay (ms)', type='int', default=20, min=5,
          desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
-        FILTER_FULL_TEXT={label='DFHack list filters search full text', type='bool', default=false,
-         desc='Whether to search for a match in the full text (true) or just at the start of words (false).'},
+    },
+    ['utils']={
+        FILTER_FULL_TEXT={label='DFHack searches full text', type='bool', default=false,
+         desc='When searching, choose whether to match anywhere in the text (true) or just at the start of words (false).'},
     },
 }
 local CPP_PREFERENCES = {
