@@ -626,7 +626,7 @@ function Quickfort:do_command(command, dry_run, post_fn)
     if command == 'run' then
         if #ctx.messages > 0 then
             self._dialog = dialogs.showMessage(
-                    'Attention',
+                    'Blueprint messages',
                     table.concat(ctx.messages, '\n\n'):wrap(dialog_width),
                     nil,
                     post_fn)
