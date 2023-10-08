@@ -13,7 +13,7 @@ Usage
 ::
 
     modtools/set-personality --list
-    modtools/set-personality [<target option>] <trait option> <modifier option>
+    modtools/set-personality [<target option>] <trait option> <modifier option> [<other options>]
 
 If no target option is given, the unit selected in the UI is used by default.
 
