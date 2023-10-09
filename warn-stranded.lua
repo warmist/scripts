@@ -72,11 +72,11 @@ end
 -- Uses persistent API. Low-level, gets all entries currently in our persistent table
 --   will return an empty array if needed. Clears and adds entries to our cache.
 -- Returns the new global ignoresCache value
-local function getIgnoredUnits()
+local function loadIgnoredUnits()
     local ignores = dfhack.persistent.get_all(scriptPrefix)
-    if ignores == nil then return {} end
-
     ignoresCache = {}
+
+    if ignores == nil then return ignoresCache end
 
     for _, entry in ipairs(ignores) do
         unit_id = entry.ints[1]
@@ -90,7 +90,7 @@ end
 --   instead of using our cache.
 -- Returns the persistent entry or nil
 local function unitIgnored(unit, refresh)
-    if refresh then getIgnoredUnits() end
+    if refresh then loadIgnoredUnits() end
 
     return ignoresCache[unit.id]
 end
@@ -448,7 +448,7 @@ dfhack.onStateChange[scriptPrefix] = function(state_change)
         return
     end
 
-    getIgnoredUnits()
+    loadIgnoredUnits()
 end
 
 if dfhack_flags.module then
