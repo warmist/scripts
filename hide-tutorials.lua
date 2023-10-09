@@ -22,8 +22,9 @@ local function close_help()
     help.open = false
 end
 
-function skip_tutorial_prompt(scr)
+function skip_tutorial_prompt()
     if not help.open then return end
+    local scr = dfhack.gui.getDFViewscreen(true)
     local mouse_y = 23
     if help.context == df.help_context_type.EMBARK_TUTORIAL_CHOICE then
         help.context = df.help_context_type.EMBARK_MESSAGE
@@ -55,7 +56,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if df.viewscreen_new_regionst:is_instance(scr) then
             close_help()
         elseif df.viewscreen_choose_start_sitest:is_instance(scr) then
-            skip_tutorial_prompt(scr)
+            dfhack.timeout(1, 'frames', skip_tutorial_prompt)
         end
     elseif sc == SC_MAP_LOADED and df.global.gamemode == df.game_mode.DWARF then
         hide_all_popups()
