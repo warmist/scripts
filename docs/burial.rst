@@ -22,4 +22,3 @@ Options
     Create dwarf-only tombs
 ``-p``
     Create pet-only tombs
-

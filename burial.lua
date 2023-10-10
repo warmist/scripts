@@ -12,7 +12,7 @@ for i, c in pairs(df.global.world.buildings.other.COFFIN) do
             goto skip
         end
     end
-    
+
     dfhack.buildings.constructBuilding {
         type = df.building_type.Civzone,
         subtype = df.civzone_type.Tomb,
@@ -31,4 +31,3 @@ for i, c in pairs(df.global.world.buildings.other.COFFIN) do
 
     ::skip::
 end
-
