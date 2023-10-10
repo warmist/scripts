@@ -2,20 +2,24 @@ burial
 ======
 
 .. dfhack-tool::
-    :summary: Configures all unowned coffins to allow burial.
-    :tags: unavailable fort productivity buildings
+    :summary: Allows burial in unowned coffins.
+    :tags: fort productivity buildings
+
+Creates a 1x1 tomb zone for each built coffin that doesn't already have one.
 
 Usage
 -----
 
-::
+    ``burial [-d] [-p]``
 
-    burial [--pets]
+Created tombs allow both dwarves and pets by default. By specifying ``-d`` or
+``-p``, they can be restricted to dwarves or pets, respectively.
 
-if the ``--pets`` option is passed, coffins will also allow burial of pets.
+Options
+-------
 
-Examples
---------
+``-d``
+    Create dwarf-only tombs
+``-p``
+    Create pet-only tombs
 
-``burial --pets``
-    Configures all unowned coffins to allow burial, including pets.

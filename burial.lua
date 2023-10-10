@@ -1,27 +1,34 @@
--- allows burial in unowned coffins
--- by Putnam https://gist.github.com/Putnam3145/e7031588f4d9b24b9dda
---[====[
+-- Allows burial in unowned coffins.
+-- Based on Putnam's work (https://gist.github.com/Putnam3145/e7031588f4d9b24b9dda)
+local argparse = require('argparse')
+local utils = require('utils')
 
-burial
-======
-Sets all unowned coffins to allow burial.  ``burial -pets`` also allows burial
-of pets.
+local args = argparse.processArgs({...}, utils.invert{'d', 'p'})
 
-]====]
-
-local utils=require('utils')
-
-local validArgs = utils.invert({
- 'pets'
-})
-
-local args = utils.processArgs({...}, validArgs)
-
-for k,v in ipairs(df.global.world.buildings.other.COFFIN) do --as:df.building_coffinst
-    if v.owner_id==-1 then
-        v.burial_mode.allow_burial=true
-        if not args.pets then
-            v.burial_mode.no_pets=true
+for i, c in pairs(df.global.world.buildings.other.COFFIN) do
+    -- Check for existing tomb
+    for i, z in pairs(c.relations) do
+        if z.type == df.civzone_type.Tomb then
+            goto skip
         end
     end
+    
+    dfhack.buildings.constructBuilding {
+        type = df.building_type.Civzone,
+        subtype = df.civzone_type.Tomb,
+        pos = xyz2pos(c.x1, c.y1, c.z),
+        abstract = true,
+        fields = {
+            is_active = 8,
+            zone_settings = {
+                tomb = {
+                    no_pets = args.d and not args.p,
+                    no_citizens = args.p and not args.d,
+                },
+            },
+        },
+    }
+
+    ::skip::
 end
+
