@@ -175,8 +175,6 @@ function WarningWindow:init(info)
         widgets.List{
             frame={h=15},
             view_id = 'list',
-            text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK },
-            cursor_pen = { fg = COLOR_BLACK, bg = COLOR_GREEN },
             on_submit=self:callback('onIgnore'),
             on_select=self:callback('onZoom'),
             on_double_click=self:callback('onIgnore'),
@@ -184,29 +182,39 @@ function WarningWindow:init(info)
         },
         widgets.Panel{
             frame={h=5},
-            autoarrange_subviews=true,
             subviews = {
                 widgets.HotkeyLabel{
+                    frame={b=3, l=0},
                     key='SELECT',
                     label='Toggle ignore',
+                    auto_width=true,
                 },
                 widgets.HotkeyLabel{
+                    frame={b=3, l=21},
                     key='CUSTOM_G',
                     label='Toggle group',
                     on_activate = self:callback('onToggleGroup'),
+                    auto_width=true,
+
                 },
                 widgets.HotkeyLabel{
+                    frame={b=3, l=37},
                     key = 'CUSTOM_SHIFT_I',
                     label = 'Ignore all',
                     on_activate = self:callback('onIgnoreAll'),
+                    auto_width=true,
+
                 },
                 widgets.HotkeyLabel{
+                    frame={b=3, l=52},
                     key = 'CUSTOM_SHIFT_C',
                     label = 'Clear all ignored',
                     on_activate = self:callback('onClear'),
+                    auto_width=true,
+
                 },
                 widgets.WrappedLabel{
-                    frame={b=0, l=0, r=0},
+                    frame={b=1, l=0},
                     text_to_wrap='Click to toggle unit ignore. Shift doubleclick to toggle a group.',
                 },
             }
