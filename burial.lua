@@ -1,33 +1,38 @@
 -- Allows burial in unowned coffins.
 -- Based on Putnam's work (https://gist.github.com/Putnam3145/e7031588f4d9b24b9dda)
 local argparse = require('argparse')
-local utils = require('utils')
+local quickfort = reqscript('quickfort')
 
-local args = argparse.processArgs({...}, utils.invert{'d', 'p'})
+local cur_zlevel, citizens, pets = false, true, true
+argparse.processArgsGetopt({...}, {
+    {'z', 'cur-zlevel', handler=function() cur_zlevel = true end},
+    {'c', 'citizens-only', handler=function() pets = false end},
+    {'p', 'pets-only', handler=function() citizens = false end},
+})
+local tomb_blueprint = {
+    mode = 'zone',
+    pos = nil,
+    -- Don't pass properties with default values to avoid 'unhandled property' warning
+    data = ('T{%s %s}'):format(citizens and '' or 'citizens=false', pets and 'pets=true' or ''),
+}
 
-for i, c in pairs(df.global.world.buildings.other.COFFIN) do
-    -- Check for existing tomb
-    for i, z in pairs(c.relations) do
-        if z.type == df.civzone_type.Tomb then
+local tomb_count = 0
+for _, coffin in pairs(df.global.world.buildings.other.COFFIN) do
+
+    if cur_zlevel and not (coffin.z == df.global.window_z) then
+        goto skip
+    end
+    for _, zone in pairs(coffin.relations) do
+        if zone.type == df.civzone_type.Tomb then
             goto skip
         end
     end
 
-    dfhack.buildings.constructBuilding {
-        type = df.building_type.Civzone,
-        subtype = df.civzone_type.Tomb,
-        pos = xyz2pos(c.x1, c.y1, c.z),
-        abstract = true,
-        fields = {
-            is_active = 8,
-            zone_settings = {
-                tomb = {
-                    no_pets = args.d and not args.p,
-                    no_citizens = args.p and not args.d,
-                },
-            },
-        },
-    }
+    tomb_blueprint.pos = xyz2pos(coffin.x1, coffin.y1, coffin.z)
+    quickfort.apply_blueprint(tomb_blueprint)
+    tomb_count = tomb_count + 1
 
     ::skip::
 end
+
+print(('Created %s tombs.'):format(tomb_count))

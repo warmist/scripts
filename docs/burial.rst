@@ -3,22 +3,42 @@ burial
 
 .. dfhack-tool::
     :summary: Allows burial in unowned coffins.
-    :tags: fort productivity buildings
+    :tags: fort | productivity | buildings
 
-Creates a 1x1 tomb zone for each built coffin that doesn't already have one.
+Creates a 1x1 tomb zone for each built coffin that isn't already in a tomb.
 
 Usage
 -----
 
-    ``burial [-d] [-p]``
+    ``burial [<options>]``
 
-Created tombs allow both dwarves and pets by default. By specifying ``-d`` or
-``-p``, they can be restricted to dwarves or pets, respectively.
+Examples
+--------
+
+``burial``
+    Create a tomb for every coffin on the map with automatic burial enabled.
+
+``burial -z``
+    Create tombs only on the current zlevel.
+
+``burial -c``
+    Create tombs designated for automatic burial of citizens only.
+
+``burial -p``
+    Create tombs designated for automatic burial of pets only.
+
+``burial -cp``
+    Create tombs with automatic burial disabled for both citizens and pets,
+    requiring manual assignment of deceased units to each tomb.
 
 Options
 -------
 
-``-d``
-    Create dwarf-only tombs
-``-p``
-    Create pet-only tombs
+``-z``, ``--cur-zlevel``
+    Only create tombs on the current zlevel.
+
+``-c``, ``--citizens-only``
+    Only automatically bury citizens.
+
+``-p``, ``--pets-only``
+    Only automatically bury pets.
