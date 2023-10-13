@@ -28,9 +28,10 @@ Template for new versions:
 
 ## New Tools
 - `add-recipe`: (reinstated) add reactions to your civ (e.g. for high boots if your civ didn't start with the ability to make high boots)
-- `burial`: (reinstated) allows burial in unowned coffins (now creates tomb zones for all built coffins)
+- `burial`: (reinstated) create tomb zones for unzoned coffins
 
 ## New Features
+- `burial`: new options to configure automatic burial and limit scope to the current z-level
 - `drain-aquifer`: gained ability to drain just above or below a certain z-level
 - `drain-aquifer`: new option to drain all layers except for the first N aquifer layers, in case you want some aquifer layers but not too many
 - `gui/control-panel`: ``drain-aquifer --top 2`` added as an autostart option
