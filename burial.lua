@@ -35,4 +35,4 @@ for _, coffin in pairs(df.global.world.buildings.other.COFFIN) do
     ::skip::
 end
 
-print(('Created %s tombs.'):format(tomb_count))
+print(('Created %s tomb(s).'):format(tomb_count))

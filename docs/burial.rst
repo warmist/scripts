@@ -2,8 +2,8 @@ burial
 ======
 
 .. dfhack-tool::
-    :summary: Allows burial in unowned coffins.
-    :tags: fort | productivity | buildings
+    :summary: Create tomb zones for unzoned coffins.
+    :tags: fort productivity buildings
 
 Creates a 1x1 tomb zone for each built coffin that isn't already in a tomb.
 
