@@ -70,7 +70,7 @@ end
 if positionals[1] == "unreachable" then
     print("Forbidding all unreachable items on the map...")
 
-    local citizens = dfhack.units.getCitizens()
+    local citizens = dfhack.units.getCitizens(true)
     local count = 0
 
     for _, item in pairs(df.global.world.items.all) do
