@@ -3,7 +3,7 @@ modtools/change-build-menu
 
 .. dfhack-tool::
     :summary: Add or remove items from the build sidebar menus.
-    :tags: unavailable dev
+    :tags: unavailable
 
 Change the build sidebar menus.
 

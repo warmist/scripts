@@ -3,7 +3,7 @@ build-now
 
 .. dfhack-tool::
     :summary: Instantly completes building construction jobs.
-    :tags: unavailable fort armok buildings
+    :tags: unavailable
 
 By default, all unsuspended buildings on the map are completed, but the area of
 effect is configurable.

@@ -3,7 +3,7 @@ modtools/item-trigger
 
 .. dfhack-tool::
     :summary: Run DFHack commands when a unit uses an item.
-    :tags: unavailable dev
+    :tags: unavailable
 
 This powerful tool triggers DFHack commands when a unit equips, unequips, or
 attacks another unit with specified item types, specified item materials, or

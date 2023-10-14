@@ -3,7 +3,7 @@ open-legends
 
 .. dfhack-tool::
     :summary: Open a legends screen from fort or adventure mode.
-    :tags: unavailable legends inspection
+    :tags: unavailable
 
 You can use this tool to open legends mode from a world loaded in fortress or
 adventure mode. You can browse around, or even run `exportlegends` while you're
