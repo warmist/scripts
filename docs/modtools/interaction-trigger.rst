@@ -3,7 +3,7 @@ modtools/interaction-trigger
 
 .. dfhack-tool::
     :summary: Run DFHack commands when a unit attacks or defends.
-    :tags: unavailable dev
+    :tags: unavailable
 
 This triggers events when a unit uses an interaction on another. It works by
 scanning the announcements for the correct attack verb, so the attack verb

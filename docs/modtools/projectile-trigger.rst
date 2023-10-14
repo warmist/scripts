@@ -3,7 +3,7 @@ modtools/projectile-trigger
 
 .. dfhack-tool::
     :summary: Run DFHack commands when projectiles hit their targets.
-    :tags: unavailable dev
+    :tags: unavailable
 
 This triggers dfhack commands when projectiles hit their targets.
 

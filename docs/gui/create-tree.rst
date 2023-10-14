@@ -3,7 +3,7 @@ gui/create-tree
 
 .. dfhack-tool::
     :summary: Create a tree.
-    :tags: unavailable fort armok plants
+    :tags: unavailable
 
 This tool provides a graphical interface for creating trees.
 
