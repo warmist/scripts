@@ -28,6 +28,7 @@ Template for new versions:
 
 ## New Tools
 - `add-recipe`: (reinstated) add reactions to your civ (e.g. for high boots if your civ didn't start with the ability to make high boots)
+- `fix/corrupt-jobs`: prevents crashes by automatically removing corrupted jobs
 - `burial`: (reinstated) create tomb zones for unzoned coffins
 
 ## New Features
