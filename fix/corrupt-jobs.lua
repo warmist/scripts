@@ -1,4 +1,5 @@
 -- Deletes corrupted jobs from affected units
+--@module = true
 
 local GLOBAL_KEY = 'corrupt-jobs'
 
