@@ -140,9 +140,6 @@ local REPEATS = {
     ['empty-wheelbarrows']={
         desc='Empties wheelbarrows which have rocks stuck in them.',
         command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/empty-wheelbarrows', '-q', ']'}},
-    ['corrupt-jobs']={
-        desc='Removes corrupt jobs from affected units.',
-        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/corrupt-jobs', ']'}},
 }
 local REPEATS_LIST = {}
 for k in pairs(REPEATS) do
