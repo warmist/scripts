@@ -5,7 +5,8 @@ burial
     :summary: Create tomb zones for unzoned coffins.
     :tags: fort productivity buildings
 
-Creates a 1x1 tomb zone for each built coffin that isn't already in a tomb.
+Creates a 1x1 tomb zone for each built coffin that isn't already contained in a
+zone.
 
 Usage
 -----
@@ -16,16 +17,16 @@ Examples
 --------
 
 ``burial``
-    Create a tomb for every coffin on the map with automatic burial enabled.
+    Create a general use tomb for every unzoned coffin on the map.
 
 ``burial -z``
     Create tombs only on the current zlevel.
 
 ``burial -c``
-    Create tombs designated for automatic burial of citizens only.
+    Create tombs designated for burial of citizens only.
 
 ``burial -p``
-    Create tombs designated for automatic burial of pets only.
+    Create tombs designated for burial of pets only.
 
 ``burial -cp``
     Create tombs with automatic burial disabled for both citizens and pets,

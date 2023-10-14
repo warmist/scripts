@@ -1,5 +1,6 @@
 -- Allows burial in unowned coffins.
 -- Based on Putnam's work (https://gist.github.com/Putnam3145/e7031588f4d9b24b9dda)
+
 local argparse = require('argparse')
 local quickfort = reqscript('quickfort')
 
@@ -18,20 +19,12 @@ local tomb_blueprint = {
 
 local tomb_count = 0
 for _, coffin in pairs(df.global.world.buildings.other.COFFIN) do
-
-    if cur_zlevel and coffin.z ~= df.global.window_z then
+    if #coffin.relations > 0 or cur_zlevel and coffin.z ~= df.global.window_z then
         goto skip
     end
-    for _, zone in pairs(coffin.relations) do
-        if zone.type == df.civzone_type.Tomb then
-            goto skip
-        end
-    end
-
     tomb_blueprint.pos = xyz2pos(coffin.x1, coffin.y1, coffin.z)
     quickfort.apply_blueprint(tomb_blueprint)
     tomb_count = tomb_count + 1
-
     ::skip::
 end
 
