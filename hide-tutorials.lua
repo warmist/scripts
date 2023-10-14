@@ -22,8 +22,9 @@ local function close_help()
     help.open = false
 end
 
-function skip_tutorial_prompt(scr)
+function skip_tutorial_prompt()
     if not help.open then return end
+    local scr = dfhack.gui.getDFViewscreen(true)
     local mouse_y = 23
     if help.context == df.help_context_type.EMBARK_TUTORIAL_CHOICE then
         help.context = df.help_context_type.EMBARK_MESSAGE
@@ -35,6 +36,10 @@ function skip_tutorial_prompt(scr)
         df.global.gps.mouse_x = df.global.gps.dimx // 2
         df.global.gps.mouse_y = mouse_y
         gui.simulateInput(scr, '_MOUSE_L')
+    end
+    if help.open then
+        -- retry later
+        help.context = df.help_context_type.EMBARK_TUTORIAL_CHOICE
     end
 end
 
@@ -55,7 +60,10 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         if df.viewscreen_new_regionst:is_instance(scr) then
             close_help()
         elseif df.viewscreen_choose_start_sitest:is_instance(scr) then
-            skip_tutorial_prompt(scr)
+            skip_tutorial_prompt()
+            dfhack.timeout(10, 'frames', skip_tutorial_prompt)
+            dfhack.timeout(100, 'frames', skip_tutorial_prompt)
+            dfhack.timeout(1000, 'frames', skip_tutorial_prompt)
         end
     elseif sc == SC_MAP_LOADED and df.global.gamemode == df.game_mode.DWARF then
         hide_all_popups()

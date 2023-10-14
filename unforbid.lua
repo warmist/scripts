@@ -5,7 +5,7 @@ local argparse = require('argparse')
 local function unforbid_all(include_unreachable, quiet)
     if not quiet then print('Unforbidding all items...') end
 
-    local citizens = dfhack.units.getCitizens()
+    local citizens = dfhack.units.getCitizens(true)
     local count = 0
     for _, item in pairs(df.global.world.items.all) do
         if item.flags.forbid then
