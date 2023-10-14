@@ -1,21 +1,14 @@
--- Deletes corrupted jobs from global job list
-
-local utils = require("utils")
+-- Deletes corrupted jobs from affected units
 
 local count = 0
 
-functioning_job_list = {}
-
-for _, job in ipairs(df.global.job_list) do
-    if job.id != -1 then 
-        functioning_job_list[#functioning_job_list+1] = job
+for _, unit in ipairs(df.global.world.units.all) do
+    if unit.job.current_job and unit.job.current_job.id == -1 then 
+        unit.job.current_job = nil
+        count = count + 1
     end 
 end
 
-for _, v in ipairs(df.global.world.units.all) do
-    if v.job.current_job then 
-        if utils.linear_index(functioning_job_list, v.job.current_job) == nil then
-        v.job.current_job = nil
-        end
-    end 
+if count > 0 then
+    print(('removed %d corrupted job(s) from affected units'):format(count))
 end
