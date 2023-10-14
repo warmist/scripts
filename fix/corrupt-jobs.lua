@@ -27,3 +27,6 @@ end
 if dfhack_flags.module then
     return
 end
+
+-- allow the player to run it manually if they want to
+remove_bad_jobs()
