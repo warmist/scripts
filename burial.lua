@@ -19,7 +19,7 @@ local tomb_blueprint = {
 local tomb_count = 0
 for _, coffin in pairs(df.global.world.buildings.other.COFFIN) do
 
-    if cur_zlevel and not (coffin.z == df.global.window_z) then
+    if cur_zlevel and coffin.z ~= df.global.window_z then
         goto skip
     end
     for _, zone in pairs(coffin.relations) do
