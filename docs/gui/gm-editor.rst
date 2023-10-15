@@ -8,14 +8,16 @@ gui/gm-editor
 This editor allows you to inspect or modify almost anything in DF. Press
 :kbd:`?` for in-game help.
 
-If you just want to browse without fear of accidentally changing anything, hit
-:kbd:`Ctrl`:kbd:`D` to toggle read-only mode.
+Select a field and hit :kbd:`Enter` or double click to edit, or, for structured
+fields, to inspect their contents. Right click or hit :kbd:`Esc` to go back to
+the previous structure you were inspecting. Right clicking when viewing the
+structure you started with will exit the tool. Hold down :kbd:`Shift` and right
+click to exit, even if you are inspecting a substructure, no matter how deep.
 
-Click on fields to edit them or, for structured fields, to inspect their
-contents. Right click or hit :kbd:`Esc` to go back to the previous structure
-you were inspecting. Right clicking when viewing the structure you started with
-will exit the tool. Hold down :kbd:`Shift` and right click to exit, even if you
-are inspecting a substructure.
+If you just want to browse without fear of accidentally changing anything, hit
+:kbd:`Ctrl`:kbd:`D` to toggle read-only mode. If you want `gui/gm-editor` to
+automatically pick up changes to game data in realtime, hit :kbd:`Alt`:kbd:`A`
+to switch to auto update mode.
 
 Usage
 -----

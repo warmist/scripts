@@ -142,9 +142,8 @@ function GmEditorUi:init(args)
 
     local helpPage=widgets.Panel{
         subviews={widgets.Label{text=helptext,frame = {l=1,t=1,yalign=0}}}}
-    local mainList=widgets.List{view_id="list_main",choices={},frame = {l=1,t=3,yalign=0},on_submit=self:callback("editSelected"),
-        on_submit2=self:callback("editSelectedRaw"),
-        text_pen=COLOR_GREY, cursor_pen=COLOR_YELLOW}
+    local mainList=widgets.List{view_id="list_main",choices={},frame = {l=1,t=3,yalign=0},on_double_click=self:callback("editSelected"),
+        on_double_click2=self:callback("editSelectedRaw"), text_pen=COLOR_GREY, cursor_pen=COLOR_YELLOW}
     local mainPage=widgets.Panel{
         subviews={
             mainList,
@@ -443,7 +442,7 @@ end
 function GmEditorUi:editSelectedRaw(index,choice)
     self:editSelected(index, choice, {raw=true})
 end
-function GmEditorUi:editSelected(index,choice,opts)
+function GmEditorUi:editSelected(index,_,opts)
     if not self:verifyStack() then
         self:updateTarget()
         return
@@ -530,7 +529,9 @@ function GmEditorUi:onInput(keys)
         return false
     end
 
-    if keys[keybindings.toggle_ro.key] then
+    if keys.SELECT then
+        self:editSelected(self.subviews.list_main:getSelected())
+    elseif keys[keybindings.toggle_ro.key] then
         self.read_only = not self.read_only
         self:updateTitles()
         return true
