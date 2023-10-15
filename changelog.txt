@@ -43,6 +43,7 @@ Template for new versions:
 - `hide-tutorials`: fix the embark tutorial prompt sometimes not being skipped
 
 ## Misc Improvements
+- `prioritize`: refuse to automatically prioritize dig and smooth/carve job types since it can break the DF job scheduler; instead, print a suggestion that the player use specialized units and vanilla designation priorities
 
 ## Removed
 

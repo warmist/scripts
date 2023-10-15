@@ -6,6 +6,7 @@ local argparse = require('argparse')
 local json = require('json')
 local eventful = require('plugins.eventful')
 local persist = require('persist-table')
+local utils = require('utils')
 
 local GLOBAL_KEY = 'prioritize' -- used for state change hooks and persistence
 
@@ -269,6 +270,27 @@ local function boost_and_watch_special(job_type, job_matcher,
     end
 end
 
+local JOB_TYPES_DENYLIST = utils.invert{
+    df.job_type.CarveFortification,
+    df.job_type.SmoothWall,
+    df.job_type.SmoothFloor,
+    df.job_type.DetailWall,
+    df.job_type.DetailFloor,
+    df.job_type.Dig,
+    df.job_type.CarveUpwardStaircase,
+    df.job_type.CarveDownwardStaircase,
+    df.job_type.CarveUpDownStaircase,
+    df.job_type.CarveRamp,
+    df.job_type.DigChannel,
+}
+
+local DIG_SMOOTH_WARNING = {
+    'Priortizing current pending jobs, but skipping automatic boosting of dig and',
+    'smooth/engrave job types. Automatic priority boosting of these types of jobs',
+    'will overwhelm the DF job scheduler. Instead, consider specializing units for',
+    'mining and related work details, and using vanilla designation priorities.',
+}
+
 local function boost_and_watch(job_matchers, opts)
     local quiet = opts.quiet
     boost(job_matchers, opts)
@@ -284,6 +306,10 @@ local function boost_and_watch(job_matchers, opts)
                 function(jm) return jm.reaction_matchers end,
                 function(jm) jm.reaction_matchers = nil end,
                 get_annotation_str, quiet)
+        elseif JOB_TYPES_DENYLIST[job_type] then
+            for _,msg in ipairs(DIG_SMOOTH_WARNING) do
+                dfhack.printerr(msg)
+            end
         elseif watched_job_matchers[job_type] then
             if not quiet then
                 print_skip_add_message(job_type)
