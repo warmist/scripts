@@ -18,6 +18,11 @@ blueprint a second time to fill in any gaps. Any part of the blueprint that has
 already been completed will be harmlessly skipped. Right click or hit
 :kbd:`Esc` to close the `gui/quickfort` UI.
 
+Note that `quickfort` blueprints will use the DFHack building planner
+(`buildingplan`) material filter settings. If you want specific materials to be
+used, use the building planner UI to set the appropriate filters before
+applying a blueprint.
+
 Usage
 -----
 
