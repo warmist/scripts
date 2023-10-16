@@ -37,6 +37,9 @@ Template for new versions:
 - `drain-aquifer`: new option to drain all layers except for the first N aquifer layers, in case you want some aquifer layers but not too many
 - `gui/control-panel`: ``drain-aquifer --top 2`` added as an autostart option
 
+## New Scripts
+- `warn-stranded`: new repeatable maintenance script to check for stranded units, similar to `warn-starving`
+
 ## Fixes
 - `suspendmanager`: fix errors when constructing near the map edge
 - `gui/sandbox`: fix scrollbar moving double distance on click
