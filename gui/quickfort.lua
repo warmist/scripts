@@ -225,6 +225,7 @@ function BlueprintDialog:onInput(keys)
         end
         return true
     end
+    return true
 end
 
 --
