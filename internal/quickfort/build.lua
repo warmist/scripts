@@ -114,12 +114,26 @@ local function is_valid_tile_bridge(pos, db_entry, b)
     return is_valid_tile_has_space_or_is_ramp(pos)
 end
 
-local function is_valid_tile_construction(pos)
+-- although vanilla allows constructions to be built on top of constructed
+-- floors or ramps, we want to offer an idempotency guarantee for quickfort.
+-- this means that the user should be able to apply the same blueprint to the
+-- same area more than once to complete any bits that failed on the first attempt.
+-- therefore, we check that we're not building a construction on top of an
+-- existing construction of the same shape
+local function is_valid_tile_construction(pos, db_entry)
+    if not is_valid_tile_has_space_or_is_ramp(pos) then return false end
     local tileattrs = df.tiletype.attrs[dfhack.maps.getTileType(pos)]
     local shape = tileattrs.shape
     local mat = tileattrs.material
-    return is_valid_tile_has_space_or_is_ramp(pos) and
-            mat ~= df.tiletype_material.CONSTRUCTION
+    if mat == df.tiletype_material.CONSTRUCTION and
+        (
+            (shape == df.tiletype_shape.FLOOR and db_entry.subtype == df.construction_type.Floor) or
+            (shape == df.tiletype_shape.RAMP and db_entry.subtype == df.construction_type.Ramp)
+        )
+    then
+        return false
+    end
+    return true
 end
 
 local function is_shape_at(pos, allowed_shapes)
