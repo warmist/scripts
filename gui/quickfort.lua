@@ -225,6 +225,7 @@ function BlueprintDialog:onInput(keys)
         end
         return true
     end
+    return true
 end
 
 --
@@ -237,7 +238,7 @@ end
 Quickfort = defclass(Quickfort, widgets.Window)
 Quickfort.ATTRS {
     frame_title='Quickfort',
-    frame={w=34, h=30, r=2, t=18},
+    frame={w=34, h=32, r=2, t=18},
     resizable=true,
     resize_min={h=26},
     autoarrange_subviews=true,
@@ -358,6 +359,9 @@ function Quickfort:init()
             active=function() return self.blueprint_name end,
             enabled=function() return self.blueprint_name end,
             on_activate=self:callback('do_command', 'undo')},
+        widgets.WrappedLabel{
+            text_to_wrap='Blueprints will use DFHack building planner material filter settings.',
+        },
     }
 end
 
