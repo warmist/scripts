@@ -210,6 +210,7 @@ function WarningWindow:init(info)
             label = 'Clear all ignored',
             on_activate = self:callback('onClear'),
             auto_width=true,
+        },
     }
 
     self.groups = info.groups
