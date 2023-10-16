@@ -163,62 +163,53 @@ end
 -- ===============================================================
 WarningWindow = defclass(WarningWindow, widgets.Window)
 WarningWindow.ATTRS{
-    frame={w=80, h=25},
-    min_size={w=60, h=25},
-    frame_title='Stranded Citizen Warning',
+    frame={w=60, h=25, r=2, t=18},
+    resize_min={w=50, h=15},
+    frame_title='Stranded citizen warning',
     resizable=true,
-    autoarrange_subviews=true,
 }
 
 function WarningWindow:init(info)
     self:addviews{
         widgets.List{
-            frame={h=15},
+            frame={l=0, r=0, t=0, b=6},
             view_id = 'list',
-            on_submit=self:callback('onIgnore'),
             on_select=self:callback('onZoom'),
             on_double_click=self:callback('onIgnore'),
             on_double_click2=self:callback('onToggleGroup'),
         },
-        widgets.Panel{
-            frame={h=5},
-            subviews = {
-                widgets.HotkeyLabel{
-                    frame={b=3, l=0},
-                    key='SELECT',
-                    label='Toggle ignore',
-                    auto_width=true,
-                },
-                widgets.HotkeyLabel{
-                    frame={b=3, l=21},
-                    key='CUSTOM_G',
-                    label='Toggle group',
-                    on_activate = self:callback('onToggleGroup'),
-                    auto_width=true,
-
-                },
-                widgets.HotkeyLabel{
-                    frame={b=3, l=37},
-                    key = 'CUSTOM_SHIFT_I',
-                    label = 'Ignore all',
-                    on_activate = self:callback('onIgnoreAll'),
-                    auto_width=true,
-
-                },
-                widgets.HotkeyLabel{
-                    frame={b=3, l=52},
-                    key = 'CUSTOM_SHIFT_C',
-                    label = 'Clear all ignored',
-                    on_activate = self:callback('onClear'),
-                    auto_width=true,
-
-                },
-                widgets.WrappedLabel{
-                    frame={b=1, l=0},
-                    text_to_wrap='Click to toggle unit ignore. Shift doubleclick to toggle a group.',
-                },
-            }
+        widgets.WrappedLabel{
+            frame={b=3, l=0},
+            text_to_wrap='Double click to toggle unit ignore. Shift double click to toggle a group.',
         },
+        widgets.HotkeyLabel{
+            frame={b=1, l=0},
+            key='SELECT',
+            label='Toggle ignore',
+            on_activate=self:callback('onIgnore'),
+            auto_width=true,
+        },
+        widgets.HotkeyLabel{
+            frame={b=1, l=23},
+            key='CUSTOM_G',
+            label='Toggle group',
+            on_activate = self:callback('onToggleGroup'),
+            auto_width=true,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=0},
+            key = 'CUSTOM_SHIFT_I',
+            label = 'Ignore all',
+            on_activate = self:callback('onIgnoreAll'),
+            auto_width=true,
+
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=23},
+            key = 'CUSTOM_SHIFT_C',
+            label = 'Clear all ignored',
+            on_activate = self:callback('onClear'),
+            auto_width=true,
     }
 
     self.groups = info.groups
@@ -246,6 +237,9 @@ function WarningWindow:initListChoices()
 end
 
 function WarningWindow:onIgnore(_, choice)
+    if not choice then
+        _, choice = self.subviews.list:getSelected()
+    end
     local unit = choice.data['unit']
 
     toggleUnitIgnore(unit)
@@ -307,7 +301,7 @@ end
 local function getStrandedUnits()
     local groupCount = 0
     local grouped = {}
-    local citizens = dfhack.units.getCitizens()
+    local citizens = dfhack.units.getCitizens(true)
 
     -- Don't use ignored units to determine if there are any stranded units
     -- but keep them to display later
