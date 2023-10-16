@@ -511,7 +511,17 @@ function GmEditorUi:set(key,input)
     self:updateTarget(true)
 end
 function GmEditorUi:onInput(keys)
-    if GmEditorUi.super.onInput(self, keys) then return true end
+    if GmEditorUi.super.onInput(self, keys) then
+        local index = self.subviews.list_main:getIdxUnderMouse()
+        if keys._MOUSE_L and index then
+            local trg = self:currentTarget()
+            local trg_type = type(trg.target[trg.keys[index]])
+            if trg_type == 'userdata' or trg_type == 'table' then
+                self:editSelected(index)
+            end
+        end
+        return true
+    end
 
     if keys.LEAVESCREEN or keys._MOUSE_R then
         if dfhack.internal.getModifiers().shift then

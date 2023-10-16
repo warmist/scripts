@@ -9,10 +9,11 @@ This editor allows you to inspect or modify almost anything in DF. Press
 :kbd:`?` for in-game help.
 
 Select a field and hit :kbd:`Enter` or double click to edit, or, for structured
-fields, to inspect their contents. Right click or hit :kbd:`Esc` to go back to
-the previous structure you were inspecting. Right clicking when viewing the
-structure you started with will exit the tool. Hold down :kbd:`Shift` and right
-click to exit, even if you are inspecting a substructure, no matter how deep.
+fields, hit :kbd:`Enter` or single click to inspect their contents. Right click
+or hit :kbd:`Esc` to go back to the previous structure you were inspecting.
+Right clicking when viewing the structure you started with will exit the tool.
+Hold down :kbd:`Shift` and right click to exit, even if you are inspecting a
+substructure, no matter how deep.
 
 If you just want to browse without fear of accidentally changing anything, hit
 :kbd:`Ctrl`:kbd:`D` to toggle read-only mode. If you want `gui/gm-editor` to
