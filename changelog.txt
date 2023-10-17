@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.11-r2
+
+## New Tools
 - `add-recipe`: (reinstated) add reactions to your civ (e.g. for high boots if your civ didn't start with the ability to make high boots)
 - `fix/corrupt-jobs`: prevents crashes by automatically removing corrupted jobs
 - `burial`: (reinstated) create tomb zones for unzoned coffins
@@ -51,8 +63,6 @@ Template for new versions:
 - `gui/overlay`: filter overlays by current context so there are fewer on the screen at once and you can more easily click on the one you want to reposition
 - `quickfort`: now allows constructions to be built on top of constructed floors and ramps, just like vanilla. however, to allow blueprints to be safely reapplied to the same area, for example to fill in buildings whose constructions were canceled due to lost items, floors will not be rebuilt on top of floors and ramps will not be rebuilt on top of ramps
 - `gui/gm-editor`: for fields with primitive types, change from click to edit to click to select, double-click to edit. this should help prevent accidental modifications to the data and make hotkeys easier to use (since you have to click on a data item to use a hotkey on it)
-
-## Removed
 
 # 50.11-r1
 
