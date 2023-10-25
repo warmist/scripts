@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `gui/unit-syndromes`: show the syndrome names properly in the UI
 
 ## Misc Improvements
 
@@ -57,7 +58,6 @@ Template for new versions:
 - `gui/sandbox`: fix scrollbar moving double distance on click
 - `hide-tutorials`: fix the embark tutorial prompt sometimes not being skipped
 - `full-heal`: fix removal of corpse after resurrection
-- `gui/unit-syndromes`: the syndrome names should now be visible
 
 ## Misc Improvements
 - `prioritize`: refuse to automatically prioritize dig and smooth/carve job types since it can break the DF job scheduler; instead, print a suggestion that the player use specialized units and vanilla designation priorities
