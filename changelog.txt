@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `gui/unit-syndromes`: show the syndrome names properly in the UI
 
 ## Misc Improvements
 
