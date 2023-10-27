@@ -179,7 +179,7 @@ function WarningWindow:init(info)
         },
         widgets.WrappedLabel{
             frame={b=3, l=0},
-            text_to_wrap='Double click to toggle unit ignore. Shift double click to toggle a group.',
+            text_to_wrap='Select to zoom to unit. Double click to toggle unit ignore. Shift double click to toggle a group.',
         },
         widgets.HotkeyLabel{
             frame={b=1, l=0},
@@ -300,7 +300,9 @@ end
 
 local function getWalkGroup(pos)
     local block = dfhack.maps.getTileBlock(pos)
-    return block and block.walkable[pos.x % 16][pos.y % 16]
+    if not block then return end
+    local walkGroup = block.walkable[pos.x % 16][pos.y % 16]
+    return walkGroup ~= 0 and walkGroup or nil
 end
 
 local function getStrandedUnits()
@@ -329,6 +331,7 @@ local function getStrandedUnits()
                 or getWalkGroup(xyz2pos(unitPos.x-1, unitPos.y+1, unitPos.z))
                 or getWalkGroup(xyz2pos(unitPos.x, unitPos.y+1, unitPos.z))
                 or getWalkGroup(xyz2pos(unitPos.x+1, unitPos.y+1, unitPos.z))
+                or 0
         end
 
         if unitIgnored(unit) then
