@@ -301,7 +301,7 @@ end
 local function getWalkGroup(pos)
     local block = dfhack.maps.getTileBlock(pos)
     if not block then return end
-    local walkGroup = block.walkable[pos.x % 16][pos.y % 16]
+    local walkGroup = dfhack.maps.getWalkableGroup(pos)
     return walkGroup ~= 0 and walkGroup or nil
 end
 
