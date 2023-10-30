@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `sync-windmills`: synchronize or randomize movement of active windmills
 
 ## New Features
 
