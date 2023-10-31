@@ -21,4 +21,5 @@ Overlay
 
 This script provides an overlay that shows the selected dimensions when
 designating something with vanilla tools, for example when painting a burrow or
-designating digging.
+designating digging. The dimensions show up in a tooltip that follows the mouse
+cursor.
