@@ -1,5 +1,5 @@
 -- A GUI front-end for creating designs
---@ module = false
+--@ module = true
 
 -- TODOS ====================
 
@@ -38,6 +38,7 @@ local gui = require("gui")
 local textures = require("gui.textures")
 local guidm = require("gui.dwarfmode")
 local widgets = require("gui.widgets")
+local overlay = require('plugins.overlay')
 local quickfort = reqscript("quickfort")
 local shapes = reqscript("internal/design/shapes")
 local util = reqscript("internal/design/util")
@@ -1770,6 +1771,67 @@ end
 function DesignScreen:onDismiss()
     view = nil
 end
+
+-- ----------------- --
+-- DimensionsOverlay --
+-- ----------------- --
+
+local DIMENSION_LABEL_WIDTH = 15
+local DIMENSION_LABEL_HEIGHT = 1
+
+DimensionsOverlay = defclass(DimensionsOverlay, overlay.OverlayWidget)
+DimensionsOverlay.ATTRS{
+    default_pos={x=1,y=1},
+    default_enabled=true,
+    viewscreens={
+        'dwarfmode/Designate',
+        'dwarfmode/Burrow/Paint',
+        'dwarfmode/Stockpile/Paint',
+    },
+    frame={w=DIMENSION_LABEL_WIDTH, h=DIMENSION_LABEL_HEIGHT},
+}
+
+local selection_rect = df.global.selection_rect
+
+local function is_choosing_area()
+    return selection_rect.start_x >= 0 and dfhack.gui.getMousePos()
+end
+
+local function get_cur_area_dims()
+    local pos1 = dfhack.gui.getMousePos()
+    local pos2 = xyz2pos(selection_rect.start_x, selection_rect.start_y, selection_rect.start_z)
+    return math.abs(pos1.x - pos2.x) + 1,
+        math.abs(pos1.y - pos2.y) + 1,
+        math.abs(pos1.z - pos2.z) + 1
+end
+
+function DimensionsOverlay:init()
+    self:addviews{
+        widgets.Label{
+            view_id='label',
+            frame={t=0, l=0, h=DIMENSION_LABEL_HEIGHT},
+            text={
+                {text=function() return ('%dx%dx%d'):format(get_cur_area_dims()) end},
+            },
+            visible=is_choosing_area,
+        },
+    }
+end
+
+function DimensionsOverlay:onRenderFrame(dc, rect)
+    DimensionsOverlay.super.onRenderFrame(self, dc, rect)
+    local sw, sh = dfhack.screen.getWindowSize()
+    local x, y = dfhack.screen.getMousePos()
+    x = math.min(x + 3, sw - DIMENSION_LABEL_WIDTH)
+    y = math.min(y + 3, sh - DIMENSION_LABEL_HEIGHT)
+    self.frame.w = x + DIMENSION_LABEL_WIDTH
+    self.frame.h = y + DIMENSION_LABEL_HEIGHT
+    self.subviews.label.frame = {t=y, l=x}
+end
+
+OVERLAY_WIDGETS = {
+    dimensions=DimensionsOverlay,
+}
 
 if dfhack_flags.module then return end
 
