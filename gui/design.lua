@@ -1776,8 +1776,8 @@ end
 -- DimensionsOverlay --
 -- ----------------- --
 
-local DIMENSION_LABEL_WIDTH = 15
-local DIMENSION_LABEL_HEIGHT = 1
+local DEFAULT_DIMENSION_TOOLTIP_WIDTH = 17
+local DIMENSION_TOOLTIP_HEIGHT = 3
 
 DimensionsOverlay = defclass(DimensionsOverlay, overlay.OverlayWidget)
 DimensionsOverlay.ATTRS{
@@ -1788,7 +1788,7 @@ DimensionsOverlay.ATTRS{
         'dwarfmode/Burrow/Paint',
         'dwarfmode/Stockpile/Paint',
     },
-    frame={w=DIMENSION_LABEL_WIDTH, h=DIMENSION_LABEL_HEIGHT},
+    frame={w=DEFAULT_DIMENSION_TOOLTIP_WIDTH, h=DIMENSION_TOOLTIP_HEIGHT},
 }
 
 local selection_rect = df.global.selection_rect
@@ -1799,34 +1799,65 @@ end
 
 local function get_cur_area_dims()
     local pos1 = dfhack.gui.getMousePos()
-    local pos2 = xyz2pos(selection_rect.start_x, selection_rect.start_y, selection_rect.start_z)
+    if not pos1 or selection_rect.start_x < 0 then return 1, 1, 1 end
+
+    -- clamp to map edges (since you can start selection out of bounds)
+    local pos2 = xyz2pos(
+        math.max(0, math.min(df.global.world.map.x_count-1, selection_rect.start_x)),
+        math.max(0, math.min(df.global.world.map.y_count-1, selection_rect.start_y)),
+        math.max(0, math.min(df.global.world.map.z_count-1, selection_rect.start_z)))
+
     return math.abs(pos1.x - pos2.x) + 1,
         math.abs(pos1.y - pos2.y) + 1,
         math.abs(pos1.z - pos2.z) + 1
 end
 
+local function format_dims()
+    return ('%dx%dx%d'):format(get_cur_area_dims())
+end
+
 function DimensionsOverlay:init()
     self:addviews{
-        widgets.Label{
-            view_id='label',
-            frame={t=0, l=0, h=DIMENSION_LABEL_HEIGHT},
-            text={
-                {text=function() return ('%dx%dx%d'):format(get_cur_area_dims()) end},
-            },
+        widgets.ResizingPanel{
+            view_id='tooltip',
+            frame={b=0, r=0, w=DEFAULT_DIMENSION_TOOLTIP_WIDTH, h=DIMENSION_TOOLTIP_HEIGHT},
+            frame_style=gui.FRAME_INTERIOR,
+            auto_width=true,
             visible=is_choosing_area,
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    auto_width=true,
+                    text={{text=format_dims}},
+                },
+            },
         },
     }
 end
 
-function DimensionsOverlay:onRenderFrame(dc, rect)
-    DimensionsOverlay.super.onRenderFrame(self, dc, rect)
-    local sw, sh = dfhack.screen.getWindowSize()
+-- don't imply that stockpiles will be 3d
+local main_interface = df.global.game.main_interface
+local function check_stockpile_dims()
+    if main_interface.bottom_mode_selected == df.main_bottom_mode_type.STOCKPILE_PAINT then
+        selection_rect.start_z = df.global.window_z
+    end
+end
+
+function DimensionsOverlay:render(dc)
+    check_stockpile_dims()
     local x, y = dfhack.screen.getMousePos()
-    x = math.min(x + 3, sw - DIMENSION_LABEL_WIDTH)
-    y = math.min(y + 3, sh - DIMENSION_LABEL_HEIGHT)
-    self.frame.w = x + DIMENSION_LABEL_WIDTH
-    self.frame.h = y + DIMENSION_LABEL_HEIGHT
-    self.subviews.label.frame = {t=y, l=x}
+    if not x then return end
+    local sw, sh = dfhack.screen.getWindowSize()
+    local tooltip_width = #format_dims() + 2
+    if tooltip_width ~= self.prev_tooltip_width then
+        self:updateLayout()
+        self.prev_tooltip_width = tooltip_width
+    end
+    x = math.min(x + 3, sw - tooltip_width)
+    y = math.min(y + 3, sh - DIMENSION_TOOLTIP_HEIGHT)
+    self.frame.w = x + tooltip_width
+    self.frame.h = y + DIMENSION_TOOLTIP_HEIGHT
+    DimensionsOverlay.super.render(self, dc)
 end
 
 OVERLAY_WIDGETS = {
