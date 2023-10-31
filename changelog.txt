@@ -30,6 +30,7 @@ Template for new versions:
 - `sync-windmills`: synchronize or randomize movement of active windmills
 
 ## New Features
+- `gui/design`: show selected dimensions next to the mouse cursor when designating with vanilla tools, for example when painting a burrow or designating digging
 
 ## Fixes
 - `gui/unit-syndromes`: show the syndrome names properly in the UI
