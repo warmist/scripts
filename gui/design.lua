@@ -1777,7 +1777,7 @@ end
 -- ----------------- --
 
 local DEFAULT_DIMENSION_TOOLTIP_WIDTH = 17
-local DIMENSION_TOOLTIP_HEIGHT = 3
+local DIMENSION_TOOLTIP_HEIGHT = 4
 
 DimensionsOverlay = defclass(DimensionsOverlay, overlay.OverlayWidget)
 DimensionsOverlay.ATTRS{
@@ -1821,12 +1821,17 @@ function DimensionsOverlay:init()
         widgets.ResizingPanel{
             view_id='tooltip',
             frame={b=0, r=0, w=DEFAULT_DIMENSION_TOOLTIP_WIDTH, h=DIMENSION_TOOLTIP_HEIGHT},
-            frame_style=gui.FRAME_INTERIOR,
+            frame_style=gui.FRAME_THIN,
+            frame_background=gui.CLEAR_PEN,
             auto_width=true,
             visible=is_choosing_area,
             subviews={
+                widgets.Panel{
+                    -- set minimum size for tooltip frame so DFHack label fits
+                    frame={t=0, l=0, w=7, h=2},
+                },
                 widgets.Label{
-                    frame={t=0, l=0},
+                    frame={t=0},
                     auto_width=true,
                     text={{text=format_dims}},
                 },
@@ -1848,7 +1853,7 @@ function DimensionsOverlay:render(dc)
     local x, y = dfhack.screen.getMousePos()
     if not x then return end
     local sw, sh = dfhack.screen.getWindowSize()
-    local tooltip_width = #format_dims() + 2
+    local tooltip_width = math.max(9, #format_dims() + 2)
     if tooltip_width ~= self.prev_tooltip_width then
         self:updateLayout()
         self.prev_tooltip_width = tooltip_width
