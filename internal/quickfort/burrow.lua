@@ -5,6 +5,7 @@ if not dfhack_flags.module then
     qerror('this script cannot be called directly')
 end
 
+local civalert = reqscript('gui/civ-alert')
 local quickfort_common = reqscript('internal/quickfort/common')
 local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
@@ -31,6 +32,10 @@ local function custom_burrow(_, keys)
     if db_entry.add and props.create == 'true' then
         db_entry.create = true
         props.create = nil
+    end
+    if db_entry.add and props.civalert == 'true' then
+        db_entry.civalert = true
+        props.civalert = nil
     end
 
     for k,v in pairs(props) do
@@ -76,6 +81,13 @@ local function do_burrow(ctx, db_entry, pos)
         dfhack.burrows.setAssignedTile(b, pos, db_entry.add)
         stats['burrow_tiles_'..(db_entry.add and 'added' or 'removed')].value =
             stats['burrow_tiles_'..(db_entry.add and 'added' or 'removed')].value + 1
+        if db_entry.civalert then
+            if db_entry.add then
+                civalert.set_civalert_burrow_if_unset(b)
+            else
+                civalert.unset_civalert_burrow_if_set(b)
+            end
+        end
         if not db_entry.add and db_entry.create and #dfhack.burrows.listBlocks(b) == 0 then
             dfhack.burrows.clearTiles(b)
             local _, _, idx = utils.binsearch(burrows.list, b.id, 'id')
