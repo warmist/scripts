@@ -24,7 +24,7 @@ local function custom_burrow(_, keys)
     local token_and_label, props_start_pos = quickfort_parse.parse_token_and_label(keys, 1, '%w')
     if not token_and_label or not rawget(burrow_db, token_and_label.token) then return nil end
     local db_entry = copyall(burrow_db[token_and_label.token])
-    local props, next_token_pos = quickfort_parse.parse_properties(keys, props_start_pos)
+    local props = quickfort_parse.parse_properties(keys, props_start_pos)
     if props.name then
         db_entry.name = props.name
         props.name = nil
@@ -36,6 +36,14 @@ local function custom_burrow(_, keys)
     if db_entry.add and props.civalert == 'true' then
         db_entry.civalert = true
         props.civalert = nil
+    end
+    if db_entry.add and props.autochop_clear == 'true' then
+        db_entry.autochop_clear = true
+        props.autochop_clear = nil
+    end
+    if db_entry.add and props.autochop_chop == 'true' then
+        db_entry.autochop_chop = true
+        props.autochop_chop = nil
     end
 
     for k,v in pairs(props) do
@@ -50,32 +58,38 @@ setmetatable(burrow_db, {__index=custom_burrow})
 
 local burrows = df.global.plotinfo.burrows
 
+local function create_burrow(name)
+    local b = df.burrow:new()
+    b.id = burrows.next_id
+    burrows.next_id = burrows.next_id + 1
+    if name then
+        b.name = name
+    end
+    b.symbol_index = math.random(0, 22)
+    b.texture_r = math.random(0, 255)
+    b.texture_g = math.random(0, 255)
+    b.texture_b = math.random(0, 255)
+    b.texture_br = 255 - b.texture_r
+    b.texture_bg = 255 - b.texture_g
+    b.texture_bb = 255 - b.texture_b
+    burrows.list:insert('#', b)
+    return b
+end
+
 local function do_burrow(ctx, db_entry, pos)
     local stats = ctx.stats
     local b
     if db_entry.name then
         b = dfhack.burrows.findByName(db_entry.name, true)
     end
-    if not b and db_entry.add and db_entry.create then
-        b = df.burrow:new()
-        b.id = burrows.next_id
-        burrows.next_id = burrows.next_id + 1
-        if db_entry.name then
-            b.name = db_entry.name
-        end
-        b.symbol_index = math.random(0, 22)
-        b.texture_r = math.random(0, 255)
-        b.texture_g = math.random(0, 255)
-        b.texture_b = math.random(0, 255)
-        b.texture_br = 255 - b.texture_r
-        b.texture_bg = 255 - b.texture_g
-        b.texture_bb = 255 - b.texture_b
-        burrows.list:insert('#', b)
-        stats.burrow_created.value = stats.burrow_created.value + 1
-    end
     if not b and db_entry.add then
-        log('could not find burrow to add to')
-        return
+        if db_entry.create then
+            b = create_burrow(db_entry.name)
+            stats.burrow_created.value = stats.burrow_created.value + 1
+        else
+            log('could not find burrow to add to')
+            return
+        end
     end
     if b then
         dfhack.burrows.setAssignedTile(b, pos, db_entry.add)
@@ -88,6 +102,14 @@ local function do_burrow(ctx, db_entry, pos)
                 civalert.unset_civalert_burrow_if_set(b)
             end
         end
+        if db_entry.autochop_clear or db_entry.autochop_chop then
+            if db_entry.autochop_chop then
+                dfhack.run_command('autochop', (db_entry.add and '' or 'no')..'chop', tostring(b.id))
+            end
+            if db_entry.autochop_clear then
+                dfhack.run_command('autochop', (db_entry.add and '' or 'no')..'clear', tostring(b.id))
+            end
+        end
         if not db_entry.add and db_entry.create and #dfhack.burrows.listBlocks(b) == 0 then
             dfhack.burrows.clearTiles(b)
             local _, _, idx = utils.binsearch(burrows.list, b.id, 'id')
@@ -98,8 +120,8 @@ local function do_burrow(ctx, db_entry, pos)
             end
         end
     elseif not db_entry.add then
-        for _,b in ipairs(burrows.list) do
-            dfhack.burrows.setAssignedTile(b, pos, false)
+        for _,burrow in ipairs(burrows.list) do
+            dfhack.burrows.setAssignedTile(burrow, pos, false)
         end
         stats.burrow_tiles_removed.value = stats.burrow_tiles_removed.value + 1
     end
