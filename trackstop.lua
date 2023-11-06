@@ -12,6 +12,7 @@ local WEST = 'West'
 local LOW = 'Low'
 local MEDIUM = 'Medium'
 local HIGH = 'High'
+local HIGHER = 'Higher'
 local MAX = 'Max'
 
 local NONE = 'None'
@@ -27,6 +28,31 @@ local FRICTION_MAP = {
 local FRICTION_MAP_REVERSE = {}
 for k, v in pairs(FRICTION_MAP) do
   FRICTION_MAP_REVERSE[v] = k
+end
+
+local SPEED_MAP = {
+  [LOW] = 10000,
+  [MEDIUM] = 20000,
+  [HIGH] = 30000,
+  [HIGHER] = 40000,
+  [MAX] = 50000,
+}
+
+local SPEED_MAP_REVERSE = {}
+for k, v in pairs(SPEED_MAP) do
+  SPEED_MAP_REVERSE[v] = k
+end
+
+local DIRECTION_MAP = {
+  [NORTH] = df.screw_pump_direction.FromSouth,
+  [EAST] = df.screw_pump_direction.FromWest,
+  [SOUTH] = df.screw_pump_direction.FromNorth,
+  [WEST] = df.screw_pump_direction.FromEast,
+}
+
+local DIRECTION_MAP_REVERSE = {}
+for k, v in pairs(DIRECTION_MAP) do
+  DIRECTION_MAP_REVERSE[v] = k
 end
 
 TrackStopOverlay = defclass(TrackStopOverlay, overlay.OverlayWidget)
@@ -151,8 +177,81 @@ function TrackStopOverlay:init()
   }
 end
 
+RollerOverlay = defclass(RollerOverlay, overlay.OverlayWidget)
+RollerOverlay.ATTRS{
+  default_pos={x=-71, y=29},
+  default_enabled=true,
+  viewscreens='dwarfmode/ViewSheets/BUILDING/Rollers',
+  frame={w=27, h=4},
+  frame_style=gui.MEDIUM_FRAME,
+  frame_background=gui.CLEAR_PEN,
+}
+
+function RollerOverlay:getDirection()
+  local building = dfhack.gui.getSelectedBuilding()
+  local direction = building.direction
+
+  return DIRECTION_MAP_REVERSE[direction]
+end
+
+function RollerOverlay:setDirection(direction)
+  local building = dfhack.gui.getSelectedBuilding()
+
+  building.direction = DIRECTION_MAP[direction]
+end
+
+function RollerOverlay:getSpeed()
+  local building = dfhack.gui.getSelectedBuilding()
+  local speed = building.speed
+
+  return SPEED_MAP_REVERSE[speed]
+end
+
+function RollerOverlay:setSpeed(speed)
+  local building = dfhack.gui.getSelectedBuilding()
+
+  building.speed = SPEED_MAP[speed]
+end
+
+function RollerOverlay:render(dc)
+  local building = dfhack.gui.getSelectedBuilding()
+
+  self.subviews.direction:setOption(DIRECTION_MAP_REVERSE[building.direction])
+  self.subviews.speed:setOption(SPEED_MAP_REVERSE[building.speed])
+
+  TrackStopOverlay.super.render(self, dc)
+end
+
+function RollerOverlay:init()
+  self:addviews{
+    widgets.Label{
+      frame={t=0, l=0},
+      text='Direction',
+    },
+    widgets.CycleHotkeyLabel{
+      frame={t=0, l=10},
+      key='CUSTOM_CTRL_X',
+      options={NORTH, EAST, SOUTH, WEST},
+      view_id='direction',
+      on_change=function(val) self:setDirection(val) end,
+    },
+    widgets.Label{
+      frame={t=1, l=0},
+      text='Speed',
+    },
+    widgets.CycleHotkeyLabel{
+      frame={t=1, l=10},
+      key='CUSTOM_CTRL_F',
+      options={LOW, MEDIUM, HIGH, HIGHER, MAX},
+      view_id='speed',
+      on_change=function(val) self:setSpeed(val) end,
+    },
+  }
+end
+
 OVERLAY_WIDGETS = {
-  trackstop=TrackStopOverlay
+  trackstop=TrackStopOverlay,
+  rollers=RollerOverlay,
 }
 
 if not dfhack_flags.module then
