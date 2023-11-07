@@ -1,13 +1,19 @@
 -- Overlay to allow changing track stop friction and dump direction after construction
 --@ module = true
+
+if not dfhack_flags.module then
+  qerror('trackstop cannot be called directly')
+end
+
 local gui = require('gui')
 local widgets = require('gui.widgets')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 
-local NORTH = 'North'
-local EAST = 'East'
-local SOUTH = 'South'
-local WEST = 'West'
+local NORTH = 'North ^'
+local EAST = 'East >'
+local SOUTH = 'South v'
+local WEST = 'West <'
 
 local LOW = 'Low'
 local MEDIUM = 'Medium'
@@ -25,10 +31,7 @@ local FRICTION_MAP = {
   [MAX] = 50000,
 }
 
-local FRICTION_MAP_REVERSE = {}
-for k, v in pairs(FRICTION_MAP) do
-  FRICTION_MAP_REVERSE[v] = k
-end
+local FRICTION_MAP_REVERSE = utils.invert(FRICTION_MAP)
 
 local SPEED_MAP = {
   [LOW] = 10000,
@@ -38,10 +41,7 @@ local SPEED_MAP = {
   [MAX] = 50000,
 }
 
-local SPEED_MAP_REVERSE = {}
-for k, v in pairs(SPEED_MAP) do
-  SPEED_MAP_REVERSE[v] = k
-end
+local SPEED_MAP_REVERSE = utils.invert(SPEED_MAP)
 
 local DIRECTION_MAP = {
   [NORTH] = df.screw_pump_direction.FromSouth,
@@ -50,17 +50,14 @@ local DIRECTION_MAP = {
   [WEST] = df.screw_pump_direction.FromEast,
 }
 
-local DIRECTION_MAP_REVERSE = {}
-for k, v in pairs(DIRECTION_MAP) do
-  DIRECTION_MAP_REVERSE[v] = k
-end
+local DIRECTION_MAP_REVERSE = utils.invert(DIRECTION_MAP)
 
 TrackStopOverlay = defclass(TrackStopOverlay, overlay.OverlayWidget)
 TrackStopOverlay.ATTRS{
-  default_pos={x=-71, y=29},
+  default_pos={x=-73, y=29},
   default_enabled=true,
   viewscreens='dwarfmode/ViewSheets/BUILDING/Trap',
-  frame={w=27, h=4},
+  frame={w=25, h=4},
   frame_style=gui.MEDIUM_FRAME,
   frame_background=gui.CLEAR_PEN,
 }
@@ -152,25 +149,31 @@ end
 
 function TrackStopOverlay:init()
   self:addviews{
-    widgets.Label{
-      frame={t=0, l=0},
-      text='Dump',
-    },
     widgets.CycleHotkeyLabel{
-      frame={t=0, l=9},
+      frame={t=0, l=0},
+      label='Dump',
       key='CUSTOM_CTRL_X',
-      options={NONE, NORTH, EAST, SOUTH, WEST},
+      options={
+        {label=NONE, value=NONE, pen=COLOR_BLUE},
+        NORTH,
+        EAST,
+        SOUTH,
+        WEST,
+      },
       view_id='dump_direction',
       on_change=function(val) self:setDumpDirection(val) end,
     },
-    widgets.Label{
-      frame={t=1, l=0},
-      text='Friction',
-    },
     widgets.CycleHotkeyLabel{
-      frame={t=1, l=9},
+      label='Friction',
+      frame={t=1, l=0},
       key='CUSTOM_CTRL_F',
-      options={NONE, LOW, MEDIUM, HIGH, MAX},
+      options={
+        {label=NONE, value=NONE, pen=COLOR_BLUE},
+        {label=LOW, value=LOW, pen=COLOR_GREEN},
+        {label=MEDIUM, value=MEDIUM, pen=COLOR_YELLOW},
+        {label=HIGH, value=HIGH, pen=COLOR_LIGHTRED},
+        {label=MAX, value=MAX, pen=COLOR_RED},
+      },
       view_id='friction',
       on_change=function(val) self:setFriction(val) end,
     },
@@ -224,25 +227,25 @@ end
 
 function RollerOverlay:init()
   self:addviews{
-    widgets.Label{
-      frame={t=0, l=0},
-      text='Direction',
-    },
     widgets.CycleHotkeyLabel{
-      frame={t=0, l=10},
+      label='Direction',
+      frame={t=0, l=0},
       key='CUSTOM_CTRL_X',
       options={NORTH, EAST, SOUTH, WEST},
       view_id='direction',
       on_change=function(val) self:setDirection(val) end,
     },
-    widgets.Label{
-      frame={t=1, l=0},
-      text='Speed',
-    },
     widgets.CycleHotkeyLabel{
-      frame={t=1, l=10},
+      label='Speed',
+      frame={t=1, l=0},
       key='CUSTOM_CTRL_F',
-      options={LOW, MEDIUM, HIGH, HIGHER, MAX},
+      options={
+        {label=LOW, value=LOW, pen=COLOR_BLUE},
+        {label=MEDIUM, value=MEDIUM, pen=COLOR_GREEN},
+        {label=HIGH, value=HIGH, pen=COLOR_YELLOW},
+        {label=HIGHER, value=HIGHER, pen=COLOR_LIGHTRED},
+        {label=MAX, value=MAX, pen=COLOR_RED},
+      },
       view_id='speed',
       on_change=function(val) self:setSpeed(val) end,
     },
@@ -253,7 +256,3 @@ OVERLAY_WIDGETS = {
   trackstop=TrackStopOverlay,
   rollers=RollerOverlay,
 }
-
-if not dfhack_flags.module then
-  main{...}
-end
