@@ -56,7 +56,7 @@ TrackStopOverlay = defclass(TrackStopOverlay, overlay.OverlayWidget)
 TrackStopOverlay.ATTRS{
   default_pos={x=-73, y=29},
   default_enabled=true,
-  viewscreens='dwarfmode/ViewSheets/BUILDING/Trap',
+  viewscreens='dwarfmode/ViewSheets/BUILDING/Trap/TrackStop',
   frame={w=25, h=4},
   frame_style=gui.MEDIUM_FRAME,
   frame_background=gui.CLEAR_PEN,
@@ -120,10 +120,6 @@ function TrackStopOverlay:setDumpDirection(direction)
 end
 
 function TrackStopOverlay:render(dc)
-  if not self:shouldRender() then
-    return
-  end
-
   local building = dfhack.gui.getSelectedBuilding()
   local friction = building.friction
   local friction_cycle = self.subviews.friction
@@ -133,18 +129,6 @@ function TrackStopOverlay:render(dc)
   self.subviews.dump_direction:setOption(self:getDumpDirection())
 
   TrackStopOverlay.super.render(self, dc)
-end
-
-function TrackStopOverlay:shouldRender()
-  local building = dfhack.gui.getSelectedBuilding()
-  return building and building.trap_type == df.trap_type.TrackStop
-end
-
-function TrackStopOverlay:onInput(keys)
-  if not self:shouldRender() then
-    return
-  end
-  TrackStopOverlay.super.onInput(self, keys)
 end
 
 function TrackStopOverlay:init()
