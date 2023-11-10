@@ -5,7 +5,7 @@ local argparse = require('argparse')
 local function unforbid_all(include_unreachable, include_tattered, quiet)
     if not quiet then print('Unforbidding all items...') end
 
-    local citizens = dfhack.units.getCitizens()
+    local citizens = dfhack.units.getCitizens(true)
     local count = 0
     for _, item in pairs(df.global.world.items.all) do
         if item.flags.forbid then
@@ -23,8 +23,8 @@ local function unforbid_all(include_unreachable, include_tattered, quiet)
                     goto skipitem
                 end
 
-                if ((not options.include_tattered) and item.wear >= 3) then
-                    if not quiet then print(('  tattered: %s (skipping)'):format(item)) end
+                if ((not options.include_worn) and item.wear >= 2) then
+                    if not quiet then print(('  worn: %s (skipping)'):format(item)) end
                     goto skipitem
                 end
             end
@@ -45,13 +45,14 @@ local options, args = {
     help = false,
     quiet = false,
     include_unreachable = false,
-    include_tattered = false
+    include_worn = false
 }, {...}
 
 local positionals = argparse.processArgsGetopt(args, {
     { 'h', 'help', handler = function() options.help = true end },
     { 'q', 'quiet', handler = function() options.quiet = true end },
-    { 'X', 'include-tattered', handler = function() options.include_tattered = true end},
+    { 'X', 'include-tattered', handler = function() options.include_worn
+ = true end},
     { 'u', 'include-unreachable', handler = function() options.include_unreachable = true end },
 })
 
@@ -61,5 +62,5 @@ if positionals[1] == nil or positionals[1] == 'help' or options.help then
 end
 
 if positionals[1] == 'all' then
-    unforbid_all(options.include_unreachable, options.include_tattered, options.quiet)
+    unforbid_all(options.include_unreachable, options.include_worn, options.quiet)
 end
