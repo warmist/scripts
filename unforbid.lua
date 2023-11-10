@@ -2,8 +2,11 @@
 
 local argparse = require('argparse')
 
-local function unforbid_all(include_unreachable, include_tattered, quiet)
-    if not quiet then print('Unforbidding all items...') end
+local function unforbid_all(include_unreachable, quiet, include_worn)
+    local p
+    if quiet then p=function(s) return end; else p=function(s) return print(s) end; end
+
+    p('Unforbidding all items...')
 
     local citizens = dfhack.units.getCitizens(true)
     local count = 0
@@ -19,17 +22,17 @@ local function unforbid_all(include_unreachable, include_tattered, quiet)
                 end
 
                 if not reachable then
-                    if not quiet then print(('  unreachable: %s (skipping)'):format(item)) end
-                    goto skipitem
-                end
-
-                if ((not options.include_worn) and item.wear >= 2) then
-                    if not quiet then print(('  worn: %s (skipping)'):format(item)) end
+                    p(('  unreachable: %s (skipping)'):format(item))
                     goto skipitem
                 end
             end
 
-            if not quiet then print(('  unforbid: %s'):format(item)) end
+            if ((not include_worn) and item.wear >= 2) then
+                p(('  worn: %s (skipping)'):format(item))
+                goto skipitem
+            end
+
+            p(('  unforbid: %s'):format(item))
             item.flags.forbid = false
             count = count + 1
 
@@ -37,7 +40,7 @@ local function unforbid_all(include_unreachable, include_tattered, quiet)
         end
     end
 
-    if not quiet then print(('%d items unforbidden'):format(count)) end
+    p(('%d items unforbidden'):format(count)) end
 end
 
 -- let the common --help parameter work, even though it's undocumented
@@ -61,5 +64,5 @@ if positionals[1] == nil or positionals[1] == 'help' or options.help then
 end
 
 if positionals[1] == 'all' then
-    unforbid_all(options.include_unreachable, options.include_worn, options.quiet)
+    unforbid_all(options.include_unreachable, options.quiet, options.include_worn)
 end
