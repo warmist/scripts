@@ -4,8 +4,11 @@ local argparse = require('argparse')
 
 local function unforbid_all(include_unreachable, quiet, include_worn)
     local p
-    if quiet then p=function(s) return end; else p=function(s) return print(s) end; end
-
+    if quiet then
+        p=function(s) return end;
+    else
+        p=function(s) return print(s) end;
+    end
     p('Unforbidding all items...')
 
     local citizens = dfhack.units.getCitizens(true)
@@ -40,7 +43,7 @@ local function unforbid_all(include_unreachable, quiet, include_worn)
         end
     end
 
-    p(('%d items unforbidden'):format(count)) end
+    p(('%d items unforbidden'):format(count))
 end
 
 -- let the common --help parameter work, even though it's undocumented
