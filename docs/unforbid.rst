@@ -24,3 +24,6 @@ Options
 
 ``-q``, ``--quiet``
     Suppress non-error console output.
+
+``-x``, ``-include-worn``
+    Include worn (X) and tattered (XX) items when unforbidding.
