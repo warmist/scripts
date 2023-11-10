@@ -2,7 +2,7 @@
 
 local argparse = require('argparse')
 
-local function unforbid_all(include_unreachable, quiet)
+local function unforbid_all(include_unreachable, include_tattered, quiet)
     if not quiet then print('Unforbidding all items...') end
 
     local citizens = dfhack.units.getCitizens()
