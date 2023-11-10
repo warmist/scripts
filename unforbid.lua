@@ -51,8 +51,7 @@ local options, args = {
 local positionals = argparse.processArgsGetopt(args, {
     { 'h', 'help', handler = function() options.help = true end },
     { 'q', 'quiet', handler = function() options.quiet = true end },
-    { 'X', 'include-tattered', handler = function() options.include_worn
- = true end},
+    { 'X', 'include-tattered', handler = function() options.include_worn = true end},
     { 'u', 'include-unreachable', handler = function() options.include_unreachable = true end },
 })
 
