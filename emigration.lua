@@ -75,7 +75,7 @@ function desert(u,method,civ)
     end
 
     -- disassociate from work details
-    for _, detail in ipairs(df.global.plotinfo.hauling.work_details) do
+    for _, detail in ipairs(df.global.plotinfo.labor_info.work_details) do
         for k, v in ipairs(detail.assigned_units) do
             if v == u.id then
                 detail.assigned_units:erase(k)
