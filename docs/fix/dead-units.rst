@@ -27,8 +27,8 @@ Options
 -------
 
 ``--active``
-    Scrub dead units from the ``active`` vector so they don't show up in the
-    dead units list. This is the default if no option is specified.
+    Scrub units that have been dead for more than a month from the ``active``
+    vector. This is the default if no option is specified.
 ``--burrow``
     Scrub dead units from burrow membership lists.
 ``-q``, ``--quiet``
