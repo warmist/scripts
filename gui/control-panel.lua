@@ -20,7 +20,6 @@ local FORT_SERVICES = {
     'autoclothing',
     'autofarm',
     'autofish',
-    'autolabor',
     'autonestbox',
     'autoslab',
     'dwarfvet',
@@ -57,10 +56,6 @@ table.sort(FORT_AUTOSTART)
 
 -- these are re-enabled by the default DFHack init scripts
 local SYSTEM_SERVICES = {
-    'buildingplan',
-    'confirm',
-    'logistics',
-    'overlay',
 }
 -- these are fully controlled by the user
 local SYSTEM_USER_SERVICES = {

@@ -43,6 +43,8 @@ Template for new versions:
 - `warn-stranded`: don't warn for units that are temporarily on unwalkable tiles (e.g. as they pass under a waterfall)
 
 ## Removed
+- `gui/control-panel`: removed always-on system services from the ``System`` tab: `buildingplan`, `confirm`, `logistics`, and `overlay`. The base services should not be turned off by the player. Individual confirmation prompts can be managed via `gui/confirm`, and overlays (including those for `buildingplan` and `logistics`) are managed on the control panel ``Overlays`` tab.
+- `gui/control-panel`: removed `autolabor` from the ``Fort`` and ``Autostart`` tabs. The tool does not function correctly with the new labor types, and is causing confusion. You can still enable `autolabor` from the commandline with ``enable autolabor`` if you understand and accept its limitations.
 
 # 50.11-r2
 
