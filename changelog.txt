@@ -32,7 +32,7 @@ Template for new versions:
 
 ## New Features
 - `gui/design`: show selected dimensions next to the mouse cursor when designating with vanilla tools, for example when painting a burrow or designating digging
-- `quickfort`: new blueprint mode for designating burrows
+- `quickfort`: new ``burrow`` blueprint mode for designating or manipulating burrows
 - `unforbid`: now ignores worn and tattered items by default (X/XX), use -X to bypass
 - `fix/dead-units`: gained ability to scrub dead units from burrow membership lists
 
