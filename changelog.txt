@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.11-r3
+
+## New Tools
 - `sync-windmills`: synchronize or randomize movement of active windmills
 - `trackstop`: (reimplemented) integrated overlay for changing track stop and roller settings after construction
 
