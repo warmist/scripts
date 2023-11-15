@@ -1779,6 +1779,9 @@ end
 local DEFAULT_DIMENSION_TOOLTIP_WIDTH = 17
 local DIMENSION_TOOLTIP_HEIGHT = 4
 
+local DIMENSION_TOOLTIP_X_OFFSET = 3
+local DIMENSION_TOOLTIP_Y_OFFSET = 3
+
 DimensionsOverlay = defclass(DimensionsOverlay, overlay.OverlayWidget)
 DimensionsOverlay.ATTRS{
     default_pos={x=1,y=1},
@@ -1836,6 +1839,7 @@ function DimensionsOverlay:init()
                     frame={t=0, l=0, w=7, h=2},
                 },
                 widgets.Label{
+                    view_id='label',
                     frame={t=0},
                     auto_width=true,
                     text={{text=format_dims}},
@@ -1858,14 +1862,11 @@ function DimensionsOverlay:render(dc)
     local x, y = dfhack.screen.getMousePos()
     if not x then return end
     local sw, sh = dfhack.screen.getWindowSize()
-    local tooltip_width = math.max(9, #format_dims() + 2)
-    if tooltip_width ~= self.prev_tooltip_width then
-        self:updateLayout()
-        self.prev_tooltip_width = tooltip_width
-    end
-    x = math.min(x + 3, sw - tooltip_width)
-    y = math.min(y + 3, sh - DIMENSION_TOOLTIP_HEIGHT)
-    self.frame.w = x + tooltip_width
+    local frame_width = math.max(9, self.subviews.label:getTextWidth() + 2)
+    self:updateLayout()
+    x = math.min(x + DIMENSION_TOOLTIP_X_OFFSET, sw - frame_width)
+    y = math.min(y + DIMENSION_TOOLTIP_Y_OFFSET, sh - DIMENSION_TOOLTIP_HEIGHT)
+    self.frame.w = x + frame_width
     self.frame.h = y + DIMENSION_TOOLTIP_HEIGHT
     DimensionsOverlay.super.render(self, dc)
 end
