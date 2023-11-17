@@ -9,7 +9,7 @@ local function unforbid_all(include_unreachable, quiet, include_worn)
 
     local citizens = dfhack.units.getCitizens(true)
     local count = 0
-    for _, item in pairs(df.global.world.items.all) do
+    for _, item in pairs(df.global.world.items.other.IN_PLAY) do
         if item.flags.forbid then
             if not include_unreachable then
                 local reachable = false
