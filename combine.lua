@@ -165,6 +165,7 @@ local function comp_item_add_item(stockpile, stack_type, comp_item, item, contai
         if container then
             new_item.before_cont_id = container.id
             comp_item.before_cont_ids[container.id] = container.id
+
         end
 
         comp_item.items[item.id] = new_item
@@ -240,6 +241,10 @@ local function stacks_add_item(stockpile, stacks, stack_type, item, container)
 
             -- add it to the before stacks container list
             stacks.before_cont_ids[container.id] = container.id
+
+            -- add the item volume to the before container volume
+            stacks.containers[container.id].before_used_capacity = stacks.containers[container.id].before_used_capacity + new_comp_item_item.before_volume
+            stacks.containers[container.id].after_used_capacity = stacks.containers[container.id].before_used_capacity
         end
     end
 end
@@ -333,7 +338,7 @@ local function print_stacks_details(stacks, quiet)
     if #stacks.containers > 0 then
         log(1, 'Summary:\nContainers:%5d before:%5d  after:%5d\n', #stacks.containers, #stacks.before_cont_ids, #stacks.after_cont_ids)
         for cont_id, cont in sorted_desc(stacks.containers, stacks.before_cont_ids) do
-            log(2, ('   Cont: %50s <%6d>   bef:%5d aft:%5d cap:%5d\n'):format(cont.description, cont_id, cont.before_stack_qty, cont.after_stack_qty, cont.capacity))
+            log(2, ('   Cont: %50s <%6d>   bef:%5d aft:%5d cap:%5d bef use cap: %6d aft use cap: %6d\n'):format(cont.description, cont_id, cont.before_stack_qty, cont.after_stack_qty, cont.capacity, cont.before_used_capacity, cont.after_used_capacity))
         end
     end
     if stacks.item_qty > 0 then
@@ -378,7 +383,7 @@ local function stacks_new()
     local stacks = {}
 
     stacks.stack_types = CList:new(nil)         -- key=type_id, val=stack_type
-    stacks.containers = CList:new(nil)          -- key=container.id, val={container, description, before_stack_qty, after_stack_qty}
+    stacks.containers = CList:new(nil)          -- key=container.id, val={container, description, capacity, before_stack_qty, after_stack_qty, before_used_capacity, after_used_capacity}
     stacks.before_cont_ids = CList:new(nil)     -- key=container.id, val=container.id
     stacks.after_cont_ids = CList:new(nil)      -- key=container.id, val=container.id
     stacks.item_qty = 0
@@ -450,9 +455,12 @@ local function stacks_add_items(stockpile, stacks, items, container, ind)
             local count = #contained_items
             stacks.containers[item.id] = {}
             stacks.containers[item.id].container = item
-            stacks.containers[item.id].before_stack_qty = #contained_items
             stacks.containers[item.id].description = utils.getItemDescription(item, 1)
             stacks.containers[item.id].capacity = dfhack.items.getCapacity(item)
+            stacks.containers[item.id].before_stack_qty = #contained_items
+            stacks.containers[item.id].after_stack_qty = 0
+            stacks.containers[item.id].before_used_capacity = 0
+            stacks.containers[item.id].after_used_capacity = 0
             log(4, ('      %sContainer:%s <%6d> #items:%5d  #capacity:%5d\n'):format(ind, utils.getItemDescription(item), item.id, count, dfhack.items.getCapacity(item)))
             stacks_add_items(stockpile, stacks, contained_items, item, ind .. '   ')
 
