@@ -87,4 +87,4 @@ The following categories are defined:
     2. Items that have an associated race/caste, grouped by item type,  race, and caste
     3. Ammo, grouped by ammo type, material, and quality. If the ammo is a masterwork, it is also grouped by who created it.
     4. Anything else, grouped by item type and material
-    
+

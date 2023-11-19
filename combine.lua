@@ -85,7 +85,7 @@ local function comp_item_new(comp_key, max_stack_qty)
     -- item info
     comp_item.items = CList:new(nil)                    -- key:item.id,
                                                         -- val:{item, base_weight, density,
-                                                        --      before_stack_qty, after_stack_qty, 
+                                                        --      before_stack_qty, after_stack_qty,
                                                         --      before_cont_id, after_cont_id,
                                                         --      before_volume, after_volume,
                                                         --      stockpile_id, stockpile_name,
@@ -475,7 +475,7 @@ local function unlimited_stacks(types)
     -- Override the realistic limits of stack sizes. This is armok behaviour for those that want it.
     -- Note: large stack sizes causes bottle neck effects for production of constructed items.
     -- Need to determine how this interacts with container capacities.
-    -- There are certain types such as seeds that don't like being in stacks 
+    -- There are certain types such as seeds that don't like being in stacks
     -- greater than 1, so exclude these ones.
     log(4, 'Unlimited stacks applied\n')
 
