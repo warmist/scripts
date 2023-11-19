@@ -45,31 +45,26 @@ Options
 
         ``all``:   all of the types listed here.
 
-        ``ammo``: AMMO. Max 25.
+        ``ammo``: AMMO. Qty max 25.
 
-        ``drink``: DRINK. No Max.
+        ``drink``: DRINK. Qty max 100.
 
-        ``fat``:   GLOB and CHEESE. Max 5.
+        ``fat``:   GLOB and CHEESE. Qty max 5.
 
-        ``fish``:  FISH, FISH_RAW and EGG. Max 5.
+        ``fish``:  FISH, FISH_RAW and EGG. Qty 5.
 
-        ``food``:  FOOD. Max 20.
+        ``food``:  FOOD. Qty max 20.
 
-        ``meat``:  MEAT. Max 5.
+        ``meat``:  MEAT. Qty max 5.
 
-        ``parts``: CORPSEPIECE. Max 1.
+        ``parts``: CORPSEPIECE. Material max 30.
 
-        ``plant``: PLANT and PLANT_GROWTH. Max 5.
+        ``plant``: PLANT and PLANT_GROWTH. Qty max 5.
 
-        ``powders``: POWDERS_MISC. Max 10.
-
-        ``seed``: SEEDS. Max 1.
+        ``powders``: POWDERS_MISC. Qty max 10.
 
 ``-q``, ``--quiet``
     Only print changes instead of a summary of all processed stockpiles.
-
-``-u``, ``--unlimited-stack``
-    Use unlimited stack size (Armok). Default false.
 
 ``-v``, ``--verbose n``
     Print verbose output, n from 1 to 4.
@@ -86,5 +81,5 @@ The following categories are defined:
     1. Corpse pieces, grouped by piece type and race
     2. Items that have an associated race/caste, grouped by item type,  race, and caste
     3. Ammo, grouped by ammo type, material, and quality. If the ammo is a masterwork, it is also grouped by who created it.
-    4. Anything else, grouped by item type and material
+    4. Anything else, grouped by item type and material.
     
