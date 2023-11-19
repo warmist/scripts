@@ -44,6 +44,7 @@ local valid_types_map = {
     ['seed']   = {[df.item_type.SEEDS]       ={type_id=df.item_type.SEEDS,        max_size=1}},
 }
 
+
 -- populate all types entry
 for k1,v1 in pairs(valid_types_map) do
     if k1 ~= 'all' then
