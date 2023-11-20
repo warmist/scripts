@@ -45,25 +45,23 @@ Options
 
         ``all``:   all of the types listed here.
 
-        ``ammo``: AMMO
+        ``ammo``: AMMO. Qty max 25.
 
-        ``drink``: DRINK
+        ``drink``: DRINK. Qty max 100.
 
-        ``fat``:   GLOB and CHEESE
+        ``fat``:   GLOB and CHEESE. Qty max 5.
 
-        ``fish``:  FISH, FISH_RAW and EGG
+        ``fish``:  FISH, FISH_RAW and EGG. Qty 5.
 
-        ``food``:  FOOD
+        ``food``:  FOOD. Qty max 20.
 
-        ``meat``:  MEAT
+        ``meat``:  MEAT. Qty max 5.
 
-        ``parts``: CORPSEPIECE
+        ``parts``: CORPSEPIECE. Material max 30.
 
-        ``plant``: PLANT and PLANT_GROWTH
+        ``plant``: PLANT and PLANT_GROWTH. Qty max 5.
 
-        ``powders``: POWDERS_MISC
-
-        ``seed``: SEEDS
+        ``powders``: POWDERS_MISC. Qty max 10.
 
 ``-q``, ``--quiet``
     Only print changes instead of a summary of all processed stockpiles.
@@ -83,8 +81,4 @@ The following categories are defined:
     1. Corpse pieces, grouped by piece type and race
     2. Items that have an associated race/caste, grouped by item type,  race, and caste
     3. Ammo, grouped by ammo type, material, and quality. If the ammo is a masterwork, it is also grouped by who created it.
-    4. Anything else, grouped by item type and material
-
-Each category has a default stack size of 30 unless a larger stack already
-exists "naturally" in your fort. In that case the largest existing stack size
-is used.
+    4. Anything else, grouped by item type and material.
