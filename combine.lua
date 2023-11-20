@@ -17,7 +17,7 @@ local opts, args = {
 local MAX_CONT_ITEMS=30
 
 -- TODO:
--- 1. Combine plantable seeds only, currently removed seeds as option.
+-- 1. Combine non-plantable seeds only, currently removed seeds as option.
 -- 2. Quality for food, currently ignoring.
 -- 3. Obey capacity limits for containers as default. Container quality?
 -- 4. Override stack size; armok option.
