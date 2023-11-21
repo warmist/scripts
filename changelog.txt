@@ -35,6 +35,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `combine`: prevent stack sizes from growing beyond quantities that you would normally see in vanilla gameplay
+- `caravan`: enable searching within containers in trade screen when in "trade bin with contents" mode
 
 ## Removed
 
