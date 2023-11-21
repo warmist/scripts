@@ -25,6 +25,15 @@ function make_search_key(str)
     return table.concat(words, ' ')
 end
 
+function make_container_search_key(item, desc)
+    local words = {}
+    add_words(words, desc)
+    for _, contained_item in ipairs(dfhack.items.getContainedItems(item)) do
+        add_words(words, get_item_description(contained_item))
+    end
+    return table.concat(words, ' ')
+end
+
 local function get_broker_skill()
     local broker = dfhack.units.getUnitByNobleRole('broker')
     if not broker then return 0 end

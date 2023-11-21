@@ -398,13 +398,19 @@ function Trade:cache_choices(list_idx, trade_bins)
             parent_data.has_requested = parent_data.has_requested or is_requested
             parent_data.ethical = parent_data.ethical and is_ethical
         end
+        local is_container = df.item_binst:is_instance(item)
+        local search_key
+        if (trade_bins and is_container) or item:isFoodStorage() then
+            search_key = common.make_container_search_key(item, desc)
+        else
+            search_key = common.make_search_key(desc)
+        end
         local choice = {
-            search_key=common.make_search_key(desc),
+            search_key=search_key,
             icon=curry(get_entry_icon, data),
             data=data,
             text=make_choice_text(data.value, desc),
         }
-        local is_container = df.item_binst:is_instance(item)
         if not data.update_container_fn then
             table.insert(trade_bins_choices, choice)
         end
