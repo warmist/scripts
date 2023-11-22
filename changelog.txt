@@ -27,17 +27,25 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `build-now`: (reinstated) instantly complete unsuspended buildings that are ready to be built
 
 ## New Features
 
 ## Fixes
 
 ## Misc Improvements
-- `combine`: prevent stack sizes from growing beyond quantities that you would normally see in vanilla gameplay
-- `caravan`: enable searching within containers in trade screen when in "trade bin with contents" mode
 
 ## Removed
+
+# 50.11-r4
+
+## New Tools
+- `build-now`: (reinstated) instantly complete unsuspended buildings that are ready to be built
+
+## Fixes
+- `combine`: prevent stack sizes from growing beyond quantities that you would normally see in vanilla gameplay
+
+## Misc Improvements
+- `caravan`: enable searching within containers in trade screen when in "trade bin with contents" mode
 
 # 50.11-r3
 
