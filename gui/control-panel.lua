@@ -140,7 +140,7 @@ local REPEATS = {
         command={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
     ['warn-stranded']={
         desc='Show a warning dialog when units are stranded from all others.',
-        command={'--time', '0.25', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
+        command={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
 }
 local REPEATS_LIST = {}
 for k in pairs(REPEATS) do

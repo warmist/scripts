@@ -33,6 +33,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `gui/control-panel`: reduce frequency for `warn-stranded` check to once every 2 days
 
 ## Removed
 
