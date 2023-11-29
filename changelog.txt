@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `ban-cooking`: fix banning creature alcohols resulting in error
 
 ## Misc Improvements
 - `gui/control-panel`: reduce frequency for `warn-stranded` check to once every 2 days
