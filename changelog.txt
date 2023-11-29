@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `warn-stranded`: Automatically ignore citizens who are gathering plants to avoid issues with gathering fruit via stepladders
 
 ## Misc Improvements
 
