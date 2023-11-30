@@ -334,8 +334,10 @@ local function getStrandedUnits()
                 or 0
         end
 
-        -- Ignore units who are gathering plants to avoid errors with stepladders
-        if unitIgnored(unit) or (unit.job.current_job and unit.job.current_job.job_type == df.job_type.GatherPlants) then
+        -- Ignore units who are gathering plants or digging to avoid errors with stepladders and weird digging things
+        if unitIgnored(unit) or (unit.job.current_job and 
+                                    (unit.job.current_job.job_type == df.job_type.GatherPlants or
+                                        df.job_type.attrs[unit.job.current_job.job_type].type == 'Digging')) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
