@@ -31,6 +31,8 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `warn-stranded`: Automatically ignore citizens who are gathering plants or digging to avoid issues with gathering fruit via stepladders and weird issues with digging
+- `warn-stranded`: Update onZoom to use df's centering functionality
 - `ban-cooking`: fix banning creature alcohols resulting in error
 
 ## Misc Improvements

@@ -269,7 +269,7 @@ function WarningWindow:onZoom()
     local unit = choice.data['unit']
 
     local target = xyz2pos(dfhack.units.getPosition(unit))
-    dfhack.gui.revealInDwarfmodeMap(target, false, true)
+    dfhack.gui.revealInDwarfmodeMap(target, true, true)
 end
 
 function WarningWindow:onToggleGroup()
@@ -334,7 +334,10 @@ local function getStrandedUnits()
                 or 0
         end
 
-        if unitIgnored(unit) then
+        -- Ignore units who are gathering plants or digging to avoid errors with stepladders and weird digging things
+        if unitIgnored(unit) or (unit.job.current_job and
+                                    (unit.job.current_job.job_type == df.job_type.GatherPlants or
+                                        df.job_type.attrs[unit.job.current_job.job_type].type == 'Digging')) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
