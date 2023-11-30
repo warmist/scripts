@@ -269,7 +269,7 @@ function WarningWindow:onZoom()
     local unit = choice.data['unit']
 
     local target = xyz2pos(dfhack.units.getPosition(unit))
-    dfhack.gui.revealInDwarfmodeMap(target, false, true)
+    dfhack.gui.revealInDwarfmodeMap(target, true, true)
 end
 
 function WarningWindow:onToggleGroup()
