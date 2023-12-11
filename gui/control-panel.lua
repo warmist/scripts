@@ -1,9 +1,9 @@
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
-local textures = require('gui.textures')
 local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
 local repeatUtil = require('repeat-util')
+local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
@@ -13,60 +13,82 @@ local PREFERENCES_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-preferenc
 local AUTOSTART_FILE = 'dfhack-config/init/onMapLoad.control-panel-new-fort.init'
 local REPEATS_FILE = 'dfhack-config/init/onMapLoad.control-panel-repeats.init'
 
--- service and command lists
-local FORT_SERVICES = {
-    'autobutcher',
-    'autochop',
-    'autoclothing',
-    'autofarm',
-    'autofish',
-    'autonestbox',
-    'autoslab',
-    'dwarfvet',
-    'emigration',
-    'fastdwarf',
-    'fix/protect-nicks',
-    'hermit',
-    'misery',
-    'nestboxes',
-    'preserve-tombs',
-    'prioritize',
-    'seedwatch',
-    'starvingdead',
-    'suspendmanager',
-    'tailor',
-}
+local REGISTRY = {
+    -- automation tools
+    {command='autobutcher', tab='automation', mode='enable'},
+    {command='autobutcher target 10 10 14 2 BIRD_GOOSE', tab='automation', mode='run'},
+    {command='autobutcher target 10 10 14 2 BIRD_TURKEY', tab='automation', mode='run'},
+    {command='autobutcher target 10 10 14 2 BIRD_CHICKEN', tab='automation', mode='run'},
+    {command='autochop', tab='automation', mode='enable'},
+    {command='autoclothing', tab='automation', mode='enable'},
+    {command='autofarm', tab='automation', mode='enable'},
+    {command='autofarm threshold 150 grass_tail_pig', tab='automation', mode='run'},
+    {command='autofish', tab='automation', mode='enable'},
+    --{command='autolabor', tab='automation', mode='enable'}, -- hide until it works better
+    {command='automilk', tab='automation', mode='repeat',
+        desc='Automatically milk creatures that are ready for milking.',
+        params={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', '"{\\"job\\":\\"MilkCreature\\",\\"item_conditions\\":[{\\"condition\\":\\"AtLeast\\",\\"value\\":2,\\"flags\\":[\\"empty\\"],\\"item_type\\":\\"BUCKET\\"}]}"', ']'}},
+    {command='autonestbox', tab='automation', mode='enable'},
+    {command='autoshear', tab='automation', mode='repeat',
+        desc='Automatically shear creatures that are ready for shearing.',
+        params={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', 'ShearCreature', ']'}},
+    {command='autoslab', tab='automation', mode='enable'},
+    {command='ban-cooking all', tab='automation', mode='run'},
+    {command='buildingplan set boulders false', tab='automation', mode='run'},
+    {command='buildingplan set logs false', tab='automation', mode='run'},
+    {command='cleanowned', tab='automation', mode='repeat',
+        desc='Encourage dwarves to drop tattered clothing and grab new ones.',
+        params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
+    {command='nestboxes', tab='automation', mode='enable'},
+    {command='orders-sort', tab='automation', mode='repeat',
+        desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
+        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
+    {command='prioritize', tab='automation', mode='enable'},
+    {command='seedwatch', tab='automation', mode='enable'},
+    {command='suspendmanager', tab='automation', mode='enable'},
+    {command='tailor', tab='automation', mode='enable'},
+    {command='work-now', tab='automation', mode='enable'},
 
-local FORT_AUTOSTART = {
-    'autobutcher target 10 10 14 2 BIRD_GOOSE',
-    'autobutcher target 10 10 14 2 BIRD_TURKEY',
-    'autobutcher target 10 10 14 2 BIRD_CHICKEN',
-    'autofarm threshold 150 grass_tail_pig',
-    'ban-cooking all',
-    'buildingplan set boulders false',
-    'buildingplan set logs false',
-    'drain-aquifer --top 2',
-    'fix/blood-del fort',
-    'light-aquifers-only fort',
-}
-for _,v in ipairs(FORT_SERVICES) do
-    table.insert(FORT_AUTOSTART, v)
-end
-table.sort(FORT_AUTOSTART)
+    -- bugfix tools
+    {command='dead-units-burrow', tab='bugfix', mode='repeat', default=true,
+        desc='Fix units still being assigned to burrows after death.',
+        params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'fix/dead-units', '--burrow', '-q', ']'}},
+    {command='fix/blood-del', tab='bugfix', mode='run', default=true},
+    {command='fix/empty-wheelbarrows', tab='bugfix', mode='repeat', default=true,
+        desc='Make abandoned full wheelbarrows usable again.',
+        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/empty-wheelbarrows', '-q', ']'}},
+    {command='fix/general-strike', tab='bugfix', mode='repeat', default=true,
+        desc='Prevent dwarves from getting stuck and refusing to work.',
+        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
+    {command='fix/protect-nicks', tab='bugfix', mode='enable', default=true},
+    {command='fix/stuck-instruments', tab='bugfix', mode='repeat', default=true,
+        desc='Fix activity references on stuck instruments to make them usable again.',
+        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
+    {command='preserve-tombs', tab='bugfix', mode='enable', default=true},
 
--- these are re-enabled by the default DFHack init scripts
-local SYSTEM_SERVICES = {
+    -- gameplay tools
+    {command='combine', tab='gameplay', mode='repeat',
+        desc='Combine partial stacks in stockpiles into full stacks.',
+        params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
+    {command='drain-aquifer --top 2', tab='gameplay', mode='run'},
+    {command='dwarfvet', tab='gameplay', mode='enable'},
+    {command='emigration', tab='gameplay', mode='enable'},
+    {command='fastdwarf', tab='gameplay', mode='enable'},
+    {command='hermit', tab='gameplay', mode='enable'},
+    {command='hide-tutorials', tab='gameplay', mode='system_enable'},
+    {command='light-aquifers-only', tab='gameplay', mode='run'},
+    {command='misery', tab='gameplay', mode='enable'},
+    {command='orders-reevaluate', tab='gameplay', mode='repeat',
+        desc='Invalidates work orders once a month, allowing conditions to be rechecked.',
+        params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
+    {command='starvingdead', tab='gameplay', mode='enable'},
+    {command='warn-starving', tab='gameplay', mode='repeat',
+        desc='Show a warning dialog when units are starving or dehydrated.',
+        params={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
+    {command='warn-stranded', tab='gameplay', mode='repeat',
+        desc='Show a warning dialog when units are stranded from all others.',
+        params={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
 }
--- these are fully controlled by the user
-local SYSTEM_USER_SERVICES = {
-    'faststart',
-    'hide-tutorials',
-    'work-now',
-}
-for _,v in ipairs(SYSTEM_USER_SERVICES) do
-    table.insert(SYSTEM_SERVICES, v)
-end
-table.sort(SYSTEM_SERVICES)
 
 local PREFERENCES = {
     ['dfhack']={
@@ -104,49 +126,25 @@ local CPP_PREFERENCES = {
     },
 }
 
-local REPEATS = {
-    ['autoMilkCreature']={
-        desc='Automatically milk creatures that are ready for milking.',
-        command={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', '"{\\"job\\":\\"MilkCreature\\",\\"item_conditions\\":[{\\"condition\\":\\"AtLeast\\",\\"value\\":2,\\"flags\\":[\\"empty\\"],\\"item_type\\":\\"BUCKET\\"}]}"', ']'}},
-    ['autoShearCreature']={
-        desc='Automatically shear creatures that are ready for shearing.',
-        command={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', 'ShearCreature', ']'}},
-    ['cleanowned']={
-        desc='Encourage dwarves to drop tattered clothing and grab new ones.',
-        command={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
-    ['combine']={
-        desc='Combine partial stacks in stockpiles into full stacks.',
-        command={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
-    ['dead-units-burrow']={
-        desc='Fix units still being assigned to burrows after death.',
-        command={'--time', '7', '--timeUnits', 'days', '--command', '[', 'fix/dead-units', '--burrow', '-q', ']'}},
-    ['empty-wheelbarrows']={
-        desc='Empties wheelbarrows which have rocks stuck in them.',
-        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/empty-wheelbarrows', '-q', ']'}},
-    ['general-strike']={
-        desc='Prevent dwarves from getting stuck and refusing to work.',
-        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
-    ['orders-sort']={
-        desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
-        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
-    ['orders-reevaluate']={
-        desc='Invalidates work orders once a month, allowing conditions to be rechecked.',
-        command={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
-    ['stuck-instruments']={
-        desc='Fix activity references on stuck instruments to make them usable again.',
-        command={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
-    ['warn-starving']={
-        desc='Show a warning dialog when units are starving or dehydrated.',
-        command={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
-    ['warn-stranded']={
-        desc='Show a warning dialog when units are stranded from all others.',
-        command={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
-}
-local REPEATS_LIST = {}
-for k in pairs(REPEATS) do
-    table.insert(REPEATS_LIST, k)
+local function read_init_file(fname, config_map, matchers)
+    local ok, f = pcall(io.open, SYSTEM_INIT_FILE)
+    if not ok or not f then return end
+    for line in f:lines() do
+        line = line:trim()
+        if #line == 0 or (line:startswith('#') and not line:startswith('##')) then
+            goto continue
+        end
+        local negate, service
+        for _, matcher in ipairs(matchers) do
+            negate, service = line:match(matcher)
+            if service then
+                config_map[service] = #negate == 0
+                break
+            end
+        end
+        ::continue::
+    end
 end
-table.sort(REPEATS_LIST)
 
 -- save_fn takes the file as a param and should call f:write() to write data
 local function save_file(path, save_fn)
@@ -157,9 +155,73 @@ local function save_file(path, save_fn)
         return
     end
     f:write('# DO NOT EDIT THIS FILE\n')
-    f:write('# Please use gui/control-panel to edit this file\n\n')
+    f:write('# Please use gui/control-panel to modify the contents of this file\n\n')
     save_fn(f)
     f:close()
+end
+
+local function write_init_files(config_map)
+    save_file(SYSTEM_INIT_FILE, function(f)
+        for _,data in ipairs(REGISTRY) do
+            if data.mode ~= 'system_enable' then goto continue end
+            local command = data.command
+            local prefix = config_map[command] and '' or '##'
+            f:write(('%senable %s\n'):format(prefix, command))
+            ::continue::
+        end
+    end)
+    save_file(AUTOSTART_FILE, function(f)
+        for _,data in ipairs(REGISTRY) do
+            if data.mode == 'system_enable' or data.mode == 'repeat' then
+                goto continue
+            end
+            local command = data.command
+            local prefix = config_map[command] and '' or '##'
+            if data.mode == 'run' then
+                f:write(('%son-new-fortress %s\n'):format(prefix, command))
+            elseif data.mode == 'enable'
+                f:write(('%son-new-fortress enable %s\n'):format(prefix, command))
+            else
+                error('unhandled mode: '.. data.mode)
+            end
+            ::continue::
+        end
+    end)
+    save_file(REPEATS_FILE, function(f)
+        for _,data in ipairs(REGISTRY) do
+            if data.mode ~= 'repeat' then goto continue end
+            local command = data.command
+            local prefix = config_map[command] and '' or '##'
+            local command_str = ('%srepeat --name %s %s\n'):
+                format(prefix, command, table.concat(data.params, ' '))
+            f:write(command_str)
+            ::continue::
+        end
+    end)
+end
+
+local function init_config_state()
+    local config_map = {}
+    read_init_file(SYSTEM_INIT_FILE, config_map, {
+        '^(#?#?)enable ([%S]+)$',
+    })
+    read_init_file(AUTOSTART_FILE, config_map, {
+        '^(#?#?)on%-new%-fortress enable ([%S]+)$',
+        '^(#?#?)on%-new%-fortress (.+)',
+    })
+    read_init_file(REPEATS_FILE, config_map, {
+        '^(#?#?)repeat %-%-name ([%S]+)',
+    })
+
+    for _, data in ipairs(REGISTRY) do
+        if data.default and config_map[data.command] == nil then
+            config_map[data.command] = true
+        end
+    end
+
+    write_init_files(config_map)
+
+    return config_map
 end
 
 local function get_icon_pens()
@@ -509,6 +571,102 @@ function SystemServices:on_submit()
 end
 
 --
+-- RepeatAutostart
+--
+
+RepeatAutostart = defclass(RepeatAutostart, ConfigPanel)
+RepeatAutostart.ATTRS{
+    title='Periodic',
+    is_enableable=true,
+    is_configurable=false,
+    intro_text='Tools that can run periodically to fix bugs or warn you of'..
+                ' dangers that are otherwise difficult to detect (like'..
+                ' starving caged animals).',
+}
+
+function RepeatAutostart:init()
+    self.subviews.show_help_label.visible = false
+    self.subviews.launch.visible = false
+    local enabled_map = {}
+    local ok, f = pcall(io.open, REPEATS_FILE)
+    if ok and f then
+        for line in f:lines() do
+            line = line:trim()
+            if #line == 0 or line:startswith('#') then goto continue end
+            local service = line:match('^repeat %-%-name ([%S]+)')
+            if service then
+                enabled_map[service] = true
+            end
+            ::continue::
+        end
+    end
+    self.enabled_map = enabled_map
+end
+
+function RepeatAutostart:onInput(keys)
+    -- call grandparent's onInput since we don't want ConfigPanel's processing
+    local handled = RepeatAutostart.super.super.onInput(self, keys)
+    if keys._MOUSE_L then
+        local list = self.subviews.list.list
+        local idx = list:getIdxUnderMouse()
+        if idx then
+            local x = list:getMousePos()
+            if x <= 2 then
+                self:on_submit()
+            end
+        end
+    end
+    return handled
+end
+
+function RepeatAutostart:refresh()
+    local choices = {}
+    for _,name in ipairs(REPEATS_LIST) do
+        local enabled = self.enabled_map[name]
+        local text = {
+            {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
+            {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
+            {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
+            ' ',
+            name,
+        }
+        table.insert(choices,
+            {text=text, desc=REPEATS[name].desc, search_key=name,
+             name=name, enabled=enabled})
+    end
+    local list = self.subviews.list
+    local filter = list:getFilter()
+    local selected = list:getSelected()
+    list:setChoices(choices)
+    list:setFilter(filter, selected)
+    list.edit:setFocus(true)
+end
+
+function RepeatAutostart:on_submit()
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    self.enabled_map[choice.name] = not choice.enabled
+    local run_commands = dfhack.isMapLoaded()
+
+    local save_fn = function(f)
+        for name,enabled in pairs(self.enabled_map) do
+            if enabled then
+                local command_str = ('repeat --name %s %s\n'):
+                        format(name, table.concat(REPEATS[name].command, ' '))
+                f:write(command_str)
+                if run_commands then
+                    dfhack.run_command(command_str) -- actually start it up too
+                end
+            elseif run_commands then
+                repeatUtil.cancel(name)
+            end
+        end
+    end
+    save_file(REPEATS_FILE, save_fn)
+    self:refresh()
+end
+
+--
 -- Overlays
 --
 
@@ -518,7 +676,7 @@ Overlays.ATTRS{
     is_enableable=true,
     is_configurable=false,
     intro_text='These are DFHack overlays that add information and'..
-                ' functionality to various DF screens.',
+                ' functionality to vanilla screens.',
 }
 
 function Overlays:init()
@@ -756,103 +914,7 @@ function Preferences:restore_defaults()
     end
     os.remove(PREFERENCES_INIT_FILE)
     self:refresh()
-    dialogs.showMessage('Success', 'Default preferences restored.')
-end
-
---
--- RepeatAutostart
---
-
-RepeatAutostart = defclass(RepeatAutostart, ConfigPanel)
-RepeatAutostart.ATTRS{
-    title='Periodic',
-    is_enableable=true,
-    is_configurable=false,
-    intro_text='Tools that can run periodically to fix bugs or warn you of'..
-                ' dangers that are otherwise difficult to detect (like'..
-                ' starving caged animals).',
-}
-
-function RepeatAutostart:init()
-    self.subviews.show_help_label.visible = false
-    self.subviews.launch.visible = false
-    local enabled_map = {}
-    local ok, f = pcall(io.open, REPEATS_FILE)
-    if ok and f then
-        for line in f:lines() do
-            line = line:trim()
-            if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^repeat %-%-name ([%S]+)')
-            if service then
-                enabled_map[service] = true
-            end
-            ::continue::
-        end
-    end
-    self.enabled_map = enabled_map
-end
-
-function RepeatAutostart:onInput(keys)
-    -- call grandparent's onInput since we don't want ConfigPanel's processing
-    local handled = RepeatAutostart.super.super.onInput(self, keys)
-    if keys._MOUSE_L then
-        local list = self.subviews.list.list
-        local idx = list:getIdxUnderMouse()
-        if idx then
-            local x = list:getMousePos()
-            if x <= 2 then
-                self:on_submit()
-            end
-        end
-    end
-    return handled
-end
-
-function RepeatAutostart:refresh()
-    local choices = {}
-    for _,name in ipairs(REPEATS_LIST) do
-        local enabled = self.enabled_map[name]
-        local text = {
-            {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
-            {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
-            {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
-            ' ',
-            name,
-        }
-        table.insert(choices,
-            {text=text, desc=REPEATS[name].desc, search_key=name,
-             name=name, enabled=enabled})
-    end
-    local list = self.subviews.list
-    local filter = list:getFilter()
-    local selected = list:getSelected()
-    list:setChoices(choices)
-    list:setFilter(filter, selected)
-    list.edit:setFocus(true)
-end
-
-function RepeatAutostart:on_submit()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    self.enabled_map[choice.name] = not choice.enabled
-    local run_commands = dfhack.isMapLoaded()
-
-    local save_fn = function(f)
-        for name,enabled in pairs(self.enabled_map) do
-            if enabled then
-                local command_str = ('repeat --name %s %s\n'):
-                        format(name, table.concat(REPEATS[name].command, ' '))
-                f:write(command_str)
-                if run_commands then
-                    dfhack.run_command(command_str) -- actually start it up too
-                end
-            elseif run_commands then
-                repeatUtil.cancel(name)
-            end
-        end
-    end
-    save_file(REPEATS_FILE, save_fn)
-    self:refresh()
+    dialogs.showMessage('Success', 'Default preference settings restored.')
 end
 
 --
@@ -874,12 +936,11 @@ function ControlPanel:init()
         widgets.TabBar{
             frame={t=0},
             labels={
-                'Fort',
-                'Maintenance',
-                'System',
-                'Overlays',
+                'Automation',
+                'Bugfixes',
+                'Gameplay',
+                'UI Overlays',
                 'Preferences',
-                'Autostart',
             },
             on_select=self:callback('set_page'),
             get_cur_page=function() return self.subviews.pages:getSelected() end,
@@ -888,12 +949,11 @@ function ControlPanel:init()
             view_id='pages',
             frame={t=5, l=0, b=0, r=0},
             subviews={
-                FortServices{},
-                RepeatAutostart{},
-                SystemServices{},
+                Automation{},
+                Bugfixes{},
+                Gameplay{},
                 Overlays{},
                 Preferences{},
-                FortServicesAutostart{},
             },
         },
     }
@@ -926,6 +986,11 @@ end
 
 function ControlPanelScreen:onDismiss()
     view = nil
+end
+
+if not view and ({...})[1] == '--check-defaults' then
+    init_config_state()
+    return
 end
 
 view = view and view:raise() or ControlPanelScreen{}:show()
