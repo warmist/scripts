@@ -50,10 +50,10 @@ local REGISTRY = {
     {command='work-now', tab='automation', mode='enable'},
 
     -- bugfix tools
-    {command='dead-units-burrow', tab='bugfix', mode='repeat', default=true,
+    {command='fix/blood-del', tab='bugfix', mode='run', default=true},
+    {command='fix/dead-units', tab='bugfix', mode='repeat', default=true,
         desc='Fix units still being assigned to burrows after death.',
         params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'fix/dead-units', '--burrow', '-q', ']'}},
-    {command='fix/blood-del', tab='bugfix', mode='run', default=true},
     {command='fix/empty-wheelbarrows', tab='bugfix', mode='repeat', default=true,
         desc='Make abandoned full wheelbarrows usable again.',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/empty-wheelbarrows', '-q', ']'}},
@@ -179,7 +179,7 @@ local function write_init_files(config_map)
             local prefix = config_map[command] and '' or '##'
             if data.mode == 'run' then
                 f:write(('%son-new-fortress %s\n'):format(prefix, command))
-            elseif data.mode == 'enable'
+            elseif data.mode == 'enable' then
                 f:write(('%son-new-fortress enable %s\n'):format(prefix, command))
             else
                 error('unhandled mode: '.. data.mode)
