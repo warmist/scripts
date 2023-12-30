@@ -2,7 +2,6 @@
 
 local argparse = require('argparse')
 local common = reqscript('internal/control-panel/common')
-local helpdb = require('helpdb')
 local json = require('json')
 local persist = require('persist-table')
 local registry = reqscript('internal/control-panel/registry')
@@ -16,11 +15,11 @@ local function apply_system_config()
     local enabled_map =common.get_enabled_map()
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
         if data.mode == 'system_enable' then
-            common.apply(data, enabled_map)
+            common.apply_command(data, enabled_map)
         end
     end
     for _, data in ipairs(registry.PREFERENCES_BY_IDX) do
-        local value = safe_index(config.data.preferences, data.name, 'val')
+        local value = safe_index(common.config.data.preferences, data.name, 'val')
         if value ~= nil then
             data.set_fn(value)
         end
@@ -31,7 +30,7 @@ local function apply_autostart_config()
     local enabled_map =common.get_enabled_map()
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
         if data.mode == 'enable' or data.mode == 'run' then
-            common.apply(data, enabled_map)
+            common.apply_command(data, enabled_map)
         end
     end
 end
@@ -41,9 +40,10 @@ local function apply_fort_loaded_config()
         apply_autostart_config()
         persist.GlobalTable[GLOBAL_KEY] = json.encode({autostart_done=true})
     end
+    local enabled_repeats = json.decode(persist.GlobalTable[common.REPEATS_GLOBAL_KEY] or '')
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
-        if data.mode == 'repeat' then
-            common.apply(data)
+        if data.mode == 'repeat' and enabled_repeats[data.command] then
+            common.apply_command(data)
         end
     end
 end
@@ -65,32 +65,11 @@ local function print_header(header)
     print(('-'):rep(#header))
 end
 
-local function get_first_word(str)
-    local word = str:trim():split(' +')[1]
-    if word:startswith(':') then word = word:sub(2) end
-    return word
-end
-
-local function command_passes_filters(data, target_group, first_word, filter_strs)
-    if data.group ~= target_group then
-        return false
-    end
-    if dfhack.getHideArmokTools() and helpdb.is_entry(first_word)
-        and helpdb.get_entry_tags(first_word).armok
-    then
-        return false
-    end
-    if not utils.search_text(data.command, filter_strs) then
-        return false
-    end
-    return true
-end
-
 local function list_command_group(group, filter_strs, enabled_map)
     local header = ('Group: %s'):format(group)
     for idx, data in ipairs(registry.COMMANDS_BY_IDX) do
-        local first_word = get_first_word(data.command)
-        if not command_passes_filters(data, group, first_word, filter_strs) then
+        local first_word = common.get_first_word(data.command)
+        if not common.command_passes_filters(data, group, first_word, filter_strs) then
             goto continue
         end
         if header then
@@ -103,13 +82,12 @@ local function list_command_group(group, filter_strs, enabled_map)
             extra = ' (global)'
         end
         print(('%d) %s%s'):format(idx, data.command, extra))
-        local desc = data.desc or
-                (helpdb.is_entry(first_word) and helpdb.get_entry_short_help(first_word))
-        if desc then
+        local desc = common.get_description(data)
+        if #desc > 0 then
             print(('        %s'):format(desc))
         end
         local default_value = not not data.default
-        local current_value = safe_index(config.data.commands, data.command, 'autostart')
+        local current_value = safe_index(common.config.data.commands, data.command, 'autostart')
         if current_value == nil then
             current_value = default_value
         end
@@ -164,7 +142,10 @@ local function do_enable_disable(which, entries)
     local enabled_map =common.get_enabled_map()
     for _, entry in ipairs(entries) do
         local data = get_command_data(entry)
-        if common.apply(data, enabled_map, which == 'en') then
+        if data.mode ~= 'system_enable' and not dfhack.world.isFortressMode() then
+            qerror('must have a loaded fortress to enable '..data.name)
+        end
+        if common.apply_command(data, enabled_map, which == 'en') then
             print(('%sabled %s'):format(which, entry))
         end
     end
@@ -184,15 +165,11 @@ local function do_autostart_noautostart(which, entries)
         if not data then
             qerror(('autostart command or index not found: "%s"'):format(entry))
         else
-            local enabled = which == 'en'
-            if enabled ~= not not data.default then
-                config.data.commands[entry].autostart = enabled
-            else
-                config.data.commands[entry] = nil
-            end
+            common.set_autostart(data, which == 'en')
             print(('%sabled autostart for: %s'):format(which, entry))
         end
     end
+    common.config:write()
 end
 
 local function do_autostart(entries)
@@ -209,27 +186,8 @@ local function do_set(params)
     if not data then
         qerror(('preference name not found: "%s"'):format(name))
     end
-    local expected_type = type(data.default)
-    if expected_type == 'boolean' then
-        value = argparse.boolean(value)
-    end
-    local actual_type = type(value)
-    if actual_type ~= expected_type then
-        qerror(('"%s" has an unexpected value type: got: %s; expected: %s'):format(
-            params[2], actual_type, expected_type))
-    end
-    if data.min and data.min > value then
-        qerror(('value too small: got: %s; minimum: %s'):format(value, data.min))
-    end
-    data.set_fn(value)
-    if data.default ~= safe_index(config.data.preferences, name, 'val') then
-        config.data.preferences[name] = {
-            val=value,
-            version=data.version,
-        }
-    else
-        config.data.preferences[name] = nil
-    end
+    common.set_preference(data, value)
+    common.config:write()
 end
 
 local function do_reset(params)
@@ -238,8 +196,8 @@ local function do_reset(params)
     if not data then
         qerror(('preference name not found: "%s"'):format(name))
     end
-    data.set_fn(data.default)
-    config.data.preferences[name] = nil
+    common.set_preference(data, data.default)
+    common.config:write()
 end
 
 local command_switch = {

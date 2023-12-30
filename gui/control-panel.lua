@@ -1,223 +1,12 @@
+local common = reqscript('internal/control-panel/common')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local textures = require('gui.textures')
 local helpdb = require('helpdb')
 local overlay = require('plugins.overlay')
-local repeatUtil = require('repeat-util')
-local textures = require('gui.textures')
+local registry = reqscript('internal/control-panel/registry')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-
-
-local REGISTRY = {
-    -- automation tools
-    {command='autobutcher', tab='automation', mode='enable'},
-    {command='autobutcher target 10 10 14 2 BIRD_GOOSE', tab='automation', mode='run'},
-    {command='autobutcher target 10 10 14 2 BIRD_TURKEY', tab='automation', mode='run'},
-    {command='autobutcher target 10 10 14 2 BIRD_CHICKEN', tab='automation', mode='run'},
-    {command='autochop', tab='automation', mode='enable'},
-    {command='autoclothing', tab='automation', mode='enable'},
-    {command='autofarm', tab='automation', mode='enable'},
-    {command='autofarm threshold 150 grass_tail_pig', tab='automation', mode='run'},
-    {command='autofish', tab='automation', mode='enable'},
-    --{command='autolabor', tab='automation', mode='enable'}, -- hide until it works better
-    {command='automilk', tab='automation', mode='repeat',
-        desc='Automatically milk creatures that are ready for milking.',
-        params={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', '"{\\"job\\":\\"MilkCreature\\",\\"item_conditions\\":[{\\"condition\\":\\"AtLeast\\",\\"value\\":2,\\"flags\\":[\\"empty\\"],\\"item_type\\":\\"BUCKET\\"}]}"', ']'}},
-    {command='autonestbox', tab='automation', mode='enable'},
-    {command='autoshear', tab='automation', mode='repeat',
-        desc='Automatically shear creatures that are ready for shearing.',
-        params={'--time', '14', '--timeUnits', 'days', '--command', '[', 'workorder', 'ShearCreature', ']'}},
-    {command='autoslab', tab='automation', mode='enable'},
-    {command='ban-cooking all', tab='automation', mode='run'},
-    {command='buildingplan set boulders false', tab='automation', mode='run'},
-    {command='buildingplan set logs false', tab='automation', mode='run'},
-    {command='cleanowned', tab='automation', mode='repeat',
-        desc='Encourage dwarves to drop tattered clothing and grab new ones.',
-        params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
-    {command='nestboxes', tab='automation', mode='enable'},
-    {command='orders-sort', tab='automation', mode='repeat',
-        desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
-        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'orders', 'sort', ']'}},
-    {command='prioritize', tab='automation', mode='enable'},
-    {command='seedwatch', tab='automation', mode='enable'},
-    {command='suspendmanager', tab='automation', mode='enable'},
-    {command='tailor', tab='automation', mode='enable'},
-    {command='work-now', tab='automation', mode='enable'},
-
-    -- bugfix tools
-    {command='fix/blood-del', tab='bugfix', mode='run', default=true},
-    {command='fix/dead-units', tab='bugfix', mode='repeat', default=true,
-        desc='Fix units still being assigned to burrows after death.',
-        params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'fix/dead-units', '--burrow', '-q', ']'}},
-    {command='fix/empty-wheelbarrows', tab='bugfix', mode='repeat', default=true,
-        desc='Make abandoned full wheelbarrows usable again.',
-        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/empty-wheelbarrows', '-q', ']'}},
-    {command='fix/general-strike', tab='bugfix', mode='repeat', default=true,
-        desc='Prevent dwarves from getting stuck and refusing to work.',
-        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
-    {command='fix/protect-nicks', tab='bugfix', mode='enable', default=true},
-    {command='fix/stuck-instruments', tab='bugfix', mode='repeat', default=true,
-        desc='Fix activity references on stuck instruments to make them usable again.',
-        params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
-    {command='preserve-tombs', tab='bugfix', mode='enable', default=true},
-
-    -- gameplay tools
-    {command='combine', tab='gameplay', mode='repeat',
-        desc='Combine partial stacks in stockpiles into full stacks.',
-        params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
-    {command='drain-aquifer --top 2', tab='gameplay', mode='run'},
-    {command='dwarfvet', tab='gameplay', mode='enable'},
-    {command='emigration', tab='gameplay', mode='enable'},
-    {command='fastdwarf', tab='gameplay', mode='enable'},
-    {command='hermit', tab='gameplay', mode='enable'},
-    {command='hide-tutorials', tab='gameplay', mode='system_enable'},
-    {command='light-aquifers-only', tab='gameplay', mode='run'},
-    {command='misery', tab='gameplay', mode='enable'},
-    {command='orders-reevaluate', tab='gameplay', mode='repeat',
-        desc='Invalidates work orders once a month, allowing conditions to be rechecked.',
-        params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
-    {command='starvingdead', tab='gameplay', mode='enable'},
-    {command='warn-starving', tab='gameplay', mode='repeat',
-        desc='Show a warning dialog when units are starving or dehydrated.',
-        params={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
-    {command='warn-stranded', tab='gameplay', mode='repeat',
-        desc='Show a warning dialog when units are stranded from all others.',
-        params={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
-}
-
-local PREFERENCES = {
-    ['dfhack']={
-        HIDE_CONSOLE_ON_STARTUP={label='Hide console on startup (MS Windows only)', type='bool', default=true,
-         desc='Hide the external DFHack terminal window on startup. Use the "show" command to unhide it.'},
-        HIDE_ARMOK_TOOLS={label='Mortal mode: hide "armok" tools', type='bool', default=false,
-         desc='Don\'t show tools that give you god-like powers wherever DFHack tools are listed.'},
-    },
-    ['gui']={
-        DEFAULT_INITIAL_PAUSE={label='DFHack tools autopause game', type='bool', default=true,
-         desc='Whether to pause the game when a DFHack tool window is shown.'},
-    },
-    ['gui.widgets']={
-        DOUBLE_CLICK_MS={label='Mouse double click speed (ms)', type='int', default=500, min=50,
-         desc='How long to wait for the second click of a double click, in ms.'},
-        SCROLL_INITIAL_DELAY_MS={label='Mouse initial scroll repeat delay (ms)', type='int', default=300, min=5,
-         desc='The delay before scrolling quickly when holding the mouse button down on a scrollbar, in ms.'},
-        SCROLL_DELAY_MS={label='Mouse scroll repeat delay (ms)', type='int', default=20, min=5,
-         desc='The delay between events when holding the mouse button down on a scrollbar, in ms.'},
-    },
-    ['utils']={
-        FILTER_FULL_TEXT={label='DFHack searches full text', type='bool', default=false,
-         desc='When searching, choose whether to match anywhere in the text (true) or just at the start of words (false).'},
-    },
-}
-local CPP_PREFERENCES = {
-    {
-        label='Prevent duplicate key events',
-        type='bool',
-        default=true,
-        desc='Whether to additionally pass key events through to DF when DFHack keybindings are triggered.',
-        init_fmt=':lua dfhack.internal.setSuppressDuplicateKeyboardEvents(%s)',
-        get_fn=dfhack.internal.getSuppressDuplicateKeyboardEvents,
-        set_fn=dfhack.internal.setSuppressDuplicateKeyboardEvents,
-    },
-}
-
-local function read_init_file(fname, config_map, matchers)
-    local ok, f = pcall(io.open, SYSTEM_INIT_FILE)
-    if not ok or not f then return end
-    for line in f:lines() do
-        line = line:trim()
-        if #line == 0 or (line:startswith('#') and not line:startswith('##')) then
-            goto continue
-        end
-        local negate, service
-        for _, matcher in ipairs(matchers) do
-            negate, service = line:match(matcher)
-            if service then
-                config_map[service] = #negate == 0
-                break
-            end
-        end
-        ::continue::
-    end
-end
-
--- save_fn takes the file as a param and should call f:write() to write data
-local function save_file(path, save_fn)
-    local ok, f = pcall(io.open, path, 'w')
-    if not ok or not f then
-        dialogs.showMessage('Error',
-            ('Cannot open file for writing: "%s"'):format(path))
-        return
-    end
-    f:write('# DO NOT EDIT THIS FILE\n')
-    f:write('# Please use gui/control-panel to modify the contents of this file\n\n')
-    save_fn(f)
-    f:close()
-end
-
-local function write_init_files(config_map)
-    save_file(SYSTEM_INIT_FILE, function(f)
-        for _,data in ipairs(REGISTRY) do
-            if data.mode ~= 'system_enable' then goto continue end
-            local command = data.command
-            local prefix = config_map[command] and '' or '##'
-            f:write(('%senable %s\n'):format(prefix, command))
-            ::continue::
-        end
-    end)
-    save_file(AUTOSTART_FILE, function(f)
-        for _,data in ipairs(REGISTRY) do
-            if data.mode == 'system_enable' or data.mode == 'repeat' then
-                goto continue
-            end
-            local command = data.command
-            local prefix = config_map[command] and '' or '##'
-            if data.mode == 'run' then
-                f:write(('%son-new-fortress %s\n'):format(prefix, command))
-            elseif data.mode == 'enable' then
-                f:write(('%son-new-fortress enable %s\n'):format(prefix, command))
-            else
-                error('unhandled mode: '.. data.mode)
-            end
-            ::continue::
-        end
-    end)
-    save_file(REPEATS_FILE, function(f)
-        for _,data in ipairs(REGISTRY) do
-            if data.mode ~= 'repeat' then goto continue end
-            local command = data.command
-            local prefix = config_map[command] and '' or '##'
-            local command_str = ('%srepeat --name %s %s\n'):
-                format(prefix, command, table.concat(data.params, ' '))
-            f:write(command_str)
-            ::continue::
-        end
-    end)
-end
-
-local function init_config_state()
-    local config_map = {}
-    read_init_file(SYSTEM_INIT_FILE, config_map, {
-        '^(#?#?)enable ([%S]+)$',
-    })
-    read_init_file(AUTOSTART_FILE, config_map, {
-        '^(#?#?)on%-new%-fortress enable ([%S]+)$',
-        '^(#?#?)on%-new%-fortress (.+)',
-    })
-    read_init_file(REPEATS_FILE, config_map, {
-        '^(#?#?)repeat %-%-name ([%S]+)',
-    })
-
-    for _, data in ipairs(REGISTRY) do
-        if data.default and config_map[data.command] == nil then
-            config_map[data.command] = true
-        end
-    end
-
-    write_init_files(config_map)
-
-    return config_map
-end
 
 local function get_icon_pens()
     local enabled_pen_left = dfhack.pen.parse{fg=COLOR_CYAN,
@@ -254,16 +43,90 @@ local ENABLED_PEN_LEFT, ENABLED_PEN_CENTER, ENABLED_PEN_RIGHT,
 -- ConfigPanel
 --
 
+-- provides common structure across control panel tabs
 ConfigPanel = defclass(ConfigPanel, widgets.Panel)
 ConfigPanel.ATTRS{
     intro_text=DEFAULT_NIL,
-    is_enableable=DEFAULT_NIL,
-    is_configurable=DEFAULT_NIL,
-    select_label='Toggle enabled',
 }
 
 function ConfigPanel:init()
+    local main_panel = widgets.Panel{
+        frame={t=0, b=7},
+        autoarrange_subviews=true,
+        autoarrange_gap=1,
+        subviews={
+            widgets.WrappedLabel{
+                frame={t=0},
+                text_to_wrap=self.intro_text,
+            },
+            -- extended by subclasses
+        },
+    }
+    self:init_main_panel(main_panel)
+
+    local footer = widgets.Panel{
+        view_id='footer',
+        frame={b=0, h=3},
+        -- extended by subclasses
+    }
+    self:init_footer(footer)
+
     self:addviews{
+        main_panel,
+        widgets.WrappedLabel{
+            view_id='desc',
+            frame={b=4, h=2},
+            auto_height=false,
+        },
+        footer,
+    }
+end
+
+-- overridden by subclasses
+function ConfigPanel:init_main_panel(panel)
+end
+
+-- overridden by subclasses
+function ConfigPanel:init_footer(panel)
+end
+
+-- overridden by subclasses
+function ConfigPanel:refresh()
+end
+
+-- attach to lists in subclasses
+-- choice.data is an entry from one of the registry tables
+function ConfigPanel:on_select(_, choice)
+    local desc = self.subviews.desc
+    desc.text_to_wrap = choice and common.get_description(choice.data) or ''
+    if desc.frame_body then
+        desc:updateLayout()
+    end
+end
+
+--[[
+--
+-- Services
+--
+
+Services = defclass(Services, ConfigPanel)
+Services.ATTRS{
+    group=DEFAULT_NIL,
+}
+
+function Services:init()
+    self:addviews{
+        widgets.TabBar{
+            frame={t=0},
+            labels={
+                'Automation',
+                'Bug Fixes',
+                'Gameplay',
+            },
+            on_select=function(val) self.subpage = val self:refresh() end,
+            get_cur_page=function() return self.subpage end,
+        },
+
         widgets.Panel{
             frame={t=0, b=7},
             autoarrange_subviews=true,
@@ -298,14 +161,14 @@ function ConfigPanel:init()
         widgets.HotkeyLabel{
             view_id='show_help_label',
             frame={b=1, l=0},
-            label='Show tool help or run commands',
+            label='Show tool help or run custom command',
             key='CUSTOM_CTRL_H',
             on_activate=self:callback('show_help')
         },
         widgets.HotkeyLabel{
             view_id='launch',
             frame={b=0, l=0},
-            label='Launch config UI',
+            label='Launch tool-specific config UI',
             key='CUSTOM_CTRL_G',
             enabled=self.is_configurable,
             on_activate=self:callback('launch_config'),
@@ -313,7 +176,18 @@ function ConfigPanel:init()
     }
 end
 
-function ConfigPanel:onInput(keys)
+function Services:get_choices()
+    local enabled_map = common.get_enabled_map()
+    local choices = {}
+    for _,data in ipairs(registry.COMMANDS_BY_IDX) do
+        if command_passes_filters(data, self.group) then
+            table.insert(choices, {data=data, enabled=enabled_map[data.command]})
+        end
+    end
+    return choices
+end
+
+function Services:onInput(keys)
     local handled = ConfigPanel.super.onInput(self, keys)
     if keys._MOUSE_L then
         local list = self.subviews.list.list
@@ -332,9 +206,11 @@ function ConfigPanel:onInput(keys)
     return handled
 end
 
+
+
 local COMMAND_REGEX = '^([%w/_-]+)'
 
-function ConfigPanel:refresh()
+function Services:refresh()
     local choices = {}
     for _,choice in ipairs(self:get_choices()) do
         local command = choice.target or choice.command
@@ -379,7 +255,7 @@ function ConfigPanel:refresh()
     list.edit:setFocus(true)
 end
 
-function ConfigPanel:on_select(idx, choice)
+function Services:on_select(idx, choice)
     local desc = self.subviews.desc
     desc.text_to_wrap = choice and choice.desc or ''
     if desc.frame_body then
@@ -391,7 +267,7 @@ function ConfigPanel:on_select(idx, choice)
     end
 end
 
-function ConfigPanel:on_submit()
+function Services:on_submit()
     if not utils.getval(self.is_enableable) then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
@@ -403,263 +279,59 @@ function ConfigPanel:on_submit()
     self:refresh()
 end
 
-function ConfigPanel:show_help()
+function Services:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     local command = choice.target:match(COMMAND_REGEX)
     dfhack.run_command('gui/launcher', command .. ' ')
 end
 
-function ConfigPanel:launch_config()
+function Services:launch_config()
     if not utils.getval(self.is_configurable) then return false end
     _,choice = self.subviews.list:getSelected()
     if not choice or not choice.gui_config then return end
     dfhack.run_command(choice.gui_config)
 end
 
---
--- Services
---
-
-Services = defclass(Services, ConfigPanel)
-Services.ATTRS{
-    services_list=DEFAULT_NIL,
-}
-
-function Services:get_enabled_map()
-    local enabled_map = {}
-    local output = dfhack.run_command_silent('enable'):split('\n+')
-    for _,line in ipairs(output) do
-        local _,_,command,enabled_str,extra = line:find('%s*(%S+):%s+(%S+)%s*(.*)')
-        if enabled_str then
-            enabled_map[command] = enabled_str == 'on'
-        end
-    end
-    return enabled_map
-end
-
-local function get_first_word(text)
-    local word = text:trim():split(' +')[1]
-    if word:startswith(':') then word = word:sub(2) end
-    return word
-end
-
-function Services:get_choices()
-    local enabled_map = self:get_enabled_map()
-    local choices = {}
-    local hide_armok = dfhack.getHideArmokTools()
-    for _,service in ipairs(self.services_list) do
-        local entry_name = get_first_word(service)
-        if not hide_armok or not helpdb.is_entry(entry_name)
-                or not helpdb.get_entry_tags(entry_name).armok then
-            table.insert(choices, {target=service, enabled=enabled_map[service]})
-        end
-    end
-    return choices
-end
 
 --
--- FortServices
+-- AutomationServices
 --
 
-FortServices = defclass(FortServices, Services)
-FortServices.ATTRS{
-    is_enableable=dfhack.world.isFortressMode,
-    is_configurable=function() return dfhack.world.isFortressMode() end,
+AutomationServices = defclass(AutomationServices, Services)
+AutomationServices.ATTRS{
     intro_text='These tools can only be enabled when you have a fort loaded,'..
                 ' but once you enable them, they will stay enabled when you'..
                 ' save and reload your fort. If you want them to be'..
                 ' auto-enabled for new forts, please see the "Autostart" tab.',
-    services_list=FORT_SERVICES,
+    group='automation',
 }
 
 --
--- FortServicesAutostart
+-- BugfixServices
 --
 
-FortServicesAutostart = defclass(FortServicesAutostart, Services)
-FortServicesAutostart.ATTRS{
-    is_enableable=true,
-    is_configurable=false,
+BugfixServices = defclass(BugfixServices, Services)
+BugfixServices.ATTRS{
     intro_text='Tools that are enabled on this page will be auto-enabled for'..
                 ' you when you start a new fort, using the default'..
                 ' configuration. To see tools that are enabled right now in'..
                 ' an active fort, please see the "Fort" tab.',
-    services_list=FORT_AUTOSTART,
+    group='bugfix',
 }
 
-function FortServicesAutostart:init()
-    local enabled_map = {}
-    local ok, f = pcall(io.open, AUTOSTART_FILE)
-    if ok and f then
-        local services_set = utils.invert(FORT_AUTOSTART)
-        for line in f:lines() do
-            line = line:trim()
-            if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^on%-new%-fortress enable ([%S]+)$')
-                    or line:match('^on%-new%-fortress (.+)')
-            if service and services_set[service] then
-                enabled_map[service] = true
-            end
-            ::continue::
-        end
-    end
-    self.enabled_map = enabled_map
-end
-
-function FortServicesAutostart:get_enabled_map()
-    return self.enabled_map
-end
-
-function FortServicesAutostart:on_submit()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    self.enabled_map[choice.target] = not choice.enabled
-
-    local save_fn = function(f)
-        for service,enabled in pairs(self.enabled_map) do
-            if enabled then
-                if service:match(' ') then
-                    f:write(('on-new-fortress %s\n'):format(service))
-                else
-                    f:write(('on-new-fortress enable %s\n'):format(service))
-                end
-            end
-        end
-    end
-    save_file(AUTOSTART_FILE, save_fn)
-    self:refresh()
-end
-
 --
--- SystemServices
+-- BugfixServices
 --
 
-local function system_service_is_configurable(gui_config)
-    return gui_config ~= 'gui/automelt' or dfhack.world.isFortressMode()
-end
-
-SystemServices = defclass(SystemServices, Services)
-SystemServices.ATTRS{
-    title='System',
-    is_enableable=true,
-    is_configurable=system_service_is_configurable,
-    intro_text='These are DFHack system services that are not bound to' ..
-            ' a specific fort. Some of these are critical DFHack services' ..
-            ' that can be manually disabled, but will re-enable themselves' ..
-            ' when DF restarts.',
-    services_list=SYSTEM_SERVICES,
+GameplayServices = defclass(GameplayServices, Services)
+GameplayServices.ATTRS{
+    intro_text='Tools that are enabled on this page will be auto-enabled for'..
+                ' you when you start a new fort, using the default'..
+                ' configuration. To see tools that are enabled right now in'..
+                ' an active fort, please see the "Fort" tab.',
+    group='gameplay',
 }
-
-function SystemServices:on_submit()
-    SystemServices.super.on_submit(self)
-
-    local enabled_map = self:get_enabled_map()
-    local save_fn = function(f)
-        for _,service in ipairs(SYSTEM_USER_SERVICES) do
-            if enabled_map[service] then
-                f:write(('enable %s\n'):format(service))
-            end
-        end
-    end
-    save_file(SYSTEM_INIT_FILE, save_fn)
-end
-
---
--- RepeatAutostart
---
-
-RepeatAutostart = defclass(RepeatAutostart, ConfigPanel)
-RepeatAutostart.ATTRS{
-    title='Periodic',
-    is_enableable=true,
-    is_configurable=false,
-    intro_text='Tools that can run periodically to fix bugs or warn you of'..
-                ' dangers that are otherwise difficult to detect (like'..
-                ' starving caged animals).',
-}
-
-function RepeatAutostart:init()
-    self.subviews.show_help_label.visible = false
-    self.subviews.launch.visible = false
-    local enabled_map = {}
-    local ok, f = pcall(io.open, REPEATS_FILE)
-    if ok and f then
-        for line in f:lines() do
-            line = line:trim()
-            if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^repeat %-%-name ([%S]+)')
-            if service then
-                enabled_map[service] = true
-            end
-            ::continue::
-        end
-    end
-    self.enabled_map = enabled_map
-end
-
-function RepeatAutostart:onInput(keys)
-    -- call grandparent's onInput since we don't want ConfigPanel's processing
-    local handled = RepeatAutostart.super.super.onInput(self, keys)
-    if keys._MOUSE_L then
-        local list = self.subviews.list.list
-        local idx = list:getIdxUnderMouse()
-        if idx then
-            local x = list:getMousePos()
-            if x <= 2 then
-                self:on_submit()
-            end
-        end
-    end
-    return handled
-end
-
-function RepeatAutostart:refresh()
-    local choices = {}
-    for _,name in ipairs(REPEATS_LIST) do
-        local enabled = self.enabled_map[name]
-        local text = {
-            {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
-            {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
-            {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
-            ' ',
-            name,
-        }
-        table.insert(choices,
-            {text=text, desc=REPEATS[name].desc, search_key=name,
-             name=name, enabled=enabled})
-    end
-    local list = self.subviews.list
-    local filter = list:getFilter()
-    local selected = list:getSelected()
-    list:setChoices(choices)
-    list:setFilter(filter, selected)
-    list.edit:setFocus(true)
-end
-
-function RepeatAutostart:on_submit()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    self.enabled_map[choice.name] = not choice.enabled
-    local run_commands = dfhack.isMapLoaded()
-
-    local save_fn = function(f)
-        for name,enabled in pairs(self.enabled_map) do
-            if enabled then
-                local command_str = ('repeat --name %s %s\n'):
-                        format(name, table.concat(REPEATS[name].command, ' '))
-                f:write(command_str)
-                if run_commands then
-                    dfhack.run_command(command_str) -- actually start it up too
-                end
-            elseif run_commands then
-                repeatUtil.cancel(name)
-            end
-        end
-    end
-    save_file(REPEATS_FILE, save_fn)
-    self:refresh()
-end
 
 --
 -- Overlays
@@ -667,11 +339,10 @@ end
 
 Overlays = defclass(Overlays, ConfigPanel)
 Overlays.ATTRS{
-    title='Overlays',
     is_enableable=true,
     is_configurable=false,
     intro_text='These are DFHack overlays that add information and'..
-                ' functionality to vanilla screens.',
+                ' functionality to various native DF screens.',
 }
 
 function Overlays:init()
@@ -696,15 +367,15 @@ function Overlays:get_choices()
     end
     return choices
 end
-
+]]
 --
--- Preferences
+-- PreferencesTab
 --
 
 IntegerInputDialog = defclass(IntegerInputDialog, widgets.Window)
 IntegerInputDialog.ATTRS{
     visible=false,
-    frame={w=50, h=8},
+    frame={w=50, h=11},
     frame_title='Edit setting',
     frame_style=gui.PANEL_FRAME,
     on_hide=DEFAULT_NIL,
@@ -715,37 +386,53 @@ function IntegerInputDialog:init()
         widgets.Label{
             frame={t=0, l=0},
             text={
-                'Please enter a new value for ',
-                {text=function() return self.id or '' end},
+                'Please enter a new value for ', NEWLINE,
+                {
+                    gap=4,
+                    text=function() return self.id or '' end,
+                },
                 NEWLINE,
                 {text=self:callback('get_spec_str')},
             },
         },
         widgets.EditField{
             view_id='input_edit',
-            frame={t=3, l=0},
+            frame={t=4, l=0},
             on_char=function(ch) return ch:match('%d') end,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=0},
+            label='Save',
+            key='SELECT',
+            on_activate=function() self:hide(self.subviews.input_edit.text) end,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, r=0},
+            label='Reset to default',
+            key='CUSTOM_CTRL_G',
+            auto_width=true,
+            on_activate=function() self.subviews.input_edit:setText(tostring(self.data.default)) end,
         },
     }
 end
 
 function IntegerInputDialog:get_spec_str()
-    if not self.spec or (not self.spec.min and not self.spec.max) then
-        return ''
+    local data = self.data
+    local strs = {
+        ('default: %d'):format(data.default),
+    }
+    if data.min then
+        table.insert(strs, ('at least %d'):format(data.min))
     end
-    local strs = {}
-    if self.spec.min then
-        table.insert(strs, ('at least %d'):format(self.spec.min))
-    end
-    if self.spec.max then
-        table.insert(strs, ('at most %d'):format(self.spec.max))
+    if data.max then
+        table.insert(strs, ('at most %d'):format(data.max))
     end
     return ('(%s)'):format(table.concat(strs, ', '))
 end
 
-function IntegerInputDialog:show(id, spec, initial)
+function IntegerInputDialog:show(id, data, initial)
     self.visible = true
-    self.id, self.spec = id, spec
+    self.id, self.data = id, data
     local edit = self.subviews.input_edit
     edit:setText(tostring(initial))
     edit:setFocus(true)
@@ -761,33 +448,25 @@ function IntegerInputDialog:onInput(keys)
     if IntegerInputDialog.super.onInput(self, keys) then
         return true
     end
-    if keys.SELECT then
-        self:hide(self.subviews.input_edit.text)
-        return true
-    elseif keys.LEAVESCREEN or keys._MOUSE_R then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:hide()
         return true
     end
 end
 
-Preferences = defclass(Preferences, ConfigPanel)
-Preferences.ATTRS{
-    title='Preferences',
-    is_enableable=true,
-    is_configurable=true,
+PreferencesTab = defclass(PreferencesTab, ConfigPanel)
+PreferencesTab.ATTRS{
     intro_text='These are the customizable DFHack system settings.',
-    select_label='Edit setting',
 }
 
-function Preferences:init()
-    self.subviews.show_help_label.visible = false
-    self.subviews.launch.visible = false
-    self:addviews{
-        widgets.HotkeyLabel{
-            frame={b=0, l=0},
-            label='Restore defaults',
-            key='CUSTOM_CTRL_G',
-            on_activate=self:callback('restore_defaults')
+function PreferencesTab:init_main_panel(panel)
+    panel:addviews{
+        widgets.FilteredList{
+            frame={t=5},
+            view_id='list',
+            on_select=self:callback('on_select'),
+            on_double_click=self:callback('on_submit'),
+            row_height=2,
         },
         IntegerInputDialog{
             view_id='input_dlg',
@@ -796,9 +475,29 @@ function Preferences:init()
     }
 end
 
-function Preferences:onInput(keys)
-    -- call grandparent's onInput since we don't want ConfigPanel's processing
-    local handled = Preferences.super.super.onInput(self, keys)
+function PreferencesTab:init_footer(panel)
+    panel:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='Toggle/edit setting',
+            key='SELECT',
+            on_activate=self:callback('on_submit')
+        },
+        widgets.HotkeyLabel{
+            frame={t=2, l=0},
+            label='Restore defaults',
+            key='CUSTOM_CTRL_G',
+            on_activate=self:callback('restore_defaults')
+        },
+    }
+end
+
+function PreferencesTab:onInput(keys)
+    if self.subviews.input_dlg.visible then
+        self.subviews.input_dlg:onInput(keys)
+        return true
+    end
+    local handled = PreferencesTab.super.onInput(self, keys)
     if keys._MOUSE_L then
         local list = self.subviews.list.list
         local idx = list:getIdxUnderMouse()
@@ -822,24 +521,17 @@ local function make_preference_text(label, value)
     }
 end
 
-function Preferences:refresh()
+function PreferencesTab:refresh()
     if self.subviews.input_dlg.visible then return end
     local choices = {}
-    for ctx_name,settings in pairs(PREFERENCES) do
-        local ctx_env = require(ctx_name)
-        for id,spec in pairs(settings) do
-            local text = make_preference_text(spec.label, ctx_env[id])
-            table.insert(choices,
-                {text=text, desc=spec.desc, search_key=text[#text],
-                 ctx_env=ctx_env, id=id, spec=spec})
-        end
+    for _, data in ipairs(registry.PREFERENCES_BY_IDX) do
+        local text = make_preference_text(data.label, data.get_fn())
+        table.insert(choices, {
+            text=text,
+            search_key=text[#text],
+            data=data
+        })
     end
-    for _,spec in ipairs(CPP_PREFERENCES) do
-        local text = make_preference_text(spec.label, spec.get_fn())
-        table.insert(choices,
-            {text=text, desc=spec.desc, search_key=text[#text], spec=spec})
-    end
-    table.sort(choices, function(a, b) return a.spec.label < b.spec.label end)
     local list = self.subviews.list
     local filter = list:getFilter()
     local selected = list:getSelected()
@@ -848,68 +540,38 @@ function Preferences:refresh()
     list.edit:setFocus(true)
 end
 
-local function preferences_set_and_save(self, choice, val)
-    if choice.spec.set_fn then
-        choice.spec.set_fn(val)
-    else
-        choice.ctx_env[choice.id] = val
-    end
-    self:do_save()
+local function preferences_set_and_save(self, data, val)
+    common.set_preference(data, val)
+    common.config:write()
     self:refresh()
 end
 
-function Preferences:on_submit()
+function PreferencesTab:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    local cur_val
-    if choice.spec.get_fn then
-        cur_val = choice.spec.get_fn()
-    else
-        cur_val = choice.ctx_env[choice.id]
-    end
-    if choice.spec.type == 'bool' then
-        preferences_set_and_save(self, choice, not cur_val)
-    elseif choice.spec.type == 'int' then
-        self.subviews.input_dlg:show(choice.id or choice.spec.label, choice.spec, cur_val)
+    local data = choice.data
+    local cur_val = data.get_fn()
+    local data_type = type(data.default)
+    if data_type == 'boolean' then
+        preferences_set_and_save(self, data, not cur_val)
+    elseif data_type == 'number' then
+        self.subviews.input_dlg:show(data.label, data, cur_val)
     end
 end
 
-function Preferences:set_val(val)
+function PreferencesTab:set_val(val)
     _,choice = self.subviews.list:getSelected()
     if not choice or not val then return end
-    preferences_set_and_save(self, choice, val)
+    preferences_set_and_save(self, choice.data, val)
 end
 
-function Preferences:do_save()
-    local save_fn = function(f)
-        for ctx_name,settings in pairs(PREFERENCES) do
-            local ctx_env = require(ctx_name)
-            for id in pairs(settings) do
-                f:write((':lua require("%s").%s=%s\n'):format(
-                        ctx_name, id, tostring(ctx_env[id])))
-            end
-        end
-        for _,spec in ipairs(CPP_PREFERENCES) do
-            local line = spec.init_fmt:format(spec.get_fn())
-            f:write(('%s\n'):format(line))
-        end
+function PreferencesTab:restore_defaults()
+    for _,data in ipairs(registry.PREFERENCES_BY_IDX) do
+        common.set_preference(data, data.default)
     end
-    save_file(PREFERENCES_INIT_FILE, save_fn)
-end
-
-function Preferences:restore_defaults()
-    for ctx_name,settings in pairs(PREFERENCES) do
-        local ctx_env = require(ctx_name)
-        for id,spec in pairs(settings) do
-            ctx_env[id] = spec.default
-        end
-    end
-    for _,spec in ipairs(CPP_PREFERENCES) do
-        spec.set_fn(spec.default)
-    end
-    os.remove(PREFERENCES_INIT_FILE)
+    common.config:write()
     self:refresh()
-    dialogs.showMessage('Success', 'Default preference settings restored.')
+    dialogs.showMessage('Success', 'Default preferences restored.')
 end
 
 --
@@ -931,10 +593,9 @@ function ControlPanel:init()
         widgets.TabBar{
             frame={t=0},
             labels={
-                'Automation',
-                'Bugfixes',
-                'Gameplay',
-                'UI Overlays',
+                --'Enabled',
+                --'Autostart',
+                --'UI Overlays',
                 'Preferences',
             },
             on_select=self:callback('set_page'),
@@ -944,11 +605,10 @@ function ControlPanel:init()
             view_id='pages',
             frame={t=5, l=0, b=0, r=0},
             subviews={
-                Automation{},
-                Bugfixes{},
-                Gameplay{},
-                Overlays{},
-                Preferences{},
+                --EnabledTab{},
+                --AutostartTab{},
+                --OverlaysTab{},
+                PreferencesTab{},
             },
         },
     }
@@ -981,11 +641,6 @@ end
 
 function ControlPanelScreen:onDismiss()
     view = nil
-end
-
-if not view and ({...})[1] == '--check-defaults' then
-    init_config_state()
-    return
 end
 
 view = view and view:raise() or ControlPanelScreen{}:show()

@@ -1,10 +1,16 @@
 --@module = true
 
+local helpdb = require('helpdb')
+local json = require('json')
 local migration = reqscript('internal/control-panel/migration')
+local persist = require('persist-table')
 local registry = reqscript('internal/control-panel/registry')
 local repeatUtil = require('repeat-util')
+local utils = require('utils')
 
 local CONFIG_FILE = 'dfhack-config/control-panel.json'
+
+REPEATS_GLOBAL_KEY = 'control-panel-repeats'
 
 local function get_config()
     local f = json.open(CONFIG_FILE)
@@ -47,6 +53,12 @@ end
 
 config = config or get_config()
 
+local function unmunge_repeat_name(munged_name)
+    if munged_name:startswith('control-panel/') then
+        return munged_name:sub(15)
+    end
+end
+
 function get_enabled_map()
     local enabled_map = {}
     local output = dfhack.run_command_silent('enable'):split('\n+')
@@ -57,13 +69,58 @@ function get_enabled_map()
         end
     end
     -- repeat entries override tool names for control-panel
-    for name in pairs(repeatUtil.repeating) do
-        enabled_map[name] = true
+    for munged_name in pairs(repeatUtil.repeating) do
+        local name = unmunge_repeat_name(munged_name)
+        if name then
+            enabled_map[name] = true
+        end
     end
     return enabled_map
 end
 
-function apply(data, enabled_map, enabled)
+local function get_first_word(str)
+    local word = str:trim():split(' +')[1]
+    if word:startswith(':') then word = word:sub(2) end
+    return word
+end
+
+function command_passes_filters(data, target_group, filter_strs)
+    if data.group ~= target_group then
+        return false
+    end
+    filter_strs = filter_strs or {}
+    local first_word = get_first_word(data.command)
+    if dfhack.getHideArmokTools() and helpdb.is_entry(first_word)
+        and helpdb.get_entry_tags(first_word).armok
+    then
+        return false
+    end
+    if not utils.search_text(data.command, filter_strs) then
+        return false
+    end
+    return true
+end
+
+function get_description(data)
+    if data.desc then
+        return data.desc
+    end
+    local first_word = get_first_word(data.command)
+    return helpdb.is_entry(first_word) and helpdb.get_entry_short_help(first_word) or ''
+end
+
+local function persist_enabled_repeats()
+    local cp_repeats = {}
+    for munged_name in pairs(repeatUtil.repeating) do
+        local name = unmunge_repeat_name(munged_name)
+        if name then
+            cp_repeats[name] = true
+        end
+    end
+    persist.GlobalTable[REPEATS_GLOBAL_KEY] = json.encode(cp_repeats)
+end
+
+function apply_command(data, enabled_map, enabled)
     enabled_map = enabled_map or {}
     if enabled == nil then
         enabled = safe_index(config.data.commands, data.command, 'autostart')
@@ -78,13 +135,15 @@ function apply(data, enabled_map, enabled)
             dfhack.run_command({enabled and 'enable' or 'disable', data.command})
         end
     elseif data.mode == 'repeat' then
+        local munged_name = 'control-panel/' .. data.command
         if enabled then
             local command_str = ('repeat --name %s %s\n'):
-                    format(data.command, table.concat(data.params, ' '))
+                    format(munged_name, table.concat(data.params, ' '))
             dfhack.run_command(command_str)
         else
-            repeatUtil.cancel(data.command)
+            repeatUtil.cancel(munged_name)
         end
+        persist_enabled_repeats()
     elseif data.mode == 'run' then
         if enabled then
             dfhack.run_command(data.command)
@@ -94,4 +153,40 @@ function apply(data, enabled_map, enabled)
         return false
     end
     return true
+end
+
+function set_preference(data, in_value)
+    local expected_type = type(data.default)
+    local value = in_value
+    if expected_type == 'boolean' and type(value) ~= 'boolean' then
+        value = argparse.boolean(value)
+    end
+    local actual_type = type(value)
+    if actual_type ~= expected_type then
+        qerror(('"%s" has an unexpected value type: got: %s; expected: %s'):format(
+            in_value, actual_type, expected_type))
+    end
+    if data.min and data.min > value then
+        qerror(('value too small: got: %s; minimum: %s'):format(value, data.min))
+    end
+    data.set_fn(value)
+    if data.default ~= safe_index(config.data.preferences, data.name, 'val') then
+        config.data.preferences[data.name] = {
+            val=value,
+            version=data.version,
+        }
+    else
+        config.data.preferences[data.name] = nil
+    end
+end
+
+function set_autostart(data, enabled)
+    if enabled ~= not not data.default then
+        config.data.commands[data.command] = {
+            autostart=enabled,
+            version=data.version,
+        }
+    else
+        config.data.commands[data.command] = nil
+    end
 end
