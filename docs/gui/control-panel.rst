@@ -76,7 +76,7 @@ The preferences tab allows you to change DFHack's internal settings and
 defaults, like whether DFHack's "mortal mode" is enabled -- hiding the god-mode
 tools from the UI, whether DFHack tools pause the game when they come up, or how
 long you can take between clicks and still have it count as a double-click.
-Click on the gear icon or hit :kdb:`Enter` to toggle or edit the selected
+Click on the gear icon or hit :kbd:`Enter` to toggle or edit the selected
 preference.
 
 Usage
