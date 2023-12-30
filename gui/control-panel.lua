@@ -150,6 +150,8 @@ function CommandTab:init_main_panel(panel)
     panel:addviews{
         widgets.TabBar{
             frame={t=5},
+            key='CUSTOM_CTRL_N',
+            key_back='CUSTOM_CTRL_M',
             labels={
                 'Automation',
                 'Bug Fixes',
@@ -195,10 +197,14 @@ function CommandTab:init_footer(panel)
     }
 end
 
+local function launch_help(command)
+    dfhack.run_command('gui/launcher', command .. ' ')
+end
+
 function CommandTab:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    dfhack.run_command('gui/launcher', choice.data.command .. ' ')
+    launch_help(choice.data.command)
 end
 
 function CommandTab:has_config()
@@ -489,7 +495,14 @@ function OverlaysTab:init_footer(panel)
         },
         widgets.HotkeyLabel{
             frame={t=1, l=0},
-            label='Launch overlay widget repositioning UI',
+            label='Show overlay help',
+            auto_width=true,
+            key='CUSTOM_CTRL_H',
+            on_activate=self:callback('show_help'),
+        },
+        widgets.HotkeyLabel{
+            frame={t=2, l=26},
+            label='Launch widget position adjustment UI',
             key='CUSTOM_CTRL_G',
             auto_width=true,
             on_activate=function() dfhack.run_script('gui/overlay') end,
@@ -506,6 +519,8 @@ function OverlaysTab:onInput(keys)
             local x = list:getMousePos()
             if x <= 2 then
                 self:on_submit()
+            elseif x >= 4 and x <= 6 then
+                self:show_help()
             end
         end
     end
@@ -517,6 +532,10 @@ local function make_overlay_text(label, enabled)
         {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
         {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
         {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
+        ' ',
+        {tile=BUTTON_PEN_LEFT},
+        {tile=HELP_PEN_CENTER},
+        {tile=BUTTON_PEN_RIGHT},
         ' ',
         label,
     }
@@ -533,8 +552,8 @@ function OverlaysTab:refresh()
             search_key=name,
             data={
                 name=name,
-                command='overlay',
-                desc=state.db[name].desc,
+                command=name:match('^(.-)%.') or 'overlay',
+                desc=state.db[name].widget.desc,
             },
             enabled=enabled,
         })
@@ -569,6 +588,12 @@ function OverlaysTab:restore_defaults()
     end
     self:refresh()
     dialogs.showMessage('Success', 'Overlay defaults restored.')
+end
+
+function OverlaysTab:show_help()
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    launch_help(choice.data.command)
 end
 
 
