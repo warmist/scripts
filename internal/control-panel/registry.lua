@@ -46,7 +46,7 @@ COMMANDS_BY_IDX = {
     {command='seedwatch', group='automation', mode='enable'},
     {command='suspendmanager', group='automation', mode='enable'},
     {command='tailor', group='automation', mode='enable'},
-    {command='work-now', group='automation', mode='system_enable'},
+    {command='work-now', group='automation', mode='enable'},
 
     -- bugfix tools
     {command='fix/blood-del', group='bugfix', mode='run', default=true},

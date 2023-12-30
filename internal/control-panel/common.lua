@@ -78,7 +78,7 @@ function get_enabled_map()
     return enabled_map
 end
 
-local function get_first_word(str)
+function get_first_word(str)
     local word = str:trim():split(' +')[1]
     if word:startswith(':') then word = word:sub(2) end
     return word
@@ -170,7 +170,7 @@ function set_preference(data, in_value)
         qerror(('value too small: got: %s; minimum: %s'):format(value, data.min))
     end
     data.set_fn(value)
-    if data.default ~= safe_index(config.data.preferences, data.name, 'val') then
+    if data.default ~= value then
         config.data.preferences[data.name] = {
             val=value,
             version=data.version,
