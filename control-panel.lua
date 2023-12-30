@@ -1,0 +1,273 @@
+--@module = true
+
+local argparse = require('argparse')
+local common = reqscript('internal/control-panel/common')
+local helpdb = require('helpdb')
+local json = require('json')
+local persist = require('persist-table')
+local registry = reqscript('internal/control-panel/registry')
+local utils = require('utils')
+
+local GLOBAL_KEY = 'control-panel'
+
+-- state change hooks
+
+local function apply_system_config()
+    local enabled_map =common.get_enabled_map()
+    for _, data in ipairs(registry.COMMANDS_BY_IDX) do
+        if data.mode == 'system_enable' then
+            common.apply(data, enabled_map)
+        end
+    end
+    for _, data in ipairs(registry.PREFERENCES_BY_IDX) do
+        local value = safe_index(config.data.preferences, data.name, 'val')
+        if value ~= nil then
+            data.set_fn(value)
+        end
+    end
+end
+
+local function apply_autostart_config()
+    local enabled_map =common.get_enabled_map()
+    for _, data in ipairs(registry.COMMANDS_BY_IDX) do
+        if data.mode == 'enable' or data.mode == 'run' then
+            common.apply(data, enabled_map)
+        end
+    end
+end
+
+local function apply_fort_loaded_config()
+    if not safe_index(json.decode(persist.GlobalTable[GLOBAL_KEY] or ''), 'autostart_done') then
+        apply_autostart_config()
+        persist.GlobalTable[GLOBAL_KEY] = json.encode({autostart_done=true})
+    end
+    for _, data in ipairs(registry.COMMANDS_BY_IDX) do
+        if data.mode == 'repeat' then
+            common.apply(data)
+        end
+    end
+end
+
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc == SC_CORE_INITIALIZED then
+        apply_system_config()
+    elseif sc == SC_MAP_LOADED and dfhack.world.isFortressMode() then
+        apply_fort_loaded_config()
+    end
+end
+
+
+-- CLI
+
+local function print_header(header)
+    print()
+    print(header)
+    print(('-'):rep(#header))
+end
+
+local function get_first_word(str)
+    local word = str:trim():split(' +')[1]
+    if word:startswith(':') then word = word:sub(2) end
+    return word
+end
+
+local function command_passes_filters(data, target_group, first_word, filter_strs)
+    if data.group ~= target_group then
+        return false
+    end
+    if dfhack.getHideArmokTools() and helpdb.is_entry(first_word)
+        and helpdb.get_entry_tags(first_word).armok
+    then
+        return false
+    end
+    if not utils.search_text(data.command, filter_strs) then
+        return false
+    end
+    return true
+end
+
+local function list_command_group(group, filter_strs, enabled_map)
+    local header = ('Group: %s'):format(group)
+    for idx, data in ipairs(registry.COMMANDS_BY_IDX) do
+        local first_word = get_first_word(data.command)
+        if not command_passes_filters(data, group, first_word, filter_strs) then
+            goto continue
+        end
+        if header then
+            print_header(header)
+            ---@diagnostic disable-next-line: cast-local-type
+            header = nil
+        end
+        local extra = ''
+        if data.mode == 'system_enable' then
+            extra = ' (global)'
+        end
+        print(('%d) %s%s'):format(idx, data.command, extra))
+        local desc = data.desc or
+                (helpdb.is_entry(first_word) and helpdb.get_entry_short_help(first_word))
+        if desc then
+            print(('        %s'):format(desc))
+        end
+        local default_value = not not data.default
+        local current_value = safe_index(config.data.commands, data.command, 'autostart')
+        if current_value == nil then
+            current_value = default_value
+        end
+        print(('        autostart enabled: %s (default: %s)'):format(current_value, default_value))
+        if enabled_map[data.command] ~= nil then
+            print(('        currently enabled: %s'):format(enabled_map[data.command]))
+        end
+        print()
+        ::continue::
+    end
+    if not header then
+    end
+end
+
+local function list_preferences(filter_strs)
+    local header = 'Preferences'
+    for _, data in ipairs(registry.PREFERENCES_BY_IDX) do
+        local search_key = ('%s %s %s'):format(data.name, data.label, data.desc)
+        if not utils.search_text(search_key, filter_strs) then goto continue end
+        if header then
+            print_header(header)
+            ---@diagnostic disable-next-line: cast-local-type
+            header = nil
+        end
+        print(('%s) %s'):format(data.name, data.label))
+        print(('        %s'):format(data.desc))
+        print(('        current: %s (default: %s)'):format(data.get_fn(), data.default))
+        if data.min then
+            print(('        minimum: %s'):format(data.min))
+        end
+        print()
+        ::continue::
+    end
+end
+
+local function do_list(filter_strs)
+    local enabled_map =common.get_enabled_map()
+    list_command_group('automation', filter_strs, enabled_map)
+    list_command_group('bugfix', filter_strs, enabled_map)
+    list_command_group('gameplay', filter_strs, enabled_map)
+    list_preferences(filter_strs)
+end
+
+local function get_command_data(name_or_idx)
+    if type(name_or_idx) == 'number' then
+        return registry.COMMANDS_BY_IDX[name_or_idx]
+    end
+    return registry.COMMANDS_BY_NAME[name_or_idx]
+end
+
+local function do_enable_disable(which, entries)
+    local enabled_map =common.get_enabled_map()
+    for _, entry in ipairs(entries) do
+        local data = get_command_data(entry)
+        if common.apply(data, enabled_map, which == 'en') then
+            print(('%sabled %s'):format(which, entry))
+        end
+    end
+end
+
+local function do_enable(entries)
+    do_enable_disable('en', entries)
+end
+
+local function do_disable(entries)
+    do_enable_disable('dis', entries)
+end
+
+local function do_autostart_noautostart(which, entries)
+    for _, entry in ipairs(entries) do
+        local data = get_command_data(entry)
+        if not data then
+            qerror(('autostart command or index not found: "%s"'):format(entry))
+        else
+            local enabled = which == 'en'
+            if enabled ~= not not data.default then
+                config.data.commands[entry].autostart = enabled
+            else
+                config.data.commands[entry] = nil
+            end
+            print(('%sabled autostart for: %s'):format(which, entry))
+        end
+    end
+end
+
+local function do_autostart(entries)
+    do_autostart_noautostart('en', entries)
+end
+
+local function do_noautostart(entries)
+    do_autostart_noautostart('dis', entries)
+end
+
+local function do_set(params)
+    local name, value = params[1], params[2]
+    local data = registry.PREFERENCES_BY_NAME[name]
+    if not data then
+        qerror(('preference name not found: "%s"'):format(name))
+    end
+    local expected_type = type(data.default)
+    if expected_type == 'boolean' then
+        value = argparse.boolean(value)
+    end
+    local actual_type = type(value)
+    if actual_type ~= expected_type then
+        qerror(('"%s" has an unexpected value type: got: %s; expected: %s'):format(
+            params[2], actual_type, expected_type))
+    end
+    if data.min and data.min > value then
+        qerror(('value too small: got: %s; minimum: %s'):format(value, data.min))
+    end
+    data.set_fn(value)
+    if data.default ~= safe_index(config.data.preferences, name, 'val') then
+        config.data.preferences[name] = {
+            val=value,
+            version=data.version,
+        }
+    else
+        config.data.preferences[name] = nil
+    end
+end
+
+local function do_reset(params)
+    local name = params[1]
+    local data = registry.PREFERENCES_BY_NAME[name]
+    if not data then
+        qerror(('preference name not found: "%s"'):format(name))
+    end
+    data.set_fn(data.default)
+    config.data.preferences[name] = nil
+end
+
+local command_switch = {
+    list=do_list,
+    enable=do_enable,
+    disable=do_disable,
+    autostart=do_autostart,
+    noautostart=do_noautostart,
+    set=do_set,
+    reset=do_reset,
+}
+
+local function main(args)
+    local help = false
+
+    local positionals = argparse.processArgsGetopt(args, {
+            {'h', 'help', handler=function() help = true end},
+        })
+
+    local command = table.remove(positionals, 1)
+    if help or not command or not command_switch[command] then
+        print(dfhack.script_help())
+        return
+    end
+
+    command_switch[command](positionals)
+end
+
+if not dfhack_flags.module then
+    main{...}
+end

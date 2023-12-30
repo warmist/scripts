@@ -7,11 +7,6 @@ local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
--- init files
-local SYSTEM_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-system.init'
-local PREFERENCES_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-preferences.init'
-local AUTOSTART_FILE = 'dfhack-config/init/onMapLoad.control-panel-new-fort.init'
-local REPEATS_FILE = 'dfhack-config/init/onMapLoad.control-panel-repeats.init'
 
 local REGISTRY = {
     -- automation tools
