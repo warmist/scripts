@@ -1,11 +1,20 @@
 -- migrate configuration from 50.11-r4 and prior to new format
 --@module = true
 
+-- read old files, add converted data to config_data, overwrite old files with
+-- a message that says they are deprecated and can be deleted with the proper
+-- procedure. we can't delete them outright since steam may just restore them due to
+-- Steam Cloud. We *could* delete them, though, if we know that we've been started
+-- from Steam as DFHack and not as DF
+
+local argparse = require('argparse')
+local registry = reqscript('internal/control-panel/registry')
+
 -- init files
 local SYSTEM_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-system.init'
-local PREFERENCES_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-preferences.init'
 local AUTOSTART_FILE = 'dfhack-config/init/onMapLoad.control-panel-new-fort.init'
 local REPEATS_FILE = 'dfhack-config/init/onMapLoad.control-panel-repeats.init'
+local PREFERENCES_INIT_FILE = 'dfhack-config/init/dfhack.control-panel-preferences.init'
 
 local function save_tombstone_file(path)
     local ok, f = pcall(io.open, path, 'w')
@@ -23,123 +32,100 @@ local function save_tombstone_file(path)
     f:write('# If you\'re not on Steam, you can delete this file at any time.\n')
     f:close()
 end
---[[
-function SystemServices:on_submit()
-    SystemServices.super.on_submit(self)
 
-    local enabled_map = self:get_enabled_map()
-    local save_fn = function(f)
-        for _,service in ipairs(SYSTEM_USER_SERVICES) do
-            if enabled_map[service] then
-                f:write(('enable %s\n'):format(service))
-            end
-        end
+local function add_autostart(config_data, name)
+    if not registry.COMMANDS_BY_NAME[name].default then
+        config_data.commands[name] = {autostart=true}
     end
-    save_file(SYSTEM_INIT_FILE, save_fn)
 end
 
-function FortServicesAutostart:on_submit()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    self.enabled_map[choice.target] = not choice.enabled
-
-    local save_fn = function(f)
-        for service,enabled in pairs(self.enabled_map) do
-            if enabled then
-                if service:match(' ') then
-                    f:write(('on-new-fortress %s\n'):format(service))
-                else
-                    f:write(('on-new-fortress enable %s\n'):format(service))
-                end
-            end
-        end
+local function add_preference(config_data, name, val)
+    local data = registry.PREFERENCES_BY_NAME[name]
+    if type(data.default) == 'boolean' then
+        ok, val = pcall(argparse.boolean, val)
+        if not ok then return end
+    elseif type(data.default) == 'number' then
+        val = tonumber(val)
+        if not val then return end
     end
-    save_file(AUTOSTART_FILE, save_fn)
-    self:refresh()
+    if data.default ~= val then
+        config_data.preferences[name] = {val=val}
+    end
 end
 
-function FortServicesAutostart:init()
-    local enabled_map = {}
-    local ok, f = pcall(io.open, AUTOSTART_FILE)
-    if ok and f then
-        local services_set = utils.invert(FORT_AUTOSTART)
-        for line in f:lines() do
-            line = line:trim()
-            if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^on%-new%-fortress enable ([%S]+)$')
-                    or line:match('^on%-new%-fortress (.+)')
-            if service and services_set[service] then
-                enabled_map[service] = true
-            end
-            ::continue::
+local function parse_lines(fname, line_fn)
+    local ok, f = pcall(io.open, fname)
+    if not ok or not f then return end
+    for line in f:lines() do
+        line = line:trim()
+        if #line > 0 and not line:startswith('#') then
+            line_fn(line)
         end
     end
-    self.enabled_map = enabled_map
 end
 
-function Preferences:do_save()
-    local save_fn = function(f)
-        for ctx_name,settings in pairs(PREFERENCES) do
-            local ctx_env = require(ctx_name)
-            for id in pairs(settings) do
-                f:write((':lua require("%s").%s=%s\n'):format(
-                        ctx_name, id, tostring(ctx_env[id])))
-            end
+local function migrate_system(config_data)
+    parse_lines(SYSTEM_INIT_FILE, function(line)
+        local service = line:match('^enable ([%S]+)$')
+        if not service then return end
+        local data = registry.COMMANDS_BY_NAME[service]
+        if data and (data.mode == 'system_enable' or data.command == 'work-now') then
+            add_autostart(config_data, service)
         end
-        for _,spec in ipairs(CPP_PREFERENCES) do
-            local line = spec.init_fmt:format(spec.get_fn())
-            f:write(('%s\n'):format(line))
-        end
-    end
-    save_file(PREFERENCES_INIT_FILE, save_fn)
+    end)
+    save_tombstone_file(SYSTEM_INIT_FILE)
 end
 
-function RepeatAutostart:init()
-    self.subviews.show_help_label.visible = false
-    self.subviews.launch.visible = false
-    local enabled_map = {}
-    local ok, f = pcall(io.open, REPEATS_FILE)
-    if ok and f then
-        for line in f:lines() do
-            line = line:trim()
-            if #line == 0 or line:startswith('#') then goto continue end
-            local service = line:match('^repeat %-%-name ([%S]+)')
-            if service then
-                enabled_map[service] = true
-            end
-            ::continue::
+local function migrate_autostart(config_data)
+    parse_lines(AUTOSTART_FILE, function(line)
+        local service = line:match('^on%-new%-fortress enable ([%S]+)$')
+            or line:match('^on%-new%-fortress (.+)')
+        if not service then return end
+        local data = registry.COMMANDS_BY_NAME[service]
+        if data and (data.mode == 'enable' or data.mode == 'run') then
+            add_autostart(config_data, service)
         end
-    end
-    self.enabled_map = enabled_map
+    end)
+    save_tombstone_file(AUTOSTART_FILE)
 end
 
-function RepeatAutostart:on_submit()
-    _,choice = self.subviews.list:getSelected()
-    if not choice then return end
-    self.enabled_map[choice.name] = not choice.enabled
-    local run_commands = dfhack.isMapLoaded()
+local REPEAT_MAP = {
+    autoMilkCreature='automilk',
+    autoShearCreature='autoshear',
+    ['dead-units-burrow']='fix/dead-units',
+    ['empty-wheelbarrows']='fix/empty-wheelbarrows',
+    ['general-strike']='fix/general-strike',
+    ['stuck-instruments']='fix/stuck-instruments',
+}
 
-    local save_fn = function(f)
-        for name,enabled in pairs(self.enabled_map) do
-            if enabled then
-                local command_str = ('repeat --name %s %s\n'):
-                        format(name, table.concat(REPEATS[name].command, ' '))
-                f:write(command_str)
-                if run_commands then
-                    dfhack.run_command(command_str) -- actually start it up too
-                end
-            elseif run_commands then
-                repeatUtil.cancel(name)
-            end
+local function migrate_repeats(config_data)
+    parse_lines(REPEATS_FILE, function(line)
+        local service = line:match('^repeat %-%-name ([%S]+)')
+        if not service then return end
+        service = REPEAT_MAP[service] or service
+        local data = registry.COMMANDS_BY_NAME[service]
+        if data and data.mode == 'repeat' then
+            add_autostart(config_data, service)
         end
-    end
-    save_file(REPEATS_FILE, save_fn)
-    self:refresh()
+    end)
+    save_tombstone_file(REPEATS_FILE)
 end
-]]
+
+local function migrate_preferences(config_data)
+    parse_lines(PREFERENCES_INIT_FILE, function(line)
+        local name, val = line:match('^:lua .+%.([^=]+)=(.+)')
+        if not name or not val then return end
+        local data = registry.PREFERENCES_BY_NAME[name]
+        if data then
+            add_preference(config_data, name, val)
+        end
+    end)
+    save_tombstone_file(PREFERENCES_INIT_FILE)
+end
+
 function migrate(config_data)
-    -- read old files, add converted data to config_data, overwrite old files with
-    -- a message that says they are deprecated and can be deleted with the proper procedure
-    -- we can't delete them outright since steam may just restore them due to Steam Cloud
-    -- we *could* delete them if we know that we've been started from Steam as DFHack and not as DF
+    migrate_system(config_data)
+    migrate_autostart(config_data)
+    migrate_repeats(config_data)
+    migrate_preferences(config_data)
 end

@@ -15,12 +15,12 @@ REPEATS_GLOBAL_KEY = 'control-panel-repeats'
 local function get_config()
     local f = json.open(CONFIG_FILE)
     local updated = false
+    -- ensure proper structure
+    ensure_key(f.data, 'commands')
+    ensure_key(f.data, 'preferences')
     if f.exists then
-        -- ensure proper structure
-        ensure_key(f.data, 'commands')
-        ensure_key(f.data, 'preferences')
         -- remove unknown or out of date entries from the loaded config
-        for k, v in pairs(f.data) do
+        for k in pairs(f.data) do
             if k ~= 'commands' and k ~= 'preferences' then
                 updated = true
                 f.data[k] = nil

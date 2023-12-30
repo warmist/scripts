@@ -171,7 +171,6 @@ function CommandTab:init_main_panel(panel)
             view_id='list',
             on_select=self:callback('on_select'),
             on_double_click=self:callback('on_submit'),
-            on_double_click2=self:callback('launch_config'),
             row_height=2,
         },
     }
@@ -188,14 +187,6 @@ function CommandTab:init_footer(panel)
         },
         widgets.HotkeyLabel{
             frame={t=1, l=0},
-            label='Launch tool-specific config UI',
-            key='CUSTOM_CTRL_G',
-            auto_width=true,
-            enabled=self:callback('has_config'),
-            on_activate=self:callback('launch_config'),
-        },
-        widgets.HotkeyLabel{
-            frame={t=2, l=26},
             label='Show full tool help or run custom command',
             auto_width=true,
             key='CUSTOM_CTRL_H',
@@ -213,12 +204,6 @@ end
 function CommandTab:has_config()
     _,choice = self.subviews.list:getSelected()
     return choice and choice.gui_config
-end
-
-function CommandTab:launch_config()
-    _,choice = self.subviews.list:getSelected()
-    if not choice or not choice.gui_config then return end
-    dfhack.run_command(choice.gui_config)
 end
 
 
@@ -239,9 +224,24 @@ function EnabledTab:init()
     if not dfhack.world.isFortressMode() then
         self.subpage = Subtabs.gameplay
     end
+
+    self.subviews.list.list.on_double_click2=self:callback('launch_config')
 end
 
--- TODO
+function EnabledTab:init_footer(panel)
+    EnabledTab.super.init_footer(self, panel)
+    panel:addviews{
+        widgets.HotkeyLabel{
+            frame={t=2, l=26},
+            label='Launch tool-specific config UI',
+            key='CUSTOM_CTRL_G',
+            auto_width=true,
+            enabled=self:callback('has_config'),
+            on_activate=self:callback('launch_config'),
+        },
+    }
+end
+
 local function get_gui_config(command)
     command = common.get_first_word(command)
     local gui_config = 'gui/' .. command
@@ -327,6 +327,12 @@ function EnabledTab:onInput(keys)
     return handled
 end
 
+function EnabledTab:launch_config()
+    _,choice = self.subviews.list:getSelected()
+    if not choice or not choice.gui_config then return end
+    dfhack.run_command(choice.gui_config)
+end
+
 function EnabledTab:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
@@ -349,7 +355,8 @@ function EnabledTab:restore_defaults()
         ::continue::
     end
     self:refresh()
-    dialogs.showMessage('Success', 'Defaults restored.')
+    dialogs.showMessage('Success',
+        ('Enabled defaults restored for %s tools.'):format(group))
 end
 
 
@@ -442,7 +449,8 @@ function AutostartTab:restore_defaults()
     end
     common.config:write()
     self:refresh()
-    dialogs.showMessage('Success', 'Defaults restored.')
+    dialogs.showMessage('Success',
+        ('Autostart defaults restored for %s tools.'):format(group))
 end
 
 
@@ -774,7 +782,7 @@ end
 ControlPanel = defclass(ControlPanel, widgets.Window)
 ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
-    frame={w=78, h=44},
+    frame={w=68, h=44},
     resizable=true,
     resize_min={h=39},
     autoarrange_subviews=true,
