@@ -332,42 +332,128 @@ GameplayServices.ATTRS{
                 ' an active fort, please see the "Fort" tab.',
     group='gameplay',
 }
-
+]]
 --
--- Overlays
+-- OverlaysTab
 --
 
-Overlays = defclass(Overlays, ConfigPanel)
-Overlays.ATTRS{
-    is_enableable=true,
-    is_configurable=false,
+OverlaysTab = defclass(OverlaysTab, ConfigPanel)
+OverlaysTab.ATTRS{
     intro_text='These are DFHack overlays that add information and'..
-                ' functionality to various native DF screens.',
+                ' functionality to native DF screens. You can toggle whether'..
+                ' they are enabled here, or you can reposition them with'..
+                ' gui/overlay.',
 }
 
-function Overlays:init()
-    self.subviews.launch.visible = false
-    self:addviews{
-        widgets.HotkeyLabel{
-            frame={b=0, l=0},
-            label='Launch overlay widget repositioning UI',
-            key='CUSTOM_CTRL_G',
-            on_activate=function() dfhack.run_script('gui/overlay') end,
+function OverlaysTab:init_main_panel(panel)
+    panel:addviews{
+        widgets.FilteredList{
+            frame={t=5},
+            view_id='list',
+            on_select=self:callback('on_select'),
+            on_double_click=self:callback('on_submit'),
+            row_height=2,
         },
     }
 end
 
-function Overlays:get_choices()
+function OverlaysTab:init_footer(panel)
+    panel:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0},
+            label='Toggle overlay',
+            key='SELECT',
+            on_activate=self:callback('on_submit')
+        },
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='Launch overlay widget repositioning UI',
+            key='CUSTOM_CTRL_G',
+            on_activate=function() dfhack.run_script('gui/overlay') end,
+        },
+        widgets.HotkeyLabel{
+            frame={t=2, l=0},
+            label='Restore defaults',
+            key='CUSTOM_CTRL_D',
+            on_activate=self:callback('restore_defaults')
+        },
+    }
+end
+
+function OverlaysTab:onInput(keys)
+    local handled = OverlaysTab.super.onInput(self, keys)
+    if keys._MOUSE_L then
+        local list = self.subviews.list.list
+        local idx = list:getIdxUnderMouse()
+        if idx then
+            local x = list:getMousePos()
+            if x <= 2 then
+                self:on_submit()
+            end
+        end
+    end
+    return handled
+end
+
+local function make_overlay_text(label, enabled)
+    return {
+        {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
+        {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
+        {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
+        ' ',
+        label,
+    }
+end
+
+function OverlaysTab:refresh()
     local choices = {}
     local state = overlay.get_state()
     for _,name in ipairs(state.index) do
-        table.insert(choices, {command='overlay',
-                               target=name,
-                               enabled=state.config[name].enabled})
+        enabled = state.config[name].enabled
+        local text = make_overlay_text(name, enabled)
+        table.insert(choices, {
+            text=text,
+            search_key=name,
+            data={
+                name=name,
+                command='overlay',
+                desc=state.db[name].desc,
+                enabled=enabled,
+            },
+        })
     end
-    return choices
+    local list = self.subviews.list
+    local filter = list:getFilter()
+    local selected = list:getSelected()
+    list:setChoices(choices)
+    list:setFilter(filter, selected)
+    list.edit:setFocus(true)
 end
-]]
+
+local function enable_overlay(name, enabled)
+    local tokens = {'overlay'}
+    table.insert(tokens, enabled and 'enable' or 'disable')
+    table.insert(tokens, name)
+    dfhack.run_command(tokens)
+end
+
+function OverlaysTab:on_submit()
+    _,choice = self.subviews.list:getSelected()
+    if not choice then return end
+    local data = choice.data
+    enable_overlay(data.name, not data.enabled)
+    self:refresh()
+end
+
+function OverlaysTab:restore_defaults()
+    local state = overlay.get_state()
+    for name, db_entry in pairs(state.db) do
+        enable_overlay(name, db_entry.widget.default_enabled)
+    end
+    self:refresh()
+    dialogs.showMessage('Success', 'Overlay defaults restored.')
+end
+
 --
 -- PreferencesTab
 --
@@ -409,7 +495,7 @@ function IntegerInputDialog:init()
         widgets.HotkeyLabel{
             frame={b=0, r=0},
             label='Reset to default',
-            key='CUSTOM_CTRL_G',
+            key='CUSTOM_CTRL_D',
             auto_width=true,
             on_activate=function() self.subviews.input_edit:setText(tostring(self.data.default)) end,
         },
@@ -486,7 +572,7 @@ function PreferencesTab:init_footer(panel)
         widgets.HotkeyLabel{
             frame={t=2, l=0},
             label='Restore defaults',
-            key='CUSTOM_CTRL_G',
+            key='CUSTOM_CTRL_D',
             on_activate=self:callback('restore_defaults')
         },
     }
@@ -595,7 +681,7 @@ function ControlPanel:init()
             labels={
                 --'Enabled',
                 --'Autostart',
-                --'UI Overlays',
+                'UI Overlays',
                 'Preferences',
             },
             on_select=self:callback('set_page'),
@@ -607,7 +693,7 @@ function ControlPanel:init()
             subviews={
                 --EnabledTab{},
                 --AutostartTab{},
-                --OverlaysTab{},
+                OverlaysTab{},
                 PreferencesTab{},
             },
         },
