@@ -82,7 +82,7 @@ COMMANDS_BY_IDX = {
         desc='Invalidates all work orders once a month, allowing conditions to be rechecked.',
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
     {command='starvingdead', group='gameplay', mode='enable'},
-    {command='warn-starving', group='gameplay', mode='repeat',
+    {command='warn-starving', group='gameplay', mode='repeat', default=true,
         desc='Show a warning dialog when units are starving or dehydrated.',
         params={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
     {command='warn-stranded', group='gameplay', mode='repeat',
