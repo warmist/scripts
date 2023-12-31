@@ -666,6 +666,7 @@ end
 
 PedestalOverlay = defclass(PedestalOverlay, overlay.OverlayWidget)
 PedestalOverlay.ATTRS{
+    desc='Adds link to the display furniture building panel to launch the DFHack display assignment UI.',
     default_pos={x=-40, y=34},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING/DisplayFurniture',

@@ -1784,6 +1784,7 @@ local DIMENSION_TOOLTIP_Y_OFFSET = 3
 
 DimensionsOverlay = defclass(DimensionsOverlay, overlay.OverlayWidget)
 DimensionsOverlay.ATTRS{
+    desc='Adds a tooltip that shows the selected dimensions when drawing boxes.',
     default_pos={x=1,y=1},
     default_enabled=true,
     overlay_only=true, -- not player-repositionable

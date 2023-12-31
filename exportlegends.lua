@@ -1031,6 +1031,7 @@ end
 
 LegendsOverlay = defclass(LegendsOverlay, overlay.OverlayWidget)
 LegendsOverlay.ATTRS{
+    desc='Adds extended export progress bar to the legends main screen.',
     default_pos={x=2, y=2},
     default_enabled=true,
     viewscreens='legends/Default',
@@ -1085,6 +1086,7 @@ end
 
 DoneMaskOverlay = defclass(DoneMaskOverlay, overlay.OverlayWidget)
 DoneMaskOverlay.ATTRS{
+    desc='Prevents legends mode from being exited while an export is in progress.',
     default_pos={x=-2, y=2},
     default_enabled=true,
     viewscreens='legends',

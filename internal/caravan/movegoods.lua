@@ -717,6 +717,7 @@ end
 
 MoveGoodsOverlay = defclass(MoveGoodsOverlay, overlay.OverlayWidget)
 MoveGoodsOverlay.ATTRS{
+    desc='Adds link to trade depot building to launch the DFHack trade goods UI.',
     default_pos={x=-64, y=10},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING/TradeDepot',
@@ -766,6 +767,7 @@ end
 
 AssignTradeOverlay = defclass(AssignTradeOverlay, overlay.OverlayWidget)
 AssignTradeOverlay.ATTRS{
+    desc='Adds link to the trade goods screen to launch the DFHack trade goods UI.',
     default_pos={x=-41,y=-5},
     default_enabled=true,
     viewscreens='dwarfmode/AssignTrade',
