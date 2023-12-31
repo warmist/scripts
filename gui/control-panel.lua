@@ -365,6 +365,12 @@ function EnabledTab:restore_defaults()
         ('Enabled defaults restored for %s tools.'):format(group))
 end
 
+-- pick up enablement changes made from other sources (e.g. gui config tools)
+function EnabledTab:onRenderFrame(dc, rect)
+    self:refresh()
+    EnabledTab.super.onRenderFrame(self, dc, rect)
+end
+
 
 --
 -- AutostartTab
@@ -696,7 +702,7 @@ function PreferencesTab:init_main_panel(panel)
             view_id='list',
             on_select=self:callback('on_select'),
             on_double_click=self:callback('on_submit'),
-            row_height=2,
+            row_height=3,
         },
         IntegerInputDialog{
             view_id='input_dlg',
@@ -736,13 +742,15 @@ function PreferencesTab:onInput(keys)
     return handled
 end
 
-local function make_preference_text(label, value)
+local function make_preference_text(label, default, value)
     return {
         {tile=BUTTON_PEN_LEFT},
         {tile=CONFIGURE_PEN_CENTER},
         {tile=BUTTON_PEN_RIGHT},
         ' ',
-        ('%s (%s)'):format(label, value),
+        label,
+        NEWLINE,
+        {gap=4, text=('(default: %s, current: %s)'):format(default, value)},
     }
 end
 
@@ -750,7 +758,7 @@ function PreferencesTab:refresh()
     if self.subviews.input_dlg.visible then return end
     local choices = {}
     for _, data in ipairs(registry.PREFERENCES_BY_IDX) do
-        local text = make_preference_text(data.label, data.get_fn())
+        local text = make_preference_text(data.label, data.default, data.get_fn())
         table.insert(choices, {
             text=text,
             search_key=text[#text],
