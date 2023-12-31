@@ -16,6 +16,7 @@ local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
+    desc='Annotates suspended buildings with a visible marker.',
     viewscreens='dwarfmode',
     default_enabled=true,
     overlay_only=true,

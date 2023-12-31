@@ -378,6 +378,7 @@ ModmanageOverlay = defclass(ModmanageOverlay, overlay.OverlayWidget)
 ModmanageOverlay.ATTRS {
     frame = { w=16, h=3 },
     frame_style = gui.MEDIUM_FRAME,
+    desc = "Adds a link to the mod selection screen for accessing the mod manager.",
     default_pos = { x=5, y=-5 },
     viewscreens = { "new_region/Mods" },
     default_enabled=true,
@@ -400,6 +401,7 @@ end
 NotificationOverlay = defclass(NotificationOverlay, overlay.OverlayWidget)
 NotificationOverlay.ATTRS {
     frame = { w=60, h=1 },
+    desc = "Displays a message when a mod preset has been automatically applied.",
     default_pos = { x=3, y=-2 },
     viewscreens = { "new_region" },
     default_enabled=true,
@@ -462,3 +464,6 @@ end
 if dfhack_flags.module then
     return
 end
+
+-- TODO: when invoked as a command, should show information on which mods are loaded
+-- and give the player the option to export the list (or at least copy it to the clipboard)

@@ -6,6 +6,7 @@ local widgets = require('gui.widgets')
 
 TradeAgreementOverlay = defclass(TradeAgreementOverlay, overlay.OverlayWidget)
 TradeAgreementOverlay.ATTRS{
+    desc='Adds select all/none functionality when requesting trade agreement items.',
     default_pos={x=45, y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Diplomacy/Requests',

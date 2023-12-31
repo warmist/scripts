@@ -800,6 +800,7 @@ end
 -- Overlay Widgets
 StatusOverlay = defclass(StatusOverlay, overlay.OverlayWidget)
 StatusOverlay.ATTRS{
+    desc='Adds information to suspended building panels about why it is suspended.',
     default_pos={x=-39,y=16},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
@@ -837,6 +838,7 @@ end
 
 ToggleOverlay = defclass(ToggleOverlay, overlay.OverlayWidget)
 ToggleOverlay.ATTRS{
+    desc='Adds a link to suspended building panels for enabling suspendmanager.',
     default_pos={x=-57,y=23},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/BUILDING',
