@@ -3,7 +3,7 @@ uniform-unstick
 
 .. dfhack-tool::
     :summary: Make military units reevaluate their uniforms.
-    :tags: unavailable
+    :tags: fort bugfix military
 
 This tool prompts military units to reevaluate their uniform, making them
 remove and drop potentially conflicting worn items.
@@ -14,6 +14,9 @@ remove clothing (e.g. shoes, trousers) if the unit has yet to claim an armor
 item for that bodypart (e.g. if you're still manufacturing them).
 
 Uniforms that have no issues are being properly worn will not be affected.
+
+Note that this tool cannot fix the case where the same item is assigned to
+multiple squad members.
 
 Usage
 -----
@@ -42,3 +45,5 @@ Strategy options
     Remove to-equip items from containers or other's inventories and place them
     on the ground, ready to be claimed. This is most useful when someone else
     is wearing/holding the required items.
+``--multi``
+    Attempt to fix issues with uniforms that allow multiple items per body part.

@@ -28,6 +28,7 @@ Template for new versions:
 
 ## New Tools
 - `control-panel`: new commandline interface for control panel functions
+- `uniform-unstick`: (reinstated) force squad members to drop items that they picked up in the wrong order so they can get everything equipped properly
 
 ## New Features
 
