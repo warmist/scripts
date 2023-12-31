@@ -256,9 +256,15 @@ local function get_gui_config(command)
     end
 end
 
-local function make_enabled_text(label, mode, enabled, gui_config)
+local function make_enabled_text(self, label, mode, gui_config)
     if mode == 'system_enable' then
         label = label .. ' (global)'
+    end
+
+    local function get_enabled_button_token(enabled_tile, disabled_tile)
+        return {
+            tile=function() return self.enabled_map[label] and enabled_tile or disabled_tile end,
+        }
     end
 
     local function get_config_button_token(tile)
@@ -269,9 +275,9 @@ local function make_enabled_text(label, mode, enabled, gui_config)
     end
 
     return {
-        {tile=enabled and ENABLED_PEN_LEFT or DISABLED_PEN_LEFT},
-        {tile=enabled and ENABLED_PEN_CENTER or DISABLED_PEN_CENTER},
-        {tile=enabled and ENABLED_PEN_RIGHT or DISABLED_PEN_RIGHT},
+        get_enabled_button_token(ENABLED_PEN_LEFT, DISABLED_PEN_LEFT),
+        get_enabled_button_token(ENABLED_PEN_CENTER, DISABLED_PEN_CENTER),
+        get_enabled_button_token(ENABLED_PEN_RIGHT, DISABLED_PEN_RIGHT),
         ' ',
         {tile=BUTTON_PEN_LEFT},
         {tile=HELP_PEN_CENTER},
@@ -295,13 +301,11 @@ function EnabledTab:refresh()
             goto continue
         end
         if not common.command_passes_filters(data, group) then goto continue end
-        local enabled = self.enabled_map[data.command]
         local gui_config = get_gui_config(data.command)
         table.insert(choices, {
-            text=make_enabled_text(data.command, data.mode, enabled, gui_config),
+            text=make_enabled_text(self, data.command, data.mode, gui_config),
             search_key=data.command,
             data=data,
-            enabled=enabled,
             gui_config=gui_config,
         })
         ::continue::
@@ -343,7 +347,7 @@ function EnabledTab:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     local data = choice.data
-    common.apply_command(data, self.enabled_map, not choice.enabled)
+    common.apply_command(data, self.enabled_map, not self.enabled_map[choice.data.command])
     self:refresh()
 end
 
@@ -367,7 +371,7 @@ end
 
 -- pick up enablement changes made from other sources (e.g. gui config tools)
 function EnabledTab:onRenderFrame(dc, rect)
-    self:refresh()
+    self.enabled_map = common.get_enabled_map()
     EnabledTab.super.onRenderFrame(self, dc, rect)
 end
 

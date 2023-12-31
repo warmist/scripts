@@ -40,7 +40,7 @@ local function apply_fort_loaded_config()
         apply_autostart_config()
         persist.GlobalTable[GLOBAL_KEY] = json.encode({autostart_done=true})
     end
-    local enabled_repeats = json.decode(persist.GlobalTable[common.REPEATS_GLOBAL_KEY] or '')
+    local enabled_repeats = json.decode(persist.GlobalTable[common.REPEATS_GLOBAL_KEY] or '') or {}
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
         if data.mode == 'repeat' and enabled_repeats[data.command] then
             common.apply_command(data)
