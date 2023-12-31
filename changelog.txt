@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `control-panel`: new commandline interface for control panel functions
 
 ## New Features
 
@@ -37,6 +38,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `gui/control-panel`: reduce frequency for `warn-stranded` check to once every 2 days
+- `gui/control-panel`: tools are now organized by type: automation, bugfix, and gameplay
 
 ## Removed
 
