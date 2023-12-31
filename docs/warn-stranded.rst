@@ -2,20 +2,23 @@ warn-stranded
 =============
 
 .. dfhack-tool::
-    :summary: Reports citizens that are stranded and can't reach any other citizens.
+    :summary: Reports citizens who can't reach any other citizens.
     :tags: fort units
 
-If any (live) groups of fort citizens are stranded from the main (largest) group,
-the game will pause and you'll get a warning dialog telling you which citizens are isolated.
-This gives you a chance to rescue them before they get overly stressed or start starving.
+If any (live) groups of fort citizens are stranded from the main (largest)
+group, the game will pause and you'll get a warning dialog telling you which
+citizens are isolated. This gives you a chance to rescue them before they get
+overly stressed or start starving.
 
 Each citizen will be put into a group with the other citizens stranded together.
 
-There is a command line interface that can print status of citizens without pausing or bringing up a window.
+There is a command line interface that can print status of citizens without
+pausing or bringing up a window.
 
-The GUI and command-line both also have the ability to ignore citizens so they don't trigger a pause and window.
+The GUI and command-line both also have the ability to ignore citizens so they
+don't trigger a pause and window.
 
-You can enable ``warn-stranded`` notifications in `gui/control-panel` on the "Maintenance" tab.
+You can enable ``warn-stranded`` notifications in `gui/control-panel` on the "Gameplay" subtab.
 
 Usage
 -----

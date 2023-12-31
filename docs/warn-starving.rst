@@ -10,7 +10,7 @@ pause and you'll get a warning dialog telling you which units are in danger.
 This gives you a chance to rescue them (or take them out of their cages) before
 they die.
 
-You can enable ``warn-starving`` notifications in `gui/control-panel` on the "Maintenance" tab.
+This script is set to run periodically by default in `gui/control-panel`.
 
 Usage
 -----
