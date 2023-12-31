@@ -9,7 +9,8 @@ local guidm = require('gui.dwarfmode')
 local INITIAL_LIST_HEIGHT = 5
 local INITIAL_INFO_HEIGHT = 15
 
-local TILE_HIGHLIGHTED = dfhack.textures.getOnOffTexposStart() -- yellow-ish indicator
+local textures = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12, true)
+local TILE_HIGHLIGHTED = dfhack.textures.getTexposByHandle(textures[1]) -- yellow-ish indicator
 if TILE_HIGHLIGHTED < 0 then -- use a fallback
     TILE_HIGHLIGHTED = 88 -- `X`
 end
