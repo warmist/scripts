@@ -6,7 +6,11 @@ uniform-unstick
     :tags: fort bugfix military
 
 This tool prompts military units to reevaluate their uniform, making them
-remove and drop potentially conflicting worn items.
+remove and drop potentially conflicting worn items. If multiple units claim the
+same item, the item will be unassigned from all units that are not already
+wearing the item. If this happens, you'll have to click the "Update equipment"
+button on the Squads "Equip" screen in order for them to get new equipment
+assigned.
 
 Unlike a "replace clothing" designation, it won't remove additional clothing if
 it's coexisting with a uniform item already on that body part. It also won't
@@ -14,9 +18,6 @@ remove clothing (e.g. shoes, trousers) if the unit has yet to claim an armor
 item for that bodypart (e.g. if you're still manufacturing them).
 
 Uniforms that have no issues are being properly worn will not be affected.
-
-Note that this tool cannot fix the case where the same item is assigned to
-multiple squad members.
 
 Usage
 -----
