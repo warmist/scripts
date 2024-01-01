@@ -325,7 +325,7 @@ function EquipOverlay:init()
         widgets.TextButton{
             view_id='button_good',
             frame={t=0, l=0, r=0, h=1},
-            label='   All good!    ',
+            label='  No conflicts  ',
             text_pen=COLOR_GREEN,
             key='CUSTOM_CTRL_T',
             visible=false,
