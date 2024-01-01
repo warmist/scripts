@@ -79,6 +79,11 @@ local function bodyparts_that_can_wear(unit, item)
     return bodyparts
 end
 
+local function print_bad_labor(unit_name, labor_name)
+    print("WARNING: Unit " .. unit_name .. " has the " .. labor_name ..
+        " labor enabled, which conflicts with military uniforms.")
+end
+
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
 local function process(unit, args)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
@@ -98,6 +103,14 @@ local function process(unit, args)
             print("Unit " .. unit_name .. " does not have a military uniform.")
         end
         return
+    end
+
+    if unit.status.labors.MINE then
+        print_bad_labor(unit_name, "mining")
+    elseif unit.status.labors.CUTWOOD then
+        print_bad_labor(unit_name, "woodcutting")
+    elseif unit.status.labors.HUNT then
+        print_bad_labor(unit_name, "hunting")
     end
 
     -- Find all worn items which may be at issue.
