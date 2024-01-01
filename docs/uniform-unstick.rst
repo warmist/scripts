@@ -42,8 +42,8 @@ Strategy options
     Force the unit to drop conflicting worn items onto the ground, where they
     can then be reclaimed in the correct order.
 ``--free``
-    Remove to-equip items from containers or other's inventories and place them
-    on the ground, ready to be claimed. This is most useful when someone else
-    is wearing/holding the required items.
+    Remove items from the uniform assignment if someone else has a claim on
+    them. This will also remove items from containers and place them on the
+    ground, ready to be claimed.
 ``--multi``
     Attempt to fix issues with uniforms that allow multiple items per body part.

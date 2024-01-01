@@ -26,13 +26,11 @@ local function get_item_pos(item)
     end
 end
 
-local function find_squad_position(unit)
-    for _, squad in ipairs(df.global.world.squads.all) do
-        for _, position in ipairs(squad.positions) do
-            if position.occupant == unit.hist_figure_id then
-                return position
-            end
-        end
+local function get_squad_position(unit)
+    local squad = df.squad.find(unit.military.squad_id)
+    if not squad then return end
+    if #squad.positions > unit.military.squad_position then
+        return squad.positions[unit.military.squad_position]
     end
 end
 
@@ -90,7 +88,7 @@ local function process(unit, args)
     local to_drop = {} -- item id to item object
 
     -- First get squad position for an early-out for non-military dwarves
-    local squad_position = find_squad_position(unit)
+    local squad_position = get_squad_position(unit)
     if not squad_position then
         if not silent then
             print("Unit " .. unit_name .. " does not have a military uniform.")
@@ -124,6 +122,7 @@ local function process(unit, args)
     end
 
     -- Figure out which assigned items are currently not being worn
+    -- and if some other unit is carrying the item, unassign it from this unit's uniform
 
     local present_ids = {} -- map of item ID to item object
     local missing_ids = {} -- map of item ID to item object
@@ -131,9 +130,28 @@ local function process(unit, args)
         if not worn_items[u_id] then
             print("Unit " .. unit_name .. " is missing an assigned item, object #" .. u_id .. " '" ..
                 item_description(item) .. "'")
-            missing_ids[u_id] = item
-            if args.free then
-                to_drop[u_id] = item
+            if dfhack.items.getGeneralRef(item, df.general_ref_type.UNIT_HOLDER) then
+                print("  Another unit has a claim on object #" .. u_id .. " '" .. item_description(item) .. "'")
+                if args.free then
+                    print("  Removing from uniform")
+                    assigned_items[u_id] = nil
+                    for _, specs in ipairs(squad_position.uniform) do
+                        for _, spec in ipairs(specs) do
+                            for idx, assigned in ipairs(spec.assigned) do
+                                if assigned == u_id then
+                                    spec.assigned:erase(idx)
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    unit.military.pickup_flags.update = true
+                end
+            else
+                missing_ids[u_id] = item
+                if args.free then
+                    to_drop[u_id] = item
+                end
             end
         else
             present_ids[u_id] = item
