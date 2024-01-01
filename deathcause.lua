@@ -1,5 +1,5 @@
 -- show death cause of a creature
-local utils = require 'utils'
+local utils = require('utils')
 local DEATH_TYPES = reqscript('gui/unit-info-viewer').DEATH_TYPES
 
 -- Creates a table of all items at the given location optionally matching a given item type
@@ -81,8 +81,14 @@ function displayDeathUnit(unit)
     print(str .. '.')
 end
 
-function getItemTypeName(item_type)
-    return df.global.world.raws.itemdefs.all[item_type].name
+-- returns the item description if the item still exists; otherwise
+-- returns the weapon name
+function getWeaponName(item_id, subtype)
+    local item = df.item.find(item_id)
+    if not item then
+        return df.global.world.raws.itemdefs.weapons[subtype].name
+    end
+    return dfhack.items.getDescription(item, 0, false)
 end
 
 function displayDeathEventHistFigUnit(histfig_unit, event)
@@ -103,9 +109,9 @@ function displayDeathEventHistFigUnit(histfig_unit, event)
 
     if event.weapon then
         if event.weapon.item_type == df.item_type.WEAPON then
-            str = str .. (", using a %s"):format(getItemTypeName(event.weapon.item_subtype))
+            str = str .. (", using a %s"):format(getWeaponName(event.weapon.item, event.weapon.item_subtype))
         elseif event.weapon.shooter_item_type == df.item_type.WEAPON then
-            str = str .. (", shot by a %s"):format(getItemTypeName(event.weapon.shooter_item_subtype))
+            str = str .. (", shot by a %s"):format(getWeaponName(event.weapon.shooter_item, event.weapon.shooter_item_subtype))
         end
     end
 
@@ -143,8 +149,8 @@ function displayDeathHistFig(histfig)
     end
 end
 
-local selected_item = dfhack.gui.getSelectedItem()
-local selected_unit = dfhack.gui.getSelectedUnit()
+local selected_item = dfhack.gui.getSelectedItem(true)
+local selected_unit = dfhack.gui.getSelectedUnit(true)
 local hist_figure_id
 
 if not selected_unit and (not selected_item or selected_item:getType() ~= df.item_type.CORPSE) then
@@ -159,7 +165,7 @@ if not selected_unit and (not selected_item or selected_item:getType() ~= df.ite
 end
 
 if not selected_unit and not selected_item then
-    qerror("Please select a corpse in the loo'k' menu, or a unit in the 'u'nitlist screen")
+    qerror("Please select a corpse")
 end
 
 if selected_item then

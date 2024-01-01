@@ -3,7 +3,7 @@ modtools/if-entity
 
 .. dfhack-tool::
     :summary: Run DFHack commands based on current civ id.
-    :tags: untested dev
+    :tags: unavailable
 
 Run a command if the current entity matches a given ID.
 
@@ -11,18 +11,19 @@ To use this script effectively it needs to be called from "raw/onload.init".
 Calling this from the main dfhack.init file will do nothing, as no world has
 been loaded yet.
 
-Usage:
+Usage
+-----
 
-- ``id``:
+``id``
     Specify the entity ID to match
-- ``cmd [ commandStrs ]``:
+``cmd [ commandStrs ]``
     Specify the command to be run if the current entity matches the entity
     given via -id
 
 All arguments are required.
 
-Example:
+Example
+-------
 
-- Print a message if you load an elf fort, but not a dwarf, human, etc. fort::
-
-    if-entity -id "FOREST" -cmd [ lua "print('Dirty hippies.')" ]
+``if-entity -id "FOREST" -cmd [ lua "print('Dirty hippies.')" ]``
+    Print a message if you load an elf fort, but not a dwarf, human, etc. fort.

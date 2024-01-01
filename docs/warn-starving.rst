@@ -10,6 +10,8 @@ pause and you'll get a warning dialog telling you which units are in danger.
 This gives you a chance to rescue them (or take them out of their cages) before
 they die.
 
+This script is set to run periodically by default in `gui/control-panel`.
+
 Usage
 -----
 
@@ -23,9 +25,6 @@ Examples
 ``warn-starving all sane``
     Report on all currently distressed units, excluding insane units that you
     wouldn't be able to save anyway.
-``repeat --time 10 --timeUnits days --command [ warn-starving sane ]``
-    Every 10 days, report any (sane) distressed units that haven't already been
-    reported.
 
 Options
 -------

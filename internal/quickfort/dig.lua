@@ -17,6 +17,7 @@ local quickfort_map = reqscript('internal/quickfort/map')
 local quickfort_parse = reqscript('internal/quickfort/parse')
 local quickfort_preview = reqscript('internal/quickfort/preview')
 local quickfort_set = reqscript('internal/quickfort/set')
+local quickfort_transform = reqscript('internal/quickfort/transform')
 
 local log = quickfort_common.log
 
@@ -108,8 +109,6 @@ local function clear_designation(flags, occupancy)
     occupancy.carve_track_west = 0
 end
 
-local values = nil
-
 local values_run = {
     dig_default=df.tile_dig_designation.Default,
     dig_channel=df.tile_dig_designation.Channel,
@@ -162,6 +161,8 @@ local values_undo = {
     traffic_high=0,
     traffic_restricted=0,
 }
+
+local values = values_run
 
 -- these functions return a function if a designation needs to be made; else nil
 local function do_mine(digctx)
@@ -263,7 +264,7 @@ local function do_remove_ramps(digctx)
     if digctx.on_map_edge or digctx.flags.hidden then return nil end
     if is_construction(digctx.tileattrs) or
             not is_removable_shape(digctx.tileattrs) then
-        return mo;
+        return nil;
     end
     return function() digctx.flags.dig = values.dig_default end
 end
@@ -281,8 +282,7 @@ local function do_smooth(digctx)
     if is_construction(digctx.tileattrs) or
             not is_hard(digctx.tileattrs) or
             is_smooth(digctx.tileattrs) or
-            (not is_floor(digctx.tileattrs) and
-             not is_wall(digctx.tileattrs)) then
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) then
         return nil
     end
     return function() digctx.flags.smooth = values.tile_smooth end
@@ -290,8 +290,8 @@ end
 
 local function do_engrave(digctx)
     if digctx.flags.hidden or
-            is_construction(digctx.tileattrs) or
             not is_smooth(digctx.tileattrs) or
+            not (is_floor(digctx.tileattrs) or is_wall(digctx.tileattrs)) or
             digctx.engraving ~= nil then
         return nil
     end
@@ -375,46 +375,47 @@ local function get_items_at(pos, include_buildings)
     return items
 end
 
-local function do_item_flag(pos, flag_name, flag_value, include_buildings)
-    local items = get_items_at(pos, include_buildings)
-    if #items == 0 then return nil end
+local function do_item_flag(digctx, flag_name, flag_value, include_buildings)
+    if digctx.flags.hidden then return nil end
+    local items = get_items_at(digctx.pos, include_buildings)
+    if #items == 0 then return function() end end -- noop, but not an error
     return function()
         for _,item in ipairs(items) do item.flags[flag_name] = flag_value end
     end
 end
 
 local function do_claim(digctx)
-    return do_item_flag(digctx.pos, "forbid", values.item_claimed, true)
+    return do_item_flag(digctx, "forbid", values.item_claimed, true)
 end
 
 local function do_forbid(digctx)
-    return do_item_flag(digctx.pos, "forbid", values.item_forbidden, true)
+    return do_item_flag(digctx, "forbid", values.item_forbidden, true)
 end
 
 local function do_melt(digctx)
     -- the game appears to autoremove the flag from unmeltable items, so we
     -- don't actually need to do any filtering here
-    return do_item_flag(digctx.pos, "melt", values.item_melted, false)
+    return do_item_flag(digctx, "melt", values.item_melted, false)
 end
 
 local function do_remove_melt(digctx)
-    return do_item_flag(digctx.pos, "melt", values.item_unmelted, false)
+    return do_item_flag(digctx, "melt", values.item_unmelted, false)
 end
 
 local function do_dump(digctx)
-    return do_item_flag(digctx.pos, "dump", values.item_dumped, false)
+    return do_item_flag(digctx, "dump", values.item_dumped, false)
 end
 
 local function do_remove_dump(digctx)
-    return do_item_flag(digctx.pos, "dump", values.item_undumped, false)
+    return do_item_flag(digctx, "dump", values.item_undumped, false)
 end
 
 local function do_hide(digctx)
-    return do_item_flag(digctx.pos, "hidden", values.item_hidden, true)
+    return do_item_flag(digctx, "hidden", values.item_hidden, true)
 end
 
 local function do_unhide(digctx)
-    return do_item_flag(digctx.pos, "hidden", values.item_unhidden, true)
+    return do_item_flag(digctx, "hidden", values.item_unhidden, true)
 end
 
 local function do_traffic_high(digctx)
@@ -437,11 +438,82 @@ local function do_traffic_restricted(digctx)
     return function() digctx.flags.traffic = values.traffic_restricted end
 end
 
-local function track_alias_entry(directions)
+local unit_vectors = quickfort_transform.unit_vectors
+local unit_vectors_revmap = quickfort_transform.unit_vectors_revmap
+
+local track_end_data = {
+    N=unit_vectors.north,
+    E=unit_vectors.east,
+    S=unit_vectors.south,
+    W=unit_vectors.west
+}
+local track_end_revmap = {
+    [unit_vectors_revmap.north]='N',
+    [unit_vectors_revmap.east]='E',
+    [unit_vectors_revmap.south]='S',
+    [unit_vectors_revmap.west]='W'
+}
+
+local track_through_data = {
+    NS=unit_vectors.north,
+    EW=unit_vectors.east
+}
+local track_through_revmap = {
+    [unit_vectors_revmap.north]='NS',
+    [unit_vectors_revmap.east]='EW',
+    [unit_vectors_revmap.south]='NS',
+    [unit_vectors_revmap.west]='EW'
+}
+
+local track_corner_data = {
+    NE={x=1, y=-2},
+    NW={x=-2, y=-1},
+    SE={x=2, y=1},
+    SW={x=-1, y=2}
+}
+local track_corner_revmap = {
+    ['x=1, y=-2'] = 'NE',
+    ['x=2, y=-1'] = 'NE',
+    ['x=2, y=1'] = 'SE',
+    ['x=1, y=2'] = 'SE',
+    ['x=-1, y=2'] = 'SW',
+    ['x=-2, y=1'] = 'SW',
+    ['x=-2, y=-1'] = 'NW',
+    ['x=-1, y=-2'] = 'NW'
+}
+
+local track_tee_data = {
+    NSE={x=1, y=-2},
+    NEW={x=-2, y=-1},
+    SEW={x=2, y=1},
+    NSW={x=-1, y=2}
+}
+local track_tee_revmap = {
+    ['x=1, y=-2'] = 'NSE',
+    ['x=2, y=-1'] = 'NEW',
+    ['x=2, y=1'] = 'SEW',
+    ['x=1, y=2'] = 'NSE',
+    ['x=-1, y=2'] = 'NSW',
+    ['x=-2, y=1'] = 'SEW',
+    ['x=-2, y=-1'] = 'NEW',
+    ['x=-1, y=-2'] = 'NSW'
+}
+
+local function make_transform_track_fn(vector, revmap)
+    return function(ctx)
+        return 'track' .. quickfort_transform.resolve_transformed_vector(ctx, vector, revmap)
+    end
+end
+local function make_track_entry(name, data, revmap)
+    local transform = nil
+    if data and revmap then
+        transform = make_transform_track_fn(data[name], revmap)
+    end
     return {action=do_track, use_priority=true, can_clobber_engravings=true,
-            direction={single_tile=true, north=directions.north,
-                       south=directions.south, east=directions.east,
-                       west=directions.west}}
+            direction={single_tile=true, north=name:find('N'),
+                       south=name:find('S'), east=name:find('E'),
+                       west=name:find('W')},
+            transform=transform}
 end
 
 local dig_db = {
@@ -478,24 +550,25 @@ local dig_db = {
     ol={action=do_traffic_low},
     ['or']={action=do_traffic_restricted},
     -- single-tile track aliases
-    trackN=track_alias_entry{north=true},
-    trackS=track_alias_entry{south=true},
-    trackE=track_alias_entry{east=true},
-    trackW=track_alias_entry{west=true},
-    trackNS=track_alias_entry{north=true, south=true},
-    trackNE=track_alias_entry{north=true, east=true},
-    trackNW=track_alias_entry{north=true, west=true},
-    trackSE=track_alias_entry{south=true, east=true},
-    trackSW=track_alias_entry{south=true, west=true},
-    trackEW=track_alias_entry{east=true, west=true},
-    trackNSE=track_alias_entry{north=true, south=true, east=true},
-    trackNSW=track_alias_entry{north=true, south=true, west=true},
-    trackNEW=track_alias_entry{north=true, east=true, west=true},
-    trackSEW=track_alias_entry{south=true, east=true, west=true},
-    trackNSEW=track_alias_entry{north=true, south=true, east=true, west=true},
+    trackN=make_track_entry('N', track_end_data, track_end_revmap),
+    trackS=make_track_entry('S', track_end_data, track_end_revmap),
+    trackE=make_track_entry('E', track_end_data, track_end_revmap),
+    trackW=make_track_entry('W', track_end_data, track_end_revmap),
+    trackNS=make_track_entry('NS', track_through_data, track_through_revmap),
+    trackEW=make_track_entry('EW', track_through_data, track_through_revmap),
+    trackNE=make_track_entry('NE', track_corner_data, track_corner_revmap),
+    trackNW=make_track_entry('NW', track_corner_data, track_corner_revmap),
+    trackSE=make_track_entry('SE', track_corner_data, track_corner_revmap),
+    trackSW=make_track_entry('SW', track_corner_data, track_corner_revmap),
+    trackNSE=make_track_entry('NSE', track_tee_data, track_tee_revmap),
+    trackNSW=make_track_entry('NSW', track_tee_data, track_tee_revmap),
+    trackNEW=make_track_entry('NEW', track_tee_data, track_tee_revmap),
+    trackSEW=make_track_entry('SEW', track_tee_data, track_tee_revmap),
+    trackNSEW=make_track_entry('NSEW'),
 }
 
 -- add trackramp aliases for the track aliases
+-- (trackramps are just tracks carved over ramps)
 dig_db.trackrampN = dig_db.trackN
 dig_db.trackrampS = dig_db.trackS
 dig_db.trackrampE = dig_db.trackE
@@ -607,6 +680,7 @@ end
 
 local function init_dig_ctx(ctx, pos, direction)
     local flags, occupancy = dfhack.maps.getTileFlags(pos)
+    if not flags then return end
     local tileattrs = df.tiletype.attrs[dfhack.maps.getTileType(pos)]
     local engraving = nil
     if is_smooth(tileattrs) then
@@ -657,9 +731,20 @@ local function get_track_direction(x, y, width, height)
     return {north=north, east=east, south=south, west=west}
 end
 
+local function get_dig_job_map()
+    local job_map = {}
+    for _, job in utils.listpairs(df.global.world.jobs.list) do
+        if df.job_type.attrs[job.job_type].is_designation then
+            ensure_keys(job_map, job.pos.z, job.pos.y)[job.pos.x] = job
+        end
+    end
+    return job_map
+end
+
 local function do_run_impl(zlevel, grid, ctx)
     local stats = ctx.stats
     ctx.bounds = ctx.bounds or quickfort_map.MapBoundsChecker{}
+    local job_map = get_dig_job_map()
     for y, row in pairs(grid) do
         for x, cell_and_text in pairs(row) do
             local cell, text = cell_and_text.cell, cell_and_text.text
@@ -674,6 +759,10 @@ local function do_run_impl(zlevel, grid, ctx)
                                 :format(text, cell))
                 stats.invalid_keys.value = stats.invalid_keys.value + 1
                 goto continue
+            end
+            if db_entry.transform then
+                db_entry = copyall(db_entry)
+                db_entry.direction = dig_db[db_entry.transform(ctx)].direction
             end
             if db_entry.action == do_track and not db_entry.direction and
                     math.abs(extent.width) == 1 and
@@ -710,9 +799,23 @@ local function do_run_impl(zlevel, grid, ctx)
                              get_track_direction(extent_x, extent_y,
                                                  extent.width, extent.height))
                     local digctx = init_dig_ctx(ctx, extent_pos, direction)
-                    -- can't dig through buildings
-                    if digctx.occupancy.building ~= 0 then
-                        goto inner_continue
+                    if not digctx then goto inner_continue end
+                    if db_entry.action == do_smooth or db_entry.action == do_engrave or
+                            db_entry.action == do_track then
+                        -- can only smooth passable tiles
+                        if digctx.occupancy.building > df.tile_building_occ.Passable and
+                                digctx.occupancy.building ~= df.tile_building_occ.Dynamic then
+                            goto inner_continue
+                        end
+                    elseif db_entry.action == do_traffic_high or db_entry.action == do_traffic_normal
+                        or db_entry.action == do_traffic_low or db_entry.action == do_traffic_restricted
+                    then
+                        -- pass
+                    else
+                        -- can't dig through buildings
+                        if digctx.occupancy.building ~= 0 then
+                            goto inner_continue
+                        end
                     end
                     local action_fn = dig_tile(digctx, db_entry)
                     quickfort_preview.set_preview_tile(ctx, extent_pos,
@@ -728,7 +831,14 @@ local function do_run_impl(zlevel, grid, ctx)
                             stats.dig_protected_engraving.value =
                                     stats.dig_protected_engraving.value + 1
                         else
-                            if not ctx.dry_run then action_fn() end
+                            if not ctx.dry_run then
+                                local existing_dig_job = safe_index(job_map, extent_pos.z, extent_pos.y, extent_pos.x)
+                                if existing_dig_job then
+                                    print(('removing existing job at %d, %d, %d'):format(extent_pos.x, extent_pos.y, extent_pos.z))
+                                    dfhack.job.removeJob(existing_dig_job)
+                                end
+                                action_fn()
+                            end
                             stats.dig_designated.value =
                                     stats.dig_designated.value + 1
                         end

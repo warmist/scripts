@@ -245,7 +245,7 @@ local function getSyndromeName(syndrome_raw)
     end
 
     if syndrome_raw.syn_name ~= "" then
-        syndrome_raw.syn_name:gsub("^%l", string.upper)
+        return syndrome_raw.syn_name:gsub("^%l", string.upper)
     elseif is_transformation then
         return "Body transformation"
     end
@@ -371,13 +371,7 @@ UnitSyndromes.ATTRS {
 }
 
 function UnitSyndromes:init()
-    local is_not_main_page = function()
-        return self.subviews.pages:getSelected() > 1
-    end
-
-    local previous_page = function()
-        self.subviews.pages:setSelected(self.subviews.pages:getSelected() - 1)
-    end
+    self.stack = {}
 
     self:addviews{
         widgets.Pages{
@@ -397,15 +391,15 @@ function UnitSyndromes:init()
                     },
                     on_submit = self:callback('showUnits'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id = 'units',
                     frame = {t = 0, l = 0},
                     row_height = 3,
                     on_submit = self:callback('showUnitSyndromes'),
                 },
-                widgets.List{
+                widgets.FilteredList{
                     view_id = 'unit_syndromes',
-                    frame = {t = 0, l = 0},
+                    frame = {t = 0, l = 0, r = 0},
                     on_submit = self:callback('showSyndromeEffects'),
                 },
                 widgets.WrappedLabel{
@@ -422,19 +416,36 @@ function UnitSyndromes:init()
             label='Back',
             auto_width=true,
             key='LEAVESCREEN',
-            on_activate=previous_page,
-            active=is_not_main_page,
-            enabled=is_not_main_page,
+            on_activate=self:callback('previous_page'),
         },
     }
 end
 
+function UnitSyndromes:previous_page()
+    local pages = self.subviews.pages
+    local cur_page = pages:getSelected()
+    if cur_page == 1 then
+        view:dismiss()
+        return
+    end
+
+    local state = table.remove(self.stack, #self.stack)
+    pages:setSelected(state.page)
+    if state.edit then
+        state.edit:setFocus(true)
+    end
+end
+
+function UnitSyndromes:push_state()
+    table.insert(self.stack, {page=self.subviews.pages:getSelected(), edit=self.focus_group.cur})
+end
+
 function UnitSyndromes:onInput(keys)
-    UnitSyndromes.super.onInput(self, keys)
-    if keys._R_MOUSE_DOWN then
+    if keys._MOUSE_R then
         self:previous_page()
         return true
     end
+    return UnitSyndromes.super.onInput(self, keys)
 end
 
 function UnitSyndromes:showUnits(index, choice)
@@ -454,8 +465,10 @@ function UnitSyndromes:showUnits(index, choice)
             :: skipsyndrome ::
         end
 
+        self:push_state()
         self.subviews.pages:setSelected('unit_syndromes')
         self.subviews.unit_syndromes:setChoices(choices)
+        self.subviews.unit_syndromes.edit:setFocus(true)
 
         return
     end
@@ -473,8 +486,10 @@ function UnitSyndromes:showUnits(index, choice)
         })
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('units')
     self.subviews.units:setChoices(choices)
+    self.subviews.units.edit:setFocus(true)
 end
 
 function UnitSyndromes:showUnitSyndromes(index, choice)
@@ -501,12 +516,14 @@ function UnitSyndromes:showUnitSyndromes(index, choice)
         :: skipsyndrome ::
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('unit_syndromes')
     self.subviews.unit_syndromes:setChoices(choices)
+    self.subviews.unit_syndromes.edit:setFocus(true)
 end
 
 function UnitSyndromes:showSyndromeEffects(index, choice)
-    local choices = {}
+    local choices = {'ID: '..tostring(choice.syndrome_type)}
 
     for _, effect in pairs(getSyndromeEffects(choice.syndrome_type)) do
         local effect_name = df.creature_interaction_effect_type[effect:getType()]
@@ -528,6 +545,7 @@ function UnitSyndromes:showSyndromeEffects(index, choice)
         ))
     end
 
+    self:push_state()
     self.subviews.pages:setSelected('syndrome_effects')
     self.subviews.syndrome_effects.text_to_wrap = table.concat(choices, "\n\n")
     self.subviews.syndrome_effects:updateLayout()

@@ -3,6 +3,7 @@
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local textures = require('gui.textures')
 local helpdb = require('helpdb')
 local json = require('json')
 local utils = require('utils')
@@ -43,6 +44,7 @@ end
 
 -- removes duplicate existing history lines and adds the given line to the front
 local function add_history(hist, hist_set, line)
+    line = line:trim()
     if hist_set[line] then
         for i,v in ipairs(hist) do
             if v == line then
@@ -264,8 +266,13 @@ function EditPanel:reset_history_idx()
     self.history_idx = #history + 1
 end
 
-function EditPanel:set_text(text)
-    self.subviews.editfield:setText(text)
+function EditPanel:set_text(text, inhibit_change_callback)
+    local edit = self.subviews.editfield
+    if inhibit_change_callback then
+        edit.on_change = nil
+    end
+    edit:setText(text)
+    edit.on_change = self.on_change
     self:reset_history_idx()
 end
 
@@ -326,135 +333,6 @@ end
 -- HelpPanel
 --
 
-local to_pen = dfhack.pen.parse
-local active_tab_pens = {
-    text_mode_tab_pen=to_pen{fg=COLOR_YELLOW},
-    text_mode_label_pen=to_pen{fg=COLOR_WHITE},
-    lt=to_pen{tile=1005, write_to_lower=true},
-    lt2=to_pen{tile=1006, write_to_lower=true},
-    t=to_pen{tile=1007, fg=COLOR_BLACK, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1008, write_to_lower=true},
-    rt=to_pen{tile=1009, write_to_lower=true},
-    lb=to_pen{tile=1015, write_to_lower=true},
-    lb2=to_pen{tile=1016, write_to_lower=true},
-    b=to_pen{tile=1017, fg=COLOR_BLACK, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1018, write_to_lower=true},
-    rb=to_pen{tile=1019, write_to_lower=true},
-}
-
-local inactive_tab_pens = {
-    text_mode_tab_pen=to_pen{fg=COLOR_BROWN},
-    text_mode_label_pen=to_pen{fg=COLOR_DARKGREY},
-    lt=to_pen{tile=1000, write_to_lower=true},
-    lt2=to_pen{tile=1001, write_to_lower=true},
-    t=to_pen{tile=1002, fg=COLOR_WHITE, write_to_lower=true, top_of_text=true},
-    rt2=to_pen{tile=1003, write_to_lower=true},
-    rt=to_pen{tile=1004, write_to_lower=true},
-    lb=to_pen{tile=1010, write_to_lower=true},
-    lb2=to_pen{tile=1011, write_to_lower=true},
-    b=to_pen{tile=1012, fg=COLOR_WHITE, write_to_lower=true, bottom_of_text=true},
-    rb2=to_pen{tile=1013, write_to_lower=true},
-    rb=to_pen{tile=1014, write_to_lower=true},
-}
-
-Tab = defclass(Tabs, widgets.Widget)
-Tab.ATTRS{
-    id=DEFAULT_NIL,
-    label=DEFAULT_NIL,
-    on_select=DEFAULT_NIL,
-    get_pens=DEFAULT_NIL,
-}
-
-function Tab:preinit(init_table)
-    init_table.frame = init_table.frame or {}
-    init_table.frame.w = #init_table.label + 4
-    init_table.frame.h = 2
-end
-
-function Tab:onRenderBody(dc)
-    local pens = self.get_pens()
-    dc:seek(0, 0)
-    if dfhack.screen.inGraphicsMode() then
-        dc:char(nil, pens.lt):char(nil, pens.lt2)
-        for i=1,#self.label do
-            dc:char(self.label:sub(i,i), pens.t)
-        end
-        dc:char(nil, pens.rt2):char(nil, pens.rt)
-        dc:seek(0, 1)
-        dc:char(nil, pens.lb):char(nil, pens.lb2)
-        for i=1,#self.label do
-            dc:char(self.label:sub(i,i), pens.b)
-        end
-        dc:char(nil, pens.rb2):char(nil, pens.rb)
-    else
-        local tp = pens.text_mode_tab_pen
-        dc:char(' ', tp):char('/', tp)
-        for i=1,#self.label do
-            dc:char('-', tp)
-        end
-        dc:char('\\', tp):char(' ', tp)
-        dc:seek(0, 1)
-        dc:char('/', tp):char('-', tp)
-        dc:string(self.label, pens.text_mode_label_pen)
-        dc:char('-', tp):char('\\', tp)
-    end
-end
-
-function Tab:onInput(keys)
-    if Tab.super.onInput(self, keys) then return true end
-    if keys._MOUSE_L_DOWN and self:getMousePos() then
-        self.on_select(self.id)
-        return true
-    end
-end
-
-TabBar = defclass(TabBar, widgets.ResizingPanel)
-TabBar.ATTRS{
-    labels=DEFAULT_NIL,
-    on_select=DEFAULT_NIL,
-    get_cur_page=DEFAULT_NIL,
-}
-
-function TabBar:init()
-    for idx,label in ipairs(self.labels) do
-        self:addviews{
-            Tab{
-                frame={t=0, l=0},
-                id=idx,
-                label=label,
-                on_select=self.on_select,
-                get_pens=function()
-                    return self.get_cur_page() == idx and
-                            active_tab_pens or inactive_tab_pens
-                end,
-            }
-        }
-    end
-end
-
-function TabBar:postComputeFrame(body)
-    local t, l, width = 0, 0, body.width
-    for _,tab in ipairs(self.subviews) do
-        if l > 0 and l + tab.frame.w > width then
-            t = t + 2
-            l = 0
-        end
-        tab.frame.t = t
-        tab.frame.l = l
-        l = l + tab.frame.w
-    end
-end
-
-function TabBar:onInput(keys)
-    if TabBar.super.onInput(self, keys) then return true end
-    if keys.CUSTOM_CTRL_T then
-        local zero_idx = self.get_cur_page() - 1
-        local next_zero_idx = (zero_idx + 1) % #self.labels
-        self.on_select(next_zero_idx + 1)
-        return true
-    end
-end
-
 HelpPanel = defclass(HelpPanel, widgets.Panel)
 HelpPanel.ATTRS{
     autoarrange_subviews=true,
@@ -469,20 +347,23 @@ Type a command to see its help text here. Hit ENTER to run the command, or tap b
 
 Not sure what to do? First, try running "quickstart-guide" to get oriented with DFHack and its capabilities. Then maybe try the "tags" command to see the different categories of tools DFHack has to offer! Run "tags <tagname>" (e.g. "tags design") to see the tools in that category.
 
-To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.]]
+To see help for this command launcher (including info on mouse controls), type "launcher" and click on "gui/launcher" to autocomplete.
+
+You're running DFHack ]] .. dfhack.getDFHackVersion() ..
+            (dfhack.isRelease() and '' or (' (git: %s)'):format(dfhack.getGitCommit(true)))
 
 function HelpPanel:init()
     self.cur_entry = ''
 
     self:addviews{
-        TabBar{
+        widgets.TabBar{
             frame={t=0, l=0},
             labels={
                 'Help',
                 'Output',
             },
             on_select=function(idx) self.subviews.pages:setSelected(idx) end,
-            get_cur_page=function() return self.subviews.pages:getSelected() end
+            get_cur_page=function() return self.subviews.pages:getSelected() end,
         },
         widgets.Pages{
             view_id='pages',
@@ -533,7 +414,7 @@ function HelpPanel:add_output(output)
     if text_len > SCROLLBACK_CHARS then
         text = text:sub(-SCROLLBACK_CHARS)
         local text_diff = text_len - #text
-        HelpPanel_update_label(label, label.text_to_wrap:sub(text_len - #text))
+        HelpPanel_update_label(label, label.text_to_wrap:sub(text_diff))
         text_height = label:getTextHeight()
         label:scroll('end')
         line_num = label.start_line_num
@@ -594,21 +475,12 @@ function MainPanel:postUpdateLayout()
     config:write(self.frame)
 end
 
-local texpos = dfhack.textures.getThinBordersTexposStart()
-local tp = function(offset)
-    if texpos == -1 then return nil end
-    return texpos + offset
-end
-
-local H_SPLIT_PEN = dfhack.pen.parse{tile=tp(5), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{tile=tp(4), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.t_frame_pen.tile,
-        ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.b_frame_pen.tile,
-        ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=gui.WINDOW_FRAME.l_frame_pen.tile,
-        ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=tp(17), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
+local H_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 6), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
+local V_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 5), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
+local TOP_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,2), ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
+local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,16), ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
+local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,8), ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
+local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 18), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
 
 -- paint autocomplete panel border
 local function paint_vertical_border(rect)
@@ -643,14 +515,6 @@ end
 
 function MainPanel:onInput(keys)
     if MainPanel.super.onInput(self, keys) then
-        return true
-    elseif keys.CUSTOM_CTRL_C then
-        if self.focus_group.cur == self.subviews.editfield then
-            self.subviews.edit:set_text('')
-            self.on_edit_input('')
-        else
-            self.focus_group.cur:setText('')
-        end
         return true
     elseif keys.CUSTOM_CTRL_D then
         dev_mode = not dev_mode
@@ -714,7 +578,13 @@ function LauncherUI:init(args)
         else
             new_frame = config.data
             if not next(new_frame) then
-                new_frame = {l=5, r=25, t=5, b=5}
+                new_frame = {w=110, h=36}
+            else
+                for k,v in pairs(new_frame) do
+                    if v < 0 then
+                        new_frame[k] = 0
+                    end
+                end
             end
         end
         main_panel.frame = new_frame
@@ -763,7 +633,7 @@ function LauncherUI:init(args)
 end
 
 function LauncherUI:update_help(text, firstword, show_help)
-    local firstword = firstword or get_first_word(text)
+    firstword = firstword or get_first_word(text)
     if firstword == self.firstword then
         return
     end
@@ -793,8 +663,6 @@ local function sort_by_freq(entries)
     end
     table.sort(entries, stable_sort_by_frequency)
 end
-
-local DEV_FILTER = {tag={'dev', 'untested'}}
 
 -- adds the n most closely affiliated peer entries for the given entry that
 -- aren't already in the entries list. affiliation is determined by how many
@@ -831,25 +699,36 @@ local function add_top_related_entries(entries, entry, n)
 end
 
 function LauncherUI:update_autocomplete(firstword)
-    local entries = helpdb.search_entries(
-        {str=firstword, types='command'},
-        dev_mode and {} or DEV_FILTER)
+    local includes = {{str=firstword, types='command'}}
+    local excludes
+    if helpdb.is_tag(firstword) then
+        table.insert(includes, {tag=firstword, types='command'})
+    end
+    if not dev_mode then
+        excludes = {tag={'dev', 'unavailable'}}
+        if dfhack.getHideArmokTools() and firstword ~= 'armok' then
+            table.insert(excludes.tag, 'armok')
+        end
+    end
+    local entries = helpdb.search_entries(includes, excludes)
     -- if firstword is in the list, extract it so we can add it to the top later
     -- even if it's not in the list, add it back anyway if it's a valid db entry
     -- (e.g. if it's a dev script that we masked out) to show that it's a valid
     -- command
-    local found = extract_entry(entries,firstword) or helpdb.is_entry(firstword)
+    local found = extract_entry(entries, firstword) or helpdb.is_entry(firstword)
     sort_by_freq(entries)
-    if found then
+    if helpdb.is_tag(firstword) then
+        self.subviews.autocomplete_label:setText("Tagged tools")
+    elseif found then
         table.insert(entries, 1, firstword)
-        self.subviews.autocomplete_label:setText("Similar scripts")
+        self.subviews.autocomplete_label:setText("Similar tools")
         add_top_related_entries(entries, firstword, 20)
     else
         self.subviews.autocomplete_label:setText("Suggestions")
     end
 
     if #firstword == 0 then
-        self.subviews.autocomplete_label:setText("All scripts")
+        self.subviews.autocomplete_label:setText("All tools")
     end
 
     self.subviews.autocomplete:set_options(entries, found)
@@ -863,7 +742,7 @@ end
 
 function LauncherUI:on_autocomplete(_, option)
     if option then
-        self.subviews.edit:set_text(option.text)
+        self.subviews.edit:set_text(option.text..' ', true)
         self:update_help(option.text)
     end
 end
@@ -904,9 +783,10 @@ function LauncherUI:run_command(reappear, command)
     end
     -- reappear and show the command output
     self.subviews.edit:set_text('')
-    self:on_edit_input('')
     if #output == 0 then
         output = 'Command finished successfully'
+    else
+        output = output:gsub('\t', ' ')
     end
     self.subviews.help:add_output(('> %s\n\n%s'):format(command, output))
 end

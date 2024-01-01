@@ -65,11 +65,7 @@ function isValidTiletype(tiletype)
     end
   end
   local shapeAttrs = df.tiletype_shape.attrs[tiletypeAttrs.shape]
-  if shapeAttrs.walkable and shapeAttrs.basic_shape ~= df.tiletype_shape_basic.Open then -- downward ramps are walkable but open; units placed here would fall
-    return true
-  else
-    return false
-  end
+  return shapeAttrs.walkable
 end
 
 function getValidEmbarkTiles(block)

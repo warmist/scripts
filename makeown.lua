@@ -1,11 +1,36 @@
---[[
-    'tweak makeown' as a lua include
-    make_own(unit)        -- removes foreign flags, sets civ_id to fort civ_id, and sets clothes ownership
-    make_citizen(unit)    -- called by make_own if unit.race == fort race
---]]
+--@module=true
 
-local utils = require 'utils'
+local function get_translation(race_id)
+    local race_name = df.global.world.raws.creatures.all[race_id].creature_id
+    for _,translation in ipairs(df.global.world.raws.language.translations) do
+        if translation.name == race_name then
+            return translation
+        end
+    end
+    return df.global.world.raws.language.translations[0]
+end
 
+local function pick_first_name(race_id)
+    local translation = get_translation(race_id)
+    return translation.words[math.random(0, #translation.words-1)].value
+end
+
+local LANGUAGE_IDX = 0
+local word_table = df.global.world.raws.language.word_table[LANGUAGE_IDX][35]
+
+function name_unit(unit)
+    if unit.name.has_name then return end
+
+    unit.name.first_name = pick_first_name(unit.race)
+    unit.name.words.FrontCompound = word_table.words.FrontCompound[math.random(0, #word_table.words.FrontCompound-1)]
+    unit.name.words.RearCompound = word_table.words.RearCompound[math.random(0, #word_table.words.RearCompound-1)]
+
+    unit.name.language = LANGUAGE_IDX
+    unit.name.parts_of_speech.FrontCompound = df.part_of_speech.Noun
+    unit.name.parts_of_speech.RearCompound = df.part_of_speech.Verb3rdPerson
+    unit.name.type = df.language_name_type.Figure
+    unit.name.has_name = true
+end
 
 local function fix_clothing_ownership(unit)
     -- extracted/translated from tweak makeown plugin
@@ -65,7 +90,7 @@ local function entity_link(hf, eid, do_event, add, replace_idx)
     end
 
     if do_event then
-        event = add and df.history_event_add_hf_entity_linkst:new() or df.history_event_remove_hf_entity_linkst:new()
+        local event = add and df.history_event_add_hf_entity_linkst:new() or df.history_event_remove_hf_entity_linkst:new()
         event.year = df.global.cur_year
         event.seconds = df.global.cur_year_tick
         event.civ = eid
@@ -81,7 +106,7 @@ end
 local function change_state(hf, site_id, pos)
     hf.info.whereabouts.whereabouts_type = 1    -- state? arrived?
     hf.info.whereabouts.site = site_id
-    event = df.history_event_change_hf_statest:new()
+    local event = df.history_event_change_hf_statest:new()
     event.year = df.global.cur_year
     event.seconds = df.global.cur_year_tick
     event.id = df.global.hist_event_next_id
@@ -101,12 +126,10 @@ function make_citizen(unit)
     local civ_id = df.global.plotinfo.civ_id                                                --get civ id
     local group_id = df.global.plotinfo.group_id                                            --get group id
     local site_id = df.global.plotinfo.site_id                                                --get site id
-    local events = df.global.world.history.events                                            --get events
 
     local fortent = df.historical_entity.find(group_id)                                        --get fort's entity
     local civent = df.historical_entity.find(civ_id)
 
-    local event
     local region_pos = df.world_site.find(site_id).pos -- used with state events and hf state
 
     local hf
@@ -116,7 +139,7 @@ function make_citizen(unit)
 
     if not hf then                                                                                --if its not a histfig then make it a histfig
         --new_hf = true
-        hf = df.historical_figure.new()
+        hf = df.new(df.historical_figure)
         hf.id = df.global.hist_figure_next_id
         df.global.hist_figure_next_id = df.global.hist_figure_next_id+1
         hf.profession = unit.profession
@@ -128,7 +151,7 @@ function make_citizen(unit)
         hf.born_seconds = unit.birth_time
         hf.curse_year = unit.curse_year
         hf.curse_seconds = unit.curse_time
-        hf.birth_year_bias=unit.bias_birth_bias
+        hf.birth_year_bias=unit.birth_year_bias
         hf.birth_time_bias=unit.birth_time_bias
         hf.old_year = unit.old_year
         hf.old_seconds = unit.old_time
@@ -262,11 +285,12 @@ function make_citizen(unit)
         end
         print("makeown: migrated nemesis entry")
     end -- nemesis
+
+    -- generate a name for the unit if it doesn't already have one
+    name_unit(unit)
 end
 
-
 function make_own(unit)
-    --tweak makeown
     unit.flags1.marauder = false;
     unit.flags1.merchant = false;
     unit.flags1.forest = false;
@@ -291,9 +315,14 @@ function make_own(unit)
 
     fix_clothing_ownership(unit)
 
-    if unit.hist_figure_id > -1 and unit.hist_figure_id2 > -1 then    --previously this just checked if the units race was the same as the
-        make_citizen(unit)                                            --player's civ, but now it checks if the creature is a histfig
+    local caste_flags = unit.enemy.caste_flags
+    if caste_flags.CAN_SPEAK or caste_flags.CAN_LEARN then
+        make_citizen(unit)
     end
+end
+
+if dfhack_flags.module then
+    return
 end
 
 unit = dfhack.gui.getSelectedUnit()

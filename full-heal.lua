@@ -1,35 +1,6 @@
 -- Attempts to fully heal the selected unit
 --author Kurik Amudnil, Urist DaVinci
 --edited by expwnent and AtomicChicken
-
---[====[
-
-full-heal
-=========
-Attempts to fully heal the selected unit from anything, optionally
-including death.  Usage:
-
-:full-heal:
-    Completely heal the currently selected unit.
-:full-heal -unit [unitId]:
-    Apply command to the unit with the given ID, instead of selected unit.
-:full-heal -r [-keep_corpse]:
-    Heal the unit, raising from the dead if needed.
-    Add ``-keep_corpse`` to avoid removing their corpse.
-    The unit can be targeted by selecting its corpse on the UI.
-:full-heal -all [-r] [-keep_corpse]:
-    Heal all units on the map.
-:full-heal -all_citizens [-r] [-keep_corpse]:
-    Heal all fortress citizens on the map. Does not include pets.
-:full-heal -all_civ [-r] [-keep_corpse]:
-    Heal all units belonging to your parent civilisation, including pets and visitors.
-
-For example, ``full-heal -r -keep_corpse -unit ID_NUM`` will fully heal
-unit ID_NUM.  If this unit was dead, it will be resurrected without deleting
-the corpse - creepy!
-
-]====]
-
 --@ module = true
 
 local utils = require('utils')
@@ -121,7 +92,9 @@ function heal(unit,resurrect,keep_corpse)
                 for i = #corpses-1,0,-1 do
                     local corpse = corpses[i] --as:df.item_body_component
                     if corpse.unit_id == unit.id then
-                        dfhack.items.remove(corpse)
+                        corpse.flags.garbage_collect = true
+                        corpse.flags.forbid = true
+                        corpse.flags.hidden = true
                     end
                 end
             end
@@ -278,49 +251,47 @@ function heal(unit,resurrect,keep_corpse)
     end
 end
 
-if not dfhack_flags.module then
+if dfhack_flags.module then
+    return
+end
 
-    if args.all then
-        for _,unit in ipairs(df.global.world.units.active) do
-            heal(unit,args.r,args.keep_corpse)
-        end
-
-    elseif args.all_citizens then
-        for _,unit in ipairs(df.global.world.units.active) do
-            if isCitizen(unit) then
-                heal(unit,args.r,args.keep_corpse)
-            end
-        end
-
-    elseif args.all_civ then
-        for _,unit in ipairs(df.global.world.units.active) do
-            if isFortCivMember(unit) then
-                heal(unit,args.r,args.keep_corpse)
-            end
-        end
-
-    else
-        local unit
-        if args.unit then
-            unit = df.unit.find(tonumber(args.unit))
-            if not unit then
-                qerror('Invalid unit ID: ' .. args.unit)
-            end
-        else
-            local item = dfhack.gui.getSelectedItem(true)
-            if item and df.item_corpsest:is_instance(item) then
-                unit = df.unit.find(item.unit_id)
-                if not unit then
-                    qerror('This corpse can no longer be resurrected.') -- unit has been offloaded
-                end
-                unit.pos:assign(xyz2pos(dfhack.items.getPosition(item))) -- to make the unit resurrect at the location of the corpse, rather than the location of death
-            else
-                unit = dfhack.gui.getSelectedUnit()
-            end
-        end
-        if not unit then
-            qerror('Please select a unit or corpse, or specify its ID via the -unit argument.')
-        end
+if args.all then
+    for _,unit in ipairs(df.global.world.units.active) do
         heal(unit,args.r,args.keep_corpse)
     end
+elseif args.all_citizens then
+    for _,unit in ipairs(df.global.world.units.active) do
+        if isCitizen(unit) then
+            heal(unit,args.r,args.keep_corpse)
+        end
+    end
+elseif args.all_civ then
+    for _,unit in ipairs(df.global.world.units.active) do
+        if isFortCivMember(unit) then
+            heal(unit,args.r,args.keep_corpse)
+        end
+    end
+else
+    local unit
+    if args.unit then
+        unit = df.unit.find(tonumber(args.unit))
+        if not unit then
+            qerror('Invalid unit ID: ' .. args.unit)
+        end
+    else
+        local item = dfhack.gui.getSelectedItem(true)
+        if item and df.item_corpsest:is_instance(item) then
+            unit = df.unit.find(item.unit_id)
+            if not unit then
+                qerror('This corpse can no longer be resurrected.') -- unit has been offloaded
+            end
+            unit.pos:assign(xyz2pos(dfhack.items.getPosition(item))) -- to make the unit resurrect at the location of the corpse, rather than the location of death
+        else
+            unit = dfhack.gui.getSelectedUnit()
+        end
+    end
+    if not unit then
+        qerror('Please select a unit or corpse, or specify its ID via the -unit argument.')
+    end
+    heal(unit,args.r,args.keep_corpse)
 end

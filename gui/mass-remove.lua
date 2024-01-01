@@ -4,6 +4,7 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local suspendmanager = reqscript('suspendmanager')
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
@@ -36,16 +37,6 @@ local function unremove_construction(pos, grid)
     dfhack.maps.getTileBlock(pos).flags.designated = true
     local job = safe_index(grid, pos.z, pos.y, pos.x)
     if job then dfhack.job.removeJob(job) end
-end
-
-local function suspend(job)
-    job.flags.suspend = true
-    job.flags.working = false
-    dfhack.job.removeWorker(job, 0)
-end
-
-local function unsuspend(job)
-    job.flags.suspend = false
 end
 
 --
@@ -146,8 +137,8 @@ function MassRemove:init()
             key_back='CUSTOM_SHIFT_X',
             options={
                 {label='Leave alone', value=function() end},
-                {label='Suspend', value=suspend},
-                {label='Unsuspend', value=unsuspend},
+                {label='Suspend', value=suspendmanager.suspend},
+                {label='Unsuspend', value=suspendmanager.unsuspend},
             },
         },
     }
@@ -184,7 +175,7 @@ end
 function MassRemove:onInput(keys)
     if MassRemove.super.onInput(self, keys) then return true end
 
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if self.mark then
             self.mark = nil
             self:updateLayout()
@@ -194,7 +185,7 @@ function MassRemove:onInput(keys)
     end
 
     local pos = nil
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         pos = dfhack.gui.getMousePos()
     end
     if not pos then return false end

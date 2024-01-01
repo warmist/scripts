@@ -3,7 +3,7 @@ combat-harden
 
 .. dfhack-tool::
     :summary: Set the combat-hardened value on a unit.
-    :tags: untested fort armok military units
+    :tags: unavailable
 
 This tool can make a unit care more/less about seeing corpses.
 

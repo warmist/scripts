@@ -111,7 +111,8 @@ function NamePanel:detect_name_collision()
 
     local suffix_pos = #name + 1
 
-    local paths = dfhack.filesystem.listdir_recursive('blueprints', nil, false)
+    local paths = dfhack.filesystem.listdir_recursive('dfhack-config/blueprints', nil, false)
+    if not paths then return false end
     for _,v in ipairs(paths) do
         if (v.isdir and v.path..'/' == name) or
                 (v.path:startswith(name) and
@@ -165,39 +166,39 @@ function PhasesPanel:init()
         widgets.Panel{
             frame={h=1},
             subviews={widgets.ToggleHotkeyLabel{view_id='dig_phase',
-                        frame={t=0, l=0}, key='CUSTOM_D', label='dig',
+                        frame={t=0, l=0, w=19}, key='CUSTOM_D', label='dig',
                         initial_option=self:get_default('dig'), label_width=9},
                       widgets.ToggleHotkeyLabel{view_id='carve_phase',
-                        frame={t=0, l=19}, key='CUSTOM_SHIFT_D', label='carve',
+                        frame={t=0, l=19, w=19}, key='CUSTOM_SHIFT_D', label='carve',
                         initial_option=self:get_default('carve')},
                     }},
         widgets.Panel{
             frame={h=1},
             subviews={widgets.ToggleHotkeyLabel{view_id='construct_phase',
-                        frame={t=0, l=0}, key='CUSTOM_SHIFT_B',
+                        frame={t=0, l=0, w=19}, key='CUSTOM_SHIFT_B',
                         label='construct',
                         initial_option=self:get_default('construct')},
                       widgets.ToggleHotkeyLabel{view_id='build_phase',
-                        frame={t=0, l=19}, key='CUSTOM_B', label='build',
+                        frame={t=0, l=19, w=19}, key='CUSTOM_B', label='build',
                         initial_option=self:get_default('build')}}},
---         widgets.Panel{frame={h=1},
---             subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
---                         frame={t=0, l=0},
---                         key='CUSTOM_P', label='place',
---                         initial_option=self:get_default('place')},
+        widgets.Panel{frame={h=1},
+            subviews={widgets.ToggleHotkeyLabel{view_id='place_phase',
+                        frame={t=0, l=0, w=19},
+                        key='CUSTOM_P', label='place',
+                        initial_option=self:get_default('place')},
 --                     widgets.ToggleHotkeyLabel{view_id='zone_phase',
---                         frame={t=0, l=15},
+--                         frame={t=0, l=15, w=19},
 --                         key='CUSTOM_Z', label='zone',
 --                         initial_option=self:get_default('zone'),
 --                         label_width=5}
---                     }},
+                    }},
 --         widgets.Panel{frame={h=1},
 --             subviews={widgets.ToggleHotkeyLabel{view_id='query_phase',
---                         frame={t=0, l=0},
+--                         frame={t=0, l=0, w=19},
 --                         key='CUSTOM_Q', label='query',
 --                         initial_option=self:get_default('query')},
 --                     widgets.ToggleHotkeyLabel{view_id='rooms_phase',
---                         frame={t=0, l=15},
+--                         frame={t=0, l=15, w=19},
 --                         key='CUSTOM_SHIFT_Q', label='rooms',
 --                         initial_option=self:get_default('rooms')}
 --                     }},
@@ -240,7 +241,7 @@ function StartPosPanel:init()
     self:addviews{
         widgets.CycleHotkeyLabel{
             view_id='startpos',
-            key='CUSTOM_P',
+            key='CUSTOM_S',
             label='playback start',
             options={'Unset', 'Setting', 'Set'},
             initial_option=self.start_pos and 'Set' or 'Unset',
@@ -458,7 +459,7 @@ end
 function Blueprint:onInput(keys)
     if Blueprint.super.onInput(self, keys) then return true end
 
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         if self:is_setting_start_pos() then
             self.subviews.startpos.option_idx = 1
             self.saved_cursor = nil
@@ -473,7 +474,7 @@ function Blueprint:onInput(keys)
     end
 
     local pos = nil
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         pos = dfhack.gui.getMousePos()
         if pos then
             guidm.setCursorPos(pos)
@@ -530,6 +531,14 @@ function Blueprint:commit(pos)
 
     -- set cursor to top left corner of the *uppermost* z-level
     local bounds = self:get_bounds()
+    if not bounds then
+        dialogs.MessageBox{
+            frame_title='Error',
+            text='Ensure blueprint bounds are set'
+        }:show()
+        return
+    end
+
     table.insert(params, ('--cursor=%d,%d,%d')
                          :format(bounds.x1, bounds.y1, bounds.z2))
 

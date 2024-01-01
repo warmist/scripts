@@ -3,7 +3,7 @@ gui/settings-manager
 
 .. dfhack-tool::
     :summary: Dynamically adjust global DF settings.
-    :tags: untested dfhack
+    :tags: unavailable
 
 This tool is an in-game editor for settings defined in
 :file:`data/init/init.txt` and :file:`data/init/d_init.txt`. Changes are written

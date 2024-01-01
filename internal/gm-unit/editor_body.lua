@@ -163,7 +163,7 @@ function Editor_Body_Modifier:init(args)
 end
 
 function Editor_Body_Modifier:onInput(keys)
-    if keys.LEAVESCREEN or keys._MOUSE_R_DOWN then
+    if keys.LEAVESCREEN or keys._MOUSE_R then
         self:setFocus(false)
         self.visible = false
     else

@@ -27,14 +27,14 @@ if args.sane then
     checkOnlySane = true
 end
 
-warning = defclass(warning, gui.ZScreen)
-warning.ATTRS = {
+Warning = defclass(Warning, gui.ZScreen)
+Warning.ATTRS = {
     focus_path='warn-starving',
     force_pause=true,
     pass_mouse_clicks=false,
 }
 
-function warning:init(args)
+function Warning:init(info)
     local main = widgets.Window{
         frame={w=80, h=18},
         frame_title='Warning',
@@ -44,14 +44,14 @@ function warning:init(args)
 
     main:addviews{
         widgets.WrappedLabel{
-            text_to_wrap=table.concat(args.messages, NEWLINE),
+            text_to_wrap=table.concat(info.messages, NEWLINE),
         }
     }
 
     self:addviews{main}
 end
 
-function warning:onDismiss()
+function Warning:onDismiss()
     view = nil
 end
 
@@ -98,13 +98,12 @@ function doCheck()
     for i=#units-1, 0, -1 do
         local unit = units[i]
         local rraw = findRaceCaste(unit)
-        if rraw and dfhack.units.isActive(unit) and not dfhack.units.isOpposedToLife(unit) then
-            if not checkOnlySane or dfhack.units.isSane(unit) then
-                table.insert(messages, checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit))
-                table.insert(messages, checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit))
-                table.insert(messages, checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit))
-            end
-        end
+        if not rraw or not dfhack.units.isFortControlled(unit) or dfhack.units.isDead(unit) then goto continue end
+        if checkOnlySane and not dfhack.units.isSane(unit) then goto continue end
+        table.insert(messages, checkVariable(unit.counters2.hunger_timer, 75000, 'starving', starvingUnits, unit))
+        table.insert(messages, checkVariable(unit.counters2.thirst_timer, 50000, 'dehydrated', dehydratedUnits, unit))
+        table.insert(messages, checkVariable(unit.counters2.sleepiness_timer, 150000, 'very drowsy', sleepyUnits, unit))
+        ::continue::
     end
     if #messages > 0 then
         dfhack.color(COLOR_LIGHTMAGENTA)
@@ -112,7 +111,7 @@ function doCheck()
             print(dfhack.df2console(msg))
         end
         dfhack.color()
-        return warning{messages=messages}:show()
+        return Warning{messages=messages}:show()
     end
 end
 

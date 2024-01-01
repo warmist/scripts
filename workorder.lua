@@ -5,10 +5,6 @@
 -- which is a great place to look up stuff like "How the hell do I find out if
 -- a creature can be sheared?!!"
 
---initialized = false -- uncomment this when working with the code
-if not initialized then
-    initialized = true
-
 local function print_help()
     print(dfhack.script_help())
 end
@@ -95,27 +91,22 @@ local function orders_match(a, b)
     return true
 end
 
--- Reduce the quantity by the number of matching orders in the queue.
-local function order_quantity(order, quantity)
-    local amount = quantity
-    for _, managed in ipairs(world.manager_orders) do
+-- Get the remaining quantity for open matching orders in the queue.
+local function cur_order_quantity(order)
+    local amount, cur_order, cur_idx = 0, nil, nil
+    for idx, managed in ipairs(world.manager_orders) do
         if orders_match(order, managed) then
             -- if infinity, don't plan anything
             if 0 == managed.amount_total then
-                return -1
+                return 0, managed, idx
             end
-            -- if ordered infinity don't reduce
-            if 0 ~= quantity then
-                amount = amount - managed.amount_left
-                if amount <= 0 then
-                    return -1
-                end
-            end
+            amount = amount + managed.amount_left
+            cur_order = cur_order or managed
+            cur_idx = cur_idx or idx
         end
     end
-    return amount
+    return amount, cur_order, cur_idx
 end
--- ]]
 
 -- make sure we have 'WEAPON' not 24.
 local function ensure_df_string(df_list, key)
@@ -408,17 +399,30 @@ local function create_orders(orders)
 
         local amount = it.amount_total
         if it.__reduce_amount then
-            -- reduce if there are identical orders
-            -- with some amount_left.
-            amount = order_quantity(order, amount)
+            -- modify existing order if possible
+            local cur_amount, cur_order, cur_order_idx = cur_order_quantity(order)
+            if cur_order then
+                if 0 == cur_amount then
+                    amount = -1
+                elseif 0 ~= amount then
+                    local diff = amount - cur_order.amount_left
+                    amount = -1
+                    if verbose then print('adjusting existing order by', diff) end
+                    cur_order.amount_left = cur_order.amount_left + diff
+                    cur_order.amount_total = cur_order.amount_total + diff
+                    if cur_order.amount_left <= 0 then
+                        if verbose then print('negative amount; removing existing order') end
+                        world.manager_orders:erase(cur_order_idx)
+                        cur_order:delete()
+                    end
+                end
+            end
         end
 
         if amount < 0 then
             if verbose then
-                print(string.format(
-                    "Order %s (%s) not queued: amount reduced from %s to %s.",
-                    it.id, df.job_type[order.job_type], tostring(it.amount_total), tostring(amount)
-                ))
+                print(string.format("Order %s (%s) not queued.",
+                    it.id, df.job_type[order.job_type]))
             end
             order:delete()
         else
@@ -490,7 +494,9 @@ local function preprocess_orders(orders)
             print(string.format("order.id<json>: %s; job: %s; .amount_total: %s; .__reduce_amount: %s",
             order.id, df.job_type[ order.job ], order.amount_total, order.__reduce_amount))
         end
-        if order.amount_total >= 0 then ret[#ret + 1] = order end
+        if order.amount_total >= 0 or order.__reduce_amount then
+            ret[#ret + 1] = order
+        end
     end
 
     return ret
@@ -548,36 +554,31 @@ default_action = function (...)
     create_orders(orders)
 end
 
--- see https://github.com/jjyg/df-ai/blob/master/ai/population.rb
--- especially `update_pets`
-
 local uu = dfhack.units
-local function isValidUnit(u)
+local function isValidAnimal(u)
+    -- this should also check for the absence of misc trait 55 (as of 50.09), but we don't
+    -- currently have an enum definition for that value yet
     return uu.isOwnCiv(u)
         and uu.isAlive(u)
         and uu.isAdult(u)
-        and u.flags1.tame -- no idea if this is needed...
-        and not u.flags1.merchant
-        and not u.flags1.forest -- no idea what this is
-        and not u.flags2.for_trade
-        and not u.flags2.slaughter
+        and uu.isActive(u)
+        and uu.isFortControlled(u)
+        and uu.isTame(u)
+        and not uu.isMarkedForSlaughter(u)
+        and not uu.getMiscTrait(u, df.misc_trait_type.Migrant, false)
 end
 
-local MilkCounter = df.misc_trait_type["MilkCounter"]
 calcAmountFor_MilkCreature = function ()
     local cnt = 0
     if debug_verbose then print "Milkable units:" end
     for i, u in pairs(world.units.active) do
-        if isValidUnit(u)
-        and uu.isMilkable(u)
-        --and uu.getMiscTrait(u, MilkCounter, false) -- aka "was milked"; but we could use its .value for something.
-        then
-            local mt_milk = uu.getMiscTrait(u, MilkCounter, false)
+        if isValidAnimal(u) and uu.isMilkable(u) and not uu.isPet(u) then
+            local mt_milk = uu.getMiscTrait(u, df.misc_trait_type.MilkCounter, false)
             if not mt_milk then cnt = cnt + 1 end
 
             if debug_verbose then
                 local mt_milk_val = mt_milk and mt_milk.value or "not milked recently"
-                print(i, uu.getRaceName(u), mt_milk_val)
+                print(u.id, uu.getRaceName(u), mt_milk_val)
             end
         end
     end
@@ -614,8 +615,7 @@ calcAmountFor_ShearCreature = function ()
     local cnt = 0
     if debug_verbose then print "Shearable units:" end
     for i, u in pairs(world.units.active) do
-        if isValidUnit(u)
-        then
+        if isValidAnimal(u) then
             local can, info = canShearCreature(u)
             if can then cnt = cnt + 1 end
 
@@ -647,8 +647,6 @@ actions = {
     ["-vv"] = toggle_debug_verbose,
     ["--reset"] = function() initialized = false end,
 }
-
-end -- `if not initialized `
 
 -- Lua is beautiful.
 (actions[ (...) or "?" ] or default_action)(...)

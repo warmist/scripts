@@ -186,7 +186,7 @@ end
 function Masspit:onInput(keys)
     if Masspit.super.onInput(self, keys) then return true end
 
-    if keys._MOUSE_L_DOWN and not self:getMouseFramePos() then
+    if keys._MOUSE_L and not self:getMouseFramePos() then
         if self.subviews.pages:getSelected() == 1 then
             local building = dfhack.buildings.findAtTile(dfhack.gui.getMousePos())
 

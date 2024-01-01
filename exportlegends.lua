@@ -1,107 +1,28 @@
 -- Export everything from legends mode
---[====[
-
-exportlegends
-=============
-Controls legends mode to export data - especially useful to set-and-forget large
-worlds, or when you want a map of every site when there are several hundred.
-
-The 'info' option exports more data than is possible in vanilla, to a
-:file:`region-date-legends_plus.xml` file developed to extend
-:forums:`World Viewer <128932>` and other legends utilities.
-
-Usage::
-
-    exportlegends OPTION [FOLDER_NAME]
-
-Valid values for ``OPTION`` are:
-
-:info:   Exports the world/gen info, the legends XML, and a custom XML with more information
-:custom: Exports a custom XML with more information
-:sites:  Exports all available site maps
-:maps:   Exports all seventeen detailed maps
-:all:    Equivalent to calling all of the above, in that order
-
-``FOLDER_NAME``, if specified, is the name of the folder where all the files
-will be saved. This defaults to the ``legends-regionX-YYYYY-MM-DD`` format. A path is
-also allowed, although everything but the last folder has to exist. To export
-to the top-level DF folder, pass ``.`` for this argument.
-
-Examples:
-
-* Export all information to the ``legends-regionX-YYYYY-MM-DD`` folder::
-
-    exportlegends all
-
-* Export all information to the ``region6`` folder::
-
-    exportlegends all region6
-
-* Export just the files included in ``info`` (above) to the ``legends-regionX-YYYYY-MM-DD`` folder::
-
-    exportlegends info
-
-* Export just the custom XML file to the DF folder (no subfolder)::
-
-    exportlegends custom .
-
-]====]
-
 --luacheck-flags: strictsubtype
+--@ module=true
 
--- General note: If you are looking for main function look at the buttom of this script file.
+local gui = require('gui')
+local overlay = require('plugins.overlay')
+local script = require('gui.script')
+local widgets = require('gui.widgets')
 
-local gui = require 'gui'
-local script = require 'gui.script'
 local args = {...}
-local vs = dfhack.gui.getCurViewscreen()
 
--- List of all the detailed maps
-local MAPS = {
-    "Standard biome+site map",
-    "Elevations including lake and ocean floors",
-    "Elevations respecting water level",
-    "Biome",
-    "Hydrosphere",
-    "Temperature",
-    "Rainfall",
-    "Drainage",
-    "Savagery",
-    "Volcanism",
-    "Current vegetation",
-    "Evil",
-    "Salinity",
-    "Structures/fields/roads/etc.",
-    "Trade",
-    "Nobility and Holdings",
-    "Diplomacy",
-}
-
--- Get that date of the world as a string
+-- Get the date of the world as a string
 -- Format: "YYYYY-MM-DD"
-function get_world_date_str()
+local function get_world_date_str()
     local month = dfhack.world.ReadCurrentMonth() + 1 --days and months are 1-indexed
     local day = dfhack.world.ReadCurrentDay()
     local date_str = string.format('%05d-%02d-%02d', df.global.cur_year, month, day)
     return date_str
 end
 
--- Go back to root folder so dfhack does not break, returns true if successfully
-function move_back_to_main_folder()
-    return dfhack.filesystem.restore_cwd()
+local function escape_xml(str)
+    return str:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;')
 end
 
--- Set default folder name
-local folder_name = "legends-" .. df.global.world.cur_savegame.save_dir .. "-" .. get_world_date_str()
--- Go to save folder, returns true if successfully
-function move_to_save_folder()
-    if move_back_to_main_folder() then
-        return dfhack.filesystem.chdir(folder_name)
-    end
-    return false
-end
-
-function getItemSubTypeName(itemType, subType)
+local function getItemSubTypeName(itemType, subType)
     if (dfhack.items.getSubtypeCount(itemType)) <= 0 then
         return tostring(-1)
     end
@@ -113,16 +34,8 @@ function getItemSubTypeName(itemType, subType)
     end
 end
 
-function table_contains(self, element)
-    for _, value in pairs(self) do
-        if value == element then
-            return true
-        end
-    end
-    return false
-end
-
-function table_containskey(self, key)
+-- is this faster than pcall?
+local function table_containskey(self, key)
     for value, _ in pairs(self) do
         if value == key then
             return true
@@ -131,19 +44,37 @@ function table_containskey(self, key)
     return false
 end
 
-function escape_xml(str)
-    return str:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;')
+progress_item = progress_item or ''
+step_size = step_size or 1
+step_percent = -1
+progress_percent = progress_percent or -1
+last_update_ms = 0
+
+-- should be frequent enough so that user can still effectively use
+-- the vanilla legends UI to browse while export is in progress
+local YIELD_TIMEOUT_MS = 10
+
+local function yield_if_timeout()
+    local now_ms = dfhack.getTickCount()
+    if now_ms - last_update_ms > YIELD_TIMEOUT_MS then
+        script.sleep(1, 'frames')
+        last_update_ms = dfhack.getTickCount()
+    end
 end
 
 --luacheck: skip
-function progress_ipairs(vector, desc, interval)
+local function progress_ipairs(vector, desc, interval)
     desc = desc or 'item'
     interval = interval or 10000
     local cb = ipairs(vector)
     return function(vector, k, ...)
-        if k and #vector >= interval and (k % interval == 0 or k == #vector - 1) then
-            print(('        %s %i/%i (%0.f%%)'):format(desc, k, #vector, k * 100 / #vector))
+        if k then
+            progress_percent = math.max(progress_percent, step_percent + ((k * step_size) // #vector))
+            if #vector >= interval and (k % interval == 0 or k == #vector - 1) then
+                print(('        %s %i/%i (%0.f%%)'):format(desc, k, #vector, (k * 100) / #vector))
+            end
         end
+        yield_if_timeout()
         return cb(vector, k)
     end, vector, nil
 end
@@ -159,7 +90,7 @@ setmetatable(df_enums, {
         local t = {}
         setmetatable(t, {
             __index = function(self, k)
-                return df[enum][k] or 'unknown ' .. k
+                return df[enum][k] or ('unknown ' .. k)
             end
         })
         return t
@@ -170,25 +101,21 @@ setmetatable(df_enums, {
 -- prints a line with the value inside the tags if the value isn't -1. Intended to be used
 -- for fields where -1 is a known "no info" value. Relies on 'indentation' being set to indicate
 -- the current indentation level
-function printifvalue (file, indentation, tag, value)
+local function printifvalue (file, indentation, tag, value)
     if value ~= -1 then
         file:write(string.rep("\t", indentation).."<"..tag..">"..tostring(value).."</"..tag..">\n")
     end
 end
 
 -- Export additional legends data, legends_plus.xml
-function export_more_legends_xml()
+local function export_more_legends_xml()
     local problem_elements = {}
 
-    -- Move into the save folder
-    if not move_to_save_folder() then
-        qerror('Could not move into the save folder.')
-    end
     local filename = df.global.world.cur_savegame.save_dir.."-"..get_world_date_str().."-legends_plus.xml"
     local file = io.open(filename, 'w')
-    move_back_to_main_folder()
     if not file then
       qerror("could not open file: " .. filename)
+      return -- so lint understands what's going on
     end
 
     file:write("<?xml version=\"1.0\" encoding='UTF-8'?>\n")
@@ -196,7 +123,17 @@ function export_more_legends_xml()
     file:write("<name>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name))).."</name>\n")
     file:write("<altname>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(df.global.world.world_data.name,1))).."</altname>\n")
 
-    file:write("<landmasses>\n")
+    local function write_chunk(name, fn)
+        progress_item = name
+        yield_if_timeout()
+        file:write("<" .. name .. ">\n")
+        fn()
+        file:write("</" .. name .. ">\n")
+    end
+
+    local chunks = {}
+
+    table.insert(chunks, {name='landmasses', fn=function()
     for landmassK, landmassV in progress_ipairs(df.global.world.world_data.landmasses, 'landmass') do
         file:write("\t<landmass>\n")
         file:write("\t\t<id>"..landmassV.index.."</id>\n")
@@ -205,9 +142,9 @@ function export_more_legends_xml()
         file:write("\t\t<coord_2>"..landmassV.max_x..","..landmassV.max_y.."</coord_2>\n")
         file:write("\t</landmass>\n")
     end
-    file:write("</landmasses>\n")
+    end})
 
-    file:write("<mountain_peaks>\n")
+    table.insert(chunks, {name='mountain_peaks', fn=function()
     for mountainK, mountainV in progress_ipairs(df.global.world.world_data.mountain_peaks, 'mountain') do
         file:write("\t<mountain_peak>\n")
         file:write("\t\t<id>"..mountainK.."</id>\n")
@@ -219,9 +156,9 @@ function export_more_legends_xml()
         end
         file:write("\t</mountain_peak>\n")
     end
-    file:write("</mountain_peaks>\n")
+    end})
 
-    file:write("<regions>\n")
+    table.insert(chunks, {name='regions', fn=function()
     for regionK, regionV in progress_ipairs(df.global.world.world_data.regions, 'region') do
         file:write("\t<region>\n")
         file:write("\t\t<id>"..regionV.index.."</id>\n")
@@ -242,9 +179,9 @@ function export_more_legends_xml()
         end
         file:write("\t</region>\n")
     end
-    file:write("</regions>\n")
+    end})
 
-    file:write("<underground_regions>\n")
+    table.insert(chunks, {name='underground_regions', fn=function()
     for regionK, regionV in progress_ipairs(df.global.world.world_data.underground_regions, 'underground region') do
         file:write("\t<underground_region>\n")
         file:write("\t\t<id>"..regionV.index.."</id>\n")
@@ -255,9 +192,9 @@ function export_more_legends_xml()
         file:write("</coords>\n")
         file:write("\t</underground_region>\n")
     end
-    file:write("</underground_regions>\n")
+    end})
 
-    file:write("<rivers>\n")
+    table.insert(chunks, {name='rivers', fn=function()
     for riverK, riverV in progress_ipairs(df.global.world.world_data.rivers, 'river') do
         file:write("\t<river>\n")
         file:write("\t\t<name>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(riverV.name, 1))).."</name>\n")
@@ -272,9 +209,9 @@ function export_more_legends_xml()
         file:write("\t\t<end_pos>"..riverV.end_pos.x..","..riverV.end_pos.y.."</end_pos>\n")
         file:write("\t</river>\n")
     end
-    file:write("</rivers>\n")
+    end})
 
-    file:write("<creature_raw>\n")
+    table.insert(chunks, {name='creature_raw', fn=function()
     for creatureK, creatureV in ipairs (df.global.world.raws.creatures.all) do
         file:write("\t<creature>\n")
         file:write("\t\t<creature_id>"..creatureV.creature_id.."</creature_id>\n")
@@ -287,15 +224,15 @@ function export_more_legends_xml()
         end
         file:write("\t</creature>\n")
     end
-    file:write("</creature_raw>\n")
+    end})
 
-    file:write("<sites>\n")
+    table.insert(chunks, {name='sites', fn=function()
     for siteK, siteV in progress_ipairs(df.global.world.world_data.sites, 'site') do
         file:write("\t<site>\n")
         for k,v in pairs(siteV) do
             if (k == "id" or k == "civ_id" or k == "cur_owner_id") then
                 printifvalue(file, 2, k, v)
---                file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
+                -- file:write("\t\t<"..k..">"..tostring(v).."</"..k..">\n")
             elseif (k == "buildings") then
                 if (#siteV.buildings > 0) then
                     file:write("\t\t<structures>\n")
@@ -329,9 +266,9 @@ function export_more_legends_xml()
         end
         file:write("\t</site>\n")
     end
-    file:write("</sites>\n")
+    end})
 
-    file:write("<world_constructions>\n")
+    table.insert(chunks, {name='world_constructions', fn=function()
     for wcK, wcV in progress_ipairs(df.global.world.world_data.constructions.list, 'construction') do
         file:write("\t<world_construction>\n")
         file:write("\t\t<id>"..wcV.id.."</id>\n")
@@ -344,9 +281,9 @@ function export_more_legends_xml()
         file:write("</coords>\n")
         file:write("\t</world_construction>\n")
     end
-    file:write("</world_constructions>\n")
+    end})
 
-    file:write("<artifacts>\n")
+    table.insert(chunks, {name='artifacts', fn=function()
     for artifactK, artifactV in progress_ipairs(df.global.world.artifacts.all, 'artifact') do
         file:write("\t<artifact>\n")
         file:write("\t\t<id>"..artifactV.id.."</id>\n")
@@ -377,9 +314,9 @@ function export_more_legends_xml()
         end
         file:write("\t</artifact>\n")
     end
-    file:write("</artifacts>\n")
+    end})
 
-    file:write("<historical_figures>\n")
+    table.insert(chunks, {name='historical_figures', fn=function()
     for hfK, hfV in progress_ipairs(df.global.world.history.figures, 'historical figure') do
         file:write("\t<historical_figure>\n")
         file:write("\t\t<id>"..hfV.id.."</id>\n")
@@ -387,9 +324,9 @@ function export_more_legends_xml()
         if hfV.race >= 0 then file:write("\t\t<race>"..escape_xml(dfhack.df2utf(df.creature_raw.find(hfV.race).name[0])).."</race>\n") end
         file:write("\t</historical_figure>\n")
     end
-    file:write("</historical_figures>\n")
+    end})
 
-    file:write("<identities>\n")
+    table.insert(chunks, {name='identities', fn=function()
     for idK, idV in progress_ipairs(df.global.world.identities.all, 'identity') do
         file:write("\t<identity>\n")
         file:write("\t\t<id>"..idV.id.."</id>\n")
@@ -408,9 +345,9 @@ function export_more_legends_xml()
         file:write("\t\t<entity_id>"..idV.entity_id.."</entity_id>\n")
         file:write("\t</identity>\n")
     end
-    file:write("</identities>\n")
+    end})
 
-    file:write("<entity_populations>\n")
+    table.insert(chunks, {name='entity_populations', fn=function()
     for entityPopK, entityPopV in progress_ipairs(df.global.world.entity_populations, 'entity population') do
         file:write("\t<entity_population>\n")
         file:write("\t\t<id>"..entityPopV.id.."</id>\n")
@@ -421,9 +358,9 @@ function export_more_legends_xml()
         file:write("\t\t<civ_id>"..entityPopV.civ_id.."</civ_id>\n")
         file:write("\t</entity_population>\n")
     end
-    file:write("</entity_populations>\n")
+    end})
 
-    file:write("<entities>\n")
+    table.insert(chunks, {name='entities', fn=function()
     for entityK, entityV in progress_ipairs(df.global.world.entities.all, 'entity') do
         file:write("\t<entity>\n")
         file:write("\t\t<id>"..entityV.id.."</id>\n")
@@ -531,9 +468,9 @@ function export_more_legends_xml()
         end
         file:write("\t</entity>\n")
     end
-    file:write("</entities>\n")
+    end})
 
-    file:write("<historical_events>\n")
+    table.insert(chunks, {name='historical_events', fn=function()
     for ID, event in progress_ipairs(df.global.world.history.events, 'event') do
         if df.history_event_add_hf_entity_linkst:is_instance(event)
               or df.history_event_add_hf_site_linkst:is_instance(event)
@@ -556,7 +493,6 @@ function export_more_legends_xml()
               or df.history_event_remove_hf_entity_linkst:is_instance(event)
               or df.history_event_remove_hf_site_linkst:is_instance(event)
               or df.history_event_replaced_buildingst:is_instance(event)
-              or df.history_event_masterpiece_created_arch_designst:is_instance(event)
               or df.history_event_masterpiece_created_dye_itemst:is_instance(event)
               or df.history_event_masterpiece_created_arch_constructst:is_instance(event)
               or df.history_event_masterpiece_created_itemst:is_instance(event)
@@ -948,8 +884,9 @@ function export_more_legends_xml()
             file:write("\t</historical_event>\n")
         end
     end
-    file:write("</historical_events>\n")
-    file:write("<historical_event_relationships>\n")
+    end})
+
+    table.insert(chunks, {name='historical_event_relationships', fn=function()
     for ID, set in progress_ipairs(df.global.world.history.relationship_events, 'relationship_event') do
         for k = 0, set.next_element - 1 do
             file:write("\t<historical_event_relationship>\n")
@@ -961,8 +898,9 @@ function export_more_legends_xml()
             file:write("\t</historical_event_relationship>\n")
         end
     end
-    file:write("</historical_event_relationships>\n")
-    file:write("<historical_event_relationship_supplements>\n")
+    end})
+
+    table.insert(chunks, {name='historical_event_relationship_supplements', fn=function()
     for ID, event in progress_ipairs(df.global.world.history.relationship_event_supplements, 'relationship_event_supplement') do
         file:write("\t<historical_event_relationship_supplement>\n")
         file:write("\t\t<event>"..event.event.."</event>\n")
@@ -971,13 +909,13 @@ function export_more_legends_xml()
         file:write("\t\t<unk_1>"..event.unk_1.."</unk_1>\n")
         file:write("\t</historical_event_relationship_supplement>\n")
     end
-    file:write("</historical_event_relationship_supplements>\n")
-    file:write("<historical_event_collections>\n")
-    file:write("</historical_event_collections>\n")
-    file:write("<historical_eras>\n")
-    file:write("</historical_eras>\n")
+    end})
 
-    file:write("<written_contents>\n")
+    table.insert(chunks, {name='historical_event_collections', fn=function() end})
+
+    table.insert(chunks, {name='historical_eras', fn=function() end})
+
+    table.insert(chunks, {name='written_contents', fn=function()
     for wcK, wcV in progress_ipairs(df.global.world.written_contents.all) do
         file:write("\t<written_content>\n")
         file:write("\t\t<id>"..wcV.id.."</id>\n")
@@ -1015,196 +953,176 @@ function export_more_legends_xml()
         file:write("\t\t<author>"..wcV.author.."</author>\n")
         file:write("\t</written_content>\n")
     end
-    file:write("</written_contents>\n")
+    end})
 
-    file:write("<poetic_forms>\n")
+    table.insert(chunks, {name='poetic_forms', fn=function()
     for formK, formV in progress_ipairs(df.global.world.poetic_forms.all, 'poetic form') do
         file:write("\t<poetic_form>\n")
         file:write("\t\t<id>"..formV.id.."</id>\n")
         file:write("\t\t<name>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(formV.name,1))).."</name>\n")
         file:write("\t</poetic_form>\n")
     end
-    file:write("</poetic_forms>\n")
+    end})
 
-    file:write("<musical_forms>\n")
+    table.insert(chunks, {name='musical_forms', fn=function()
     for formK, formV in progress_ipairs(df.global.world.musical_forms.all, 'musical form') do
         file:write("\t<musical_form>\n")
         file:write("\t\t<id>"..formV.id.."</id>\n")
         file:write("\t\t<name>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(formV.name,1))).."</name>\n")
         file:write("\t</musical_form>\n")
     end
-    file:write("</musical_forms>\n")
+    end})
 
-    file:write("<dance_forms>\n")
+    table.insert(chunks, {name='dance_forms', fn=function()
     for formK, formV in progress_ipairs(df.global.world.dance_forms.all, 'dance form') do
         file:write("\t<dance_form>\n")
         file:write("\t\t<id>"..formV.id.."</id>\n")
         file:write("\t\t<name>"..escape_xml(dfhack.df2utf(dfhack.TranslateName(formV.name,1))).."</name>\n")
         file:write("\t</dance_form>\n")
     end
-    file:write("</dance_forms>\n")
+    end})
+
+    step_size = math.max(1, 100 // #chunks)
+    for k, chunk in ipairs(chunks) do
+        progress_percent = math.max(progress_percent, (100 * k) // #chunks)
+        step_percent = progress_percent
+        write_chunk(chunk.name, chunk.fn)
+    end
 
     file:write("</df_world>\n")
     file:close()
 
     local problem_elements_exist = false
-    for i, element in pairs (problem_elements) do
-        for k, field in pairs (element) do
-          dfhack.printerr (i.." element '"..k.."' attempted to be processed as simple type.")
+    for i, element in pairs(problem_elements) do
+        for k, field in pairs(element) do
+          dfhack.printerr(i.." element '"..k.."' attempted to be processed as simple type.")
         end
         problem_elements_exist = true
     end
     if problem_elements_exist then
-        dfhack.printerr ("Some elements could not be interpreted correctly because they were not simple elements.")
-        dfhack.printerr ("These elements are reported above. Please notify the DFHack community of these value pairs.")
-        dfhack.printerr ("Note that these issues have not invalidated the XML file: it ought to still be usable.")
+        dfhack.printerr("Some elements could not be interpreted correctly because they were not simple elements.")
+        dfhack.printerr("These elements are reported above. Please notify the DFHack community of these value pairs.")
+        dfhack.printerr("Note that these issues have not invalidated the XML file: it ought to still be usable.")
     end
+
+    print("Done exporting extended legends data to: " .. filename)
 end
 
--- Export world information and legends.xml (keys: 'p and x')
-function export_legends_info()
-    -- Move into the save folder
-    if not move_to_save_folder() then
-        qerror('Could not move into the save folder.')
+local function wrap_export()
+    if progress_percent >= 0 then
+        qerror('exportlegends already in progress')
     end
-    print('    Exporting:  World map/gen info')
-    gui.simulateInput(vs, 'LEGENDS_EXPORT_MAP')
-    print('    Exporting:  Legends xml')
-    gui.simulateInput(vs, 'LEGENDS_EXPORT_XML')
-    move_back_to_main_folder() -- Move back out of the save folder
-    print("    Exporting:  Extra legends_plus xml")
-    export_more_legends_xml()
+    progress_percent = 0
+    step_size = 1
+    progress_item = 'basic info'
+    yield_if_timeout()
+    local ok, err = pcall(export_more_legends_xml)
+    if not ok then
+        dfhack.printerr(err)
+    end
+    progress_percent = -1
+    step_size = 1
+    progress_item = ''
 end
 
--- Export all the detailed maps like biome and elevation maps. (key: 'd')
-function export_detailed_maps()
-    script.start(
-        function()
-        -- When script is finished run `move_back_to_main_folder()`
-        dfhack.with_finalize(
-            -- Function when script is finished
-            function()
-                -- This makes sure it will always go back to the main folder.
-                -- Even if an error occurs
-                move_back_to_main_folder()
-                -- Make sure this is always printed even when error occurs.
-                print("    Done exporting.")
-            end,
-            -- Run script
-            function()
-                -- Loop over all the detailed maps and export them.
-                for i = 1, #MAPS do
-                    -- Select the detailed map section
-                    local vs = dfhack.gui.getViewscreenByType(df.viewscreen_export_graphical_mapst, 0)
-                    if not vs then
-                        local legends_vs = dfhack.gui.getViewscreenByType(df.viewscreen_legendsst, 0)
-                        if not legends_vs then
-                            qerror("Could not find legends screen")
-                        end
+-- -------------------
+-- LegendsOverlay
+--
 
-                        gui.simulateInput(legends_vs, 'LEGENDS_EXPORT_DETAILED_MAP')
-                    end
+LegendsOverlay = defclass(LegendsOverlay, overlay.OverlayWidget)
+LegendsOverlay.ATTRS{
+    desc='Adds extended export progress bar to the legends main screen.',
+    default_pos={x=2, y=2},
+    default_enabled=true,
+    viewscreens='legends/Default',
+    frame={w=55, h=5},
+}
 
-                    vs = dfhack.gui.getViewscreenByType(df.viewscreen_export_graphical_mapst, 0)
-                    if not vs then
-                        qerror("Could not find map export screen")
-                    end
+function LegendsOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            view_id='button_mask',
+            frame={t=0, l=0, w=15, h=3},
+        },
+        widgets.BannerPanel{
+            frame={b=0, l=0, r=0, h=1},
+            subviews={
+                widgets.ToggleHotkeyLabel{
+                    view_id='do_export',
+                    frame={t=0, l=1, w=53},
+                    label='Also export DFHack extended legends data:',
+                    key='CUSTOM_CTRL_D',
+                    visible=function() return progress_percent < 0 end,
+                },
+                widgets.Label{
+                    frame={t=0, l=1},
+                    text={
+                        'Exporting ',
+                        {text=function() return progress_item end},
+                        ' (',
+                        {text=function() return progress_percent end, pen=COLOR_YELLOW},
+                        '% complete)'
+                    },
+                    visible=function() return progress_percent >= 0 end,
+                },
+            },
+        },
+    }
+end
 
-                    vs.sel_type = i - 1
-                    -- Move into the save folder
-                    if not move_to_save_folder() then
-                        qerror('Could not move into the save folder.')
-                    end
-                    print('    Exporting map ' ..i.. '/' ..#MAPS..': '.. MAPS[i])
-                    -- Select the map and start exporting
-                    gui.simulateInput(vs, 'SELECT')
-                    -- Wait for the map to finish exporting
-                    while dfhack.gui.getCurViewscreen() == vs do
-                        script.sleep(10, 'frames')
-                    end
-                    -- Move back out of the save folder
-                    move_back_to_main_folder()
-                end
-            end
-        )
+function LegendsOverlay:onInput(keys)
+    if keys._MOUSE_L and progress_percent < 0 and
+        self.subviews.button_mask:getMousePos() and
+        self.subviews.do_export:getOptionValue()
+    then
+        script.start(wrap_export)
+    end
+    return LegendsOverlay.super.onInput(self, keys)
+end
+
+-- -------------------
+-- DoneMaskOverlay
+--
+
+DoneMaskOverlay = defclass(DoneMaskOverlay, overlay.OverlayWidget)
+DoneMaskOverlay.ATTRS{
+    desc='Prevents legends mode from being exited while an export is in progress.',
+    default_pos={x=-2, y=2},
+    default_enabled=true,
+    viewscreens='legends',
+    frame={w=9, h=3},
+}
+
+function DoneMaskOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            frame_background=gui.CLEAR_PEN,
+            visible=function() return progress_percent >= 0 end,
+        }
+    }
+end
+
+function DoneMaskOverlay:onInput(keys)
+    if progress_percent >= 0 then
+        if keys.LEAVESCREEN or (keys._MOUSE_L and self:getMousePos()) then
+            return true
         end
-    )
+    end
+    return DoneMaskOverlay.super.onInput(self, keys)
 end
 
--- Export the maps of all the sites (cities, towns,...) (key: 'sites', 'p')
-function export_site_maps()
-    local vs = dfhack.gui.getCurViewscreen()
-    if ((dfhack.gui.getCurFocus() ~= "legends" ) and (not table_contains(vs, "main_cursor"))) then -- Using open-legends
-        vs = vs.parent --luacheck: retype
-    end
-    if df.viewscreen_legendsst:is_instance(vs) then
-        -- Move into the save folder
-        if not move_to_save_folder() then
-            qerror('Could not move into the save folder.')
-        end
-        print('    Exporting:  All possible site maps')
-        vs.main_cursor = 1
-        gui.simulateInput(vs, 'SELECT')
-        for i=1, #vs.sites do
-            gui.simulateInput(vs, 'LEGENDS_EXPORT_MAP')
-            gui.simulateInput(vs, 'STANDARDSCROLL_DOWN')
-        end
-        gui.simulateInput(vs, 'LEAVESCREEN')
-        move_back_to_main_folder() -- Move back out of the save folder
-    else
-        qerror('this command can only be used in Legends mode')
-    end
+OVERLAY_WIDGETS = {
+    export=LegendsOverlay,
+    mask=DoneMaskOverlay,
+}
+
+if dfhack_flags.module then
+    return
 end
 
--- Check if a folder with this name could be created or already exists
-function create_folder(folder_name)
-    if folder_name == "-00000-01-01" then
-        qerror('"'..folder_name..'" is the default foldername, this folder will not be created as you are probably not in the legends screen.')
-    end
-    -- check if it is a file, not a folder
-    if dfhack.filesystem.isfile(folder_name) then
-        qerror(folder_name..' is a file, not a folder')
-    end
-    if dfhack.filesystem.exists(folder_name) then
-        return true
-    else
-        return dfhack.filesystem.mkdir(folder_name)
-    end
-end
-
--- If folder_name is given as a argument use that
-if #args >= 2 then
-    folder_name = args[2]
-end
--- Create folder to export all files into, if possible.
-if not create_folder(folder_name) then
-    -- no valid folder name or could not create folder
-    qerror('The foldername '..folder_name..' could not be created')
-end
-print("Writing all files in: "..folder_name)
-
--- Main: Check if on legends screen and trigger the correct export.
-if dfhack.gui.getCurFocus() == "legends" or dfhack.gui.getCurFocus() == "dfhack/lua/legends" then
-    -- either native legends mode, or using the open-legends.lua script
-    if args[1] == "all" then
-        export_legends_info()
-        export_site_maps()
-        export_detailed_maps()
-    elseif args[1] == "info" then
-        export_legends_info()
-    elseif args[1] == "custom" then
-        export_more_legends_xml()
-    elseif args[1] == "maps" then
-        export_detailed_maps()
-    elseif args[1] == "sites" then
-        export_site_maps()
-    else
-        qerror('Valid arguments are "all", "info", "custom", "maps" or "sites"')
-    end
-elseif args[1] == "maps" and dfhack.gui.getCurFocus() == "export_graphical_map" then
-    export_detailed_maps()
-else
+-- Check if on legends screen and trigger the export if so
+if not dfhack.gui.matchFocusString('legends') then
     qerror('exportlegends must be run from the main legends view')
 end
 
-print("Exported files can be found in the \""..folder_name.."\" folder.")
+script.start(wrap_export)

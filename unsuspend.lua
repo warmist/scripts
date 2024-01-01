@@ -2,7 +2,8 @@
 --@module = true
 
 local guidm = require('gui.dwarfmode')
-local utils = require('utils')
+local argparse = require('argparse')
+local suspendmanager = reqscript('suspendmanager')
 
 local overlay = require('plugins.overlay')
 
@@ -11,16 +12,11 @@ if not ok then
     buildingplan = nil
 end
 
-local function foreach_construction_job(fn)
-    for _,job in utils.listpairs(df.global.world.jobs.list) do
-        if job.job_type == df.job_type.ConstructBuilding then
-            fn(job)
-        end
-    end
-end
+local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32, true)
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
+    desc='Annotates suspended buildings with a visible marker.',
     viewscreens='dwarfmode',
     default_enabled=true,
     overlay_only=true,
@@ -60,7 +56,7 @@ end
 function SuspendOverlay:overlay_onupdate()
     local added = false
     self.data_version = self.data_version + 1
-    foreach_construction_job(function(job)
+    suspendmanager.foreach_construction_job(function(job)
         self:update_building(dfhack.job.getHolder(job).id, job)
         added = true
     end)
@@ -142,6 +138,10 @@ function SuspendOverlay:refresh_screen_buildings()
     self.screen_buildings = screen_buildings
 end
 
+local tp = function(offset)
+    return dfhack.textures.getTexposByHandle(textures[offset])
+end
+
 function SuspendOverlay:render_marker(dc, bld, screen_pos)
     if not bld or #bld.jobs ~= 1 then return end
     local data = self.in_progress_buildings[bld.id]
@@ -151,16 +151,15 @@ function SuspendOverlay:render_marker(dc, bld, screen_pos)
             or not job.flags.suspend then
         return
     end
-    local color = COLOR_YELLOW
-    local ch = 'x'
+    local color, ch, texpos = COLOR_YELLOW, 'x', tp(2)
     if buildingplan and buildingplan.isPlannedBuilding(bld) then
-        color = COLOR_GREEN
-        ch = 'P'
+        color, ch, texpos = COLOR_GREEN, 'P', tp(4)
+    elseif suspendmanager and suspendmanager.isKeptSuspended(job) then
+        color, ch, texpos = COLOR_WHITE, 'x', tp(3)
     elseif data.suspend_count > 1 then
-        color = COLOR_RED
-        ch = 'X'
+        color, ch, texpos = COLOR_RED, 'X', tp(1)
     end
-    dc:seek(screen_pos.x, screen_pos.y):tile(ch, nil, color)
+    dc:seek(screen_pos.x, screen_pos.y):tile(ch, texpos, color)
 end
 
 function SuspendOverlay:onRenderFrame(dc)
@@ -184,32 +183,35 @@ if dfhack_flags.module then
     return
 end
 
-local unsuspended_count, flow_count, buildingplan_count = 0, 0, 0
+local quiet, skipblocking = false, false
+argparse.processArgsGetopt({...}, {
+    {'q', 'quiet', handler=function() quiet = true end},
+    {'s', 'skipblocking', handler=function() skipblocking = true end},
+})
 
-foreach_construction_job(function(job)
+local skipped_counts = {}
+local unsuspended_count = 0
+
+local manager = suspendmanager.SuspendManager{preventBlocking=skipblocking}
+manager:refresh()
+suspendmanager.foreach_construction_job(function(job)
     if not job.flags.suspend then return end
-    if dfhack.maps.getTileFlags(job.pos).flow_size > 1 then
-        flow_count = flow_count + 1
+
+    local skip_reason=manager:shouldStaySuspended(job, skipblocking)
+    if skip_reason then
+        skipped_counts[skip_reason] = (skipped_counts[skip_reason] or 0) + 1
         return
     end
-    local bld = dfhack.buildings.findAtTile(job.pos)
-    if bld and buildingplan and buildingplan.isPlannedBuilding(bld) then
-        buildingplan_count = buildingplan_count + 1
-        return
-    end
-    job.flags.suspend = false
+    suspendmanager.unsuspend(job)
     unsuspended_count = unsuspended_count + 1
 end)
 
-local opts = utils.invert{...}
-local quiet = opts['-q'] or opts['--quiet']
+if not quiet then
+    for reason,count in pairs(skipped_counts) do
+        print(string.format('Not unsuspending %d %s job(s)', count, suspendmanager.REASON_TEXT[reason]))
+    end
 
-if flow_count > 0 then
-    print(string.format('Not unsuspending %d underwater job(s)', flow_count))
-end
-if buildingplan_count > 0 then
-    print(string.format('Not unsuspending %d buildingplan job(s)', buildingplan_count))
-end
-if unsuspended_count > 0 or not quiet then
-    print(string.format('Unsuspended %d job(s).', unsuspended_count))
+    if unsuspended_count > 0 then
+        print(string.format('Unsuspended %d job(s).', unsuspended_count))
+    end
 end
