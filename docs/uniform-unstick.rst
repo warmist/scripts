@@ -53,6 +53,9 @@ Overlay
 -------
 
 This script adds a small link to the squad equipment page that will run
-``uniform-unstick --all --drop --free`` when clicked. If any items are
-unassigned (they'll turn red on the equipment screen), hit the "Update
-Equipment" button to get everything resolved.
+``uniform-unstick --all`` and show the report when clicked. After reviewing the
+report, you can right click to exit and do nothing or you can click the "Try to
+resolve conflicts" button, which runs the equivalent of
+``uniform-unstick --all --drop --free``. If any items are unassigned (they'll
+turn red on the equipment screen), hit the "Update Equipment" button to
+reassign equipment.

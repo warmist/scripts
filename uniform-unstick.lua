@@ -1,5 +1,6 @@
 --@ module=true
 
+local gui = require('gui')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
@@ -245,24 +246,98 @@ local function main(args)
     end
 end
 
+ReportWindow = defclass(ReportWindow, widgets.Window)
+ReportWindow.ATTRS {
+    frame_title='Equipment conflict report',
+    frame={w=100, h=45},
+    resizable=true, -- if resizing makes sense for your dialog
+    resize_min={w=50, h=20}, -- try to allow users to shrink your windows
+    autoarrange_subviews=1,
+    autoarrange_gap=1,
+    report=DEFAULT_NIL,
+}
+
+function ReportWindow:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            frame={t=0, l=0, r=0},
+            label='Try to resolve conflicts',
+            key='CUSTOM_CTRL_T',
+            auto_width=true,
+            on_activate=function()
+                dfhack.run_script('uniform-unstick', '--all', '--drop', '--free')
+                self.parent_view:dismiss()
+            end,
+        },
+        widgets.WrappedLabel{
+            frame={t=2, l=0, r=0},
+            text_pen=COLOR_LIGHTRED,
+            text_to_wrap='After resolving conflicts, be sure to click the "Update equipment" button to reassign new equipment!',
+        },
+        widgets.WrappedLabel{
+            frame={t=4, l=0, r=0},
+            text_to_wrap=self.report,
+        },
+    }
+end
+
+ReportScreen = defclass(ReportScreen, gui.ZScreenModal)
+ReportScreen.ATTRS {
+    focus_path='equipreport',
+    report=DEFAULT_NIL,
+}
+
+function ReportScreen:init()
+    self:addviews{ReportWindow{report=self.report}}
+end
+
 EquipOverlay = defclass(EquipOverlay, overlay.OverlayWidget)
 EquipOverlay.ATTRS{
     desc='Adds a link to the equip screen to fix equipment conflicts.',
-    default_pos={x=-102,y=21},
+    default_pos={x=-101,y=21},
     default_enabled=true,
     viewscreens='dwarfmode/SquadEquipment',
-    frame={w=23, h=1},
+    frame={w=26, h=1},
 }
 
 function EquipOverlay:init()
     self:addviews{
         widgets.TextButton{
+            view_id='button',
             frame={t=0, l=0, r=0, h=1},
-            label='Fix conflicts',
+            label='Detect conflicts',
             key='CUSTOM_CTRL_T',
-            on_activate=function() main{'--all', '--drop', '--free'} end,
+            on_activate=self:callback('run_report'),
+        },
+        widgets.TextButton{
+            view_id='button_good',
+            frame={t=0, l=0, r=0, h=1},
+            label='   All good!    ',
+            text_pen=COLOR_GREEN,
+            key='CUSTOM_CTRL_T',
+            visible=false,
         },
     }
+end
+
+function EquipOverlay:run_report()
+    local output = dfhack.run_command_silent({'uniform-unstick', '--all'})
+    if #output == 0 then
+        self.subviews.button.visible = false
+        self.subviews.button_good.visible = true
+        local end_ms = dfhack.getTickCount() + 5000
+        local function label_reset()
+            if dfhack.getTickCount() < end_ms then
+                dfhack.timeout(10, 'frames', label_reset)
+            else
+                self.subviews.button_good.visible = false
+                self.subviews.button.visible = true
+            end
+        end
+        label_reset()
+    else
+        ReportScreen{report=output}:show()
+    end
 end
 
 OVERLAY_WIDGETS = {overlay=EquipOverlay}
