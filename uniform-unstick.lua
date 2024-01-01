@@ -103,7 +103,8 @@ local function process(unit, args)
         local item = inv_item.item
         -- Include weapons so we can check we have them later
         if inv_item.mode == df.unit_inventory_item.T_mode.Worn or
-            inv_item.mode == df.unit_inventory_item.T_mode.Weapon
+            inv_item.mode == df.unit_inventory_item.T_mode.Weapon or
+            inv_item.mode == df.unit_inventory_item.T_mode.Strapped
         then
             worn_items[item.id] = item
             worn_parts[item.id] = inv_item.body_part_id
