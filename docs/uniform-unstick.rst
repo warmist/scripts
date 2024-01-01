@@ -48,3 +48,11 @@ Strategy options
     ground, ready to be claimed.
 ``--multi``
     Attempt to fix issues with uniforms that allow multiple items per body part.
+
+Overlay
+-------
+
+This script adds a small link to the squad equipment page that will run
+``uniform-unstick --all --drop --free`` when clicked. If any items are
+unassigned (they'll turn red on the equipment screen), hit the "Update
+Equipment" button to get everything resolved.

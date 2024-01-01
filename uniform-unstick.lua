@@ -1,5 +1,8 @@
--- Prompt units to adjust their uniform.
+--@ module=true
+
+local overlay = require('plugins.overlay')
 local utils = require('utils')
+local widgets = require('gui.widgets')
 
 local validArgs = utils.invert({
     'all',
@@ -220,25 +223,52 @@ local function do_drop(item_list)
     end
 end
 
+local function main(args)
+    args = utils.processArgs(args, validArgs)
 
--- Main
+    if args.help then
+        print(dfhack.script_help())
+        return
+    end
 
-local args = utils.processArgs({ ... }, validArgs)
+    if args.all then
+        for _, unit in ipairs(dfhack.units.getCitizens(false)) do
+            do_drop(process(unit, args))
+        end
+    else
+        local unit = dfhack.gui.getSelectedUnit()
+        if unit then
+            do_drop(process(unit, args))
+        else
+            qerror("Please select a unit if not running with --all")
+        end
+    end
+end
 
-if args.help then
-    print(dfhack.script_help())
+EquipOverlay = defclass(EquipOverlay, overlay.OverlayWidget)
+EquipOverlay.ATTRS{
+    desc='Adds a link to the equip screen to fix equipment conflicts.',
+    default_pos={x=-102,y=21},
+    default_enabled=true,
+    viewscreens='dwarfmode/SquadEquipment',
+    frame={w=23, h=1},
+}
+
+function EquipOverlay:init()
+    self:addviews{
+        widgets.TextButton{
+            frame={t=0, l=0, r=0, h=1},
+            label='Fix conflicts',
+            key='CUSTOM_CTRL_T',
+            on_activate=function() main{'--all', '--drop', '--free'} end,
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {overlay=EquipOverlay}
+
+if dfhack_flags.module then
     return
 end
 
-if args.all then
-    for _, unit in ipairs(dfhack.units.getCitizens(false)) do
-        do_drop(process(unit, args))
-    end
-else
-    local unit = dfhack.gui.getSelectedUnit()
-    if unit then
-        do_drop(process(unit, args))
-    else
-        qerror("Please select a unit if not running with --all")
-    end
-end
+main({...})
