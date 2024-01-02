@@ -163,7 +163,6 @@ local function process(unit, args)
                             end
                         end
                     end
-                    unit.military.pickup_flags.update = true
                 end
             else
                 missing_ids[u_id] = item
