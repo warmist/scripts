@@ -20,6 +20,7 @@ ConfirmConf.ATTRS{
     intercept_keys={},
     context=DEFAULT_NIL,
     predicate=DEFAULT_NIL,
+    pausable=false,
     intercept_frame=DEFAULT_NIL,
 }
 
@@ -83,6 +84,7 @@ if not next(registry) then
         intercept_keys='_MOUSE_L',
         context='dwarfmode/Hauling',
         predicate=function() return df.global.game.main_interface.current_hover == 180 end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -92,6 +94,7 @@ if not next(registry) then
         intercept_keys='_MOUSE_L',
         context='dwarfmode/Hauling',
         predicate=function() return df.global.game.main_interface.current_hover == 185 end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -112,6 +115,7 @@ if not next(registry) then
         intercept_keys='_MOUSE_L',
         context='dwarfmode/Squads',
         predicate=function() return df.global.game.main_interface.current_hover == 343 end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -121,6 +125,7 @@ if not next(registry) then
         intercept_keys='_MOUSE_L',
         context='dwarfmode/Info/WORK_ORDERS/Default',
         predicate=function() return df.global.game.main_interface.current_hover == 222 end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -128,8 +133,9 @@ if not next(registry) then
         title='Remove zone',
         message='Are you sure you want to remove this zone?',
         intercept_keys='_MOUSE_L',
-        context='dwarfmode/Zone/Some',
+        context='dwarfmode/Zone',
         predicate=function() return df.global.game.main_interface.current_hover == 130 end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -142,6 +148,7 @@ if not next(registry) then
             return df.global.game.main_interface.current_hover == 171 or
                 df.global.game.main_interface.current_hover == 168
         end,
+        pausable=true,
     }
 
     ConfirmConf{
@@ -149,8 +156,9 @@ if not next(registry) then
         title='Remove stockpile',
         message='Are you sure you want to remove this stockpile?',
         intercept_keys='_MOUSE_L',
-        context='dwarfmode/Some/Stockpile',
+        context='dwarfmode/Stockpile',
         predicate=function() return df.global.game.main_interface.current_hover == 118 end,
+        pausable=true,
     }
 end
 
@@ -309,7 +317,7 @@ function get_state()
 end
 
 function set_enabled(id, enabled)
-    for _, conf in ipairs(config.data) do
+    for _, conf in pairs(config.data) do
         if conf.id == id then
             if conf.enabled ~= enabled then
                 conf.enabled = enabled
@@ -325,18 +333,16 @@ end
 
 PromptWindow = defclass(PromptWindow, widgets.Window)
 PromptWindow.ATTRS {
-    frame={w=50, h=15},
-    resizable=true,
-    resize_min={w=50, h=20},
-    id=DEFAULT_NIL,
-    message=DEFAULT_NIL,
+    frame={w=47, h=16},
+    conf=DEFAULT_NIL,
+    propagate_fn=DEFAULT_NIL,
 }
 
 function PromptWindow:init()
     self:addviews{
         widgets.WrappedLabel{
             frame={t=0, l=0, r=0, b=3},
-            text_to_wrap=self.message,
+            text_to_wrap=self.conf.message,
         },
         widgets.HotkeyLabel{
             frame={b=1, l=0},
@@ -346,7 +352,7 @@ function PromptWindow:init()
             on_activate=self:callback('proceed'),
         },
         widgets.HotkeyLabel{
-            frame={b=1, l=20},
+            frame={b=1, l=32},
             label='Settings',
             key='CUSTOM_SHIFT_S',
             auto_width=true,
@@ -354,43 +360,43 @@ function PromptWindow:init()
         },
         widgets.HotkeyLabel{
             frame={b=0, l=0},
-            label='Pause confirmations until you leave this screen',
+            label='Pause confirmations while on this screen',
             key='CUSTOM_SHIFT_P',
             auto_width=true,
+            visible=self.conf.pausable,
             on_activate=self:callback('pause'),
         },
     }
 end
 
 function PromptWindow:proceed()
-    self.parent_view:propagate()
     self.parent_view:dismiss()
+    self.propagate_fn()
 end
 
 function PromptWindow:settings()
     self.parent_view:dismiss()
-    dfhack.run_script('gui/confirm', self.id)
+    dfhack.run_script('gui/confirm', self.conf.id)
 end
 
 function PromptWindow:pause()
-    self.parent_view.paused_conf = registry[id]
-    self:proceed()
+    self.parent_view:dismiss()
+    self.propagate_fn(true)
 end
 
 PromptScreen = defclass(PromptScreen, gui.ZScreenModal)
 PromptScreen.ATTRS {
     focus_path='confirm/prompt',
-    id=DEFAULT_NIL,
-    title=DEFAULT_NIL,
-    message=DEFAULT_NIL,
+    conf=DEFAULT_NIL,
+    propagate_fn=DEFAULT_NIL,
 }
 
 function PromptScreen:init()
     self:addviews{
         PromptWindow{
-            frame_title=self.title,
-            id=self.id,
-            message=self.message,
+            frame_title=self.conf.title,
+            conf=self.conf,
+            propagate_fn=self.propagate_fn,
         }
     }
 end
@@ -426,23 +432,57 @@ end
 
 function ConfirmOverlay:overlay_onupdate()
     if self.paused_conf and
-        not dfhack.gui.matchFocusString(self.paused_conf.context, dfhack.gui.getDFViewscreen(true))
+        not dfhack.gui.matchFocusString(self.paused_conf.context,
+                dfhack.gui.getDFViewscreen(true))
     then
         self.paused_conf = nil
         self.overlay_onupdate_max_freq_seconds = 300
     end
 end
 
-function ConfirmOverlay:onInput(keys)
-    if self.paused_conf then
-        return false
+local function matches_conf(conf, keys, scr)
+    local matched_keys = false
+    for _, key in ipairs(conf.intercept_keys) do
+        if keys[key] then
+            matched_keys = true
+            break
+        end
     end
-    self.saved_keys = keys
-    local handled = ConfirmOverlay.super.onInput(self, keys)
+    if not matched_keys then return false end
+    if not dfhack.gui.matchFocusString(conf.context, scr) then return false end
+    return not conf.predicate or conf.predicate()
 end
 
-function ConfirmOverlay:propagate()
+function ConfirmOverlay:onInput(keys)
+    if self.paused_conf or self.simulating then
+        return false
+    end
+    local scr = dfhack.gui.getDFViewscreen(true)
+    for id, conf in pairs(registry) do
+        if config.data[id].enabled and matches_conf(conf, keys, scr) then
+            local mouse_pos = xy2pos(dfhack.screen.getMousePos())
+            local propagate_fn = function(pause)
+                if pause then
+                    self.paused_conf = conf
+                    self.overlay_onupdate_max_freq_seconds = 0
+                end
+                if keys._MOUSE_L then
+                    df.global.gps.mouse_x = mouse_pos.x
+                    df.global.gps.mouse_y = mouse_pos.y
+                end
+                self.simulating = true
+                gui.simulateInput(scr, keys)
+                self.simulating = false
+            end
+            PromptScreen{conf=conf, propagate_fn=propagate_fn}:show()
+            return true
+        end
+    end
 end
+
+OVERLAY_WIDGETS = {
+    overlay=ConfirmOverlay,
+}
 
 ------------------------
 -- CLI

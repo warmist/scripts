@@ -7,7 +7,7 @@ local widgets = require('gui.widgets')
 Confirm = defclass(Confirm, widgets.Window)
 Confirm.ATTRS{
     frame_title='Confirmation dialogs',
-    frame={w=36, h=17},
+    frame={w=37, h=17},
     initial_id=DEFAULT_NIL,
 }
 
@@ -16,28 +16,21 @@ function Confirm:init()
         widgets.List{
             view_id='list',
             frame={t=0, l=0, b=2},
-            on_submit=function(idx)
-                self:toggle(idx)
-                self:refresh()
-            end,
+            on_submit=self:callback('toggle'),
         },
         widgets.HotkeyLabel{
             frame={b=0, l=0},
             label='Toggle',
             key='SELECT',
-            on_activate=function()
-                self:toggle(self.subviews.list:getSelected())
-                self:refresh()
-            end,
+            auto_width=true,
+            on_activate=function() self:toggle(self.subviews.list:getSelected()) end,
         },
         widgets.HotkeyLabel{
-            frame={b=0, l=20},
+            frame={b=0, l=15},
             label='Toggle all',
             key='CUSTOM_CTRL_A',
-            on_activate=function()
-                self:toggle_all(self.subviews.list:getSelected())
-                self:refresh()
-            end,
+            auto_width=true,
+            on_activate=self:callback('toggle_all'),
         },
     }
 
@@ -54,18 +47,17 @@ function Confirm:init()
 end
 
 function Confirm:refresh()
-    self.data = confirm.get_state()
     local choices = {}
-    for _, c in ipairs(self.data) do
+    for id, conf in pairs(confirm.get_state()) do
         table.insert(choices, {
-            id=c.id,
-            enabled=c.enabled,
+            id=id,
+            enabled=conf.enabled,
             text={
-                c.id,
+                id,
                 ': ',
                 {
-                    text=c.enabled and 'Enabled' or 'Disabled',
-                    pen=c.enabled and COLOR_GREEN or COLOR_RED,
+                    text=conf.enabled and 'Enabled' or 'Disabled',
+                    pen=conf.enabled and COLOR_GREEN or COLOR_RED,
                 }
             }
         })
@@ -76,22 +68,24 @@ function Confirm:refresh()
     list:setSelected(selected)
 end
 
-function Confirm:toggle(idx)
-    local choice = self.data[idx]
+function Confirm:toggle(_, choice)
+    if not choice then return end
     confirm.set_enabled(choice.id, not choice.enabled)
     self:refresh()
 end
 
-function Confirm:toggle_all(choice)
-    local target_state = not self.data[1].enabled
-    for _, c in pairs(self.data) do
-        confirm.set_enabled(c.id, target_state)
+function Confirm:toggle_all()
+    local choice = self.subviews.list:getChoices()[1]
+    if not choice then return end
+    local target_state = not choice.enabled
+    for id in pairs(confirm.get_state()) do
+        confirm.set_enabled(id, target_state)
     end
     self:refresh()
 end
 
 ConfirmScreen = defclass(ConfirmScreen, gui.ZScreen)
-PromptScreen.ATTRS {
+ConfirmScreen.ATTRS {
     focus_path='confirm/config',
     initial_id=DEFAULT_NIL,
 }
