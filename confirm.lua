@@ -347,7 +347,7 @@ end
 
 PromptWindow = defclass(PromptWindow, widgets.Window)
 PromptWindow.ATTRS {
-    frame={w=47, h=16},
+    frame={w=47, h=12},
     conf=DEFAULT_NIL,
     propagate_fn=DEFAULT_NIL,
 }
@@ -355,7 +355,7 @@ PromptWindow.ATTRS {
 function PromptWindow:init()
     self:addviews{
         widgets.WrappedLabel{
-            frame={t=0, l=0, r=0, b=3},
+            frame={t=0, l=0, r=0},
             text_to_wrap=self.conf.message,
         },
         widgets.HotkeyLabel{
