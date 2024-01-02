@@ -62,6 +62,7 @@ function Confirm:refresh()
             }
         })
     end
+    table.sort(choices, function(a, b) return a.id < b.id end)
     local list = self.subviews.list
     local selected = list:getSelected()
     list:setChoices(choices)
