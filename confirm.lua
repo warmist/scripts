@@ -40,10 +40,6 @@ function ConfirmConf:init()
         error('context must be set to a bounding focus string')
     end
 
-    if registry[self.id] then
-        error('id already registered: ' .. tostring(self.id))
-    end
-
     -- auto-register
     registry[self.id] = self
 end
@@ -59,6 +55,17 @@ local function trade_goods_selected()
         goods_selected(df.global.game.main_interface.trade.goodflag[1])
 end
 
+local function trade_agreement_items_selected()
+    local diplomacy = df.global.game.main_interface.diplomacy
+    for _, tab in ipairs(diplomacy.environment.meeting.sell_requests.priority) do
+        for _, priority in ipairs(tab) do
+            if priority ~= 0 then
+                return true
+            end
+        end
+    end
+end
+
 local function has_caravans()
     for _, caravan in pairs(df.global.plotinfo.caravans) do
         if caravan.time_remaining > 0 then
@@ -67,100 +74,107 @@ local function has_caravans()
     end
 end
 
-if not next(registry) then
-    ConfirmConf{
-        id='trade-cancel',
-        title='Cancel trade',
-        message='Are you sure you want leave this screen? Selected items will not be saved.',
-        intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
-        context='dwarfmode/Trade',
-        predicate=trade_goods_selected,
-    }
+ConfirmConf{
+    id='trade-cancel',
+    title='Cancel trade',
+    message='Are you sure you want leave this screen? Selected items will not be saved.',
+    intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
+    context='dwarfmode/Trade',
+    predicate=trade_goods_selected,
+}
 
-    ConfirmConf{
-        id='haul-delete-route',
-        title='Delete hauling route',
-        message='Are you sure you want to delete this route?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Hauling',
-        predicate=function() return df.global.game.main_interface.current_hover == 180 end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='diplomacy-request',
+    title='Cancel trade agreement',
+    message='Are you sure you want to leave this screen? The trade agreement selection will not be saved until you hit the "Done" button at the bottom of the screen.',
+    intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
+    context='dwarfmode/Diplomacy/Requests',
+    predicate=trade_agreement_items_selected,
+}
 
-    ConfirmConf{
-        id='haul-delete-stop',
-        title='Delete hauling stop',
-        message='Are you sure you want to delete this stop?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Hauling',
-        predicate=function() return df.global.game.main_interface.current_hover == 185 end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='haul-delete-route',
+    title='Delete hauling route',
+    message='Are you sure you want to delete this route?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Hauling',
+    predicate=function() return df.global.game.main_interface.current_hover == 180 end,
+    pausable=true,
+}
 
-    ConfirmConf{
-        id='depot-remove',
-        title='Remove depot',
-        message='Are you sure you want to remove this depot? Merchants are present and will lose profits.',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/ViewSheets/BUILDING/TradeDepot',
-        predicate=function()
-            return df.global.game.main_interface.current_hover == 301 and has_caravans()
-        end,
-    }
+ConfirmConf{
+    id='haul-delete-stop',
+    title='Delete hauling stop',
+    message='Are you sure you want to delete this stop?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Hauling',
+    predicate=function() return df.global.game.main_interface.current_hover == 185 end,
+    pausable=true,
+}
 
-    ConfirmConf{
-        id='squad-disband',
-        title='Disband squad',
-        message='Are you sure you want to disband this squad?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Squads',
-        predicate=function() return df.global.game.main_interface.current_hover == 343 end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='depot-remove',
+    title='Remove depot',
+    message='Are you sure you want to remove this depot? Merchants are present and will lose profits.',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/ViewSheets/BUILDING/TradeDepot',
+    predicate=function()
+        return df.global.game.main_interface.current_hover == 301 and has_caravans()
+    end,
+}
 
-    ConfirmConf{
-        id='order-remove',
-        title='Remove manger order',
-        message='Are you sure you want to remove this manager order?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Info/WORK_ORDERS/Default',
-        predicate=function() return df.global.game.main_interface.current_hover == 222 end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='squad-disband',
+    title='Disband squad',
+    message='Are you sure you want to disband this squad?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Squads',
+    predicate=function() return df.global.game.main_interface.current_hover == 343 end,
+    pausable=true,
+}
 
-    ConfirmConf{
-        id='zone-remove',
-        title='Remove zone',
-        message='Are you sure you want to remove this zone?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Zone',
-        predicate=function() return df.global.game.main_interface.current_hover == 130 end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='order-remove',
+    title='Remove manger order',
+    message='Are you sure you want to remove this manager order?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Info/WORK_ORDERS/Default',
+    predicate=function() return df.global.game.main_interface.current_hover == 222 end,
+    pausable=true,
+}
 
-    ConfirmConf{
-        id='burrow-remove',
-        title='Remove burrow',
-        message='Are you sure you want to remove this burrow?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Burrow',
-        predicate=function()
-            return df.global.game.main_interface.current_hover == 171 or
-                df.global.game.main_interface.current_hover == 168
-        end,
-        pausable=true,
-    }
+ConfirmConf{
+    id='zone-remove',
+    title='Remove zone',
+    message='Are you sure you want to remove this zone?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Zone',
+    predicate=function() return df.global.game.main_interface.current_hover == 130 end,
+    pausable=true,
+}
 
-    ConfirmConf{
-        id='stockpile-remove',
-        title='Remove stockpile',
-        message='Are you sure you want to remove this stockpile?',
-        intercept_keys='_MOUSE_L',
-        context='dwarfmode/Stockpile',
-        predicate=function() return df.global.game.main_interface.current_hover == 118 end,
-        pausable=true,
-    }
-end
+ConfirmConf{
+    id='burrow-remove',
+    title='Remove burrow',
+    message='Are you sure you want to remove this burrow?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Burrow',
+    predicate=function()
+        return df.global.game.main_interface.current_hover == 171 or
+            df.global.game.main_interface.current_hover == 168
+    end,
+    pausable=true,
+}
+
+ConfirmConf{
+    id='stockpile-remove',
+    title='Remove stockpile',
+    message='Are you sure you want to remove this stockpile?',
+    intercept_keys='_MOUSE_L',
+    context='dwarfmode/Stockpile',
+    predicate=function() return df.global.game.main_interface.current_hover == 118 end,
+    pausable=true,
+}
 
 -- these confirmations have more complex button detection requirements
 --[[
@@ -333,7 +347,7 @@ end
 
 PromptWindow = defclass(PromptWindow, widgets.Window)
 PromptWindow.ATTRS {
-    frame={w=47, h=16},
+    frame={w=47, h=12},
     conf=DEFAULT_NIL,
     propagate_fn=DEFAULT_NIL,
 }
@@ -341,12 +355,12 @@ PromptWindow.ATTRS {
 function PromptWindow:init()
     self:addviews{
         widgets.WrappedLabel{
-            frame={t=0, l=0, r=0, b=3},
+            frame={t=0, l=0, r=0},
             text_to_wrap=self.conf.message,
         },
         widgets.HotkeyLabel{
             frame={b=1, l=0},
-            label='Yes, allow',
+            label='Yes, proceed',
             key='SELECT',
             auto_width=true,
             on_activate=self:callback('proceed'),
