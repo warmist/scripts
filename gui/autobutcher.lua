@@ -1,4 +1,3 @@
--- A GUI front-end for the autobutcher plugin.
 local gui = require 'gui'
 local utils = require 'utils'
 local widgets = require 'gui.widgets'
@@ -28,15 +27,12 @@ function nextAutobutcherState()
     return 'Start'
 end
 
-function getSleepTimer()
-    return plugin.autobutcher_getSleep()
-end
-
-function setSleepTimer(ticks)
-    plugin.autobutcher_setSleep(ticks)
-end
-
 function WatchList:init(args)
+    if plugin.isEnabled() then
+        -- ensure slaughter counts and autowatch are up to date
+        dfhack.run_command('autobutcher', 'now')
+    end
+
     local colwidth = 7
     self:addviews{
         widgets.Window{
@@ -100,7 +96,7 @@ function WatchList:onToggleView()
     self:updateBottom()
 end
 
--- update the bottom part of the UI (after sleep timer changed etc)
+-- update the bottom part of the UI
 function WatchList:updateBottom()
     self.subviews.bottom_ui:setText(
         {
@@ -129,9 +125,7 @@ function WatchList:updateBottom()
             { key = 'CUSTOM_SHIFT_A', text = ': '..nextAutobutcherState()..' Autobutcher',
               on_activate = self:callback('onToggleAutobutcher') }, '. ',
             { key = 'CUSTOM_SHIFT_W', text = ': '..nextAutowatchState()..' Autowatch',
-              on_activate = self:callback('onToggleAutowatch') }, '.       ',
-            { key = 'CUSTOM_SHIFT_S', text = ': Sleep ('..getSleepTimer()..' ticks)',
-              on_activate = self:callback('onEditSleepTimer') }, '. ',
+              on_activate = self:callback('onToggleAutowatch') }, '.
         })
 end
 
@@ -271,21 +265,6 @@ function WatchList:checkUserInput(count, text)
     end
     if count < 0 then
         dlg.showMessage('Invalid Number', 'Negative numbers make no sense!', COLOR_LIGHTRED)
-        return false
-    end
-    return true
-end
-
--- check the user input for sleep timer
-function WatchList:checkUserInputSleep(count, text)
-    if count == nil then
-        dlg.showMessage('Invalid Number', 'This is not a number: '..text..NEWLINE..'(for zero enter a 0)', COLOR_LIGHTRED)
-        return false
-    end
-    if count < 1000 then
-        dlg.showMessage('Invalid Number',
-            'Minimum allowed timer value is 1000!'..NEWLINE..'Too low values could decrease performance'..NEWLINE..'and are not necessary!',
-            COLOR_LIGHTRED)
         return false
     end
     return true
@@ -486,24 +465,6 @@ function WatchList:onEditMA()
                     plugin.autobutcher_setWatchListRace(id, fk, mk, fa, ma, watched)
                 end
                 self:initListChoices()
-            end
-        end
-    )
-end
-
-function WatchList:onEditSleepTimer()
-    local sleep = getSleepTimer()
-    dlg.showInputPrompt(
-        'Edit Sleep Timer',
-        'Enter new sleep timer in ticks:'..NEWLINE..'(1 ingame day equals 1200 ticks)',
-        COLOR_WHITE,
-        ' '..sleep,
-        function(text)
-            local count = tonumber(text)
-            if self:checkUserInputSleep(count, text) then
-                sleep = count
-                setSleepTimer(sleep)
-                self:updateBottom()
             end
         end
     )
