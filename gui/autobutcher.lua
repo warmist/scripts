@@ -131,17 +131,17 @@ local function sort_by_watched_asc(a, b)
 end
 
 local function sort_by_ordered_desc(a, b)
-    if either_are_special(a, b) or a.data.ordered == b.data.ordered then
+    if either_are_special(a, b) or a.ordered == b.ordered then
         return sort_by_race_desc(a, b)
     end
-    return a.data.ordered > b.data.ordered
+    return a.ordered > b.ordered
 end
 
 local function sort_by_ordered_asc(a, b)
-    if either_are_special(a, b) or a.data.ordered == b.data.ordered then
+    if either_are_special(a, b) or a.ordered == b.ordered then
         return sort_by_race_desc(a, b)
     end
-    return a.data.ordered < b.data.ordered
+    return a.ordered < b.ordered
 end
 
 function nextAutowatchState()
@@ -197,7 +197,7 @@ function WatchList:init()
             },
             widgets.ToggleHotkeyLabel{
                 view_id='hide_zero',
-                frame={t=0, l=35, w=44},
+                frame={t=0, l=35, w=49},
                 key='CUSTOM_CTRL_H',
                 label='Show only rows with non-zero targets',
                 on_change=self:callback('refresh', 'sort'),
@@ -336,10 +336,11 @@ function WatchList:init()
                         frame={t=0, l=0},
                         text={
                             'Columns show butcherable stock (+ protected stock, if any) / target: ', NEWLINE,
-                            'Double click on a value to edit or use one of the hotkeys listed below.'
+                            'Double click on a value to edit/toggle or use the hotkeys listed below.'
                         }
                     },
                     widgets.HotkeyLabel{
+                        view_id='fk',
                         frame={t=3, l=0},
                         key='CUSTOM_F',
                         label='f kids',
@@ -347,6 +348,7 @@ function WatchList:init()
                         on_activate=self:callback('editVal', 'female kids', 'fk'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='mk',
                         frame={t=4, l=0},
                         key='CUSTOM_M',
                         label='m kids',
@@ -354,6 +356,7 @@ function WatchList:init()
                         on_activate=self:callback('editVal', 'male kids', 'mk'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='fa',
                         frame={t=3, l=11},
                         key='CUSTOM_SHIFT_F',
                         label='F adults',
@@ -361,6 +364,7 @@ function WatchList:init()
                         on_activate=self:callback('editVal', 'female adults', 'fa'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='ma',
                         frame={t=4, l=11},
                         key='CUSTOM_SHIFT_M',
                         label='M adults',
@@ -368,6 +372,7 @@ function WatchList:init()
                         on_activate=self:callback('editVal', 'male adults', 'ma'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='butcher',
                         frame={t=3, l=24},
                         key='CUSTOM_B',
                         label='Butcher race',
@@ -375,6 +380,7 @@ function WatchList:init()
                         on_activate=self:callback('onButcherRace'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='unbutcher',
                         frame={t=4, l=24},
                         key='CUSTOM_SHIFT_B',
                         label='Unbutcher race',
@@ -382,6 +388,7 @@ function WatchList:init()
                         on_activate=self:callback('onUnbutcherRace'),
                     },
                     widgets.HotkeyLabel{
+                        view_id='watch',
                         frame={t=3, l=43},
                         key='CUSTOM_W',
                         label='Toggle watch',
@@ -519,11 +526,11 @@ function WatchList:refresh(sort_widget, sort_fn)
         end
         local total = data.fk_total + data.mk_total + data.fa_total + data.ma_total
         local ordered = data.fk_butcherflag + data.fa_butcherflag + data.mk_butcherflag + data.ma_butcherflag
-        if ordered == 0 then ordered = nil end
         table.insert(choices, {
-            text=make_row_text(data.name, data, total, ordered),
+            text=make_row_text(data.name, data, total, ordered ~= 0 and ordered or nil),
             race=data.name,
             total=total,
+            ordered=ordered,
             data=data,
         })
         ::continue::
@@ -531,6 +538,28 @@ function WatchList:refresh(sort_widget, sort_fn)
 
     table.sort(choices, self.subviews.sort:getOptionValue())
     self.subviews.list:setChoices(choices)
+end
+
+function WatchList:onDoubleClick(_, choice)
+    local x = self.subviews.list:getMousePos()
+    if x <= 32 then return
+    elseif x <= 41 then self.subviews.fk.on_activate()
+    elseif x <= 42 then return
+    elseif x <= 50 then self.subviews.mk.on_activate()
+    elseif x <= 51 then return
+    elseif x <= 59 then self.subviews.fa.on_activate()
+    elseif x <= 60 then return
+    elseif x <= 69 then self.subviews.ma.on_activate()
+    elseif x <= 70 then return
+    elseif x <= 76 then self.subviews.watch.on_activate()
+    elseif x <= 77 then return
+    elseif x <= 90 and choice.ordered then
+        if choice.ordered == 0 then
+            self.subviews.butcher.on_activate()
+        else
+            self.subviews.unbutcher.on_activate()
+        end
+    end
 end
 
 -- check the user input for target population values
@@ -567,7 +596,7 @@ function WatchList:editVal(desc, var)
         ' '..data[var],
         function(text)
             local count = tonumber(text)
-            if self:checkUserInput(count, text) then
+            if checkUserInput(count, text) then
                 data[var] = count
                 if choice.race == 1 then
                     plugin.autobutcher_setDefaultTargetAll(data.fk, data.mk, data.fa, data.ma)
@@ -595,7 +624,7 @@ function WatchList:onSetRow()
         ' ',
         function(text)
             local count = tonumber(text)
-            if self:checkUserInput(count, text) then
+            if checkUserInput(count, text) then
                 if choice.race == 1 then
                     plugin.autobutcher_setDefaultTargetAll(count, count, count, count)
                 elseif choice.race == 2 then
@@ -667,10 +696,6 @@ function WatchList:onButcherRace()
     end
     plugin.autobutcher_butcherRace(choice.data.id)
     self:refresh()
-end
-
-function WatchList:onDoubleClick()
-    -- TODO
 end
 
 function WatchList:onToggleAutobutcher()
