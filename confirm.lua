@@ -18,10 +18,10 @@ ConfirmConf.ATTRS{
     title='DFHack confirm',
     message='Are you sure?',
     intercept_keys={},
+    intercept_frame=DEFAULT_NIL,
     context=DEFAULT_NIL,
     predicate=DEFAULT_NIL,
     pausable=false,
-    intercept_frame=DEFAULT_NIL,
 }
 
 function ConfirmConf:init()
@@ -149,7 +149,7 @@ ConfirmConf{
     message='Are you sure you want to remove this zone?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Zone',
-    predicate=function() return df.global.game.main_interface.current_hover == 130 end,
+    intercept_frame={l=40, t=8, w=4, h=3},
     pausable=true,
 }
 
@@ -438,6 +438,16 @@ ConfirmOverlay.ATTRS{
 }
 
 function ConfirmOverlay:init()
+    for id, conf in pairs(registry) do
+        if conf.intercept_frame then
+            self:addviews{
+                widgets.Panel{
+                    view_id=id,
+                    frame=conf.intercept_frame,
+                }
+            }
+        end
+    end
 end
 
 function ConfirmOverlay:preUpdateLayout()
@@ -454,7 +464,7 @@ function ConfirmOverlay:overlay_onupdate()
     end
 end
 
-local function matches_conf(conf, keys, scr)
+function ConfirmOverlay:matches_conf(conf, keys, scr)
     local matched_keys = false
     for _, key in ipairs(conf.intercept_keys) do
         if keys[key] then
@@ -463,6 +473,9 @@ local function matches_conf(conf, keys, scr)
         end
     end
     if not matched_keys then return false end
+    if conf.intercept_frame and not self.subviews[conf.id]:getMousePos() then
+        return false
+    end
     if not dfhack.gui.matchFocusString(conf.context, scr) then return false end
     return not conf.predicate or conf.predicate()
 end
@@ -473,7 +486,7 @@ function ConfirmOverlay:onInput(keys)
     end
     local scr = dfhack.gui.getDFViewscreen(true)
     for id, conf in pairs(registry) do
-        if config.data[id].enabled and matches_conf(conf, keys, scr) then
+        if config.data[id].enabled and self:matches_conf(conf, keys, scr) then
             local mouse_pos = xy2pos(dfhack.screen.getMousePos())
             local propagate_fn = function(pause)
                 if pause then

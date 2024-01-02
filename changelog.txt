@@ -37,6 +37,7 @@ Template for new versions:
 - `warn-stranded`: Automatically ignore citizens who are gathering plants or digging to avoid issues with gathering fruit via stepladders and weird issues with digging
 - `warn-stranded`: Update onZoom to use df's centering functionality
 - `ban-cooking`: fix banning creature alcohols resulting in error
+- `confirm`: properly detect clicks on the remove zone button even when the unit selection screen is also open (e.g. the vanilla assign animal to pasture panel)
 
 ## Misc Improvements
 - `gui/control-panel`: reduce frequency for `warn-stranded` check to once every 2 days
