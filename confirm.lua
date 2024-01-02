@@ -59,6 +59,17 @@ local function trade_goods_selected()
         goods_selected(df.global.game.main_interface.trade.goodflag[1])
 end
 
+local function trade_agreement_items_selected()
+    local diplomacy = df.global.game.main_interface.diplomacy
+    for _, tab in ipairs(diplomacy.environment.meeting.sell_requests.priority) do
+        for _, priority in ipairs(tab) do
+            if priority ~= 0 then
+                return true
+            end
+        end
+    end
+end
+
 local function has_caravans()
     for _, caravan in pairs(df.global.plotinfo.caravans) do
         if caravan.time_remaining > 0 then
@@ -75,6 +86,15 @@ if not next(registry) then
         intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
         context='dwarfmode/Trade',
         predicate=trade_goods_selected,
+    }
+
+    ConfirmConf{
+        id='diplomacy-request',
+        title='Cancel trade agreement',
+        message='Are you sure you want to leave this screen? The trade agreement selection will not be saved until you hit the "Done" button at the bottom of the screen.',
+        intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
+        context='dwarfmode/Diplomacy/Requests',
+        predicate=trade_agreement_items_selected,
     }
 
     ConfirmConf{
@@ -346,7 +366,7 @@ function PromptWindow:init()
         },
         widgets.HotkeyLabel{
             frame={b=1, l=0},
-            label='Yes, allow',
+            label='Yes, proceed',
             key='SELECT',
             auto_width=true,
             on_activate=self:callback('proceed'),
