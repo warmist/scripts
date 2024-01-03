@@ -1,9 +1,18 @@
 --@ module = true
 local repeatUtil = require('repeat-util')
 
-liquidSources = liquidSources or {}
+liquidSources = json.decode(persist.GlobalTable[GLOBAL_KEY] or {})
 
 local sourceId = 'liquidSources'
+
+local json = require('json')
+local persist = require('persist-table')
+
+local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
+
+local function persist_state()
+    persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
+end
 
 local function formatPos(pos)
     return ('[%d, %d, %d]'):format(pos.x, pos.y, pos.z)
@@ -54,6 +63,7 @@ function AddLiquidSource(pos, liquid, amount)
             end
         end
     end)
+    persist_state()
 end
 
 function DeleteLiquidSource(pos)
@@ -61,12 +71,16 @@ function DeleteLiquidSource(pos)
         if same_xyz(pos, v.pos) then liquidSources[k] = nil end
         return
     end
+
+    persist_state()
 end
 
 function ClearLiquidSources()
     for k, _ in pairs(liquidSources) do
         liquidSources[k] = nil
     end
+
+    persist_state()
 end
 
 function ListLiquidSources()
