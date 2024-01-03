@@ -156,10 +156,10 @@ local valid_locations = {
                 contents={desired_instruments=5, need_more={instruments=true}}}},
 }
 local valid_restrictions = {
-    visitors={AllowVisitors=true, AllowResidents=true, OnlyMembers=false},
-    residents={AllowVisitors=false, AllowResidents=true, OnlyMembers=false},
-    citizens={AllowVisitors=false, AllowResidents=false, OnlyMembers=false},
-    members={AllowVisitors=false, AllowResidents=false, OnlyMembers=true},
+    visitors={VISITORS_ALLOWED=true, NON_CITIZENS_ALLOWED=true, MEMBERS_ONLY=false},
+    residents={VISITORS_ALLOWED=false, NON_CITIZENS_ALLOWED=true, MEMBERS_ONLY=false},
+    citizens={VISITORS_ALLOWED=false, NON_CITIZENS_ALLOWED=false, MEMBERS_ONLY=false},
+    members={VISITORS_ALLOWED=false, NON_CITIZENS_ALLOWED=false, MEMBERS_ONLY=true},
 }
 for _, v in pairs(valid_locations) do
     ensure_key(v, 'assign').flags = valid_restrictions.visitors
