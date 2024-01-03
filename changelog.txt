@@ -45,6 +45,7 @@ Template for new versions:
 - `confirm`: updated confirmation dialogs to use clickable widgets and draggable windows
 - `confirm`: added confirmation dialog for right clicking out of the trade agreement screen (so your trade agreement selections aren't lost)
 - `gui/autobutcher`: interface redesigned to better support mouse control
+- `gui/launcher`: now persists the most recent 32KB of command output even if you close it and bring it back up
 
 ## Removed
 
