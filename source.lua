@@ -1,16 +1,17 @@
 --@ module = true
 local repeatUtil = require('repeat-util')
-
-liquidSources = json.decode(persist.GlobalTable[GLOBAL_KEY] or {})
-
-local sourceId = 'liquidSources'
-
 local json = require('json')
 local persist = require('persist-table')
 
 local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
-local function persist_state()
+local sourceId = 'liquidSources'
+
+local function retrieve_state()
+    return json.decode(persist.GlobalTable[GLOBAL_KEY] or '{}')
+end
+
+local function persist_state(liquidSources)
     persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
 end
 
@@ -27,6 +28,7 @@ function IsFlowPassable(pos)
 end
 
 function AddLiquidSource(pos, liquid, amount)
+    liquidSources = retrieve_state()
     table.insert(liquidSources, {
         liquid = liquid,
         amount = amount,
@@ -63,10 +65,11 @@ function AddLiquidSource(pos, liquid, amount)
             end
         end
     end)
-    persist_state()
+    persist_state(liquidSources)
 end
 
 function DeleteLiquidSource(pos)
+    liquidSources = retrieve_state()
     for k, v in pairs(liquidSources) do
         if same_xyz(pos, v.pos) then liquidSources[k] = nil end
         return
@@ -76,6 +79,7 @@ function DeleteLiquidSource(pos)
 end
 
 function ClearLiquidSources()
+    liquidSources = retrieve_state()
     for k, _ in pairs(liquidSources) do
         liquidSources[k] = nil
     end
@@ -84,6 +88,7 @@ function ClearLiquidSources()
 end
 
 function ListLiquidSources()
+    liquidSources = retrieve_state()
     print('Current Liquid Sources:')
     for _,v in pairs(liquidSources) do
         print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
@@ -91,6 +96,7 @@ function ListLiquidSources()
 end
 
 function FindLiquidSourceAtPos(pos)
+    liquidSources = retrieve_state()
     for k,v in pairs(liquidSources) do
         if same_xyz(v.pos, pos) then
             return k
