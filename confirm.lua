@@ -201,6 +201,13 @@ function ConfirmOverlay:onInput(keys)
     end
 end
 
+function ConfirmOverlay:render(dc)
+    if gui.blink_visible(500) then
+        return
+    end
+    ConfirmOverlay.super.render(self, dc)
+end
+
 OVERLAY_WIDGETS = {
     overlay=ConfirmOverlay,
 }
