@@ -18,12 +18,10 @@ function isEnabled()
 end
 
 local function retrieve_state()
-    print("Loading state")
     return json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
 end
 
 local function persist_state(liquidSources)
-    print("Saving state")
     persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
 end
 
@@ -51,8 +49,6 @@ function AddLiquidSource(pos, liquid, amount)
 end
 
 function LoadLiquidSources(liquidSources)
-    print("Loading the following Sources:\n")
-    print(("%s"):format(liquidSources))
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
         if next(liquidSources) == nil then
             repeatUtil.cancel(sourceId)
@@ -97,7 +93,7 @@ function RemoveLiquidSource(pos)
 end
 
 function DeleteLiquidSource(pos)
-    print(("Searching for Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
+    print(("Searching for Source to remove at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
     for k, v in pairs(liquidSources) do
         if same_xyz(pos, v.pos) then
             print("Source Found")
