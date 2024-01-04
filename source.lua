@@ -9,8 +9,6 @@ g_state = g_state or {}
 
 local sourceId = 'liquidSources'
 
-liquidSources = liquidSources or {}
-
 enabled = enabled or false
 
 function isEnabled()
@@ -39,21 +37,21 @@ end
 
 function AddLiquidSource(pos, liquid, amount)
     print(("Adding %d %s to [%d, %d, %d]"):format(amount, liquid, pos.x, pos.y, pos.z))
-    table.insert(liquidSources, {
+    table.insert(g_state, {
         liquid = liquid,
         amount = amount,
         pos = copyall(pos),
     })
 
-    LoadLiquidSources(liquidSources)
+    LoadLiquidSources(g_state)
 end
 
 function LoadLiquidSources(liquidSources)
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
-        if next(liquidSources) == nil then
+        if next(g_state) == nil then
             repeatUtil.cancel(sourceId)
         else
-            for _, v in pairs(liquidSources) do
+            for _, v in pairs(g_state) do
                 local block = dfhack.maps.getTileBlock(v.pos)
                 local x = v.pos.x
                 local y = v.pos.y
@@ -79,11 +77,11 @@ function LoadLiquidSources(liquidSources)
             end
         end
     end)
-    persist_state(liquidSources)
+    persist_state(g_state)
 end
 
 function RemoveLiquidSource(pos)
-    for _, v in pairs(liquidSources) do
+    for _, v in pairs(g_state) do
         print(("Removing Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
         local block = dfhack.maps.getTileBlock(pos)
         if block then
@@ -94,35 +92,35 @@ end
 
 function DeleteLiquidSource(pos)
     print(("Searching for Source to remove at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k, v in pairs(liquidSources) do
+    for k, v in pairs(g_state) do
         if same_xyz(pos, v.pos) then
             print("Source Found")
             RemoveLiquidSource(pos)
-            liquidSources[k] = nil
+            g_state[k] = nil
         end
         return
     end
-    LoadLiquidSources(liquidSources)
+    LoadLiquidSources(g_state)
 end
 
 function ClearLiquidSources()
     print("Clearing all Sources")
-    for _, v in pairs(liquidSources) do
+    for _, v in pairs(g_state) do
         DeleteLiquidSource(v.pos)
     end
-    LoadLiquidSources(liquidSources)
+    LoadLiquidSources(g_state)
 end
 
 function ListLiquidSources()
     print('Current Liquid Sources:')
-    for _,v in pairs(liquidSources) do
+    for _,v in pairs(g_state) do
         print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
     end
 end
 
 function FindLiquidSourceAtPos(pos)
     print(("Searching for Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k,v in pairs(liquidSources) do
+    for k,v in pairs(g_state) do
         if same_xyz(v.pos, pos) then
             print("Source Found")
             return k
@@ -190,9 +188,14 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     end
 
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        local liquidSources = retrieve_state()
-        LoadLiquidSources(liquidSources)
+        local g_state = retrieve_state()
+        LoadLiquidSources(g_state)
         return
+    end
+
+    if sc == SC_WORLD_LOADED then
+        local g_state = retrieve_state()
+        LoadLiquidSources(g_state)
     end
 
     local state = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
