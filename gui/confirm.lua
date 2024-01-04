@@ -7,7 +7,7 @@ local widgets = require('gui.widgets')
 Confirm = defclass(Confirm, widgets.Window)
 Confirm.ATTRS{
     frame_title='Confirmation dialogs',
-    frame={w=37, h=17},
+    frame={w=42, h=17},
     initial_id=DEFAULT_NIL,
 }
 
