@@ -234,7 +234,7 @@ ConfirmSpec{
 ConfirmSpec{
     id='uniform-delete',
     title='Delete uniform',
-    message="Are you sure you want to delete this uniform?",
+    message='Are you sure you want to delete this uniform?',
     intercept_keys='_MOUSE_L',
     intercept_frame={r=131, t=23, w=6, h=27},
     context='dwarfmode/AssignUniform',
@@ -251,6 +251,44 @@ ConfirmSpec{
         return mouse_offset.y // 3 < num_uniforms - mi.assign_uniform.scroll_position
     end,
     pausable=true,
+}
+
+local selected_convict_name = 'this creature'
+ConfirmSpec{
+    id='convict',
+    title='Confirm conviction',
+    message=function()
+        return ('Are you sure you want to convict %s? This action is irreversible.'):format(selected_convict_name)
+    end,
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=31, t=14, w=11, b=5},
+    debug_frame=true,
+    context='dwarfmode/Info/JUSTICE/Convicting',
+    predicate=function(mouse_offset)
+        local justice = mi.info.justice
+        local num_choices = #justice.conviction_list
+        if num_choices == 0 then return false end
+        local sw, sh = dfhack.screen.getWindowSize()
+        local y_offset = sw >= 155 and 0 or 4
+        local max_visible_buttons = (sh - (19 + y_offset)) // 3
+        -- adjust detection area depending on presence of scrollbar
+        if num_choices > max_visible_buttons and mouse_offset.x > 9 then
+            return false
+        elseif num_choices <= max_visible_buttons and mouse_offset.x <= 1 then
+            return false
+        end
+        local num_visible_buttons = math.min(num_choices, max_visible_buttons)
+        local selected_button_offset = (mouse_offset.y - y_offset) // 3
+        if selected_button_offset >= num_visible_buttons then
+            return false
+        end
+        local unit = justice.conviction_list[selected_button_offset + justice.scroll_position_conviction]
+        selected_convict_name = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
+        if selected_convict_name == '' then
+            selected_convict_name = 'this creature'
+        end
+        return true
+    end,
 }
 
 ConfirmSpec{
@@ -295,26 +333,9 @@ ConfirmSpec{
     pausable=true,
 }
 
--- these confirmations have more complex button detection requirements
---[[
-
-
-
-convict = defconf('convict')
-convict.title = "Confirm conviction"
-function convict.intercept_key(key)
-    return key == keys.SELECT and
-        screen.cur_column == df.viewscreen_justicest.T_cur_column.ConvictChoices
-end
-function convict.get_message()
-    name = dfhack.TranslateName(dfhack.units.getVisibleName(screen.convict_choices[screen.cursor_right]))
-    if name == "" then
-        name = "this creature"
-    end
-    return "Are you sure you want to convict " .. name .. "?\n" ..
-        "This action is irreversible."
-end
-]]--
+--------------------------
+-- Config file management
+--
 
 local function get_config()
     local f = json.open(CONFIG_FILE)

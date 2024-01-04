@@ -163,7 +163,7 @@ function ConfirmOverlay:matches_conf(conf, keys, scr)
     end
     if not matched_keys then return false end
     local mouse_offset
-    if conf.intercept_frame then
+    if keys._MOUSE_L and conf.intercept_frame then
         local mousex, mousey = self.subviews[conf.id]:getMouseFramePos()
         if not mousex then
             return false
