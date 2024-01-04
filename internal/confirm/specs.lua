@@ -51,6 +51,7 @@ function ConfirmSpec:init()
 end
 
 local mi = df.global.game.main_interface
+local plotinfo = df.global.plotinfo
 
 local function trade_goods_any_selected(which)
     for _, sel in ipairs(mi.trade.goodflag[which]) do
@@ -249,6 +250,55 @@ ConfirmSpec{
         end
         -- exclude the "No uniform" option (which has no delete button)
         return mouse_offset.y // 3 < num_uniforms - mi.assign_uniform.scroll_position
+    end,
+    pausable=true,
+}
+
+local hotkey_reset_action = 'reset'
+local num_hotkeys = 16
+ConfirmSpec{
+    id='hotkey-reset',
+    title='Reassign or clear zoom hotkeys',
+    message=function() return ('Are you sure you want to %s this zoom hotkey?'):format(hotkey_reset_action) end,
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=32, t=11, w=12, b=9},
+    context='dwarfmode/Hotkey',
+    predicate=function(mouse_offset)
+        local _, sh = dfhack.screen.getWindowSize()
+        local num_sections = (sh - 20) // 3
+        local selected_section = mouse_offset.y // 3
+        print('num_sections, selected_section', num_sections, selected_section)
+        -- if this isn't a button section, exit early
+        if selected_section % 2 ~= 0 then return false end
+        -- if this hotkey isn't set, then all actions are ok
+        local selected_offset = selected_section // 2
+        local selected_idx = selected_offset + mi.hotkey.scroll_position
+        local max_visible_buttons = num_sections // 2
+        if selected_offset >= max_visible_buttons or
+            selected_idx >= num_hotkeys or
+            plotinfo.main.hotkeys[selected_idx].cmd == df.ui_hotkey.T_cmd.None
+        then
+            return false
+        end
+        -- adjust detection area depending on presence of scrollbar
+        if max_visible_buttons < num_hotkeys then
+            if mouse_offset.x > 7 then
+                return false
+            elseif mouse_offset.x <= 3 then
+                hotkey_reset_action = 'reassign'
+            else
+                hotkey_reset_action = 'clear'
+            end
+        elseif max_visible_buttons >= num_hotkeys then
+            if mouse_offset.x <= 1 then
+                return false
+            elseif mouse_offset.x <= 5 then
+                hotkey_reset_action = 'reassign'
+            else
+                hotkey_reset_action = 'clear'
+            end
+        end
+        return true
     end,
     pausable=true,
 }
