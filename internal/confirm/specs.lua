@@ -66,7 +66,7 @@ local function trade_goods_all_selected(which)
 end
 
 local function trade_agreement_items_any_selected()
-    local diplomacy = df.global.game.main_interface.diplomacy
+    local diplomacy = mi.diplomacy
     for _, tab in ipairs(diplomacy.environment.meeting.sell_requests.priority) do
         for _, priority in ipairs(tab) do
             if priority ~= 0 then
@@ -98,7 +98,7 @@ ConfirmSpec{
     title='Mark all fortress goods',
     message='Are you sure you want mark all fortress goods at the depot? Your current fortress goods selections will be lost.',
     intercept_keys='_MOUSE_L',
-    intercept_frame={r=46, b=7, w=14, h=3},
+    intercept_frame={r=47, b=7, w=12, h=3},
     context='dwarfmode/Trade',
     predicate=function() return trade_goods_any_selected(1) and not trade_goods_all_selected(1) end,
     pausable=true,
@@ -120,7 +120,7 @@ ConfirmSpec{
     title='Mark all merchant goods',
     message='Are you sure you want mark all merchant goods at the depot? Your current merchant goods selections will be lost.',
     intercept_keys='_MOUSE_L',
-    intercept_frame={l=0, r=72, b=7, w=14, h=3},
+    intercept_frame={l=0, r=72, b=7, w=12, h=3},
     context='dwarfmode/Trade',
     predicate=function() return trade_goods_any_selected(0) and not trade_goods_all_selected(0) end,
     pausable=true,
@@ -134,6 +134,39 @@ ConfirmSpec{
     intercept_frame={l=0, r=40, b=7, w=14, h=3},
     context='dwarfmode/Trade',
     predicate=function() return trade_goods_any_selected(0) and not trade_goods_all_selected(0) end,
+    pausable=true,
+}
+
+ConfirmSpec{
+    id='trade-confirm-trade',
+    title='Confirm trade',
+    message="Are you sure you want to trade the selected goods?",
+    intercept_keys='_MOUSE_L',
+    intercept_frame={l=0, r=23, b=4, w=11, h=3},
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(0) and trade_goods_any_selected(1) end,
+    pausable=true,
+}
+
+ConfirmSpec{
+    id='trade-sieze',
+    title='Sieze merchant goods',
+    message='Are you sure you want size marked merchant goods? This will make the merchant unwilling to trade further and will damage relations with the merchant\'s civilization.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={l=0, r=73, b=4, w=11, h=3},
+    context='dwarfmode/Trade',
+    predicate=function() return mi.trade.mer.mood > 0 and trade_goods_any_selected(0) end,
+    pausable=true,
+}
+
+ConfirmSpec{
+    id='trade-offer',
+    title='Offer fortress goods',
+    message='Are you sure you want to offer these goods? You will receive no payment.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={l=40, r=5, b=4, w=19, h=3},
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(1) end,
     pausable=true,
 }
 
@@ -152,7 +185,7 @@ ConfirmSpec{
     message='Are you sure you want to delete this route?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Hauling',
-    predicate=function() return df.global.game.main_interface.current_hover == 180 end,
+    predicate=function() return mi.current_hover == 180 end,
     pausable=true,
 }
 
@@ -162,7 +195,7 @@ ConfirmSpec{
     message='Are you sure you want to delete this stop?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Hauling',
-    predicate=function() return df.global.game.main_interface.current_hover == 185 end,
+    predicate=function() return mi.current_hover == 185 end,
     pausable=true,
 }
 
@@ -173,7 +206,7 @@ ConfirmSpec{
     intercept_keys='_MOUSE_L',
     context='dwarfmode/ViewSheets/BUILDING/TradeDepot',
     predicate=function()
-        return df.global.game.main_interface.current_hover == 301 and has_caravans()
+        return mi.current_hover == 301 and has_caravans()
     end,
 }
 
@@ -183,7 +216,7 @@ ConfirmSpec{
     message='Are you sure you want to disband this squad?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Squads',
-    predicate=function() return df.global.game.main_interface.current_hover == 343 end,
+    predicate=function() return mi.current_hover == 343 end,
     pausable=true,
 }
 
@@ -193,7 +226,7 @@ ConfirmSpec{
     message='Are you sure you want to remove this manager order?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Info/WORK_ORDERS/Default',
-    predicate=function() return df.global.game.main_interface.current_hover == 222 end,
+    predicate=function() return mi.current_hover == 222 end,
     pausable=true,
 }
 
@@ -214,8 +247,7 @@ ConfirmSpec{
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Burrow',
     predicate=function()
-        return df.global.game.main_interface.current_hover == 171 or
-            df.global.game.main_interface.current_hover == 168
+        return mi.current_hover == 171 or mi.current_hover == 168
     end,
     pausable=true,
 }
@@ -226,52 +258,13 @@ ConfirmSpec{
     message='Are you sure you want to remove this stockpile?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Stockpile',
-    predicate=function() return df.global.game.main_interface.current_hover == 118 end,
+    predicate=function() return mi.current_hover == 118 end,
     pausable=true,
 }
 
 -- these confirmations have more complex button detection requirements
 --[[
-trade = defconf('trade')
-function trade.intercept_key(key)
-    dfhack.gui.matchFocusString("dwarfmode/Trade") and key == MOUSE_LEFT and hovering over trade button?
-end
-trade.title = "Confirm trade"
-function trade.get_message()
-    if trader_goods_selected() and broker_goods_selected() then
-        return "Are you sure you want to trade the selected goods?"
-    elseif trader_goods_selected() then
-        return "You are not giving any items. This is likely\n" ..
-            "to irritate the merchants.\n" ..
-            "Attempt to trade anyway?"
-    elseif broker_goods_selected() then
-        return "You are not receiving any items. You may want to\n" ..
-            "offer these items instead or choose items to receive.\n" ..
-            "Attempt to trade anyway?"
-    else
-        return "No items are selected. This is likely\n" ..
-            "to irritate the merchants.\n" ..
-            "Attempt to trade anyway?"
-    end
-end
 
-trade_seize = defconf('trade-seize')
-function trade_seize.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        trader_goods_selected() and
-        key == keys.TRADE_SEIZE
-end
-trade_seize.title = "Confirm seize"
-trade_seize.message = "Are you sure you want to seize these goods?"
-
-trade_offer = defconf('trade-offer')
-function trade_offer.intercept_key(key)
-    return screen.in_edit_count == 0 and
-        broker_goods_selected() and
-        key == keys.TRADE_OFFER
-end
-trade_offer.title = "Confirm offer"
-trade_offer.message = "Are you sure you want to offer these goods?\nYou will receive no payment."
 
 uniform_delete = defconf('uniform-delete')
 function uniform_delete.intercept_key(key)
