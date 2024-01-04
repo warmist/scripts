@@ -332,6 +332,19 @@ ConfirmSpec{
     pausable=true,
 }
 
+ConfirmSpec{
+    id='embark-site-finder',
+    title='Re-run finder',
+    message='Are you sure you want to re-run the site finder? Your current map highlights will be lost.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=2, t=36, w=7, h=3},
+    context='choose_start_site/SiteFinder',
+    predicate=function()
+        return dfhack.gui.getDFViewscreen(true).find_results ~= df.viewscreen_choose_start_sitest.T_find_results.None
+    end,
+    pausable=true,
+}
+
 --------------------------
 -- Config file management
 --
