@@ -105,12 +105,33 @@ ConfirmSpec{
 }
 
 ConfirmSpec{
+    id='trade-unmark-all-fort',
+    title='Unmark all fortress goods',
+    message='Are you sure you want unmark all fortress goods at the depot? Your current fortress goods selections will be lost.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=30, b=7, w=14, h=3},
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(1) and not trade_goods_all_selected(1) end,
+    pausable=true,
+}
+
+ConfirmSpec{
     id='trade-mark-all-merchant',
     title='Mark all merchant goods',
     message='Are you sure you want mark all merchant goods at the depot? Your current merchant goods selections will be lost.',
     intercept_keys='_MOUSE_L',
     intercept_frame={l=0, r=72, b=7, w=14, h=3},
-    debug_frame=true,
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(0) and not trade_goods_all_selected(0) end,
+    pausable=true,
+}
+
+ConfirmSpec{
+    id='trade-unmark-all-merchant',
+    title='Mark all merchant goods',
+    message='Are you sure you want mark all merchant goods at the depot? Your current merchant goods selections will be lost.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={l=0, r=40, b=7, w=14, h=3},
     context='dwarfmode/Trade',
     predicate=function() return trade_goods_any_selected(0) and not trade_goods_all_selected(0) end,
     pausable=true,
@@ -262,25 +283,6 @@ end
 uniform_delete.title = "Delete uniform"
 uniform_delete.message = "Are you sure you want to delete this uniform?"
 
-note_delete = defconf('note-delete')
-function note_delete.intercept_key(key)
-    return key == keys.D_NOTE_DELETE and
-        ui.main.mode == df.ui_sidebar_mode.NotesPoints and
-        not ui.waypoints.in_edit_name_mode and
-        not ui.waypoints.in_edit_text_mode
-end
-note_delete.title = "Delete note"
-note_delete.message = "Are you sure you want to delete this note?"
-
-route_delete = defconf('route-delete')
-function route_delete.intercept_key(key)
-    return key == keys.D_NOTE_ROUTE_DELETE and
-        ui.main.mode == df.ui_sidebar_mode.NotesRoutes and
-        not ui.waypoints.in_edit_name_mode
-end
-route_delete.title = "Delete route"
-route_delete.message = "Are you sure you want to delete this route?"
-
 convict = defconf('convict')
 convict.title = "Confirm conviction"
 function convict.intercept_key(key)
@@ -295,20 +297,6 @@ function convict.get_message()
     return "Are you sure you want to convict " .. name .. "?\n" ..
         "This action is irreversible."
 end
-]]--
-
--- locations cannot be retired currently
---[[
-location_retire = defconf('location-retire')
-function location_retire.intercept_key(key)
-    return key == keys.LOCATION_RETIRE and
-        (screen.menu == df.viewscreen_locationsst.T_menu.Locations or
-            screen.menu == df.viewscreen_locationsst.T_menu.Occupations) and
-        screen.in_edit == df.viewscreen_locationsst.T_in_edit.None and
-        screen.locations[screen.location_idx]
-end
-location_retire.title = "Retire location"
-location_retire.message = "Are you sure you want to retire this location?"
 ]]--
 
 local function get_config()
