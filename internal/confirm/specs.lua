@@ -19,7 +19,7 @@ ConfirmSpec.ATTRS{
     message='Are you sure?',
     intercept_keys={},
     intercept_frame=DEFAULT_NIL,
-    debug_frame=false, -- set to true when doing original positioning
+    debug_frame=false, -- set to true when debugging frame positioning
     context=DEFAULT_NIL,
     predicate=DEFAULT_NIL,
     pausable=false,
