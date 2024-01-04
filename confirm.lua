@@ -126,6 +126,7 @@ function ConfirmOverlay:init()
                 widgets.Panel{
                     view_id=id,
                     frame=conf.intercept_frame,
+                    frame_style=conf.debug_frame and gui.FRAME_INTERIOR or nil,
                 }
             }
         end
@@ -155,7 +156,7 @@ function ConfirmOverlay:matches_conf(conf, keys, scr)
         end
     end
     if not matched_keys then return false end
-    if conf.intercept_frame and not self.subviews[conf.id]:getMousePos() then
+    if conf.intercept_frame and not self.subviews[conf.id]:getMouseFramePos() then
         return false
     end
     if not dfhack.gui.matchFocusString(conf.context, scr) then return false end
@@ -198,14 +199,16 @@ OVERLAY_WIDGETS = {
 
 local function do_list()
     print('Available confirmation prompts:')
-    local max_len = 10
-    for id in pairs(specs.REGISTRY) do
-        max_len = math.max(max_len, #id)
-    end
+    local confs, max_len = {}, 10
     for id, conf in pairs(specs.REGISTRY) do
-        local fmt = '%' .. tostring(max_len) .. 's: (%s) %s'
-        print((fmt):format(id,
-            specs.config.data[id].enabled and 'enabled' or 'disabled',
+        max_len = math.max(max_len, #id)
+        table.insert(confs, conf)
+    end
+    table.sort(confs, function(a,b) return a.id < b.id end)
+    for _, conf in ipairs(confs) do
+        local fmt = '%' .. tostring(max_len) .. 's: %s %s'
+        print((fmt):format(conf.id,
+            specs.config.data[conf.id].enabled and '(enabled) ' or '(disabled)',
             conf.title))
     end
 end

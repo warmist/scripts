@@ -1,5 +1,7 @@
 --@module = true
 
+-- if adding a new spec, just run `confirm` to load it and make it live
+--
 -- remember to reload the overlay when adding/changing specs that have
 -- intercept_frames defined
 
@@ -7,6 +9,7 @@ local json = require('json')
 
 local CONFIG_FILE = 'dfhack-config/confirm.json'
 
+-- populated by ConfirmSpec constructor below
 REGISTRY = {}
 
 ConfirmSpec = defclass(ConfirmSpec)
@@ -16,6 +19,7 @@ ConfirmSpec.ATTRS{
     message='Are you sure?',
     intercept_keys={},
     intercept_frame=DEFAULT_NIL,
+    debug_frame=false, -- set to true when doing original positioning
     context=DEFAULT_NIL,
     predicate=DEFAULT_NIL,
     pausable=false,
@@ -46,18 +50,22 @@ function ConfirmSpec:init()
     REGISTRY[self.id] = self
 end
 
-local function trade_goods_selected()
-    local function goods_selected(vec)
-        for _, sel in ipairs(vec) do
-            if sel == 1 then return true end
-        end
-    end
+local mi = df.global.game.main_interface
 
-    return goods_selected(df.global.game.main_interface.trade.goodflag[0]) or
-        goods_selected(df.global.game.main_interface.trade.goodflag[1])
+local function trade_goods_any_selected(which)
+    for _, sel in ipairs(mi.trade.goodflag[which]) do
+        if sel == 1 then return true end
+    end
 end
 
-local function trade_agreement_items_selected()
+local function trade_goods_all_selected(which)
+    for _, sel in ipairs(mi.trade.goodflag[which]) do
+        if sel ~= 1 then return false end
+    end
+    return true
+end
+
+local function trade_agreement_items_any_selected()
     local diplomacy = df.global.game.main_interface.diplomacy
     for _, tab in ipairs(diplomacy.environment.meeting.sell_requests.priority) do
         for _, priority in ipairs(tab) do
@@ -82,7 +90,30 @@ ConfirmSpec{
     message='Are you sure you want leave this screen? Selected items will not be saved.',
     intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
     context='dwarfmode/Trade',
-    predicate=trade_goods_selected,
+    predicate=function() return trade_goods_any_selected(0) or trade_goods_any_selected(1) end,
+}
+
+ConfirmSpec{
+    id='trade-mark-all-fort',
+    title='Mark all fortress goods',
+    message='Are you sure you want mark all fortress goods at the depot? Your current fortress goods selections will be lost.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=46, b=7, w=14, h=3},
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(1) and not trade_goods_all_selected(1) end,
+    pausable=true,
+}
+
+ConfirmSpec{
+    id='trade-mark-all-merchant',
+    title='Mark all merchant goods',
+    message='Are you sure you want mark all merchant goods at the depot? Your current merchant goods selections will be lost.',
+    intercept_keys='_MOUSE_L',
+    intercept_frame={l=0, r=72, b=7, w=14, h=3},
+    debug_frame=true,
+    context='dwarfmode/Trade',
+    predicate=function() return trade_goods_any_selected(0) and not trade_goods_all_selected(0) end,
+    pausable=true,
 }
 
 ConfirmSpec{
@@ -91,7 +122,7 @@ ConfirmSpec{
     message='Are you sure you want to leave this screen? The trade agreement selection will not be saved until you hit the "Done" button at the bottom of the screen.',
     intercept_keys={'LEAVESCREEN', '_MOUSE_R'},
     context='dwarfmode/Diplomacy/Requests',
-    predicate=trade_agreement_items_selected,
+    predicate=trade_agreement_items_any_selected,
 }
 
 ConfirmSpec{
@@ -220,21 +251,6 @@ function trade_offer.intercept_key(key)
 end
 trade_offer.title = "Confirm offer"
 trade_offer.message = "Are you sure you want to offer these goods?\nYou will receive no payment."
-
-trade_select_all = defconf('trade-select-all')
-function trade_select_all.intercept_key(key)
-    if screen.in_edit_count == 0 and key == keys.SEC_SELECT then
-        if screen.in_right_pane and broker_goods_selected() and not broker_goods_all_selected() then
-            return true
-        elseif not screen.in_right_pane and trader_goods_selected() and not trader_goods_all_selected() then
-            return true
-        end
-    end
-    return false
-end
-trade_select_all.title = "Confirm selection"
-trade_select_all.message = "Selecting all goods will overwrite your current selection\n" ..
-        "and cannot be undone. Continue?"
 
 uniform_delete = defconf('uniform-delete')
 function uniform_delete.intercept_key(key)
