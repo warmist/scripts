@@ -262,7 +262,6 @@ ConfirmSpec{
     end,
     intercept_keys='_MOUSE_L',
     intercept_frame={r=31, t=14, w=11, b=5},
-    debug_frame=true,
     context='dwarfmode/Info/JUSTICE/Convicting',
     predicate=function(mouse_offset)
         local justice = mi.info.justice
