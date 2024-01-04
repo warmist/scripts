@@ -84,6 +84,17 @@ local function has_caravans()
     end
 end
 
+local function get_num_uniforms()
+    local site = df.global.world.world_data.active_site[0]
+    for _, entity_site_link in ipairs(site.entity_links) do
+        local he = df.historical_entity.find(entity_site_link.entity_id)
+        if he and he.type == df.historical_entity_type.SiteGovernment then
+            return #he.uniforms
+        end
+    end
+    return 0
+end
+
 ConfirmSpec{
     id='trade-cancel',
     title='Cancel trade',
@@ -221,6 +232,28 @@ ConfirmSpec{
 }
 
 ConfirmSpec{
+    id='uniform-delete',
+    title='Delete uniform',
+    message="Are you sure you want to delete this uniform?",
+    intercept_keys='_MOUSE_L',
+    intercept_frame={r=131, t=23, w=6, h=27},
+    context='dwarfmode/AssignUniform',
+    predicate=function(mouse_offset)
+        local num_uniforms = get_num_uniforms()
+        if num_uniforms == 0 then return false end
+        -- adjust detection area depending on presence of scrollbar
+        if num_uniforms > 8 and mouse_offset.x > 2 then
+            return false
+        elseif num_uniforms <= 8 and mouse_offset.x <= 1 then
+            return false
+        end
+        -- exclude the "No uniform" option (which has no delete button)
+        return mouse_offset.y // 3 < num_uniforms - mi.assign_uniform.scroll_position
+    end,
+    pausable=true,
+}
+
+ConfirmSpec{
     id='order-remove',
     title='Remove manger order',
     message='Are you sure you want to remove this manager order?',
@@ -266,15 +299,6 @@ ConfirmSpec{
 --[[
 
 
-uniform_delete = defconf('uniform-delete')
-function uniform_delete.intercept_key(key)
-    return key == keys.D_MILITARY_DELETE_UNIFORM and
-        screen.page == screen._type.T_page.Uniforms and
-        #screen.equip.uniforms > 0 and
-        not screen.equip.in_name_uniform
-end
-uniform_delete.title = "Delete uniform"
-uniform_delete.message = "Are you sure you want to delete this uniform?"
 
 convict = defconf('convict')
 convict.title = "Confirm conviction"

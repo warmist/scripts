@@ -125,7 +125,7 @@ function ConfirmOverlay:init()
             self:addviews{
                 widgets.Panel{
                     view_id=id,
-                    frame=conf.intercept_frame,
+                    frame=copyall(conf.intercept_frame),
                     frame_style=conf.debug_frame and gui.FRAME_INTERIOR or nil,
                 }
             }
@@ -135,6 +135,12 @@ end
 
 function ConfirmOverlay:preUpdateLayout()
     self.frame.w, self.frame.h = dfhack.screen.getWindowSize()
+    -- reset frames if any of them have been pushed out of position
+    for id, conf in pairs(specs.REGISTRY) do
+        if conf.intercept_frame then
+            self.subviews[id].frame = copyall(conf.intercept_frame)
+        end
+    end
 end
 
 function ConfirmOverlay:overlay_onupdate()
@@ -156,11 +162,16 @@ function ConfirmOverlay:matches_conf(conf, keys, scr)
         end
     end
     if not matched_keys then return false end
-    if conf.intercept_frame and not self.subviews[conf.id]:getMouseFramePos() then
-        return false
+    local mouse_offset
+    if conf.intercept_frame then
+        local mousex, mousey = self.subviews[conf.id]:getMouseFramePos()
+        if not mousex then
+            return false
+        end
+        mouse_offset = xy2pos(mousex, mousey)
     end
     if not dfhack.gui.matchFocusString(conf.context, scr) then return false end
-    return not conf.predicate or conf.predicate()
+    return not conf.predicate or conf.predicate(mouse_offset)
 end
 
 function ConfirmOverlay:onInput(keys)
