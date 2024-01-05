@@ -5,20 +5,15 @@ local persist = require('persist-table')
 
 local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
-local sourceId = 'liquidSources'
-
 g_sources_list = g_sources_list or {}
-local function retrieve_state()
-    return g_sources_list
-end
 
 local function has_elements(collection)
-    for _,_ in pairs(collection) do return true end
+    for _,_ in ipairs(collection) do return true end
     return false
 end
 
-function isEnabled()
-    return has_elements(retrieve_state())
+local function isEnabled()
+    return next(g_sources_list)
 end
 
 
@@ -30,7 +25,7 @@ local function formatPos(pos)
     return ('[%d, %d, %d]'):format(pos.x, pos.y, pos.z)
 end
 
-function is_flow_passable(pos)
+local function is_flow_passable(pos)
     local tiletype = dfhack.maps.getTileType(pos)
     local titletypeAttrs = df.tiletype.attrs[tiletype]
     local shape = titletypeAttrs.shape
@@ -38,29 +33,27 @@ function is_flow_passable(pos)
     return tiletypeShapeAttrs.passable_flow
 end
 
-function add_liquid_source(pos, liquid, amount)
-    new_source = {liquid = liquid, amount = amount, pos = copyall(pos)}
-    print(("Adding %d %s to [%d, %d, %d]"):format(amount, liquid, pos.x, pos.y, pos.z))
-    for k, v in pairs(retrieve_state()) do
+local function add_liquid_source(pos, liquid, amount)
+    local new_source = {liquid = liquid, amount = amount, pos = copyall(pos)}
+    print(("Adding %d %s to %s"):format(amount, liquid, formatPos(pos)))
+    for k, v in ipairs(g_sources_list) do
         if same_xyz(pos, v.pos) then
             delete_source_at(k)
         end
     end
 
-    local sources = retrieve_state()
-    table.insert(sources, new_source)
+    table.insert(g_sources_list, new_source)
 
-    persist_state(sources)
+    persist_state(g_sources_list)
     load_liquid_source()
 end
 
-function load_liquid_source()
-    local sources = retrieve_state()
-    repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
-        if next(sources) == nil then
-            repeatUtil.cancel(sourceId)
+local function load_liquid_source()
+    repeatUtil.scheduleEvery(GLOBAL_KEY, 12, 'ticks', function()
+        if next(g_sources_list) == nil then
+            repeatUtil.cancel(GLOBAL_KEY)
         else
-            for _, v in pairs(sources) do
+            for _, v in pairs(g_sources_list) do
                 local block = dfhack.maps.getTileBlock(v.pos)
                 if block and is_flow_passable(v.pos) then
                     local isMagma = v.liquid == 'magma'
@@ -84,12 +77,11 @@ function load_liquid_source()
             end
         end
     end)
-    persist_state(sources)
+    persist_state(g_sources_list)
 end
 
-function delete_source_at(key)
-    local sources = retrieve_state()
-    local v = sources[key]
+local function delete_source_at(key)
+    local v = g_sources_list[key]
 
     if v then
         local block = dfhack.maps.getTileBlock(v.pos)
@@ -98,15 +90,15 @@ function delete_source_at(key)
             flags.flow_size = 0
             dfhack.maps.enableBlockUpdates(block, true)
         end
-        sources[key] = nil
+        g_sources_list[key] = nil
     end
-    persist_state(sources)
+    persist_state(g_sources_list)
     load_liquid_source()
 end
 
-function delete_liquid_source(pos)
-    print(("Deleting Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k, v in pairs(retrieve_state()) do
+local function delete_liquid_source(pos)
+    print(("Deleting Source at %s"):format(formatPos(pos)))
+    for k, v in ipairs(g_sources_list) do
         if same_xyz(pos, v.pos) then
             print("Source Found")
             delete_source_at(k)
@@ -114,23 +106,23 @@ function delete_liquid_source(pos)
     end
 end
 
-function clear_liquid_sources()
+local function clear_liquid_sources()
     print("Clearing all Sources")
-    for k, v in pairs(retrieve_state()) do
+    for k, v in ipairs(g_sources_list) do
         delete_source_at(k)
     end
 end
 
-function list_liquid_sources()
+local function list_liquid_sources()
     print('Current Liquid Sources:')
-    for _,v in pairs(retrieve_state()) do
+    for _,v in pairs(g_sources_list) do
         print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
     end
 end
 
-function find_liquid_source_at_pos(pos)
-    print(("Searching for Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k,v in pairs(retrieve_state()) do
+local function find_liquid_source_at_pos(pos)
+    print(("Searching for Source at %s"):format(formatPos(pos)))
+    for k,v in ipairs(g_sources_list) do
         if same_xyz(v.pos, pos) then
             print("Source Found")
             return k
@@ -189,44 +181,22 @@ function main(args)
         print(('Added %s %d at %s'):format(liquidArg, amountArg, formatPos(targetPos)))
         return
     end
+
+    persist_state(g_sources_list)
 end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
+    
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
-    -- sometimes the keys come back as strings; fix that up
-    for k,v in pairs(persisted_data) do
-        if type(k) == 'string' then
-            persisted_data[tonumber(k)] = v
-            persisted_data[k] = nil
-        end
-    end
+    
     g_sources_list = persisted_data
+    
     load_liquid_source(g_sources_list)
-end
-
-if dfhack.internal.IN_TEST then
-    unit_test_hooks = {
-        clear_watched_job_matchers=clear_watched_job_matchers,
-        on_new_job=on_new_job,
-        status=status,
-        boost=boost,
-        boost_and_watch=boost_and_watch,
-        remove_watch=remove_watch,
-        print_current_jobs=print_current_jobs,
-        print_registry=print_registry,
-        parse_commandline=parse_commandline,
-    }
 end
 
 if dfhack_flags.module then
     return
 end
-
-if not dfhack_flags.module then
-    main({...})
-end
-
-persist_state(g_sources_list)
