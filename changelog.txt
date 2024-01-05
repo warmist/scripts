@@ -34,7 +34,7 @@ Template for new versions:
 - `uniform-unstick`: add overlay to the squad equipment screen to show a equipment conflict report and give you a one-click button to fix
 
 ## Fixes
-- `warn-stranded`: Automatically ignore citizens who are gathering plants or digging to avoid issues with gathering fruit via stepladders and weird issues with digging
+- `warn-stranded`: Don't warn for citizens who are gathering fruit on steplatters or are actively digging themselves out of a hole
 - `warn-stranded`: Update onZoom to use df's centering functionality
 - `ban-cooking`: fix banning creature alcohols resulting in error
 - `confirm`: properly detect clicks on the remove zone button even when the unit selection screen is also open (e.g. the vanilla assign animal to pasture panel)
