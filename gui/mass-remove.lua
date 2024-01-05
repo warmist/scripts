@@ -4,43 +4,38 @@ local gui = require('gui')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-local suspendmanager = reqscript('suspendmanager')
 
-local ok, buildingplan = pcall(require, 'plugins.buildingplan')
-if not ok then
-    buildingplan = nil
+local function noop()
 end
 
-local function remove_building(bld)
+local function remove_building(built, planned, bld)
+    if (built and bld:getBuildStage() == bld:getMaxBuildStage()) or
+        (planned and bld:getBuildStage() ~= bld:getMaxBuildStage())
+    then
+        dfhack.buildings.deconstruct(bld)
+    end
+end
+
+local function remove_construction(built, planned, pos, bld)
+    if planned and bld then
+        remove_building(false, true, bld)
+    elseif built and not bld then
+        dfhack.constructions.designateRemove(pos)
+    end
+end
+
+local function remove_stockpile(bld)
     dfhack.buildings.deconstruct(bld)
 end
 
-local function get_first_job(bld)
-    if not bld then return end
-    if #bld.jobs ~= 1 then return end
-    return bld.jobs[0]
-end
-
-local function unremove_building(bld)
-    local job = get_first_job(bld)
-    if not job or job.job_type ~= df.job_type.DestroyBuilding then return end
-    dfhack.job.removeJob(job)
-end
-
-local function remove_construction(pos)
-    dfhack.constructions.designateRemove(pos)
-end
-
-local function unremove_construction(pos, grid)
-    local tileFlags = dfhack.maps.getTileFlags(pos)
-    tileFlags.dig = df.tile_dig_designation.No
-    dfhack.maps.getTileBlock(pos).flags.designated = true
-    local job = safe_index(grid, pos.z, pos.y, pos.x)
-    if job then dfhack.job.removeJob(job) end
+local function remove_zone(pos)
+    for _, bld in ipairs(dfhack.buildings.findCivzonesAt(pos) or {}) do
+        dfhack.buildings.deconstruct(bld)
+    end
 end
 
 --
--- ActionPanel
+-- DimsPanel
 --
 
 local function get_dims(pos1, pos2)
@@ -50,13 +45,13 @@ local function get_dims(pos1, pos2)
     return width, height, depth
 end
 
-ActionPanel = defclass(ActionPanel, widgets.ResizingPanel)
-ActionPanel.ATTRS{
+DimsPanel = defclass(DimsPanel, widgets.ResizingPanel)
+DimsPanel.ATTRS{
     get_mark_fn=DEFAULT_NIL,
     autoarrange_subviews=true,
 }
 
-function ActionPanel:init()
+function DimsPanel:init()
     self:addviews{
         widgets.WrappedLabel{
             text_to_wrap=self:callback('get_action_text')
@@ -69,12 +64,12 @@ function ActionPanel:init()
     }
 end
 
-function ActionPanel:get_action_text()
+function DimsPanel:get_action_text()
     local str = self.get_mark_fn() and 'second' or 'first'
     return ('Select the %s corner with the mouse.'):format(str)
 end
 
-function ActionPanel:get_area_text()
+function DimsPanel:get_area_text()
     local mark = self.get_mark_fn()
     if not mark then return '' end
     local other = dfhack.gui.getMousePos()
@@ -85,6 +80,12 @@ function ActionPanel:get_area_text()
     return ('%dx%dx%d (%d tile%s)'):format(width, height, depth, tiles, plural)
 end
 
+local function is_something_selected()
+    return dfhack.gui.getSelectedBuilding(true) or
+        dfhack.gui.getSelectedStockpile(true) or
+        dfhack.gui.getSelectedCivZone(true)
+end
+
 --
 -- MassRemove
 --
@@ -92,9 +93,9 @@ end
 MassRemove = defclass(MassRemove, widgets.Window)
 MassRemove.ATTRS{
     frame_title='Mass Remove',
-    frame={w=47, h=16, r=2, t=18},
+    frame={w=47, h=18, r=2, t=18},
     resizable=true,
-    resize_min={h=10},
+    resize_min={h=9},
     autoarrange_subviews=true,
     autoarrange_gap=1,
 }
@@ -102,43 +103,66 @@ MassRemove.ATTRS{
 function MassRemove:init()
     self:addviews{
         widgets.WrappedLabel{
-            text_to_wrap='Designate multiple buildings and/or constructions (built or planned) for removal.'
+            view_id='warning',
+            text_to_wrap='Please deselect any selected buildings, stockpiles or zones before attempting to remove them.',
+            text_pen=COLOR_RED,
+            visible=is_something_selected,
         },
-        ActionPanel{
-            get_mark_fn=function() return self.mark end
+        widgets.WrappedLabel{
+            text_to_wrap='Designate buildings, constructions, stockpiles, and/or zones for removal.',
+            visible=function() return not is_something_selected() end,
+        },
+        DimsPanel{
+            get_mark_fn=function() return self.mark end,
+            visible=function() return not is_something_selected() end,
         },
         widgets.CycleHotkeyLabel{
             view_id='buildings',
             label='Buildings:',
             key='CUSTOM_B',
             key_back='CUSTOM_SHIFT_B',
+            option_gap=5,
             options={
-                {label='Leave alone', value=function() end},
-                {label='Remove', value=remove_building},
-                -- {label='Unremove', value=unremove_building},
+                {label='Leave alone', value=noop, pen=COLOR_BLUE},
+                {label='Remove built and planned', value=curry(remove_building, true, true), pen=COLOR_RED},
+                {label='Remove built', value=curry(remove_building, true, false), pen=COLOR_LIGHTRED},
+                {label='Remove planned', value=curry(remove_building, false, true), pen=COLOR_YELLOW},
             },
-            initial_option=remove_building,
+            initial_option=2,
         },
         widgets.CycleHotkeyLabel{
             view_id='constructions',
             label='Constructions:',
-            key='CUSTOM_V',
-            key_back='CUSTOM_SHIFT_V',
+            key='CUSTOM_C',
+            key_back='CUSTOM_SHIFT_C',
+            option_gap=1,
             options={
-                {label='Leave alone', value=function() end},
-                {label='Remove', value=remove_construction},
-                -- {label='Unremove', value=unremove_construction},
+                {label='Leave alone', value=noop, pen=COLOR_BLUE},
+                {label='Remove built and planned', value=curry(remove_construction, true, true), pen=COLOR_RED},
+                {label='Remove built', value=curry(remove_construction, true, false), pen=COLOR_LIGHTRED},
+                {label='Remove planned', value=curry(remove_construction, false, true), pen=COLOR_YELLOW},
             },
         },
         widgets.CycleHotkeyLabel{
-            view_id='suspend',
-            label='Suspend:',
-            key='CUSTOM_X',
-            key_back='CUSTOM_SHIFT_X',
+            view_id='stockpiles',
+            label='Stockpiles:',
+            key='CUSTOM_S',
+            key_sep=':  ',
+            option_gap=4,
             options={
-                {label='Leave alone', value=function() end},
-                {label='Suspend', value=suspendmanager.suspend},
-                {label='Unsuspend', value=suspendmanager.unsuspend},
+                {label='Leave alone', value=noop, pen=COLOR_BLUE},
+                {label='Remove', value=remove_stockpile, pen=COLOR_RED},
+            },
+        },
+        widgets.CycleHotkeyLabel{
+            view_id='zones',
+            label='Zones:',
+            key='CUSTOM_Z',
+            key_sep=':  ',
+            option_gap=9,
+            options={
+                {label='Leave alone', value=noop, pen=COLOR_BLUE},
+                {label='Remove', value=remove_zone, pen=COLOR_RED},
             },
         },
     }
@@ -190,6 +214,12 @@ function MassRemove:onInput(keys)
     end
     if not pos then return false end
 
+    if is_something_selected() then
+        self.mark = nil
+        self:updateLayout()
+        return true
+    end
+
     if self.mark then
         self:commit(get_bounds(self.mark, pos))
         self.mark = nil
@@ -205,8 +235,6 @@ end
 local to_pen = dfhack.pen.parse
 local SELECTION_PEN = to_pen{ch='X', fg=COLOR_GREEN,
                        tile=dfhack.screen.findGraphicsTile('CURSORS', 1, 2)}
-local SUSPENDED_PEN = to_pen{ch='s', fg=COLOR_YELLOW,
-                       tile=dfhack.screen.findGraphicsTile('CURSORS', 0, 0)}
 local DESTROYING_PEN = to_pen{ch='d', fg=COLOR_LIGHTRED,
                        tile=dfhack.screen.findGraphicsTile('CURSORS', 3, 0)}
 
@@ -222,8 +250,10 @@ local function is_destroying_construction(pos, grid)
         dfhack.maps.getTileFlags(pos).dig == df.tile_dig_designation.Default
 end
 
-local function can_suspend(bld)
-    return not buildingplan or not buildingplan.isPlannedBuilding(bld)
+local function get_first_job(bld)
+    if not bld then return end
+    if #bld.jobs ~= 1 then return end
+    return bld.jobs[0]
 end
 
 local function get_job_pen(pos, grid)
@@ -237,9 +267,6 @@ local function get_job_pen(pos, grid)
     if jt == df.job_type.DestroyBuilding
             or jt == df.job_type.RemoveConstruction then
         return DESTROYING_PEN
-    elseif jt == df.job_type.ConstructBuilding and job.flags.suspend
-            and can_suspend(bld) then
-        return SUSPENDED_PEN
     end
 end
 
@@ -268,25 +295,27 @@ end
 function MassRemove:commit(bounds)
     local bld_fn = self.subviews.buildings:getOptionValue()
     local constr_fn = self.subviews.constructions:getOptionValue()
-    local susp_fn = self.subviews.suspend:getOptionValue()
-
-    self:refresh_grid()
-    local grid = self.grid
+    local stockpile_fn = self.subviews.stockpiles:getOptionValue()
+    local zones_fn = self.subviews.zones:getOptionValue()
 
     for z=bounds.z1,bounds.z2 do
         for y=bounds.y1,bounds.y2 do
             for x=bounds.x1,bounds.x2 do
                 local pos = xyz2pos(x, y, z)
                 local bld = dfhack.buildings.findAtTile(pos)
-                if bld then bld_fn(bld)  end
-                if is_construction(pos) then
-                    constr_fn(pos, grid)
+                if bld then
+                    if bld:getType() == df.building_type.Stockpile then
+                        stockpile_fn(bld)
+                    elseif bld:getType() == df.building_type.Construction then
+                        constr_fn(pos, bld)
+                    else
+                        bld_fn(bld)
+                    end
                 end
-                local job = get_first_job(bld)
-                if job and job.job_type == df.job_type.ConstructBuilding
-                        and can_suspend(bld) then
-                    susp_fn(job)
+                if not dfhack.buildings.findAtTile(pos) and is_construction(pos) then
+                    constr_fn(pos)
                 end
+                zones_fn(pos)
             end
         end
     end
