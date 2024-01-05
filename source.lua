@@ -39,26 +39,29 @@ function is_flow_passable(pos)
 end
 
 function add_liquid_source(pos, liquid, amount)
-    local sources = retrieve_state()
+    new_source = {liquid = liquid, amount = amount, pos = copyall(pos)}
     print(("Adding %d %s to [%d, %d, %d]"):format(amount, liquid, pos.x, pos.y, pos.z))
-    table.insert(sources, {
-        liquid = liquid,
-        amount = amount,
-        pos = copyall(pos),
-    })
+    for k, v in pairs(retrieve_state()) do
+        if same_xyz(pos, v.pos) then
+            delete_source_at(k)
+        end
+    end
 
-    load_liquid_source(sources)
+    local sources = retrieve_state()
+    table.insert(sources, new_source)
+
+    persist_state(sources)
+    load_liquid_source()
 end
 
-function load_liquid_source(sources)
+function load_liquid_source()
+    local sources = retrieve_state()
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
         if next(sources) == nil then
             repeatUtil.cancel(sourceId)
         else
             for _, v in pairs(sources) do
                 local block = dfhack.maps.getTileBlock(v.pos)
-                local x = v.pos.x
-                local y = v.pos.y
                 if block and is_flow_passable(v.pos) then
                     local isMagma = v.liquid == 'magma'
 
@@ -84,33 +87,38 @@ function load_liquid_source(sources)
     persist_state(sources)
 end
 
-function delete_liquid_source(pos)
+function delete_source_at(key)
     local sources = retrieve_state()
-    print(("Searching for Source to remove at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k, v in pairs(sources) do
-        if same_xyz(pos, v.pos) then
-            print("Source Found")
-            local block = dfhack.maps.getTileBlock(pos)
-            if block and is_flow_passable(pos) then
-                local flags = dfhack.maps.getTileFlags(pos)
-                flags.flow_size = 0
-                flags.flow_forbid = true
-                dfhack.maps.enableBlockUpdates(block, true)
-            end
-            sources[k] = nil
+    local v = sources[key]
+
+    if v then
+        local block = dfhack.maps.getTileBlock(v.pos)
+        if block and is_flow_passable(v.pos) then
+            local flags = dfhack.maps.getTileFlags(v.pos)
+            flags.flow_size = 0
+            dfhack.maps.enableBlockUpdates(block, true)
         end
-        return
+        sources[key] = nil
     end
-    load_liquid_source(sources)
+    persist_state(sources)
+    load_liquid_source()
 end
 
-function clear_liquid_source()
-    local sources = retrieve_state()
-    print("Clearing all Sources")
-    for _, v in pairs(sources) do
-        delete_liquid_source(v.pos)
+function delete_liquid_source(pos)
+    print(("Deleting Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
+    for k, v in pairs(retrieve_state()) do
+        if same_xyz(pos, v.pos) then
+            print("Source Found")
+            delete_source_at(k)
+        end
     end
-    load_liquid_source(sources)
+end
+
+function clear_liquid_sources()
+    print("Clearing all Sources")
+    for k, v in pairs(retrieve_state()) do
+        delete_source_at(k)
+    end
 end
 
 function list_liquid_sources()
@@ -140,7 +148,7 @@ function main(args)
     end
 
     if command == 'clear' then
-        clear_liquid_source()
+        clear_liquid_sources()
         print("Cleared sources")
         return
     end
