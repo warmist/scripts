@@ -26,7 +26,7 @@ end
 
 local function load_liquid_source()
     repeatUtil.scheduleEvery(GLOBAL_KEY, 12, 'ticks', function()
-        if next(g_sources_list) == nil then
+        if not next(g_sources_list) then
             repeatUtil.cancel(GLOBAL_KEY)
         else
             for _, v in ipairs(g_sources_list) do
