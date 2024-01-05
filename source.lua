@@ -2,7 +2,6 @@
 local repeatUtil = require('repeat-util')
 local json = require('json')
 local persist = require('persist-table')
-local argparse = require('argparse')
 
 local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
