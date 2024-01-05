@@ -103,7 +103,7 @@ end
 
 local function list_liquid_sources()
     print('Current Liquid Sources:')
-    for _,v in pairs(g_sources_list) do
+    for _,v in ipairs(g_sources_list) do
         print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
     end
 end
