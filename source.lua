@@ -189,11 +189,11 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
-    
+
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
-    
+
     g_sources_list = persisted_data
-    
+
     load_liquid_source(g_sources_list)
 end
 
