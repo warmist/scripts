@@ -2,22 +2,26 @@
 local repeatUtil = require('repeat-util')
 local json = require('json')
 local persist = require('persist-table')
+local argparse = require('argparse')
 
 local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
-g_state = g_state or {}
-
 local sourceId = 'liquidSources'
 
-enabled = enabled or false
+g_sources_list = g_sources_list or {}
+local function retrieve_state()
+    return g_sources_list
+end
+
+local function has_elements(collection)
+    for _,_ in pairs(collection) do return true end
+    return false
+end
 
 function isEnabled()
-    return enabled
+    return has_elements(retrieve_state())
 end
 
-local function retrieve_state()
-    return json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-end
 
 local function persist_state(liquidSources)
     persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
@@ -27,7 +31,7 @@ local function formatPos(pos)
     return ('[%d, %d, %d]'):format(pos.x, pos.y, pos.z)
 end
 
-function IsFlowPassable(pos)
+function is_flow_passable(pos)
     local tiletype = dfhack.maps.getTileType(pos)
     local titletypeAttrs = df.tiletype.attrs[tiletype]
     local shape = titletypeAttrs.shape
@@ -35,27 +39,28 @@ function IsFlowPassable(pos)
     return tiletypeShapeAttrs.passable_flow
 end
 
-function AddLiquidSource(pos, liquid, amount)
+function add_liquid_source(pos, liquid, amount)
+    local sources = retrieve_state()
     print(("Adding %d %s to [%d, %d, %d]"):format(amount, liquid, pos.x, pos.y, pos.z))
-    table.insert(g_state, {
+    table.insert(sources, {
         liquid = liquid,
         amount = amount,
         pos = copyall(pos),
     })
 
-    LoadLiquidSources(g_state)
+    load_liquid_source(sources)
 end
 
-function LoadLiquidSources(liquidSources)
+function load_liquid_source(sources)
     repeatUtil.scheduleEvery(sourceId, 12, 'ticks', function()
-        if next(g_state) == nil then
+        if next(sources) == nil then
             repeatUtil.cancel(sourceId)
         else
-            for _, v in pairs(g_state) do
+            for _, v in pairs(sources) do
                 local block = dfhack.maps.getTileBlock(v.pos)
                 local x = v.pos.x
                 local y = v.pos.y
-                if block and IsFlowPassable(v.pos) then
+                if block and is_flow_passable(v.pos) then
                     local isMagma = v.liquid == 'magma'
 
                     local flags = dfhack.maps.getTileFlags(v.pos)
@@ -77,50 +82,48 @@ function LoadLiquidSources(liquidSources)
             end
         end
     end)
-    persist_state(g_state)
+    persist_state(sources)
 end
 
-function RemoveLiquidSource(pos)
-    for _, v in pairs(g_state) do
-        print(("Removing Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-        local block = dfhack.maps.getTileBlock(pos)
-        if block then
-            dfhack.maps.enableBlockUpdates(block, false)
-        end
-    end
-end
-
-function DeleteLiquidSource(pos)
+function delete_liquid_source(pos)
+    local sources = retrieve_state()
     print(("Searching for Source to remove at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k, v in pairs(g_state) do
+    for k, v in pairs(sources) do
         if same_xyz(pos, v.pos) then
             print("Source Found")
-            RemoveLiquidSource(pos)
-            g_state[k] = nil
+            local block = dfhack.maps.getTileBlock(pos)
+            if block and is_flow_passable(pos) then
+                local flags = dfhack.maps.getTileFlags(pos)
+                flags.flow_size = 0
+                flags.flow_forbid = true
+                dfhack.maps.enableBlockUpdates(block, true)
+            end
+            sources[k] = nil
         end
         return
     end
-    LoadLiquidSources(g_state)
+    load_liquid_source(sources)
 end
 
-function ClearLiquidSources()
+function clear_liquid_source()
+    local sources = retrieve_state()
     print("Clearing all Sources")
-    for _, v in pairs(g_state) do
-        DeleteLiquidSource(v.pos)
+    for _, v in pairs(sources) do
+        delete_liquid_source(v.pos)
     end
-    LoadLiquidSources(g_state)
+    load_liquid_source(sources)
 end
 
-function ListLiquidSources()
+function list_liquid_sources()
     print('Current Liquid Sources:')
-    for _,v in pairs(g_state) do
+    for _,v in pairs(retrieve_state()) do
         print(('%s %s %d'):format(formatPos(v.pos), v.liquid, v.amount))
     end
 end
 
-function FindLiquidSourceAtPos(pos)
+function find_liquid_source_at_pos(pos)
     print(("Searching for Source at [%d, %d, %d]"):format(pos.x, pos.y, pos.z))
-    for k,v in pairs(g_state) do
+    for k,v in pairs(retrieve_state()) do
         if same_xyz(v.pos, pos) then
             print("Source Found")
             return k
@@ -133,25 +136,25 @@ function main(args)
     local command = args[1]
 
     if command == 'list' then
-        ListLiquidSources()
+        list_liquid_sources()
         return
     end
 
     if command == 'clear' then
-        ClearLiquidSources()
+        clear_liquid_source()
         print("Cleared sources")
         return
     end
 
     local targetPos = copyall(df.global.cursor)
-    local index = FindLiquidSourceAtPos(targetPos)
+    local index = find_liquid_source_at_pos(targetPos)
 
     if command == 'delete' then
         if targetPos.x < 0 then
             qerror("Please place the cursor where there is a source to delete")
         end
         if index then
-            DeleteLiquidSource(targetPos)
+            delete_liquid_source(targetPos)
             print(('Deleted source at %s'):format(formatPos(targetPos)))
         else
             qerror(('%s Does not contain a liquid source'):format(formatPos(targetPos)))
@@ -171,49 +174,52 @@ function main(args)
         if not (liquidArg == 'magma' or liquidArg == 'water') then
             qerror('Liquid must be either "water" or "magma"')
         end
-        if not IsFlowPassable(targetPos) then
+        if not is_flow_passable(targetPos) then
             qerror("Tile not flow passable: I'm afraid I can't let you do that, Dave.")
         end
         local amountArg = tonumber(args[3]) or 7
-        AddLiquidSource(targetPos, liquidArg, amountArg)
+        add_liquid_source(targetPos, liquidArg, amountArg)
         print(('Added %s %d at %s'):format(liquidArg, amountArg, formatPos(targetPos)))
         return
     end
 end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-    if sc == SC_MAP_UNLOADED then
-        enabled = false
-        return
-    end
-
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        local g_state = retrieve_state()
-        LoadLiquidSources(g_state)
         return
     end
-
-    if sc == SC_WORLD_LOADED then
-        local g_state = retrieve_state()
-        LoadLiquidSources(g_state)
+    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
+    -- sometimes the keys come back as strings; fix that up
+    for k,v in pairs(persisted_data) do
+        if type(k) == 'string' then
+            persisted_data[tonumber(k)] = v
+            persisted_data[k] = nil
+        end
     end
-
-    local state = json.decode(persist.GlobalTable[GLOBAL_KEY] or '')
-    g_state = state or {}
+    g_sources_list = persisted_data
+    load_liquid_source(g_sources_list)
 end
 
-if dfhack_flags.enable then
-    if dfhack_flags.enable_state then
-        start()
-        enabled = true
-    else
-        stop()
-        enabled = false
-    end
+if dfhack.internal.IN_TEST then
+    unit_test_hooks = {
+        clear_watched_job_matchers=clear_watched_job_matchers,
+        on_new_job=on_new_job,
+        status=status,
+        boost=boost,
+        boost_and_watch=boost_and_watch,
+        remove_watch=remove_watch,
+        print_current_jobs=print_current_jobs,
+        print_registry=print_registry,
+        parse_commandline=parse_commandline,
+    }
+end
+
+if dfhack_flags.module then
+    return
 end
 
 if not dfhack_flags.module then
     main({...})
 end
 
-persist_state(liquidSources)
+persist_state(g_sources_list)
