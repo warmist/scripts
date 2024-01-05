@@ -7,15 +7,6 @@ local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
 g_sources_list = g_sources_list or {}
 
-local function has_elements(collection)
-    for _,_ in ipairs(collection) do return true end
-    return false
-end
-
-local function isEnabled()
-    return next(g_sources_list)
-end
-
 
 local function persist_state(liquidSources)
     persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
@@ -33,27 +24,12 @@ local function is_flow_passable(pos)
     return tiletypeShapeAttrs.passable_flow
 end
 
-local function add_liquid_source(pos, liquid, amount)
-    local new_source = {liquid = liquid, amount = amount, pos = copyall(pos)}
-    print(("Adding %d %s to %s"):format(amount, liquid, formatPos(pos)))
-    for k, v in ipairs(g_sources_list) do
-        if same_xyz(pos, v.pos) then
-            delete_source_at(k)
-        end
-    end
-
-    table.insert(g_sources_list, new_source)
-
-    persist_state(g_sources_list)
-    load_liquid_source()
-end
-
 local function load_liquid_source()
     repeatUtil.scheduleEvery(GLOBAL_KEY, 12, 'ticks', function()
         if next(g_sources_list) == nil then
             repeatUtil.cancel(GLOBAL_KEY)
         else
-            for _, v in pairs(g_sources_list) do
+            for _, v in ipairs(g_sources_list) do
                 local block = dfhack.maps.getTileBlock(v.pos)
                 if block and is_flow_passable(v.pos) then
                     local isMagma = v.liquid == 'magma'
@@ -77,7 +53,6 @@ local function load_liquid_source()
             end
         end
     end)
-    persist_state(g_sources_list)
 end
 
 local function delete_source_at(key)
@@ -92,7 +67,20 @@ local function delete_source_at(key)
         end
         g_sources_list[key] = nil
     end
-    persist_state(g_sources_list)
+    load_liquid_source()
+end
+
+local function add_liquid_source(pos, liquid, amount)
+    local new_source = {liquid = liquid, amount = amount, pos = copyall(pos)}
+    print(("Adding %d %s to %s"):format(amount, liquid, formatPos(pos)))
+    for k, v in ipairs(g_sources_list) do
+        if same_xyz(pos, v.pos) then
+            delete_source_at(k)
+        end
+    end
+
+    table.insert(g_sources_list, new_source)
+
     load_liquid_source()
 end
 
@@ -181,13 +169,15 @@ function main(args)
         print(('Added %s %d at %s'):format(liquidArg, amountArg, formatPos(targetPos)))
         return
     end
-
-    persist_state(g_sources_list)
 end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
+    end
+
+    if sc == SC_WORLD_UNLOADED then
+        clear_liquid_sources()
     end
 
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
@@ -200,3 +190,6 @@ end
 if dfhack_flags.module then
     return
 end
+
+main{...}
+persist_state(g_sources_list)
