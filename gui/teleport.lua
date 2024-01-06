@@ -7,6 +7,8 @@ saved_citizens = saved_citizens or (saved_citizens == nil and true)
 saved_friendly = saved_friendly or (saved_friendly == nil and true)
 saved_hostile = saved_hostile or (saved_hostile == nil and true)
 
+local indicator = df.global.game.main_interface.recenter_indicator_m
+
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
             math.abs(pos1.y - pos2.y) + 1,
@@ -35,7 +37,7 @@ end
 Teleport = defclass(Teleport, widgets.Window)
 Teleport.ATTRS {
     frame_title='Teleport',
-    frame={w=44, h=28, r=2, t=18},
+    frame={w=45, h=28, r=2, t=18},
     resizable=true,
     resize_min={h=20},
     autoarrange_subviews=true,
@@ -49,7 +51,12 @@ function Teleport:init()
     self:reset_double_click() -- sets self.last_map_click_ms and self.last_map_click_pos
 
     -- pre-add UI selected unit, if any
-    self:add_unit(dfhack.gui.getSelectedUnit(true))
+    local initial_unit = dfhack.gui.getSelectedUnit(true)
+    if initial_unit then
+        self:add_unit(initial_unit)
+    end
+    -- close the view sheet panel (if it's open) so the player can see the map
+    df.global.game.main_interface.view_sheets.open = false
 
     self:addviews{
         widgets.WrappedLabel{
@@ -124,23 +131,42 @@ function Teleport:init()
                 },
                 widgets.List{
                     view_id='list',
-                    frame={t=2, l=0, r=0, b=3},
+                    frame={t=2, l=0, r=0, b=4},
+                    on_select=function(_, choice)
+                        if choice then
+                            df.assign(indicator, xyz2pos(dfhack.units.getPosition(choice.unit)))
+                        end
+                    end,
+                    on_submit=function(_, choice)
+                        if choice then
+                            local pos = xyz2pos(dfhack.units.getPosition(choice.unit))
+                            dfhack.gui.revealInDwarfmodeMap(pos, true, true)
+                        end
+                    end,
                 },
                 widgets.HotkeyLabel{
                     frame={l=0, b=1},
                     key='CUSTOM_SHIFT_R',
-                    label='Remove unit from list',
+                    label='Deselect unit',
                     auto_width=true,
                     on_activate=self:callback('remove_unit'),
                     enabled=function() return #self.selected_units.list > 0 end,
                 },
                 widgets.HotkeyLabel{
-                    frame={l=0, b=0},
+                    frame={l=26, b=1},
                     key='CUSTOM_SHIFT_X',
                     label='Clear list',
                     auto_width=true,
                     on_activate=self:callback('reset_selected_state'),
                     enabled=function() return #self.selected_units.list > 0 end,
+                },
+                widgets.Label{
+                    frame={l=0, b=0},
+                    text={
+                        'Click name or hit ',
+                        {text='Enter', pen=COLOR_LIGHTGREEN},
+                        ' to zoom to unit',
+                    },
                 },
             }
         }
@@ -193,10 +219,18 @@ end
 function Teleport:refresh_choices()
     local choices = {}
     for _, unit in ipairs(self.selected_units.list) do
-        local suffix
-        if dfhack.units.isCitizen(unit) then suffix = ' citizen'
-        elseif dfhack.units.isDanger(unit) then suffix = ' hostile'
-        else suffix = ' friendly'
+        local suffix = ''
+        if dfhack.units.isCitizen(unit) then suffix = ' (citizen)'
+        elseif dfhack.units.isDanger(unit) then suffix = ' (hostile)'
+        elseif dfhack.units.isMerchant(unit) or dfhack.units.isForest(unit) then
+            suffix = ' (merchant)'
+        elseif dfhack.units.isAnimal(unit) then
+            -- tame units will already have an annotation in the readable name
+            if not dfhack.units.isTame(unit) then
+                suffix = ' (wild)'
+            end
+        else
+            suffix = ' (friendly)'
         end
         table.insert(choices, {
             text=dfhack.units.getReadableName(unit)..suffix,
@@ -322,6 +356,7 @@ function Teleport:onRenderFrame(dc, rect)
     local highlight_coords = self.selected_coords[df.global.window_z]
     if highlight_coords then
         local function get_overlay_pen(pos)
+            if same_xyz(indicator, pos) then return end
             if safe_index(highlight_coords, pos.y, pos.x) then
                 return SELECTED_PEN
             end
@@ -346,6 +381,7 @@ function Teleport:do_teleport(pos)
     for _,unit in ipairs(self.selected_units.list) do
         dfhack.units.teleport(unit, pos)
     end
+    indicator.x = -30000
     self:reset_selected_state()
     self:updateLayout()
 end
@@ -367,6 +403,7 @@ function TeleportScreen:init()
 end
 
 function TeleportScreen:onDismiss()
+    indicator.x = -30000
     view = nil
 end
 
