@@ -349,7 +349,7 @@ end
 function BiomeVisualizerLegend:onRenderBody(painter)
     local thisPos = self:getMouseFramePos()
     local pos = dfhack.gui.getMousePos()
-    
+
     if not thisPos and pos then
         local N = safe_index(biomesMap, pos.z, pos.y, pos.x)
         if N then
