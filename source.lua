@@ -190,5 +190,10 @@ if dfhack_flags.module then
     return
 end
 
+if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
+    dfhack.printerr('source needs a loaded fortress map to work')
+    return
+end
+
 main{...}
 persist_state(g_sources_list)
