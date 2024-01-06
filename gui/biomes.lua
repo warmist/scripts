@@ -9,12 +9,20 @@ local guidm = require('gui.dwarfmode')
 local INITIAL_LIST_HEIGHT = 5
 local INITIAL_INFO_HEIGHT = 15
 
-local textures = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12, true)
-local TILE_HIGHLIGHTED = dfhack.textures.getTexposByHandle(textures[1]) -- yellow-ish indicator
+local texturesOnOff8x12 = dfhack.textures.loadTileset('hack/data/art/on-off.png', 8, 12, true)
+local LIST_ITEM_HIGHLIGHTED = dfhack.textures.getTexposByHandle(texturesOnOff8x12[1]) -- yellow-ish indicator
+
+local texturesOnOff = dfhack.textures.loadTileset('hack/data/art/on-off - top-left.png', 32, 32, true)
+local TILE_HIGHLIGHTED = dfhack.textures.getTexposByHandle(texturesOnOff[1]) -- yellow-ish indicator
 if TILE_HIGHLIGHTED < 0 then -- use a fallback
     TILE_HIGHLIGHTED = 88 -- `X`
 end
-local TILE_STARTING_SYMBOL = 97 -- `a`
+
+local texturesSmallLetters = dfhack.textures.loadTileset('hack/data/art/curses_small_letters - top-left.png', 32, 32, true)
+local TILE_STARTING_SYMBOL = dfhack.textures.getTexposByHandle(texturesSmallLetters[1])
+if TILE_STARTING_SYMBOL < 0 then -- use a fallback
+    TILE_STARTING_SYMBOL = 97 -- `a`
+end
 
 local biomeTypeNames = {
     MOUNTAIN = "Mountain",
@@ -218,7 +226,7 @@ function BiomeVisualizerLegend:init()
     self:UpdateChoices()
 end
 
-local PEN_ACTIVE_ICON = dfhack.pen.parse{tile=TILE_HIGHLIGHTED}
+local PEN_ACTIVE_ICON = dfhack.pen.parse{tile=LIST_ITEM_HIGHLIGHTED}
 local PEN_NO_ICON = nil
 
 function BiomeVisualizerLegend:get_icon_pen_callback(ix)
