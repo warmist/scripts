@@ -67,7 +67,6 @@ local function delete_source_at(key)
         end
         g_sources_list[key] = nil
     end
-    load_liquid_source()
 end
 
 local function add_liquid_source(pos, liquid, amount)
@@ -172,12 +171,12 @@ function main(args)
 end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        return
-    end
-
     if sc == SC_WORLD_UNLOADED then
         clear_liquid_sources()
+    end
+
+    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
+        return
     end
 
     local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
