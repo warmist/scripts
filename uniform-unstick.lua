@@ -163,7 +163,6 @@ local function process(unit, args)
                             end
                         end
                     end
-                    unit.military.pickup_flags.update = true
                 end
             else
                 missing_ids[u_id] = item
@@ -309,7 +308,7 @@ EquipOverlay.ATTRS{
     desc='Adds a link to the equip screen to fix equipment conflicts.',
     default_pos={x=-101,y=21},
     default_enabled=true,
-    viewscreens='dwarfmode/SquadEquipment',
+    viewscreens='dwarfmode/SquadEquipment/Default',
     frame={w=26, h=1},
 }
 
@@ -325,7 +324,7 @@ function EquipOverlay:init()
         widgets.TextButton{
             view_id='button_good',
             frame={t=0, l=0, r=0, h=1},
-            label='   All good!    ',
+            label='  No conflicts  ',
             text_pen=COLOR_GREEN,
             key='CUSTOM_CTRL_T',
             visible=false,

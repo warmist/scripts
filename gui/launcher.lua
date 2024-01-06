@@ -23,6 +23,9 @@ local TITLE = 'DFHack Launcher'
 -- within 1s when adding text to a full scrollback buffer
 local SCROLLBACK_CHARS = 2^18
 
+-- smaller amount of scrollback persisted between gui/launcher invocations
+local PERSISTED_SCROLLBACK_CHARS = 2^15
+
 config = config or json.open('dfhack-config/launcher.json')
 base_freq = base_freq or json.open('hack/data/base_command_counts.json')
 user_freq = user_freq or json.open('dfhack-config/command_counts.json')
@@ -340,6 +343,8 @@ HelpPanel.ATTRS{
     frame_inset={t=0, l=1, r=1, b=0},
 }
 
+persisted_scrollback = persisted_scrollback or ''
+
 -- this text is intentionally unwrapped so the in-UI wrapping can do the job
 local DEFAULT_HELP_TEXT = [[Welcome to DFHack!
 
@@ -388,7 +393,7 @@ function HelpPanel:init()
                         STANDARDSCROLL_PAGEUP='-halfpage',
                         STANDARDSCROLL_PAGEDOWN='+halfpage',
                     },
-                    text_to_wrap=''},
+                    text_to_wrap=persisted_scrollback},
             },
         },
     }
@@ -419,6 +424,7 @@ function HelpPanel:add_output(output)
         label:scroll('end')
         line_num = label.start_line_num
     end
+    persisted_scrollback = text:sub(-PERSISTED_SCROLLBACK_CHARS)
     HelpPanel_update_label(label, text)
     if line_num == 1 then
         label:scroll(text_height - 1)
@@ -453,6 +459,13 @@ function HelpPanel:postComputeFrame()
     local wrapped_help = helpdb.get_entry_long_help(self.cur_entry,
                                                     self.frame_body.width - 5)
     HelpPanel_update_label(self.subviews.help_label, wrapped_help)
+end
+
+function HelpPanel:postUpdateLayout()
+    if not self.sentinel then
+        self.sentinel = true
+        self.subviews.output_label:scroll('end')
+    end
 end
 
 ----------------------------------
