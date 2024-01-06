@@ -1,6 +1,11 @@
 local gui = require('gui')
 local guidm = require('gui.dwarfmode')
+local utils = require('utils')
 local widgets = require('gui.widgets')
+
+saved_citizens = saved_citizens or (saved_citizens == nil and true)
+saved_friendly = saved_friendly or (saved_friendly == nil and true)
+saved_hostile = saved_hostile or (saved_hostile == nil and true)
 
 local function get_dims(pos1, pos2)
     local width, height, depth = math.abs(pos1.x - pos2.x) + 1,
@@ -9,12 +14,18 @@ local function get_dims(pos1, pos2)
     return width, height, depth
 end
 
-local function is_good_unit(unit, include)
+local function is_good_unit(include, unit)
     if not unit then return false end
-    if item.flags.forbid and not include.forbidden then return false end
-    if item.flags.in_job and not include.in_job then return false end
-    if item.flags.trader and not include.trader then return false end
-    return true
+    if dfhack.units.isDead(unit) or
+        not dfhack.units.isActive(unit) or
+        unit.flags1.caged
+    then
+        return false
+    end
+    if dfhack.units.isCitizen(unit) then return include.citizens end
+    local dangerous = dfhack.units.isDanger(unit)
+    if not dangerous then return include.friendly end
+    return include.hostile
 end
 
 -----------------
@@ -24,9 +35,9 @@ end
 Teleport = defclass(Teleport, widgets.Window)
 Teleport.ATTRS {
     frame_title='Teleport',
-    frame={w=48, h=28, r=2, t=18},
+    frame={w=44, h=28, r=2, t=18},
     resizable=true,
-    resize_min={h=10},
+    resize_min={h=20},
     autoarrange_subviews=true,
     autoarrange_gap=1,
 }
@@ -35,8 +46,10 @@ function Teleport:init()
     self.mark = nil
     self.prev_help_text = ''
     self:reset_selected_state() -- sets self.selected_*
-    self:refresh_dump_items() -- sets self.dump_items
     self:reset_double_click() -- sets self.last_map_click_ms and self.last_map_click_pos
+
+    -- pre-add UI selected unit, if any
+    self:add_unit(dfhack.gui.getSelectedUnit(true))
 
     self:addviews{
         widgets.WrappedLabel{
@@ -58,68 +71,82 @@ function Teleport:init()
         },
         widgets.HotkeyLabel{
             frame={l=0},
-            label='Teleport to tile under mouse cursor',
+            label='Teleport units to mouse cursor',
             key='CUSTOM_CTRL_T',
             auto_width=true,
             on_activate=self:callback('do_teleport'),
-            enabled=function() return dfhack.gui.getMousePos() end,
+            enabled=function()
+                return dfhack.gui.getMousePos() and #self.selected_units.list > 0
+            end,
         },
         widgets.ResizingPanel{
             autoarrange_subviews=true,
             subviews={
                 widgets.ToggleHotkeyLabel{
                     view_id='include_citizens',
-                    frame={l=0},
-                    label='Include citizen units',
-                    key='CUSTOM_CTRL_U',
-                    auto_width=true,
-                    initial_option=true,
+                    frame={l=0, w=29},
+                    label='Include citizen units ',
+                    key='CUSTOM_SHIFT_U',
+                    initial_option=saved_citizens,
+                    on_change=function(val) saved_citizens = val end,
                 },
                 widgets.ToggleHotkeyLabel{
                     view_id='include_friendly',
-                    frame={l=0},
+                    frame={l=0, w=29},
                     label='Include friendly units',
-                    key='CUSTOM_CTRL_F',
-                    auto_width=true,
-                    initial_option=true,
+                    key='CUSTOM_SHIFT_F',
+                    initial_option=saved_friendly,
+                    on_change=function(val) saved_friendly = val end,
                 },
                 widgets.ToggleHotkeyLabel{
                     view_id='include_hostile',
-                    frame={l=0},
-                    label='Include hostile units',
-                    key='CUSTOM_CTRL_H',
-                    auto_width=true,
-                    initial_option=true,
+                    frame={l=0, w=29},
+                    label='Include hostile units ',
+                    key='CUSTOM_SHIFT_H',
+                    initial_option=saved_hostile,
+                    on_change=function(val) saved_hostile = val end,
                 },
             },
         },
-        widgets.Label{
-            text={
-                {text=function() return #self.selected_units.list end}
-                ' selected units:'
-            },
-        },
-        widgets.List{
-            view_id='list',
-            frame={l=0, r=0, b=2}
-        },
-        widgets.HotkeyLabel{
-            frame={l=0},
-            key='CUSTOM_R',
-            label='Remove selected unit from list',
-            auto_width=true,
-            on_activate=self:callback('remove_unit'),
-            enabled=function() return #self.selected_items.list > 0 end,
-        },
-        widgets.HotkeyLabel{
-            frame={l=0},
-            key='CUSTOM_SHIFT_R',
-            label='Remove all selected units',
-            auto_width=true,
-            on_activate=self:callback('reset_selected_state'),
-            enabled=function() return #self.selected_items.list > 0 end,
-        },
-}
+        widgets.Panel{
+            frame={t=10, b=0, l=0, r=0},
+            frame_style=gui.FRAME_INTERIOR,
+            subviews={
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text='No selected units',
+                    visible=function() return #self.selected_units.list == 0 end,
+                },
+                widgets.Label{
+                    frame={t=0, l=0},
+                    text='Selected units:',
+                    visible=function() return #self.selected_units.list > 0 end,
+                },
+                widgets.List{
+                    view_id='list',
+                    frame={t=2, l=0, r=0, b=3},
+                },
+                widgets.HotkeyLabel{
+                    frame={l=0, b=1},
+                    key='CUSTOM_SHIFT_R',
+                    label='Remove unit from list',
+                    auto_width=true,
+                    on_activate=self:callback('remove_unit'),
+                    enabled=function() return #self.selected_units.list > 0 end,
+                },
+                widgets.HotkeyLabel{
+                    frame={l=0, b=0},
+                    key='CUSTOM_SHIFT_X',
+                    label='Clear list',
+                    auto_width=true,
+                    on_activate=self:callback('reset_selected_state'),
+                    enabled=function() return #self.selected_units.list > 0 end,
+                },
+            }
+        }
+    }
+
+    self:refresh_choices()
 end
 
 function Teleport:reset_double_click()
@@ -127,52 +154,88 @@ function Teleport:reset_double_click()
     self.last_map_click_pos = {}
 end
 
-function Teleport:reset_selected_state()
-    self.selected_items = {list={}, set={}}
-    self.selected_coords = {} -- z -> y -> x -> true
-    self.selected_bounds = {} -- z -> bounds rect
-    if next(self.subviews) then
-        self:updateLayout()
+function Teleport:update_coords(x, y, z)
+    ensure_keys(self.selected_coords, z, y)[x] = true
+    local selected_bounds = ensure_key(self.selected_bounds, z,
+            {x1=x, x2=x, y1=y, y2=y})
+    selected_bounds.x1 = math.min(selected_bounds.x1, x)
+    selected_bounds.x2 = math.max(selected_bounds.x2, x)
+    selected_bounds.y1 = math.min(selected_bounds.y1, y)
+    selected_bounds.y2 = math.max(selected_bounds.y2, y)
+end
+
+function Teleport:add_unit(unit)
+    if not unit then return end
+    local x, y, z = dfhack.units.getPosition(unit)
+    if not x then return end
+    if not self.selected_units.set[unit.id] then
+        self.selected_units.set[unit.id] = true
+        utils.insert_sorted(self.selected_units.list, unit, 'id')
+        self:update_coords(x, y, z)
     end
 end
 
-function Teleport:get_include()
-    local include = {forbidden=false, in_job=false, trader=false}
+function Teleport:reset_selected_state(keep_units)
+    if not keep_units then
+        self.selected_units = {list={}, set={}}
+    end
+    self.selected_coords = {} -- z -> y -> x -> true
+    self.selected_bounds = {} -- z -> bounds rect
+    for _, unit in ipairs(self.selected_units.list) do
+        self:update_coords(dfhack.units.getPosition(unit))
+    end
     if next(self.subviews) then
-        include.forbidden = self.subviews.include_forbidden:getOptionValue()
-        include.in_job = self.subviews.include_in_job:getOptionValue()
-        include.trader = self.subviews.include_trader:getOptionValue()
+        self:updateLayout()
+        self:refresh_choices()
+    end
+end
+
+function Teleport:refresh_choices()
+    local choices = {}
+    for _, unit in ipairs(self.selected_units.list) do
+        local suffix
+        if dfhack.units.isCitizen(unit) then suffix = ' citizen'
+        elseif dfhack.units.isDanger(unit) then suffix = ' hostile'
+        else suffix = ' friendly'
+        end
+        table.insert(choices, {
+            text=dfhack.units.getReadableName(unit)..suffix,
+            unit=unit
+        })
+    end
+    table.sort(choices, function(a, b) return a.text < b.text end)
+    self.subviews.list:setChoices(choices)
+end
+
+function Teleport:remove_unit()
+    local _, choice = self.subviews.list:getSelected()
+    if not choice then return end
+    self.selected_units.set[choice.unit.id] = nil
+    utils.erase_sorted_key(self.selected_units.list, choice.unit.id, 'id')
+    self:reset_selected_state(true)
+end
+
+function Teleport:get_include()
+    local include = {citizens=false, friendly=false, hostile=false}
+    if next(self.subviews) then
+        include.citizens = self.subviews.include_citizens:getOptionValue()
+        include.friendly = self.subviews.include_friendly:getOptionValue()
+        include.hostile = self.subviews.include_hostile:getOptionValue()
     end
     return include
 end
 
-function Teleport:refresh_dump_items()
-    local dump_items = {}
-    local include = self:get_include()
-    for _,item in ipairs(df.global.world.items.all) do
-        if not is_good_item(item, include) then goto continue end
-        if item.flags.dump then
-            table.insert(dump_items, item)
-        end
-        ::continue::
-    end
-    self.dump_items = dump_items
-    if next(self.subviews) then
-        self:updateLayout()
-    end
-end
-
 function Teleport:get_help_text()
-    local ret = 'Double click on a tile to teleport'
-    if #self.selected_items.list > 0 then
-        ret = ('%s %d highlighted item(s).'):format(ret, #self.selected_items.list)
-    else
-        ret = ('%s %d item(s) marked for dumping.'):format(ret, #self.dump_items)
+    local help_text = 'Draw boxes around units to select'
+    local num_selected = #self.selected_units.list
+    if num_selected > 0 then
+        help_text = help_text ..
+            (', or double click on a tile to teleport %d selected unit(s).'):format(num_selected)
     end
-    if ret ~= self.prev_help_text then
-        self.prev_help_text = ret
+    if help_text ~= self.prev_help_text then
+        self.prev_help_text = help_text
     end
-    return ret
+    return help_text
 end
 
 function Teleport:get_selection_area_text()
@@ -197,47 +260,15 @@ function Teleport:get_bounds(cursor, mark)
     }
 end
 
-function Teleport:select_items_in_block(block, bounds)
-    local include = self:get_include()
-    for _,item_id in ipairs(block.items) do
-        local item = df.item.find(item_id)
-        if not is_good_item(item, include) then
-            goto continue
-        end
-        local x, y, z = dfhack.items.getPosition(item)
-        if not x then goto continue end
-        if not self.selected_items.set[item_id] and
-                x >= bounds.x1 and x <= bounds.x2 and
-                y >= bounds.y1 and y <= bounds.y2 then
-            self.selected_items.set[item_id] = true
-            table.insert(self.selected_items.list, item)
-            ensure_key(ensure_key(self.selected_coords, z), y)[x] = true
-            local selected_bounds = ensure_key(self.selected_bounds, z,
-                    {x1=x, x2=x, y1=y, y2=y})
-            selected_bounds.x1 = math.min(selected_bounds.x1, x)
-            selected_bounds.x2 = math.max(selected_bounds.x2, x)
-            selected_bounds.y1 = math.min(selected_bounds.y1, y)
-            selected_bounds.y2 = math.max(selected_bounds.y2, y)
-        end
-        ::continue::
-    end
-end
-
 function Teleport:select_box(bounds)
     if not bounds then return end
-    local seen_blocks = {}
-    for z=bounds.z1,bounds.z2 do
-        for y=bounds.y1,bounds.y2 do
-            for x=bounds.x1,bounds.x2 do
-                local block = dfhack.maps.getTileBlock(xyz2pos(x, y, z))
-                local block_str = tostring(block)
-                if not seen_blocks[block_str] then
-                    seen_blocks[block_str] = true
-                    self:select_items_in_block(block, bounds)
-                end
-            end
-        end
+    local filter = curry(is_good_unit, self:get_include())
+    local selected_units = dfhack.units.getUnitsInBox(
+        bounds.x1, bounds.y1, bounds.z1, bounds.x2, bounds.y2, bounds.z2, filter)
+    for _,unit in ipairs(selected_units) do
+        self:add_unit(unit)
     end
+    self:refresh_choices()
 end
 
 function Teleport:onInput(keys)
@@ -311,14 +342,10 @@ end
 function Teleport:do_teleport(pos)
     pos = pos or dfhack.gui.getMousePos()
     if not pos then return end
-    print(('teleporting %d units'):format(#self.unit_ids))
-    for _,unid in ipairs(self.unit_ids) do
-        local unit = df.unit.find(unid)
-        if unit then
-            dfhack.units.teleport(unit, pos)
-        end
+    print(('teleporting %d units'):format(#self.selected_units.list))
+    for _,unit in ipairs(self.selected_units.list) do
+        dfhack.units.teleport(unit, pos)
     end
-    self.unit_ids = {}
     self:reset_selected_state()
     self:updateLayout()
 end
@@ -332,6 +359,7 @@ TeleportScreen.ATTRS {
     focus_path='autodump',
     pass_movement_keys=true,
     pass_mouse_clicks=false,
+    force_pause=true,
 }
 
 function TeleportScreen:init()
