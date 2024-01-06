@@ -239,6 +239,18 @@ function BiomeVisualizerLegend:get_icon_pen_callback(ix)
     end
 end
 
+function BiomeVisualizerLegend:get_text_pen_callback(ix)
+    return function ()
+        if self.MapHoverIndex == ix then
+            return self.SelectedIndex == ix
+                and { fg = COLOR_BLACK, bg = COLOR_LIGHTCYAN }
+                 or { fg = COLOR_BLACK, bg = COLOR_GREY }
+        else
+            return nil
+        end
+    end
+end
+
 function BiomeVisualizerLegend:onSelectEntry(idx, option)
     self.SelectedIndex = idx
     self.SelectedOption = option
@@ -251,7 +263,10 @@ function BiomeVisualizerLegend:UpdateChoices()
     for i = #choices + 1, #biomeList do
         local biomeExt = biomeList[i]
         table.insert(choices, {
-            text = ([[%s: %s]]):format(biomeExt.char, GetBiomeName(biomeExt.biome, biomeExt.typeId)),
+            text = {{
+                pen = self:get_text_pen_callback(#choices+1),
+                text = ([[%s: %s]]):format(biomeExt.char, GetBiomeName(biomeExt.biome, biomeExt.typeId)),
+            }},
             icon = self:get_icon_pen_callback(#choices+1),
             biomeTypeId = biomeExt.typeId,
             biome = biomeExt.biome,
@@ -329,6 +344,26 @@ function BiomeVisualizerLegend:ShowTooltip(option)
     local lbl = tooltip_panel.subviews.label
 
     lbl:setText(text)
+end
+
+function BiomeVisualizerLegend:onRenderBody(painter)
+    local thisPos = self:getMouseFramePos()
+    local pos = dfhack.gui.getMousePos()
+    
+    if not thisPos and pos then
+        local N = safe_index(biomesMap, pos.z, pos.y, pos.x)
+        if N then
+            local choices = self.list:getChoices()
+            local option = choices[N]
+
+            self.MapHoverIndex = N
+            self:ShowTooltip(option)
+        end
+    else
+        self.MapHoverIndex = nil
+    end
+
+    BiomeVisualizerLegend.super.onRenderBody(self, painter)
 end
 
 --------------------------------------------------------------------------------
