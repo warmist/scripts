@@ -50,9 +50,12 @@ Template for new versions:
 - `confirm`: added confirmation prompt for convicting a criminal
 - `confirm`: added confirmation prompt for re-running the embark site finder
 - `confirm`: added confirmation prompt for reassigning or clearing zoom hotkeys
+- `confirm`: added confirmation prompt for exiting the uniform customization page without saving
 - `gui/autobutcher`: interface redesigned to better support mouse control
 - `gui/launcher`: now persists the most recent 32KB of command output even if you close it and bring it back up
 - `gui/quickcmd`: clickable buttons for command add/remove/edit operations
+- `gui/mass-remove`: can now differentiate planned constructions, stockpiles, and regular buildings
+- `gui/mass-remove`: can now remove zones
 
 ## Removed
 

@@ -171,7 +171,7 @@ function ConfirmOverlay:matches_conf(conf, keys, scr)
         mouse_offset = xy2pos(mousex, mousey)
     end
     if not dfhack.gui.matchFocusString(conf.context, scr) then return false end
-    return not conf.predicate or conf.predicate(mouse_offset)
+    return not conf.predicate or conf.predicate(keys, mouse_offset)
 end
 
 function ConfirmOverlay:onInput(keys)
@@ -183,6 +183,9 @@ function ConfirmOverlay:onInput(keys)
         if specs.config.data[id].enabled and self:matches_conf(conf, keys, scr) then
             local mouse_pos = xy2pos(dfhack.screen.getMousePos())
             local propagate_fn = function(pause)
+                if conf.on_propagate then
+                    conf.on_propagate()
+                end
                 if pause then
                     self.paused_conf = conf
                     self.overlay_onupdate_max_freq_seconds = 0

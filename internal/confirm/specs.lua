@@ -22,6 +22,7 @@ ConfirmSpec.ATTRS{
     debug_frame=false, -- set to true when debugging frame positioning
     context=DEFAULT_NIL,
     predicate=DEFAULT_NIL,
+    on_propagate=DEFAULT_NIL, -- called if prompt is bypassed (Ok clicked or paused)
     pausable=false,
 }
 
@@ -239,7 +240,7 @@ ConfirmSpec{
     intercept_keys='_MOUSE_L',
     intercept_frame={r=131, t=23, w=6, h=27},
     context='dwarfmode/AssignUniform',
-    predicate=function(mouse_offset)
+    predicate=function(_, mouse_offset)
         local num_uniforms = get_num_uniforms()
         if num_uniforms == 0 then return false end
         -- adjust detection area depending on presence of scrollbar
@@ -254,6 +255,82 @@ ConfirmSpec{
     pausable=true,
 }
 
+local se = mi.squad_equipment
+local uniform_starting_state = nil
+
+local function uniform_has_changes()
+    for k, v in pairs(uniform_starting_state or {}) do
+        if type(v) == table then
+            if #v + 1 ~= #se[k] then return true end
+            for k2, v2 in pairs(v) do
+                if v2 ~= se[k][k2] then return true end
+            end
+        else
+            if v ~= se[k] then return true end
+        end
+    end
+    return false
+end
+
+local function ensure_uniform_record()
+    if uniform_starting_state then return end
+    uniform_starting_state = {
+        cs_cat=copyall(se.cs_cat),
+        cs_it_spec_item_id=copyall(se.cs_it_spec_item_id),
+        cs_it_type=copyall(se.cs_it_type),
+        cs_it_subtype=copyall(se.cs_it_subtype),
+        cs_civ_mat=copyall(se.cs_civ_mat),
+        cs_spec_mat=copyall(se.cs_spec_mat),
+        cs_spec_matg=copyall(se.cs_spec_matg),
+        cs_color_pattern_index=copyall(se.cs_color_pattern_index),
+        cs_icp_flag=copyall(se.cs_icp_flag),
+        cs_assigned_item_number=copyall(se.cs_assigned_item_number),
+        cs_assigned_item_id=copyall(se.cs_assigned_item_id),
+        cs_uniform_flag=se.cs_uniform_flag,
+    }
+end
+
+local function clear_uniform_record()
+    uniform_starting_state = nil
+end
+
+local function clicked_on_confirm_button(mouse_offset)
+    -- buttons are all in the top 3 lines
+    if mouse_offset.y > 2 then return false end
+    -- clicking on the Confirm button saves the uniform and closes the panel
+    if mouse_offset.x >= 38 and mouse_offset.x <= 46 then return true end
+    -- the "Confirm and save uniform" button does the same thing, but it is
+    -- only enabled if a name has been entered
+    if #mi.squad_equipment.customizing_squad_uniform_nickname == 0 then
+        return false
+    end
+    return mouse_offset.x >= 74 and mouse_offset.x <= 99
+end
+
+ConfirmSpec{
+    id='uniform-discard-changes',
+    title='Discard uniform changes',
+    message='Are you sure you want to discard changes to this uniform?',
+    intercept_keys={'_MOUSE_L', '_MOUSE_R'},
+    -- sticks out the left side so it can move with the panel
+    -- when the screen is resized too narrow
+    intercept_frame={r=32, t=19, w=101, b=3},
+    context='dwarfmode/SquadEquipment/Customizing/Default',
+    predicate=function(keys, mouse_offset)
+        if keys._MOUSE_R then
+            return uniform_has_changes()
+        end
+        if clicked_on_confirm_button(mouse_offset) then
+            print('confirm click detected')
+            clear_uniform_record()
+        else
+            ensure_uniform_record()
+        end
+        return false
+    end,
+    on_propagate=clear_uniform_record,
+}
+
 local hotkey_reset_action = 'reset'
 local num_hotkeys = 16
 ConfirmSpec{
@@ -263,7 +340,7 @@ ConfirmSpec{
     intercept_keys='_MOUSE_L',
     intercept_frame={r=32, t=11, w=12, b=9},
     context='dwarfmode/Hotkey',
-    predicate=function(mouse_offset)
+    predicate=function(_, mouse_offset)
         local _, sh = dfhack.screen.getWindowSize()
         local num_sections = (sh - 20) // 3
         local selected_section = mouse_offset.y // 3
@@ -313,7 +390,7 @@ ConfirmSpec{
     intercept_keys='_MOUSE_L',
     intercept_frame={r=31, t=14, w=11, b=5},
     context='dwarfmode/Info/JUSTICE/Convicting',
-    predicate=function(mouse_offset)
+    predicate=function(_, mouse_offset)
         local justice = mi.info.justice
         local num_choices = #justice.conviction_list
         if num_choices == 0 then return false end
