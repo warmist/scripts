@@ -579,6 +579,8 @@ function LauncherUI:init(args)
         on_edit_input=self:callback('on_edit_input'),
     }
 
+    local function not_minimized() return not self.minimal end
+
     local frame_r = get_frame_r()
 
     local update_frames = function()
@@ -621,7 +623,7 @@ function LauncherUI:init(args)
             on_autocomplete=self:callback('on_autocomplete'),
             on_double_click=function(_,c) self:run_command(true, c.text) end,
             on_double_click2=function(_,c) self:run_command(false, c.text) end,
-            visible=function() return not self.minimal end},
+            visible=not_minimized},
         EditPanel{
             view_id='edit',
             frame={t=0, l=0},
@@ -637,7 +639,16 @@ function LauncherUI:init(args)
         HelpPanel{
             view_id='help',
             frame={t=EDIT_PANEL_HEIGHT+1, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1},
-            visible=function() return not self.minimal end},
+            visible=not_minimized},
+        widgets.Divider{
+            frame={t=0, b=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, w=1},
+            frame_style_t=false,
+            frame_style_b=false,
+            visible=not_minimized},
+        widgets.Divider{
+            frame={t=EDIT_PANEL_HEIGHT, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, h=1},
+            frame_style_l=false,
+            visible=not_minimized},
     }
     self:addviews{main_panel}
 
