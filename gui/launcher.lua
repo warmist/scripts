@@ -488,44 +488,6 @@ function MainPanel:postUpdateLayout()
     config:write(self.frame)
 end
 
-local H_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 6), ch=196, fg=COLOR_GREY, bg=COLOR_BLACK}
-local V_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 5), ch=179, fg=COLOR_GREY, bg=COLOR_BLACK}
-local TOP_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,2), ch=209, fg=COLOR_GREY, bg=COLOR_BLACK}
-local BOTTOM_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,16), ch=207, fg=COLOR_GREY, bg=COLOR_BLACK}
-local LEFT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_window,8), ch=199, fg=COLOR_GREY, bg=COLOR_BLACK}
-local RIGHT_SPLIT_PEN = dfhack.pen.parse{tile=curry(textures.tp_border_thin, 18), ch=180, fg=COLOR_GREY, bg=COLOR_BLACK}
-
--- paint autocomplete panel border
-local function paint_vertical_border(rect)
-    local x = rect.x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
-    local y1, y2 = rect.y1, rect.y2
-    dfhack.screen.paintTile(TOP_SPLIT_PEN, x, y1)
-    dfhack.screen.paintTile(BOTTOM_SPLIT_PEN, x, y2)
-    for y=y1+1,y2-1 do
-        dfhack.screen.paintTile(V_SPLIT_PEN, x, y)
-    end
-end
-
--- paint border between edit area and help area
-local function paint_horizontal_border(rect)
-    local panel_height = EDIT_PANEL_HEIGHT + 1
-    local x1, x2 = rect.x1, rect.x2
-    local v_border_x = x2 - (AUTOCOMPLETE_PANEL_WIDTH + 2)
-    local y = rect.y1 + panel_height
-    dfhack.screen.paintTile(LEFT_SPLIT_PEN, x1, y)
-    dfhack.screen.paintTile(RIGHT_SPLIT_PEN, v_border_x, y)
-    for x=x1+1,v_border_x-1 do
-        dfhack.screen.paintTile(H_SPLIT_PEN, x, y)
-    end
-end
-
-function MainPanel:onRenderFrame(dc, rect)
-    MainPanel.super.onRenderFrame(self, dc, rect)
-    if self.get_minimal() then return end
-    paint_vertical_border(rect)
-    paint_horizontal_border(rect)
-end
-
 function MainPanel:onInput(keys)
     if MainPanel.super.onInput(self, keys) then
         return true
