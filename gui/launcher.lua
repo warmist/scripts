@@ -647,6 +647,7 @@ function LauncherUI:init(args)
             visible=not_minimized},
         widgets.Divider{
             frame={t=EDIT_PANEL_HEIGHT, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, h=1},
+            interior=true,
             frame_style_l=false,
             visible=not_minimized},
     }
