@@ -1,15 +1,12 @@
 --@ module = true
 local repeatUtil = require('repeat-util')
-local json = require('json')
-local persist = require('persist-table')
 
 local GLOBAL_KEY = 'source' -- used for state change hooks and persistence
 
 g_sources_list = g_sources_list or {}
 
-
 local function persist_state(liquidSources)
-    persist.GlobalTable[GLOBAL_KEY] = json.encode(liquidSources)
+    dfhack.persistent.saveSiteData(GLOBAL_KEY, liquidSources)
 end
 
 local function formatPos(pos)
@@ -179,9 +176,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
 
-    local persisted_data = json.decode(persist.GlobalTable[GLOBAL_KEY] or '') or {}
-
-    g_sources_list = persisted_data
+    g_sources_list = dfhack.persistent.getSiteData(GLOBAL_KEY, {})
 
     load_liquid_source(g_sources_list)
 end
