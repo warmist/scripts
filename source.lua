@@ -91,7 +91,6 @@ local function delete_liquid_source(pos)
 end
 
 local function clear_liquid_sources()
-    print("Clearing all Sources")
     for k, v in ipairs(g_sources_list) do
         delete_source_at(k)
     end
@@ -178,7 +177,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
 
     g_sources_list = dfhack.persistent.getSiteData(GLOBAL_KEY, {})
 
-    load_liquid_source(g_sources_list)
+    load_liquid_source()
 end
 
 if dfhack_flags.module then
