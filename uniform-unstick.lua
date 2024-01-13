@@ -40,9 +40,7 @@ local function get_site_id()
     end
 end
 
-local site_id = get_site_id()
-
-local function get_squad_position(unit, unit_name)
+local function get_squad_position(unit, unit_name, site_id)
     local squad = df.squad.find(unit.military.squad_id)
     if squad then
         if squad.entity_id ~= site_id then
@@ -105,7 +103,7 @@ local function print_bad_labor(unit_name, labor_name)
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
-local function process(unit, args)
+local function process(unit, site_id, args)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
     local unit_name = dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 
@@ -117,7 +115,7 @@ local function process(unit, args)
     local to_drop = {} -- item id to item object
 
     -- First get squad position for an early-out for non-military dwarves
-    local squad_position = get_squad_position(unit, unit_name)
+    local squad_position = get_squad_position(unit, unit_name, site_id)
     if not squad_position then
         if not silent then
             print("Unit " .. unit_name .. " does not have a military uniform.")
@@ -264,14 +262,15 @@ local function main(args)
         return
     end
 
+    local site_id = get_site_id()
     if args.all then
         for _, unit in ipairs(dfhack.units.getCitizens(false)) do
-            do_drop(process(unit, args))
+            do_drop(process(unit, site_id, args))
         end
     else
         local unit = dfhack.gui.getSelectedUnit()
         if unit then
-            do_drop(process(unit, args))
+            do_drop(process(unit, site_id, args))
         else
             qerror("Please select a unit if not running with --all")
         end
