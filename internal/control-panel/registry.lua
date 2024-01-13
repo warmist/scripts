@@ -46,7 +46,6 @@ COMMANDS_BY_IDX = {
     {command='seedwatch', group='automation', mode='enable'},
     {command='suspendmanager', group='automation', mode='enable'},
     {command='tailor', group='automation', mode='enable'},
-    {command='work-now', group='automation', mode='enable'},
 
     -- bugfix tools
     {command='fix/blood-del', group='bugfix', mode='run', default=true},
@@ -88,6 +87,7 @@ COMMANDS_BY_IDX = {
     {command='warn-stranded', group='gameplay', mode='repeat',
         desc='Show a warning dialog when units are stranded from all others.',
         params={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
+    {command='work-now', group='gameplay', mode='enable'},
 }
 
 COMMANDS_BY_NAME = {}
