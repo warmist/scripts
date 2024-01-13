@@ -43,7 +43,7 @@ end
 
 local scr = dfhack.gui.getCurViewscreen() --as:df.viewscreen_setupdwarfgamest
 if not dfhack.gui.matchFocusString('setupdwarfgame/Dwarves', scr) then
-    qerror('Must be called on the "Prepare carefully" screen')
+    qerror('Must be called on the "Prepare carefully" screen, "Dwarves" tab')
 end
 
 local dwarf_info = scr.dwarf_info
