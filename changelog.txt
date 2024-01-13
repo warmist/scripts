@@ -60,6 +60,7 @@ Template for new versions:
 - `uniform-unstick`: warn if a unit belongs to a squad from a different site (can happen with migrants from previous forts)
 - `gui/mass-remove`: can now differentiate planned constructions, stockpiles, and regular buildings
 - `gui/mass-remove`: can now remove zones
+- `gui/mass-remove`: can now cancel removal for buildings and constructions
 
 ## Removed
 
