@@ -87,8 +87,8 @@ local function has_caravans()
 end
 
 local function get_num_uniforms()
-    local site = df.global.world.world_data.active_site[0]
-    for _, entity_site_link in ipairs(site.entity_links) do
+    local site = dfhack.getCurrentSite() or {}
+    for _, entity_site_link in ipairs(site.entity_links or {}) do
         local he = df.historical_entity.find(entity_site_link.entity_id)
         if he and he.type == df.historical_entity_type.SiteGovernment then
             return #he.uniforms

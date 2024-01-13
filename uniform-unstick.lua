@@ -30,9 +30,9 @@ local function get_item_pos(item)
     end
 end
 
-local function get_site_id()
-    local fort = df.global.world.world_data.active_site[0]
-    for _, el in ipairs(fort.entity_links) do
+local function get_gov_id()
+    local fort = dfhack.getCurrentSite() or {}
+    for _, el in ipairs(fort.entity_links or {}) do
         local he = df.historical_entity.find(el.entity_id)
         if he and he.type == df.historical_entity_type.SiteGovernment then
             return el.entity_id
@@ -40,10 +40,10 @@ local function get_site_id()
     end
 end
 
-local function get_squad_position(unit, unit_name, site_id)
+local function get_squad_position(unit, unit_name, gov_id)
     local squad = df.squad.find(unit.military.squad_id)
     if squad then
-        if squad.entity_id ~= site_id then
+        if squad.entity_id ~= gov_id then
             print("WARNING: Unit " .. unit_name .. " is a member of a squad in another site!" ..
                 " You can fix this by assigning them to a local squad and then unassigning them.")
             return
@@ -103,7 +103,7 @@ local function print_bad_labor(unit_name, labor_name)
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
-local function process(unit, site_id, args)
+local function process(unit, gov_id, args)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
     local unit_name = dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 
@@ -115,7 +115,7 @@ local function process(unit, site_id, args)
     local to_drop = {} -- item id to item object
 
     -- First get squad position for an early-out for non-military dwarves
-    local squad_position = get_squad_position(unit, unit_name, site_id)
+    local squad_position = get_squad_position(unit, unit_name, gov_id)
     if not squad_position then
         if not silent then
             print("Unit " .. unit_name .. " does not have a military uniform.")
@@ -262,15 +262,15 @@ local function main(args)
         return
     end
 
-    local site_id = get_site_id()
+    local gov_id = get_gov_id()
     if args.all then
         for _, unit in ipairs(dfhack.units.getCitizens(false)) do
-            do_drop(process(unit, site_id, args))
+            do_drop(process(unit, gov_id, args))
         end
     else
         local unit = dfhack.gui.getSelectedUnit()
         if unit then
-            do_drop(process(unit, site_id, args))
+            do_drop(process(unit, gov_id, args))
         else
             qerror("Please select a unit if not running with --all")
         end
