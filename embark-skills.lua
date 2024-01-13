@@ -42,7 +42,7 @@ function adjust(dwarves, callback)
 end
 
 local scr = dfhack.gui.getCurViewscreen() --as:df.viewscreen_setupdwarfgamest
-if not df.viewscreen_setupdwarfgamest:is_instance(scr) then
+if not dfhack.gui.matchFocusString('setupdwarfgame/Dwarves', scr) then
     qerror('Must be called on the "Prepare carefully" screen')
 end
 
