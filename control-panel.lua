@@ -10,7 +10,7 @@ local GLOBAL_KEY = 'control-panel'
 -- state change hooks
 
 local function apply_system_config()
-    local enabled_map =common.get_enabled_map()
+    local enabled_map = common.get_enabled_map()
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
         if data.mode == 'system_enable' then
             common.apply_command(data, enabled_map)
@@ -27,7 +27,7 @@ end
 local function apply_autostart_config()
     local enabled_map =common.get_enabled_map()
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
-        if data.mode == 'enable' or data.mode == 'run' then
+        if data.mode == 'enable' or data.mode == 'run' or data.mode == 'repeat' then
             common.apply_command(data, enabled_map)
         end
     end
