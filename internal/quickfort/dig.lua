@@ -242,9 +242,6 @@ local function do_up_down_stair(digctx)
             return nil
         end
     end
-    if is_up_stair(digctx.tileattrs) then
-        return function() digctx.flags.dig = values.dig_downstair end
-    end
     return function() digctx.flags.dig = values.dig_updownstair end
 end
 
