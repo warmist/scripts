@@ -256,14 +256,15 @@ local function get_gui_config(command)
     end
 end
 
-local function make_enabled_text(self, label, mode, gui_config)
+local function make_enabled_text(self, command, mode, gui_config)
+    local label = command
     if mode == 'system_enable' then
         label = label .. ' (global)'
     end
 
     local function get_enabled_button_token(enabled_tile, disabled_tile)
         return {
-            tile=function() return self.enabled_map[label] and enabled_tile or disabled_tile end,
+            tile=function() return self.enabled_map[command] and enabled_tile or disabled_tile end,
         }
     end
 
@@ -347,7 +348,7 @@ function EnabledTab:on_submit()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
     local data = choice.data
-    common.apply_command(data, self.enabled_map, not self.enabled_map[choice.data.command])
+    common.apply_command(data, self.enabled_map, not self.enabled_map[data.command])
     self:refresh()
 end
 
