@@ -433,7 +433,7 @@ ConfirmSpec{
     message='Are you sure you want to remove this zone?',
     intercept_keys='_MOUSE_L',
     context='dwarfmode/Zone', -- this is just Zone and not Zone/Some so we can pause across zones
-    predicate=function() print('predicate')  return dfhack.gui.matchFocusString('dwarfmode/Zone/Some') end,
+    predicate=function() return dfhack.gui.matchFocusString('dwarfmode/Zone/Some') end,
     intercept_frame={l=40, t=8, w=4, h=3},
     pausable=true,
 }
