@@ -106,7 +106,7 @@ end
 local function get_first_word(text)
     local word = text:trim():split(' +')[1]
     if word:startswith(':') then word = word:sub(2) end
-    return word
+    return word:lower()
 end
 
 local function get_command_count(command)
