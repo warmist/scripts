@@ -5,7 +5,6 @@ local helpdb = require('helpdb')
 local textures = require('gui.textures')
 local overlay = require('plugins.overlay')
 local registry = reqscript('internal/control-panel/registry')
-local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local function get_icon_pens()
@@ -460,15 +459,20 @@ function CommandTab:onInput(keys)
 end
 
 function CommandTab:restore_defaults()
-    if subtab == Subtabs.enabled then
-        enabled_restore_defaults(self)
-    else
-        autostart_restore_defaults(self)
-    end
-    self:refresh()
-    dialogs.showMessage('Success',
-        ('%s defaults restored for %s tools.'):format(
-            self.subviews.subtabbar.labels[subtab], self.group))
+    dialogs.showYesNoPrompt('Are you sure?',
+        ('Are you sure you want to restore %s\ndefaults for %s tools?'):format(
+            self.subviews.subtabbar.labels[subtab], self.group),
+        nil, function()
+            if subtab == Subtabs.enabled then
+                enabled_restore_defaults(self)
+            else
+                autostart_restore_defaults(self)
+            end
+            self:refresh()
+            dialogs.showMessage('Success',
+                ('%s defaults restored for %s tools.'):format(
+                    self.subviews.subtabbar.labels[subtab], self.group))
+        end)
 end
 
 
@@ -631,12 +635,16 @@ function OverlaysTab:on_submit()
 end
 
 function OverlaysTab:restore_defaults()
-    local state = overlay.get_state()
-    for name, db_entry in pairs(state.db) do
-        enable_overlay(name, db_entry.widget.default_enabled)
-    end
-    self:refresh()
-    dialogs.showMessage('Success', 'Overlay defaults restored.')
+    dialogs.showYesNoPrompt('Are you sure?',
+    'Are you sure you want to restore overlay defaults?',
+    nil, function()
+        local state = overlay.get_state()
+        for name, db_entry in pairs(state.db) do
+            enable_overlay(name, db_entry.widget.default_enabled)
+        end
+        self:refresh()
+        dialogs.showMessage('Success', 'Overlay defaults restored.')
+    end)
 end
 
 function OverlaysTab:show_help()
@@ -842,12 +850,16 @@ function PreferencesTab:set_val(val)
 end
 
 function PreferencesTab:restore_defaults()
-    for _,data in ipairs(registry.PREFERENCES_BY_IDX) do
-        common.set_preference(data, data.default)
-    end
-    common.config:write()
-    self:refresh()
-    dialogs.showMessage('Success', 'Default preferences restored.')
+    dialogs.showYesNoPrompt('Are you sure?',
+    'Are you sure you want to restore default preferences?',
+    nil, function()
+        for _,data in ipairs(registry.PREFERENCES_BY_IDX) do
+            common.set_preference(data, data.default)
+        end
+        common.config:write()
+        self:refresh()
+        dialogs.showMessage('Success', 'Default preferences restored.')
+    end)
 end
 
 
