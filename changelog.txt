@@ -63,6 +63,7 @@ Template for new versions:
 - `gui/mass-remove`: can now remove zones
 - `gui/mass-remove`: can now cancel removal for buildings and constructions
 - `fix/stuck-instruments`: now handles instruments that are left in the "in job" state but that don't have any actual jobs associated with them
+- `gui/launcher`: make autocomplete case insensitive
 
 ## Removed
 
