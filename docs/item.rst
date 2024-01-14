@@ -13,7 +13,7 @@ the number of items that matched the filters and were modified.
 Usage
 -----
 
-``item [ help | count | [un]forbid | [un]dump | [un]melt ] <filter option>``
+``item [ count | [un]forbid | [un]dump | [un]melt ] <filter options>``
 
 Action names should be self explanatory. All actions other than ``help`` and
 ``count`` have implicit filters associated with them. For instance, ``item
@@ -28,7 +28,7 @@ Examples
 
 ``item unforbid --inside Cavern1 --type wood``
     Unforbid/reclaim all logs inside the burrow named "Cavern1" (Hint: use 3D
-    flood-fill to create a burrow covering an entire cavern layer)
+    flood-fill to create a burrow covering an entire cavern layer).
 
 ``item melt -t weapon -m steel --max-quality 3``
     Designate all steel weapons whose quality is less than "exceptional" for
@@ -38,7 +38,7 @@ Options
 -------
 
 ``-n, --dry-run``
-    Use get an accurate count of the items that would be affected, including the
+    Get an accurate count of the items that would be affected, including the
     implicit filters of the selected main action.
 
 ``-i, --inside <burrow>``
@@ -51,7 +51,7 @@ Options
     Only include items reachable by one of your citizens.
 
 ``-u, --unreachable``
-    Only include items not reachable by one of your citizens.
+    Only include items not reachable by any of your citizens.
 
 ``-t, --type <string>``
     Filter by item type (e.g., BOULDER, CORPSE, ...). Also accepts lower case
@@ -63,7 +63,7 @@ Options
 
 ``-c, --mat-category <string>``
     Filter by material category of the material item is made out of (e.g.,
-    "metal"). Use ``:lua df.dfhack_material_category`` to get have a list of all
+    "metal"). Use ``:lua df.dfhack_material_category`` to get a list of all
     material categories.
 
 ``-d, --description <string>``
@@ -74,7 +74,7 @@ Options
 
 ``-a, --include-artifacts``
     Include artifacts in the item list. Regardless of this setting, artifacts
-    are never dumped or melted
+    are never dumped or melted.
 
 ``-w, --min-wear <integer>``
     Only include items whose wear/damage level is at least ``integer``. Useful
@@ -86,8 +86,8 @@ Options
 
 ``-q, --min-quality <integer>``
     Only include items whose quality level is at least ``integer``. Useful
-    values are 0 (standard) to 5 (masterwork).
+    values are 0 (ordinary) to 5 (masterwork).
 
 ``-Q, --max-quality <integer>``
     Only include items whose quality level is at most ``integer``. Useful
-    values are 0 (standard) to 5 (masterwork).
+    values are 0 (ordinary) to 5 (masterwork).
