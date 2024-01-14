@@ -364,6 +364,17 @@ function CommandTab:init_main_panel(panel)
             on_double_click=self:callback('on_submit'),
             on_double_click2=self:callback('launch_config'),
             row_height=2,
+            visible=function() return #self.subviews.list:getChoices() > 0 end,
+        },
+        widgets.Label{
+            frame={t=9, l=0},
+            text={
+                'Please load a fort to see the fort-mode tools. Alternately,', NEWLINE,
+                'please switch to the "Autostart" tab to configure which', NEWLINE,
+                'tools should be run or enabled on embark.',
+            },
+            text_pen=COLOR_LIGHTRED,
+            visible=function() return #self.subviews.list:getChoices() == 0 end,
         },
     }
 end
