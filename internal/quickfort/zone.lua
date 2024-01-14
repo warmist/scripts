@@ -312,7 +312,7 @@ local function set_location(zone, location, ctx)
         dfhack.printerr('cannot create a guildhall without a specified profession')
         return
     end
-    local site = dfhack.getCurrentSite()
+    local site = dfhack.world.getCurrentSite()
     local loc_id = nil
     if location.label and safe_index(ctx, 'zone', 'locations', location.label) then
         local cached_loc = ctx.zone.locations[location.label]
