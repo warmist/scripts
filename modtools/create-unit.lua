@@ -915,12 +915,12 @@ end
 
 function wildUnit(unit)
   local casteFlags = unit.enemy.caste_flags
-  -- x = dfhack.getCurrentSite().pos.x
-  -- y = dfhack.getCurrentSite().pos.y
+  -- x = dfhack.world.getCurrentSite().pos.x
+  -- y = dfhack.world.getCurrentSite().pos.y
   -- region = df.global.map.map_blocks[df.global.map.x_count_block*x+y]
   if not(casteFlags.CAN_SPEAK or casteFlags.CAN_LEARN) then
     if dfhack.isSiteLoaded() then
-      local site = dfhack.getCurrentSite()
+      local site = dfhack.world.getCurrentSite()
       unit.animal.population.region_x = site.pos.x
       unit.animal.population.region_y = site.pos.y
     end
