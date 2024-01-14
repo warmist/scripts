@@ -197,14 +197,14 @@ function CommandTab:init_footer(panel)
     }
 end
 
-local function launch_help(command)
-    dfhack.run_command('gui/launcher', command .. ' ')
+local function launch_help(data)
+    dfhack.run_command('gui/launcher', data.help_command or data.command .. ' ')
 end
 
 function CommandTab:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    launch_help(choice.data.command)
+    launch_help(choice.data)
 end
 
 function CommandTab:has_config()
@@ -604,7 +604,7 @@ end
 function OverlaysTab:show_help()
     _,choice = self.subviews.list:getSelected()
     if not choice then return end
-    launch_help(choice.data.command)
+    launch_help(choice.data)
 end
 
 
