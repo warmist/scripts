@@ -67,3 +67,12 @@ Examples
     this will also remove some entries from the ``control-panel list`` output.
     Run ``control-panel list`` to see all preference options and their
     descriptions.
+
+API
+---
+
+Other scripts can query whether a command is set for autostart via the script
+API::
+
+    local control_panel = reqscript('control-panel')
+    local enabled, default = control_panel.get_autostart(command)

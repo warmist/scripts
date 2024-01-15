@@ -1,5 +1,7 @@
 --@ module = true
 
+local argparse = require('argparse')
+local control_panel = reqscript('control-panel')
 local gui = require('gui')
 local json = require('json')
 local overlay = require('plugins.overlay')
@@ -224,15 +226,232 @@ function DifficultySettingsOverlay:get_df_struct()
     return df.global.game.main_interface.settings
 end
 
+------------------------------
+-- StandingOrdersOverlay
+--
+
+StandingOrdersOverlay = defclass(StandingOrdersOverlay, overlay.OverlayWidget)
+StandingOrdersOverlay.ATTRS {
+    desc='Adds buttons to the standing orders screen for saving and restoring settings.',
+    default_pos={x=6, y=-5},
+    viewscreens='dwarfmode/Info/LABOR/STANDING_ORDERS/AUTOMATED_WORKSHOPS',
+    default_enabled=true,
+    frame={w=78, h=5},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+local li = df.global.plotinfo.labor_info
+
+local function save_standing_orders()
+    local standing_orders = {}
+    for name, val in pairs(df.global) do
+        if name:startswith('standing_orders_') then
+            standing_orders[name] = val
+        end
+    end
+    config.data.standing_orders = standing_orders
+    local chores = {}
+    chores.enabled = li.flags.children_do_chores
+    chores.labors = utils.clone(li.chores)
+    config.data.chores = chores
+    config:write()
+end
+
+local function load_standing_orders()
+    for name, val in pairs(config.data.standing_orders or {}) do
+        df.global[name] = val
+    end
+    li.flags.children_do_chores = not not safe_index(config.data.chores, 'enabled')
+    for i, val in ipairs(safe_index(config.data.chores, 'labors') or {}) do
+        li.chores[i-1] = val
+    end
+end
+
+function StandingOrdersOverlay:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            view_id='save',
+            frame={l=0, t=0, w=39},
+            key='CUSTOM_CTRL_E',
+            label='Save standing orders (all tabs)',
+            on_activate=self:callback('do_save'),
+        },
+        widgets.Label{
+            view_id='save_flash',
+            frame={l=18, t=0},
+            text='Saved',
+            text_pen=COLOR_GREEN,
+            visible=false,
+        },
+        widgets.HotkeyLabel{
+            view_id='load',
+            frame={l=42, t=0, w=34},
+            key='CUSTOM_CTRL_I',
+            label='Load saved standing orders',
+            on_activate=self:callback('do_load'),
+            enabled=function() return next(config.data.standing_orders or {}) end,
+        },
+        widgets.Label{
+            view_id='load_flash',
+            frame={l=51, t=0},
+            text='Loaded',
+            text_pen=COLOR_GREEN,
+            visible=false,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='auto',
+            frame={l=0, t=2},
+            key='CUSTOM_CTRL_A',
+            label='Apply saved settings for new embarks:',
+            on_change=self:callback('do_auto'),
+            enabled=function() return next(config.data.standing_orders or {}) end,
+        },
+    }
+end
+
+function StandingOrdersOverlay:do_save()
+    flash(self, 'save')
+    save_standing_orders()
+end
+
+function StandingOrdersOverlay:do_load()
+    flash(self, 'load')
+    load_standing_orders()
+end
+
+local autostart_command = 'gui/settings-manager load-standing-orders'
+
+SOMessage = defclass(SOMessage, widgets.Window)
+SOMessage.ATTRS {
+    frame={w=61, h=9},
+    enabled=DEFAULT_NIL,
+}
+
+function SOMessage:init()
+    self:addviews{
+        widgets.Label{
+            view_id='label',
+            frame={t=0, l=0},
+            text={
+                'The "', autostart_command, '" command', NEWLINE,
+                'has been ',
+                {text=self.enabled and 'enabled' or 'disabled', pen=self.enabled and COLOR_GREEN or COLOR_LIGHTRED},
+                ' in the ',
+                {text='Automation', pen=COLOR_YELLOW}, ' -> ',
+                {text='Autostart', pen=COLOR_YELLOW}, ' tab of ', NEWLINE,
+                {text='.', gap=25},
+            },
+        },
+        widgets.HotkeyLabel{
+            frame={t=2, l=0},
+            label='gui/control-panel',
+            key='CUSTOM_CTRL_G',
+            auto_width=true,
+            on_activate=function()
+                self.parent_view:dismiss()
+                dfhack.run_script('gui/control-panel')
+            end,
+        },
+        widgets.HotkeyLabel{
+            frame={b=0, l=0, r=0},
+            label='Ok',
+            key='SELECT',
+            auto_width=true,
+            on_activate=function() self.parent_view:dismiss() end,
+        },
+    }
+end
+
+SOMessageScreen = defclass(SOMessageScreen, gui.ZScreenModal)
+SOMessageScreen.ATTRS {
+    focus_path='settings-manager/prompt',
+    enabled=DEFAULT_NIL,
+}
+
+function SOMessageScreen:init()
+    self:addviews{
+        SOMessage{
+            frame_title=(self.enabled and 'Enabled' or 'Disabled')..' auto-restore',
+            enabled=self.enabled
+        },
+    }
+end
+
+function StandingOrdersOverlay:do_auto(val)
+    dfhack.run_script('control-panel', (val and '' or 'no') .. 'autostart', autostart_command)
+    SOMessageScreen{enabled=val}:show()
+end
+
+function StandingOrdersOverlay:onRenderFrame(dc, rect)
+    StandingOrdersOverlay.super.onRenderFrame(self, dc, rect)
+    local enabled = control_panel.get_autostart(autostart_command)
+    self.subviews.auto:setOption(enabled)
+end
+
 OVERLAY_WIDGETS = {
     embark_difficulty=DifficultyEmbarkOverlay,
     embark_notification=DifficultyEmbarkNotificationOverlay,
     settings_difficulty=DifficultySettingsOverlay,
+    standing_orders=StandingOrdersOverlay,
 }
 
 if dfhack_flags.module then
     return
 end
+
+------------------------------
+-- CLI processing
+--
+
+local help = false
+
+local positionals = argparse.processArgsGetopt({...}, {
+        {'h', 'help', handler=function() help = true end},
+    })
+
+local command = (positionals or {})[1]
+
+if help then
+    print(dfhack.script_help())
+    return
+end
+
+local scr = dfhack.gui.getDFViewscreen(true)
+local is_embark = df.viewscreen_setupdwarfgamest:is_instance(scr)
+local is_fort = df.viewscreen_dwarfmodest:is_instance(scr)
+
+if command == 'save-difficulty' then
+    if is_embark then save_difficulty(scr.difficulty)
+    elseif is_fort then
+        save_difficulty(df.global.game.main_interface.settings.difficulty)
+    else
+        qerror('must be on the embark preparation screen or in a loaded fort')
+    end
+elseif command == 'load-difficulty' then
+    if is_embark then
+        load_difficulty(scr.difficulty)
+        show_notification = true
+    elseif is_fort then
+        load_difficulty(df.global.game.main_interface.settings.difficulty)
+    else
+        qerror('must be on the embark preparation screen or in a loaded fort')
+    end
+elseif command == 'save-standing-orders' then
+    if is_fort then save_standing_orders()
+    else
+        qerror('must be in a loaded fort')
+    end
+elseif command == 'load-standing-orders' then
+    if is_fort then load_standing_orders()
+    else
+        qerror('must be in a loaded fort')
+    end
+else
+    print(dfhack.script_help())
+end
+
+return
 
 --[[
 
