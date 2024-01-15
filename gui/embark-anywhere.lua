@@ -102,7 +102,7 @@ function EmbarkAnywhereScreen:onInput(keys)
     local scr = dfhack.gui.getDFViewscreen(true)
     if keys.LEAVESCREEN and not scr.zoomed_in then
         -- we have to make sure we're off the stack when returning to the title screen
-        --  since the top viewscreen will get unceremoniously destroyed by DF
+        -- since the top viewscreen will get unceremoniously destroyed by DF
         self.defocused = false
     elseif keys._MOUSE_L and scr.choosing_embark and not self:clicked_on_panel_mask() then
         -- clicked on the map -- time to do our thing
