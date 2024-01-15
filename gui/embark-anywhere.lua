@@ -40,6 +40,8 @@ end
 function EmbarkAnywhereScreen:init()
     self:addviews{
         EmbarkAnywhere{view_id='main'},
+        -- this panel will get checked for masking too, but it's wholely
+        -- inside the size selection panel, so it's ok
         widgets.Panel{
             frame={l=20, t=1, w=22, h=6},
             frame_style=gui.FRAME_MEDIUM,
