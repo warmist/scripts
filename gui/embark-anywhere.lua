@@ -92,7 +92,7 @@ end
 
 function EmbarkAnywhereScreen:clicked_on_panel_mask()
     for _, sv in ipairs(self.subviews) do
-        if sv.view_id ~= 'main' and sv.visible then
+        if sv.view_id ~= 'main' then
             if sv:getMousePos() then return true end
         end
     end
