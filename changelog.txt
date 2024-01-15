@@ -36,6 +36,7 @@ Template for new versions:
 
 ## New Features
 - `uniform-unstick`: add overlay to the squad equipment screen to show a equipment conflict report and give you a one-click button to fix
+- `gui/settings-manager`: save and load (optionally automatically) embark difficulty settings
 
 ## Fixes
 - `source`: water and magma sources now persist with fort across saves and loads
