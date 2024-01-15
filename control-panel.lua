@@ -55,6 +55,30 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     end
 end
 
+local function get_command_data(name_or_idx)
+    if type(name_or_idx) == 'number' then
+        return registry.COMMANDS_BY_IDX[name_or_idx]
+    end
+    return registry.COMMANDS_BY_NAME[name_or_idx]
+end
+
+local function get_autostart_internal(data)
+    local default_value = not not data.default
+    local current_value = safe_index(common.config.data.commands, data.command, 'autostart')
+    if current_value == nil then
+        current_value = default_value
+    end
+    return current_value, default_value
+end
+
+-- API
+
+-- returns current, default
+function get_autostart(command)
+    local data = get_command_data(command)
+    if not data then return end
+    return get_autostart_internal(data)
+end
 
 -- CLI
 
@@ -85,12 +109,7 @@ local function list_command_group(group, filter_strs, enabled_map)
         if #desc > 0 then
             print(('        %s'):format(desc))
         end
-        local default_value = not not data.default
-        local current_value = safe_index(common.config.data.commands, data.command, 'autostart')
-        if current_value == nil then
-            current_value = default_value
-        end
-        print(('        autostart enabled: %s (default: %s)'):format(current_value, default_value))
+        print(('        autostart enabled: %s (default: %s)'):format(get_autostart_internal(data)))
         if enabled_map[data.command] ~= nil then
             print(('        currently enabled: %s'):format(enabled_map[data.command]))
         end
@@ -128,13 +147,6 @@ local function do_list(filter_strs)
     list_command_group('bugfix', filter_strs, enabled_map)
     list_command_group('gameplay', filter_strs, enabled_map)
     list_preferences(filter_strs)
-end
-
-local function get_command_data(name_or_idx)
-    if type(name_or_idx) == 'number' then
-        return registry.COMMANDS_BY_IDX[name_or_idx]
-    end
-    return registry.COMMANDS_BY_NAME[name_or_idx]
 end
 
 local function do_enable_disable(which, entries)

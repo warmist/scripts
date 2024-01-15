@@ -38,6 +38,8 @@ COMMANDS_BY_IDX = {
     {command='cleanowned', group='automation', mode='repeat',
         desc='Encourage dwarves to drop tattered clothing and grab new ones.',
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
+    {command='gui/settings-manager load-standing-orders', group='automation', mode='run',
+        desc='Go to the Standing Orders tab in the Labor screen to save your current settings.'},
     {command='nestboxes', group='automation', mode='enable'},
     {command='orders-sort', help_command='orders', group='automation', mode='repeat',
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
