@@ -1,11 +1,244 @@
+--@ module = true
+
+local gui = require('gui')
+local json = require('json')
+local overlay = require('plugins.overlay')
+local utils = require('utils')
+local widgets = require('gui.widgets')
+
+local GLOBAL_KEY = 'settings-manager'
+
+config = config or json.open("dfhack-config/settings-manager.json")
+
+--------------------------
+-- DifficultyOverlayBase
+--
+
+DifficultyOverlayBase = defclass(DifficultyOverlayBase, overlay.OverlayWidget)
+DifficultyOverlayBase.ATTRS {
+    frame={w=46, h=5},
+    frame_style=gui.MEDIUM_FRAME,
+    frame_background=gui.CLEAR_PEN,
+}
+
+local function save_difficulty(df_difficulty)
+    local difficulty = utils.clone(df_difficulty, true)
+    for _, v in pairs(difficulty) do
+        if type(v) == 'table' and not v[1] then
+            for name in pairs(v) do
+                if tonumber(name) then
+                    -- remove numeric "filler" vals from bitflag records
+                    v[name] = nil
+                end
+            end
+        end
+    end
+    -- replace top-level button states to say "Custom"
+    -- one of the vanilla presets might actually apply, but we don't know that
+    -- unless we do some diffing
+    difficulty.difficulty_enemies = 3
+    difficulty.difficulty_economy = 2
+    config.data.difficulty = difficulty
+    config:write()
+end
+
+local function load_difficulty(df_difficulty)
+    local difficulty = utils.clone(config.data.difficulty or {}, true)
+    for _, v in pairs(difficulty) do
+        if type(v) == 'table' and v[1] then
+            -- restore 0-based index for static arrays and prevent resizing
+            for i, elem in ipairs(v) do
+                v[i-1] = elem
+                v[i] = nil
+            end
+            v.resize = false
+        end
+    end
+    df_difficulty:assign(difficulty)
+end
+
+local function save_auto(val)
+    config.data.auto = val
+    config:write()
+end
+
+function DifficultyOverlayBase:init()
+    self:addviews{
+        widgets.HotkeyLabel{
+            view_id='save',
+            frame={l=0, t=0, w=16},
+            key='CUSTOM_SHIFT_S',
+            label='Save settings',
+            on_activate=self:callback('do_save'),
+        },
+        widgets.Label{
+            view_id='save_flash',
+            frame={l=6, t=0},
+            text='Saved',
+            text_pen=COLOR_GREEN,
+            visible=false,
+        },
+        widgets.HotkeyLabel{
+            view_id='load',
+            frame={l=22, t=0, w=22},
+            key='CUSTOM_SHIFT_L',
+            label='Load saved settings',
+            on_activate=self:callback('do_load'),
+            enabled=function() return next(config.data.difficulty or {}) end,
+        },
+        widgets.Label{
+            view_id='load_flash',
+            frame={l=28, t=0},
+            text='Loaded',
+            text_pen=COLOR_GREEN,
+            visible=false,
+        },
+        widgets.ToggleHotkeyLabel{
+            frame={l=0, t=2},
+            key='CUSTOM_SHIFT_A',
+            label='Apply saved settings for new embarks:',
+            on_change=save_auto,
+            initial_option=not not config.data.auto,
+            enabled=function() return next(config.data.difficulty or {}) end,
+        },
+    }
+end
+
+local function flash(self, which)
+    self.subviews[which].visible = false
+    self.subviews[which..'_flash'].visible = true
+    local end_ms = dfhack.getTickCount() + 5000
+    local function label_reset()
+        if dfhack.getTickCount() < end_ms then
+            dfhack.timeout(10, 'frames', label_reset)
+        else
+            self.subviews[which..'_flash'].visible = false
+            self.subviews[which].visible = true
+        end
+    end
+    label_reset()
+end
+
+-- overridden by subclasses
+function DifficultyOverlayBase:get_df_struct()
+end
+
+function DifficultyOverlayBase:do_save()
+    flash(self, 'save')
+    save_difficulty(self:get_df_struct().difficulty)
+end
+
+function DifficultyOverlayBase:do_load()
+    flash(self, 'load')
+    load_difficulty(self:get_df_struct().difficulty)
+end
+
+function DifficultyOverlayBase:onInput(keys)
+    if self:get_df_struct().entering_value_str then return false end
+    return DifficultyOverlayBase.super.onInput(self, keys)
+end
+
+----------------------------
+-- DifficultyEmbarkOverlay
+--
+
+DifficultyEmbarkOverlay = defclass(DifficultyEmbarkOverlay, DifficultyOverlayBase)
+DifficultyEmbarkOverlay.ATTRS {
+    desc='Adds buttons to the embark difficulty screen for saving and restoring settings.',
+    default_pos={x=-20, y=5},
+    viewscreens='setupdwarfgame/CustomSettings',
+    default_enabled=true,
+}
+
+show_notification = show_notification or false
+
+function DifficultyEmbarkOverlay:get_df_struct()
+    return dfhack.gui.getDFViewscreen(true)
+end
+
+function DifficultyEmbarkOverlay:onInput(keys)
+    show_notification = false
+    return DifficultyEmbarkOverlay.super.onInput(self, keys)
+end
+
+----------------------------------------
+-- DifficultyEmbarkNotificationOverlay
+--
+
+DifficultyEmbarkNotificationOverlay = defclass(DifficultyEmbarkNotificationOverlay, overlay.OverlayWidget)
+DifficultyEmbarkNotificationOverlay.ATTRS {
+    desc='Displays a message when saved difficulty settings have been automatically applied.',
+    default_pos={x=75, y=18},
+    viewscreens='setupdwarfgame/Default',
+    default_enabled=true,
+    frame={w=23, h=3},
+}
+
+function DifficultyEmbarkNotificationOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            frame={t=0, w=25},
+            frame_style=gui.FRAME_MEDIUM,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.Label{
+                    text='Saved settings restored',
+                    text_pen=COLOR_LIGHTGREEN,
+                },
+            },
+            visible=function() return show_notification end,
+        },
+    }
+end
+
+function DifficultyEmbarkNotificationOverlay:preUpdateLayout(parent_rect)
+    self.frame.w = parent_rect.width - (self.frame.l or (self.default_pos.x - 1))
+end
+
+local last_scr_type
+dfhack.onStateChange[GLOBAL_KEY] = function(sc)
+    if sc ~= SC_VIEWSCREEN_CHANGED then return end
+    local scr = dfhack.gui.getDFViewscreen(true)
+    if last_scr_type == scr._type then return end
+    last_scr_type = scr._type
+    show_notification = false
+    if not df.viewscreen_setupdwarfgamest:is_instance(scr) then return end
+    if not config.data.auto then return end
+    load_difficulty(scr.difficulty)
+    show_notification = true
+end
+
+------------------------------
+-- DifficultySettingsOverlay
+--
+
+DifficultySettingsOverlay = defclass(DifficultySettingsOverlay, DifficultyOverlayBase)
+DifficultySettingsOverlay.ATTRS {
+    desc='Adds buttons to the fort difficulty screen for saving and restoring settings.',
+    default_pos={x=-42, y=8},
+    viewscreens='dwarfmode/Settings/DIFFICULTY/CustomSettings',
+    default_enabled=true,
+}
+
+function DifficultySettingsOverlay:get_df_struct()
+    return df.global.game.main_interface.settings
+end
+
+OVERLAY_WIDGETS = {
+    embark_difficulty=DifficultyEmbarkOverlay,
+    embark_notification=DifficultyEmbarkNotificationOverlay,
+    settings_difficulty=DifficultySettingsOverlay,
+}
+
+if dfhack_flags.module then
+    return
+end
+
+--[[
+
+TODO: reinstate color editor
+
 -- An in-game init file editor
---[====[
-
-gui/settings-manager
-====================
-An in-game manager for settings defined in ``init.txt`` and ``d_init.txt``.
-
-]====]
 
 VERSION = '0.6.0'
 
@@ -67,7 +300,6 @@ if dfhack.getOSType() == 'linux' or dfhack.getOSType() == 'darwin' then
     table.insert(print_modes, {'TEXT', 'TEXT (ncurses)'})
 end
 
---[[
 Setting descriptions
 
 Settings listed MUST exist, but settings not listed will be ignored
@@ -98,7 +330,7 @@ Fields:
 
 Reserved field names:
 - value (set to current setting value when settings are loaded)
-]]
+
 SETTINGS = {
     init = {
         {id = 'SOUND', type = 'bool', desc = 'Enable sound'},
@@ -892,3 +1124,5 @@ if dfhack.gui.getCurFocus() == 'dfhack/lua/settings_manager' then
     dfhack.screen.dismiss(dfhack.gui.getCurViewscreen())
 end
 settings_manager():show()
+
+]]
