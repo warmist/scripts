@@ -595,7 +595,8 @@ local function buildingOnDesignation(building)
     for x=building.x1,building.x2 do
         for y=building.y1,building.y2 do
             local flags, occupancy = dfhack.maps.getTileFlags(x,y,z)
-            if flags.dig ~= df.tile_dig_designation.No or
+            if not flags then goto continue end
+            if flags and flags.dig ~= df.tile_dig_designation.No or
                 flags.smooth > 0 or
                 occupancy.carve_track_north or
                 occupancy.carve_track_east or
@@ -604,6 +605,7 @@ local function buildingOnDesignation(building)
             then
                 return true
             end
+            ::continue::
         end
     end
 end
