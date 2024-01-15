@@ -12,7 +12,7 @@ to try a brief existence in the middle of the ocean? Nobody can stop you! Want
 to tempt fate by embarking *inside of* a necromancer tower? !!FUN!!
 
 Any and all consequences of embarking in strange locations are up to you to
-handle (possibly with other `armok <tags-armok>` tools).
+handle (possibly with other `armok <armok-tag-index>` tools).
 
 Usage
 -----
