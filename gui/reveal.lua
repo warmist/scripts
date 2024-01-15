@@ -1,6 +1,5 @@
 --@ module = true
 
-local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local widgets = require('gui.widgets')
 
