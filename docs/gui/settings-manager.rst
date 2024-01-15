@@ -5,17 +5,7 @@ gui/settings-manager
     :summary: Save, load, and modify DF settings.
     :tags: embark interface
 
-This tool provides overlays that allow you to save and load DF settings. When
-run as a command, it also allows you to adjust the colors displayed in ASCII
-mode. After changing the colors, you have to restart DF to see the effects
-in-game.
-
-Usage
------
-
-::
-
-    gui/settings-manager
+This tool provides overlays that allow you to save and load DF settings.
 
 Overlays
 --------
