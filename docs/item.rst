@@ -13,7 +13,7 @@ the number of items that matched the filters and were modified.
 Usage
 -----
 
-``item [ count | [un]forbid | [un]dump | [un]melt ] <filter options>``
+``item [ count | [un]forbid | [un]dump | [un]hide | [un]melt ] <filter options>``
 
 Action names should be self explanatory. All actions other than ``help`` and
 ``count`` have implicit filters associated with them. For instance, ``item
@@ -31,8 +31,7 @@ Examples
     flood-fill to create a burrow covering an entire cavern layer).
 
 ``item melt -t weapon -m steel --max-quality 3``
-    Designate all steel weapons whose quality is less than "exceptional" for
-    melting.
+    Designate all steel weapons whose quality is at most superior for melting.
 
 Options
 -------
@@ -66,11 +65,12 @@ Options
     "metal"). Use ``:lua df.dfhack_material_category`` to get a list of all
     material categories.
 
-``-d, --description <string>``
-    Filter by item description (singular form without stack sizes). Example:
-    "cave spider silk web". Note: Due to a bug, this is of limited use for some
-    animal products such as wool, because their description always includes the
-    stack size.
+``-d, --description <pattern>``
+    Filter by item description (singular form without stack sizes). The
+    ``pattern`` is a Lua pattern
+    (cf. https://www.lua.org/manual/5.4/manual.html#6.4.1), so "cave spider
+    silk" will match both "cave spider silk web" as well as "cave spider silk
+    cloth". Use ``^pattern$`` to match the entire description.
 
 ``-a, --include-artifacts``
     Include artifacts in the item list. Regardless of this setting, artifacts
@@ -91,3 +91,18 @@ Options
 ``-Q, --max-quality <integer>``
     Only include items whose quality level is at most ``integer``. Useful
     values are 0 (ordinary) to 5 (masterwork).
+
+``--forbidden``
+    Only include forbidden items.
+
+``--melting``
+    Only include items designated for melting.
+
+``--dumping``
+    only include items designated for dumping.
+
+``--visible``
+    Only include visible items (i.e., ignore hidden items).
+
+``--hidden``
+    Only include hidden items.

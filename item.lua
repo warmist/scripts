@@ -39,15 +39,6 @@ function citizenWalkabilityGroups()
     return cgroups
 end
 
-function table.contains (t, val)
-    for _,v in ipairs(t) do
-        if v == val then return true end
-    end
-    return false
-end
-
-
-
 -----------------------------------------------------------------------
 -- external API: helpers to assemble filters and `execute` to execute.
 -----------------------------------------------------------------------
@@ -78,7 +69,7 @@ function condition_type(tab, match)
             tab,
             function (item) return item:getType() == type end
         )
-    else qerror("match argument must be string or number")
+    else error("match argument must be string or number")
     end
 end
 
@@ -95,13 +86,17 @@ function condition_unreachable(tab)
 end
 
 -- uses the singular form without stack size (i.e., prickle berry)
--- Exception: for corpse pieces like "wool", their description always includes stacksize (DF bug)
 --- @param tab conditions
---- @param desc string
-function condition_description(tab, desc)
+--- @param desc string # Lua pattern: https://www.lua.org/manual/5.4/manual.html#6.4.1
+function condition_description(tab, pattern)
     table.insert(
         tab,
-        function(item) return dfhack.items.getDescription(item, 1) == desc end)
+        function(item)
+            -- remove trailing stack size for corpse pieces like "wool" (work around DF bug)
+            local desc = dfhack.items.getDescription(item, 1):gsub(' %[%d+%]','')
+            return not not desc:find(pattern)
+        end
+    )
 end
 
 --- @param tab conditions
@@ -115,8 +110,7 @@ end
 --- @param tab conditions
 --- @param match string
 function condition_matcat(tab, match)
-    if table.contains(df.dfhack_material_category,match)
-    then
+    if df.dfhack_material_category[match] ~= nil then
         table.insert(
             tab,
             function (item)
@@ -157,10 +151,21 @@ end
 
 --- @param tab conditions
 function condition_dump(tab)
-    table.insert(tab,function (item) return item.flags.dump end)
+    table.insert(tab, function(item) return item.flags.dump end)
 end
 
---- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"
+--- @param tab conditions
+function condition_hidden(tab)
+    table.insert(tab, function(item) return item.flags.hidden end)
+end
+
+function condition_visible(tab)
+    table.insert(tab, function(item) return not item.flags.hidden end)
+end
+
+
+
+--- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
 --- @param options { help : boolean, artifact : boolean, dryrun : boolean, by_type : boolean }
 --- @return number, table<number,number>
@@ -185,7 +190,9 @@ function execute(action, conditions, options)
             action == 'forbid' and item.flags.forbid or
             action == 'unforbid' and not item.flags.forbid or
             action == 'dump' and (item.flags.dump or item.flags.artifact) or
-            action == 'undump' and not item.flags.dump
+            action == 'undump' and not item.flags.dump or
+            action == 'hide' and item.flags.hidden or
+            action == 'unhide' and not item.flags.hidden
         then
             goto skipitem
         end
@@ -221,6 +228,10 @@ function execute(action, conditions, options)
             dfhack.items.markForMelting(item)
         elseif action == 'unmelt' and not options.dryrun then
             dfhack.items.cancelMelting(item)
+        elseif action == "hide" and not options.dryrun then
+            item.flags.hidden = true
+        elseif action == "unhide" and not options.dryrun then
+            item.flags.hidden = false
         end
         :: skipitem ::
     end
@@ -228,7 +239,7 @@ function execute(action, conditions, options)
     return count, types
 end
 
---- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"
+--- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
 --- @param options { help : boolean, artifact : boolean, dryrun : boolean, by_type : boolean }
 function executeWithPrinting (action, conditions, options)
@@ -323,7 +334,11 @@ local positionals = argparse.processArgsGetopt({ ... }, {
   { nil, 'melting',
     handler = function () condition_melt(conditions) end },
   { nil, 'dumping',
-    handler = function () condition_dump(conditions) end }
+    handler = function () condition_dump(conditions) end },
+  { nil, 'hidden',
+    handler = function () condition_hidden(conditions) end },
+  { nil, 'visible',
+    handler = function () condition_visible(conditions) end }
 })
 
 if options.help or positionals[1] == 'help' then
@@ -336,5 +351,7 @@ elseif positionals[1] == 'undump'   then executeWithPrinting('undump',conditions
 elseif positionals[1] == 'melt'     then executeWithPrinting('melt',conditions,options)
 elseif positionals[1] == 'unmelt'   then executeWithPrinting('unmelt',conditions,options)
 elseif positionals[1] == 'count'    then executeWithPrinting('count',conditions,options)
+elseif positionals[1] == 'hide'     then executeWithPrinting('hide',conditions,options)
+elseif positionals[1] == 'unhide'   then executeWithPrinting('unhide',conditions,options)
 else qerror('main action not recognized')
 end
