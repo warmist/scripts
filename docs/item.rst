@@ -43,6 +43,10 @@ Options
     Get an accurate count of the items that would be affected, including the
     implicit filters of the selected main action.
 
+``-a, --include-artifacts``
+    Include artifacts in the item list. Regardless of this setting, artifacts
+    are never dumped or melted.
+
 ``-i, --inside <burrow>``
     Only include items inside the given burrow.
 
@@ -74,10 +78,6 @@ Options
     (cf. https://www.lua.org/manual/5.4/manual.html#6.4.1), so "cave spider
     silk" will match both "cave spider silk web" as well as "cave spider silk
     cloth". Use ``^pattern$`` to match the entire description.
-
-``-a, --include-artifacts``
-    Include artifacts in the item list. Regardless of this setting, artifacts
-    are never dumped or melted.
 
 ``-w, --min-wear <integer>``
     Only include items whose wear/damage level is at least ``integer``. Useful
@@ -116,3 +116,85 @@ Options
 
 ``--hidden``
     Only include hidden items.
+
+
+API
+---
+
+The item script can be called programmatically by other scripts, either via the
+commandline interface with ``dfhack.run_script()`` or via the API functions
+defined in :source-scripts:`item.lua`, available from the return value of
+``reqscript('item')``:
+
+* ``item.execute(action, conditions, options)``
+* ``item.executeWithPrinting(action, conditions, options)``
+
+Performs ``action`` (``forbid``, ``melt``, etc.) on all items satisfying
+``conditions`` (a table containing functions from item to boolean). ``options``
+is a table containing the boolean flags ``artifact``, ``dryrun``, and
+``bytype``, which correspond to the (filter) options described above.
+
+The function ``item.execute`` performs no output, while the ``WithPrinting``
+variant performs the same output as the ``item`` tool.
+
+The API provides a number of helper functions to aid in the construction of the
+filter table. The first argument ``tab`` is always the table to which the filter
+should be added.
+
+* ``item.condition_burrow(tab,burrow, outside)``
+    Corresponds to ``--inside`` or ``--outside`` (when ``outside=true``). The
+    ``burrow`` argument must be a burrow object, not a string.
+
+* ``item.condition_type(tab, match)``
+    If ``match`` is a string, this corresponds to ``--type <match>``. Also
+    accepts numbers, matching against ``item:getType()``
+
+* ``item.condition_reachable(tab)``
+    Corresponds to ``--reachable``
+
+* ``item.condition_unreachable(tab)``
+    Corresponds to ``--unreachable``
+
+* ``item.condition_description(tab, pattern)``
+    Corresponds to ``--description <pattern>``
+
+* ``item.condition_material(tab, match)``
+    Corresponds to ``--material <match>``
+
+* ``item.condition_matcat(tab, match)``
+    Corresponds to ``--mat-category <match>``
+
+* ``item.condition_wear(tab, lower, upper)``
+    Selects items with wear level between ``lower`` and ``upper`` (Range 0-3, see above).
+
+* ``item.condition_quality(tab, lower, upper)``
+    Selects items with quality between ``lower`` and ``upper`` (Range 0-5, see above).
+
+* ``item.condition_stockpiled(tab, invert)``
+    Selects stockpiled items, or scattered items when ``invert=true``.
+
+* ``item.condition_forbidden(tab)``
+    Checks for ``item.flags.forbid``
+
+* ``item.condition_melt(tab)``
+    Checks for ``item.flags.melt``
+
+* ``item.condition_dump(tab)``
+    Checks for ``item.flags.dump``
+
+* ``item.condition_hidden(tab)``
+    Checks for ``item.flags.hidden``
+
+* ``item.condition_visible(tab)``
+    Checks for ``not item.flags.hidden``
+
+ API usage example::
+
+   local item = reqscript('item')
+   local cond = {}
+
+   item.condition_type(cond, "BOULDER")
+   item.execute('unhide', cond, {}) -- reveal all boulders
+
+   item.condition_stockpiled(cond, true)
+   item.execute('hide', cond, {})   -- hide all boulders not in stockpiles

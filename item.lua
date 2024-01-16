@@ -233,7 +233,7 @@ function execute(action, conditions, options)
 
         -- item matches the filters
         count = count + 1
-        if options.by_type then
+        if options.bytype then
             local it = item:getType()
             types[it] = (types[it] or 0) + 1
         end
@@ -268,7 +268,7 @@ end
 function executeWithPrinting (action, conditions, options)
     local count, types = execute(action, conditions, options)
     print(count, 'items matched the filter options')
-    if options.by_type and count > 0 then
+    if options.bytype and count > 0 then
         local sorted = {}
         for tp, ct in pairs(types) do
             table.insert(sorted, { type = tp, count = ct })
@@ -299,7 +299,7 @@ local options = {
     help = false,
     artifact = false,
     dryrun = false,
-    by_type = false,
+    bytype = false,
 }
 
 --- @type (fun(item:item):boolean)[]
@@ -309,7 +309,7 @@ local positionals = argparse.processArgsGetopt({ ... }, {
   { 'h', 'help', handler = function() options.help = true end },
   { 'a', 'include-artifacts', handler = function() options.artifact = true end },
   { 'n', 'dry-run', handler = function() options.dryrun = true end },
-  { nil, 'by-type', handler = function() options.by_type = true end },
+  { nil, 'by-type', handler = function() options.bytype = true end },
   { 'i', 'inside', hasArg = true,
     handler = function (name)
         local burrow = dfhack.burrows.findByName(name,true)
