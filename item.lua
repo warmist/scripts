@@ -159,11 +159,34 @@ function condition_hidden(tab)
     table.insert(tab, function(item) return item.flags.hidden end)
 end
 
+--- @param tab conditions
 function condition_visible(tab)
     table.insert(tab, function(item) return not item.flags.hidden end)
 end
 
-
+--- @param tab conditions
+--- @param invert boolean
+function condition_stockpiled(tab, invert)
+    local stocked = {}
+    for _, stockpile in ipairs(df.global.world.buildings.other.STOCKPILE) do
+        for _, item_container in ipairs(dfhack.buildings.getStockpileContents(stockpile)) do
+            stocked[item_container.id] = true
+            local contents = dfhack.items.getContainedItems(item_container)
+            for _, item_bag in ipairs(contents) do
+                stocked[item_bag.id] = true
+                local contents2 = dfhack.items.getContainedItems(item_bag)
+                for _, item in ipairs(contents2) do
+                    stocked[item.id] = true
+                end
+            end
+        end
+    end
+    if invert then
+        table.insert(tab, function(item) return not stocked[item.id] end)
+    else
+        table.insert(tab, function(item) return stocked[item.id] end)
+    end
+end
 
 --- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
@@ -329,6 +352,10 @@ local positionals = argparse.processArgsGetopt({ ... }, {
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'max-quality')
         condition_quality(conditions, 0, level) end },
+  { nil, 'stockpiled',
+    handler = function () condition_stockpiled(conditions) end },
+  { nil, 'scattered',
+    handler = function () condition_stockpiled(conditions, true) end },
   { nil, 'forbidden',
     handler = function () condition_forbidden(conditions) end },
   { nil, 'melting',

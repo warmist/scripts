@@ -33,6 +33,9 @@ Examples
 ``item melt -t weapon -m steel --max-quality 3``
     Designate all steel weapons whose quality is at most superior for melting.
 
+``item hide -t boulder --scattered``
+    Hide all scattered boulders, i.e. those that are not in stockpiles.
+
 Options
 -------
 
@@ -92,6 +95,13 @@ Options
     Only include items whose quality level is at most ``integer``. Useful
     values are 0 (ordinary) to 5 (masterwork).
 
+``--stockpiled``
+    Only include items that are in stockpiles. Does not include empty bins,
+    barrels, and wheelbarrows assigned as storage and transport for stockpiles.
+
+``--scattered``
+    Opposite of ``--stockpiled``
+
 ``--forbidden``
     Only include forbidden items.
 
@@ -99,7 +109,7 @@ Options
     Only include items designated for melting.
 
 ``--dumping``
-    only include items designated for dumping.
+    Only include items designated for dumping.
 
 ``--visible``
     Only include visible items (i.e., ignore hidden items).
