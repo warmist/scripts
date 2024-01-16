@@ -29,7 +29,7 @@ end
 
 PromptWindow = defclass(PromptWindow, widgets.Window)
 PromptWindow.ATTRS {
-    frame={w=47, h=12},
+    frame={w=47, h=13},
     conf=DEFAULT_NIL,
     propagate_fn=DEFAULT_NIL,
 }
@@ -41,14 +41,14 @@ function PromptWindow:init()
             text_to_wrap=self.conf.message,
         },
         widgets.HotkeyLabel{
-            frame={b=1, l=0},
+            frame={b=2, l=0},
             label='Yes, proceed',
             key='SELECT',
             auto_width=true,
             on_activate=self:callback('proceed'),
         },
         widgets.HotkeyLabel{
-            frame={b=1, l=32},
+            frame={b=2, l=32},
             label='Settings',
             key='CUSTOM_SHIFT_S',
             auto_width=true,
