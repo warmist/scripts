@@ -7,19 +7,20 @@ item
 
 Filter items in you fort by various properties (e.g., item type, material,
 wear-level, quality, ...), and perform bulk operations like forbid, dump, melt,
-and their inverses. By default, the tool does not consider artifacts. Outputs
-the number of items that matched the filters and were modified.
+and their inverses. By default, the tool does not consider artifacts and owned
+items. Outputs the number of items that matched the filters and were modified.
 
 Usage
 -----
 
 ``item [ count | [un]forbid | [un]dump | [un]hide | [un]melt ] <filter options>``
 
-The ``count`` action just counts up the items that would be matched by the
-given filter options. Otherwise, the named property is set (or unset) on all
-the items that the filter options match. The counts reported when you actually
-apply a property might differ from what is output by the ``count`` action if
-some items already have the property set to the desired state.
+The ``count`` action counts up the items that are matched by the given filter
+options. Otherwise, the named property is set (or unset) on all the items
+matched by the filter options. The counts reported when you actually apply a
+property might differ from those reported by ``count``, because applying a
+property skips over all items that already have the property set (see
+``--dry-run``)
 
 Examples
 --------
@@ -37,6 +38,9 @@ Examples
 ``item hide -t boulder --scattered``
     Hide all scattered boulders, i.e. those that are not in stockpiles.
 
+``item unhide``
+    Makes all hidden items visible again.
+
 Options
 -------
 
@@ -45,9 +49,16 @@ Options
     number returned by the ``count`` action minus the number of items with the desired
     property already set.
 
+``--by-type``
+    Only applies to the ``count`` action. Outputs, in addition to the total
+    count, a table of item counts grouped by item type.
+
 ``-a, --include-artifacts``
     Include artifacts in the item list. Regardless of this setting, artifacts
     are never dumped or melted.
+
+``--include-owned``
+    Include items owned by units (e.g., your dwarfs or visitors)
 
 ``-i, --inside <burrow>``
     Only include items inside the given burrow.
@@ -77,7 +88,7 @@ Options
 ``-d, --description <pattern>``
     Filter by item description (singular form without stack sizes). The
     ``pattern`` is a Lua pattern
-    (cf. https://www.lua.org/manual/5.4/manual.html#6.4.1), so "cave spider
+    (cf. https://www.lua.org/manual/5.3/manual.html#6.4.1), so "cave spider
     silk" will match both "cave spider silk web" as well as "cave spider silk
     cloth". Use ``^pattern$`` to match the entire description.
 
@@ -91,7 +102,8 @@ Options
 
 ``-q, --min-quality <integer>``
     Only include items whose quality level is at least ``integer``. Useful
-    values are 0 (ordinary) to 5 (masterwork).
+    values are 0 (ordinary) to 5 (masterwork). Use ``:lua @df.item_quality`` to
+    get the mapping between numbers and adjectives.
 
 ``-Q, --max-quality <integer>``
     Only include items whose quality level is at most ``integer``. Useful
@@ -104,21 +116,17 @@ Options
 ``--scattered``
     Opposite of ``--stockpiled``
 
-``--forbidden``
-    Only include forbidden items.
+``--marked=<flag>,<flag>,...``
+    Only include items that have all provided flag set to true. Valid flags are:
+    ``forbid`` (or ``forbidden``), ``dump``, ``hidden``, ``melt``, and
+    ``owned``.
 
-``--melting``
-    Only include items designated for melting.
-
-``--dumping``
-    Only include items designated for dumping.
+``--not-marked=<flag>,<flag>,...``
+    Only include items that have all provided flag set to false. Valid flags the
+    same as for ``--marked``.
 
 ``--visible``
-    Only include visible items (i.e., ignore hidden items).
-
-``--hidden``
-    Only include hidden items.
-
+    Same as ``--not-marked=hidden``
 
 API
 ---
@@ -128,67 +136,65 @@ commandline interface with ``dfhack.run_script()`` or via the API functions
 defined in :source-scripts:`item.lua`, available from the return value of
 ``reqscript('item')``:
 
-* ``item.execute(action, conditions, options)``
-* ``item.executeWithPrinting(action, conditions, options)``
+* ``execute(action, conditions, options)``
 
 Performs ``action`` (``forbid``, ``melt``, etc.) on all items satisfying
 ``conditions`` (a table containing functions from item to boolean). ``options``
-is a table containing the boolean flags ``artifact``, ``dryrun``, and
-``bytype``, which correspond to the (filter) options described above.
+is a table containing the boolean flags ``artifact``, ``dryrun``, ``bytype``,
+and ``owned`` which correspond to the (filter) options described above.
 
-The function ``execute`` performs no output, while the ``WithPrinting``
-variant performs the same output as the ``item`` tool.
+The function ``execute`` performs no output, but returns three values:
+
+1. the number of matching items
+2. a table containing all matched items, if the action is ``count``
+3. a table containing a mapping from numeric item types to their occurrence
+   count, if ``options.bytype=true``
+
+* ``executeWithPrinting(action, conditions, options)``
+
+Performs the same action as ``execute`` and performs the same output as the
+``item`` tool, but returns nothing.
 
 The API provides a number of helper functions to aid in the construction of the
 filter table. The first argument ``tab`` is always the table to which the filter
-should be added.
+should be added. The final ``negate`` argument is optional, passing ``{ negate =
+true }`` negates the added filter condition. Below, only the positive version of
+the filter is described.
 
-* ``item.condition_burrow(tab, burrow, outside)``
-    Corresponds to ``--inside`` or ``--outside`` (when ``outside=true``). The
-    ``burrow`` argument must be a burrow object, not a string.
+* ``condition_burrow(tab, burrow, negate)``
+    Corresponds to ``--inside``. The ``burrow`` argument must be a burrow
+    object, not a string.
 
-* ``item.condition_type(tab, match)``
+* ``condition_type(tab, match, negate)``
     If ``match`` is a string, this corresponds to ``--type <match>``. Also
-    accepts numbers, matching against ``item:getType()``
+    accepts numbers, matching against ``item:getType()``.
 
-* ``item.condition_reachable(tab)``
-    Corresponds to ``--reachable``
+* ``condition_reachable(tab, negate)``
+    Corresponds to ``--reachable``.
 
-* ``item.condition_unreachable(tab)``
-    Corresponds to ``--unreachable``
+* ``condition_description(tab, pattern, negate)``
+    Corresponds to ``--description <pattern>``.
 
-* ``item.condition_description(tab, pattern)``
-    Corresponds to ``--description <pattern>``
+* ``condition_material(tab, match, negate)``
+    Corresponds to ``--material <match>``.
 
-* ``item.condition_material(tab, match)``
-    Corresponds to ``--material <match>``
+* ``condition_matcat(tab, match, negate)``
+    Corresponds to ``--mat-category <match>``.
 
-* ``item.condition_matcat(tab, match)``
-    Corresponds to ``--mat-category <match>``
+* ``condition_wear(tab, lower, upper, negate)``
+    Selects items with wear level between ``lower`` and ``upper`` (Range 0-3,
+    see above).
 
-* ``item.condition_wear(tab, lower, upper)``
-    Selects items with wear level between ``lower`` and ``upper`` (Range 0-3, see above).
+* ``condition_quality(tab, lower, upper, negate)``
+    Selects items with quality between ``lower`` and ``upper`` (Range 0-5, see
+    above).
 
-* ``item.condition_quality(tab, lower, upper)``
-    Selects items with quality between ``lower`` and ``upper`` (Range 0-5, see above).
+* ``condition_stockpiled(tab, negate)``
+    Corresponds to ``--stockpiled``.
 
-* ``item.condition_stockpiled(tab, invert)``
-    Selects stockpiled items, or scattered items when ``invert=true``.
-
-* ``item.condition_forbidden(tab)``
-    Checks for ``item.flags.forbid``
-
-* ``item.condition_melt(tab)``
-    Checks for ``item.flags.melt``
-
-* ``item.condition_dump(tab)``
-    Checks for ``item.flags.dump``
-
-* ``item.condition_hidden(tab)``
-    Checks for ``item.flags.hidden``
-
-* ``item.condition_visible(tab)``
-    Checks for ``not item.flags.hidden``
+* ``condition_[forbid|melt|dump|hidden|owned](tab,negate)``
+    Selects items with the respective flag set to ``true`` (e.g.,
+    ``condition_forbid`` checks for ``item.flags.forbid``).
 
  API usage example::
 
@@ -198,5 +204,5 @@ should be added.
    itemtools.condition_type(cond, "BOULDER")
    itemtools.execute('unhide', cond, {}) -- reveal all boulders
 
-   itemtools.condition_stockpiled(cond, true)
+   itemtools.condition_stockpiled(cond, { negate = true })
    itemtools.execute('hide', cond, {})   -- hide all boulders not in stockpiles

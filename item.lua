@@ -39,6 +39,19 @@ function citizenWalkabilityGroups()
     return cgroups
 end
 
+
+--- @param tab conditions
+--- @param pred fun(_:item):boolean
+--- @param negate { negate : boolean }|nil
+local function addPositiveOrNegative(tab, pred, negate)
+    if negate and negate.negate == true then
+	table.insert(tab, function (item) return not pred(item) end)
+    else
+	table.insert(tab, pred)
+    end
+end
+
+
 -----------------------------------------------------------------------
 -- external API: helpers to assemble filters and `execute` to execute.
 -----------------------------------------------------------------------
@@ -47,77 +60,67 @@ end
 
 --- @param tab conditions
 --- @param burrow burrow
---- @param outside boolean
-function condition_burrow(tab,burrow, outside)
-    if outside then
-        table.insert(tab, function (item) return not containsItem(burrow, item) end)
-    else
-        table.insert(tab, function (item) return containsItem(burrow, item) end)
-    end
+--- @param negate { negate : boolean }|nil
+function condition_burrow(tab,burrow, negate)
+    local pred = function (item) return containsItem(burrow, item) end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
 --- @param match number|string
-function condition_type(tab, match)
+--- @param negate { negate : boolean }|nil
+function condition_type(tab, match, negate)
+    local pred = nil
     if type(match) == "string" then
-        table.insert(
-            tab,
-            function (item) return df.item_type[item:getType()] == string.upper(match) end
-        )
+	pred = function (item) return df.item_type[item:getType()] == string.upper(match) end
     elseif type(match) == "number" then
-        table.insert(
-            tab,
-            function (item) return item:getType() == type end
-        )
+	pred = function (item) return item:getType() == type end
     else error("match argument must be string or number")
     end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_reachable(tab)
+--- @param negate { negate : boolean }|nil
+function condition_reachable(tab, negate)
     local cgroups = citizenWalkabilityGroups()
-    table.insert(tab, function(item) return fastReachable(item, cgroups) end)
-end
-
---- @param tab conditions
-function condition_unreachable(tab)
-    local cgroups = citizenWalkabilityGroups()
-    table.insert(tab, function (item) return not fastReachable(item,cgroups) end)
+    local pred = function(item) return fastReachable(item, cgroups) end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 -- uses the singular form without stack size (i.e., prickle berry)
 --- @param tab conditions
---- @param desc string # Lua pattern: https://www.lua.org/manual/5.4/manual.html#6.4.1
-function condition_description(tab, pattern)
-    table.insert(
-        tab,
+--- @param pattern string # Lua pattern: https://www.lua.org/manual/5.3/manual.html#6.4.1
+--- @param negate { negate : boolean }|nil
+function condition_description(tab, pattern, negate)
+    local pred =
         function(item)
             -- remove trailing stack size for corpse pieces like "wool" (work around DF bug)
             local desc = dfhack.items.getDescription(item, 1):gsub(' %[%d+%]','')
             return not not desc:find(pattern)
         end
-    )
+     addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
 --- @param material string
-function condition_material(tab, material)
-    table.insert(
-        tab,
-        function(item) return dfhack.matinfo.decode(item):toString() == material end)
+--- @param negate { negate : boolean }|nil
+function condition_material(tab, material, negate)
+    local pred = function(item) return dfhack.matinfo.decode(item):toString() == material end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
 --- @param match string
-function condition_matcat(tab, match)
+--- @param negate { negate : boolean }|nil
+function condition_matcat(tab, match, negate)
     if df.dfhack_material_category[match] ~= nil then
-        table.insert(
-            tab,
+	local pred =
             function (item)
                 local matinfo = dfhack.matinfo.decode(item)
                 return matinfo:matches{[match]=true}
             end
-        )
+	addPositiveOrNegative(tab, pred, negate)
     else
         qerror("invalid material category")
     end
@@ -126,47 +129,56 @@ end
 --- @param tab conditions
 --- @param lower number # range: 0 (pristine) to 3 (XX)
 --- @param upper number # range: 0 (pristine) to 3 (XX)
-function condition_wear(tab, lower, upper)
-    table.insert(tab,
-                 function(item) return lower <= item.wear and item.wear <= upper end)
+--- @param negate { negate : boolean }|nil
+function condition_wear(tab, lower, upper, negate)
+    local pred = function(item) return lower <= item.wear and item.wear <= upper end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
 --- @param lower number # range: 0 (standard) to 5 (masterwork)
 --- @param upper number # range: 0 (standard) to 5 (masterwork)
-function condition_quality(tab, lower, upper)
-    table.insert(tab,
-                 function(item) return lower <= item.quality and item.quality <= upper end)
+--- @param negate { negate : boolean }|nil
+function condition_quality(tab, lower, upper, negate)
+    local pred = function(item) return lower <= item.quality and item.quality <= upper end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_forbidden(tab)
-    table.insert(tab, function(item) return item.flags.forbid end)
+--- @param negate { negate : boolean }|nil
+function condition_forbid(tab, negate)
+    local pred = function(item) return item.flags.forbid end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_melt(tab)
-    table.insert(tab,function (item) return item.flags.melt end)
+--- @param negate { negate : boolean }|nil
+function condition_melt(tab, negate)
+    local pred = function (item) return item.flags.melt end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_dump(tab)
-    table.insert(tab, function(item) return item.flags.dump end)
+--- @param negate { negate : boolean }|nil
+function condition_dump(tab, negate)
+    local pred = function(item) return item.flags.dump end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_hidden(tab)
-    table.insert(tab, function(item) return item.flags.hidden end)
+function condition_hidden(tab, negate)
+    local pred = function(item) return item.flags.hidden end
+    addPositiveOrNegative(tab, pred, negate)
+end
+
+function condition_owned(tab, negate)
+    local pred = function(item) return item.flags.owned end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param tab conditions
-function condition_visible(tab)
-    table.insert(tab, function(item) return not item.flags.hidden end)
-end
-
---- @param tab conditions
---- @param invert boolean
-function condition_stockpiled(tab, invert)
+--- @param negate { negate : boolean }|nil
+function condition_stockpiled(tab, negate)
     local stocked = {}
     for _, stockpile in ipairs(df.global.world.buildings.other.STOCKPILE) do
         for _, item_container in ipairs(dfhack.buildings.getStockpileContents(stockpile)) do
@@ -181,19 +193,17 @@ function condition_stockpiled(tab, invert)
             end
         end
     end
-    if invert then
-        table.insert(tab, function(item) return not stocked[item.id] end)
-    else
-        table.insert(tab, function(item) return stocked[item.id] end)
-    end
+    local pred = function(item) return stocked[item.id] end
+    addPositiveOrNegative(tab, pred, negate)
 end
 
 --- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
---- @param options { help : boolean, artifact : boolean, dryrun : boolean, by_type : boolean }
---- @return number, table<number,number>
+--- @param options { help : boolean, artifact : boolean, dryrun : boolean, bytype : boolean, owned : boolean }
+--- @return number, item[], table<number,number>
 function execute(action, conditions, options)
     local count = 0
+    local items = {}
     local types = {}
 
     for _, item in pairs(df.global.world.items.other.IN_PLAY) do
@@ -202,7 +212,10 @@ function execute(action, conditions, options)
         if item.flags.construction or
             item.flags.in_building or
             item.flags.hostile or
-            (item.flags.artifact and not options.artifact)
+            (item.flags.artifact and not options.artifact) or
+	    item.flags.on_fire or
+	    item.flags.trader or
+	    (item.flags.owned and not options.owned)
         then
             goto skipitem
         end
@@ -255,19 +268,27 @@ function execute(action, conditions, options)
             item.flags.hidden = true
         elseif action == "unhide" and not options.dryrun then
             item.flags.hidden = false
+	elseif action == "count" then
+	    table.insert(items,item)
         end
         :: skipitem ::
     end
 
-    return count, types
+    return count, items, types
 end
 
 --- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
---- @param options { help : boolean, artifact : boolean, dryrun : boolean, by_type : boolean }
+--- @param options { help : boolean, artifact : boolean, dryrun : boolean, bytype : boolean, owned : boolean }
 function executeWithPrinting (action, conditions, options)
-    local count, types = execute(action, conditions, options)
-    print(count, 'items matched the filter options')
+    local count, _ , types = execute(action, conditions, options)
+    if action == "count" then
+	print(count, 'items matched the filter options')
+    elseif options.dryrun then
+	print(count, 'items would be modified')
+    else
+	print(count, 'items were modified')
+    end
     if options.bytype and count > 0 then
         local sorted = {}
         for tp, ct in pairs(types) do
@@ -279,9 +300,6 @@ function executeWithPrinting (action, conditions, options)
             print(("%-14s %5s"):format(df.item_type[t.type], t.count))
         end
         print()
-    end
-    if action == "count" or options.dryrun then
-        print('no items were modified')
     end
 end
 
@@ -300,34 +318,52 @@ local options = {
     artifact = false,
     dryrun = false,
     bytype = false,
+    owned = false
 }
 
 --- @type (fun(item:item):boolean)[]
 local conditions = {}
 
+local function flagsFilter(args, negate)
+    local flags = argparse.stringList(args, "flag list")
+    for _,flag in ipairs(flags) do
+	if     flag == 'forbid' then condition_forbid(conditions, negate)
+	elseif flag == 'forbidden' then condition_forbid(conditions, negate) -- be lenient
+	elseif flag == 'dump'   then condition_dump(conditions, negate)
+	elseif flag == 'hidden' then condition_hidden(conditions, negate)
+	elseif flag == 'melt'   then condition_melt(conditions, negate)
+	elseif flag == 'owned'  then
+	    options.owned = true
+	    condition_owned(conditions, negate)
+	else qerror('unkown flag "'..flag..'"')
+	end
+    end
+end
+
 local positionals = argparse.processArgsGetopt({ ... }, {
   { 'h', 'help', handler = function() options.help = true end },
   { 'a', 'include-artifacts', handler = function() options.artifact = true end },
+  { nil, 'include-owned', handler = function() options.owned = true end },
   { 'n', 'dry-run', handler = function() options.dryrun = true end },
   { nil, 'by-type', handler = function() options.bytype = true end },
   { 'i', 'inside', hasArg = true,
     handler = function (name)
         local burrow = dfhack.burrows.findByName(name,true)
-        if burrow then condition_burrow(conditions, burrow, false)
+        if burrow then condition_burrow(conditions, burrow)
         else qerror('burrow '..name..' not found') end
     end
   },
   { 'o', 'outside', hasArg = true,
     handler = function (name)
         local burrow = dfhack.burrows.findByName(name,true)
-        if burrow then condition_burrow(conditions, burrow, true)
+        if burrow then condition_burrow(conditions, burrow, { negate = true })
         else qerror('burrow '..name..' not found') end
     end
   },
   { 'r', 'reachable',
     handler = function () condition_reachable(conditions) end },
   { 'u', 'unreachable',
-    handler = function () condition_unreachable(conditions) end },
+    handler = function () condition_reachable(conditions, { negate = true }) end },
   { 't', 'type', hasArg = true,
     handler = function (type) condition_type(conditions,type) end },
   { 'd', 'description', hasArg = true,
@@ -355,30 +391,26 @@ local positionals = argparse.processArgsGetopt({ ... }, {
   { nil, 'stockpiled',
     handler = function () condition_stockpiled(conditions) end },
   { nil, 'scattered',
-    handler = function () condition_stockpiled(conditions, true) end },
-  { nil, 'forbidden',
-    handler = function () condition_forbidden(conditions) end },
-  { nil, 'melting',
-    handler = function () condition_melt(conditions) end },
-  { nil, 'dumping',
-    handler = function () condition_dump(conditions) end },
-  { nil, 'hidden',
-    handler = function () condition_hidden(conditions) end },
+    handler = function () condition_stockpiled(conditions, { negate = true}) end },
+  { nil, 'marked', hasArg = true,
+    handler = function (args) flagsFilter(args) end },
+  { nil, 'not-marked', hasArg = true,
+    handler = function (args) flagsFilter(args, { negate = true }) end },
   { nil, 'visible',
-    handler = function () condition_visible(conditions) end }
+    handler = function () condition_hidden(conditions, { negate = true }) end }
 })
 
 if options.help or positionals[1] == 'help' then
     print(dfhack.script_help())
     return
-elseif positionals[1] == 'forbid'   then executeWithPrinting('forbid',conditions,options)
-elseif positionals[1] == 'unforbid' then executeWithPrinting('unforbid',conditions,options)
-elseif positionals[1] == 'dump'     then executeWithPrinting('dump',conditions,options)
-elseif positionals[1] == 'undump'   then executeWithPrinting('undump',conditions,options)
-elseif positionals[1] == 'melt'     then executeWithPrinting('melt',conditions,options)
-elseif positionals[1] == 'unmelt'   then executeWithPrinting('unmelt',conditions,options)
-elseif positionals[1] == 'count'    then executeWithPrinting('count',conditions,options)
-elseif positionals[1] == 'hide'     then executeWithPrinting('hide',conditions,options)
-elseif positionals[1] == 'unhide'   then executeWithPrinting('unhide',conditions,options)
+elseif positionals[1] == 'forbid'   then executeWithPrinting('forbid', conditions, options)
+elseif positionals[1] == 'unforbid' then executeWithPrinting('unforbid', conditions, options)
+elseif positionals[1] == 'dump'     then executeWithPrinting('dump', conditions, options)
+elseif positionals[1] == 'undump'   then executeWithPrinting('undump', conditions, options)
+elseif positionals[1] == 'melt'     then executeWithPrinting('melt', conditions, options)
+elseif positionals[1] == 'unmelt'   then executeWithPrinting('unmelt', conditions, options)
+elseif positionals[1] == 'count'    then executeWithPrinting('count', conditions, options)
+elseif positionals[1] == 'hide'     then executeWithPrinting('hide', conditions, options)
+elseif positionals[1] == 'unhide'   then executeWithPrinting('unhide', conditions, options)
 else qerror('main action not recognized')
 end
