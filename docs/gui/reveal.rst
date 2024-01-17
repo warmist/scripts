@@ -13,6 +13,11 @@ you close `gui/reveal`, the map will automatically be unrevealed so you can
 continue normal gameplay. If you want the reveal to be permanent, you can
 toggle the setting before you close `gui/reveal`.
 
+In graphics mode, solid tiles that are not adjacent to open space will not be
+rendered, but they can still be examined by hovering over them with the mouse.
+Switching to ASCII mode (in the game settings) will allow the display of the
+revealed tiles.
+
 Usage
 -----
 
