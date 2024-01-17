@@ -2,11 +2,11 @@ item
 ====
 
 .. dfhack-tool::
-    :summary: Perform bulk operations on items based on various properties.
+    :summary: Perform bulk operations on groups of items.
     :tags: fort productivity items
 
 Filter items in you fort by various properties (e.g., item type, material,
-wear-level, quality, ...), and perform the bulk operations forbid, dump, melt,
+wear-level, quality, ...), and perform bulk operations like forbid, dump, melt,
 and their inverses. By default, the tool does not consider artifacts. Outputs
 the number of items that matched the filters and were modified.
 
@@ -15,10 +15,11 @@ Usage
 
 ``item [ count | [un]forbid | [un]dump | [un]hide | [un]melt ] <filter options>``
 
-Action names should be self explanatory. All actions other than ``help`` and
-``count`` have implicit filters associated with them. For instance, ``item
-forbid --unreachable`` will neither report nor test reachability of items that
-are already forbidden.
+The ``count`` action just counts up the items that would be matched by the
+given filter options. Otherwise, the named property is set (or unset) on all
+the items that the filter options match. The counts reported when you actually
+apply a property might differ from what is output by the ``count`` action if
+some items already have the property set to the desired state.
 
 Examples
 --------
@@ -40,8 +41,9 @@ Options
 -------
 
 ``-n, --dry-run``
-    Get an accurate count of the items that would be affected, including the
-    implicit filters of the selected main action.
+    Get a count of the items that would be modified by an operation, which will be the
+    number returned by the ``count`` action minus the number of items with the desired
+    property already set.
 
 ``-a, --include-artifacts``
     Include artifacts in the item list. Regardless of this setting, artifacts
@@ -69,7 +71,7 @@ Options
 
 ``-c, --mat-category <string>``
     Filter by material category of the material item is made out of (e.g.,
-    "metal"). Use ``:lua df.dfhack_material_category`` to get a list of all
+    "metal"). Use ``:lua @df.dfhack_material_category`` to get a list of all
     material categories.
 
 ``-d, --description <pattern>``
@@ -134,14 +136,14 @@ Performs ``action`` (``forbid``, ``melt``, etc.) on all items satisfying
 is a table containing the boolean flags ``artifact``, ``dryrun``, and
 ``bytype``, which correspond to the (filter) options described above.
 
-The function ``item.execute`` performs no output, while the ``WithPrinting``
+The function ``execute`` performs no output, while the ``WithPrinting``
 variant performs the same output as the ``item`` tool.
 
 The API provides a number of helper functions to aid in the construction of the
 filter table. The first argument ``tab`` is always the table to which the filter
 should be added.
 
-* ``item.condition_burrow(tab,burrow, outside)``
+* ``item.condition_burrow(tab, burrow, outside)``
     Corresponds to ``--inside`` or ``--outside`` (when ``outside=true``). The
     ``burrow`` argument must be a burrow object, not a string.
 
@@ -190,11 +192,11 @@ should be added.
 
  API usage example::
 
-   local item = reqscript('item')
+   local itemtools = reqscript('item')
    local cond = {}
 
-   item.condition_type(cond, "BOULDER")
-   item.execute('unhide', cond, {}) -- reveal all boulders
+   itemtools.condition_type(cond, "BOULDER")
+   itemtools.execute('unhide', cond, {}) -- reveal all boulders
 
-   item.condition_stockpiled(cond, true)
-   item.execute('hide', cond, {})   -- hide all boulders not in stockpiles
+   itemtools.condition_stockpiled(cond, true)
+   itemtools.execute('hide', cond, {})   -- hide all boulders not in stockpiles
