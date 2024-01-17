@@ -1853,7 +1853,9 @@ end
 -- don't imply that stockpiles will be 3d
 local main_interface = df.global.game.main_interface
 local function check_stockpile_dims()
-    if main_interface.bottom_mode_selected == df.main_bottom_mode_type.STOCKPILE_PAINT then
+    if main_interface.bottom_mode_selected == df.main_bottom_mode_type.STOCKPILE_PAINT and
+        selection_rect.start_x > 0
+    then
         selection_rect.start_z = df.global.window_z
     end
 end
