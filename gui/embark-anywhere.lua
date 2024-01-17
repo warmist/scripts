@@ -40,8 +40,6 @@ end
 function EmbarkAnywhereScreen:init()
     self:addviews{
         EmbarkAnywhere{view_id='main'},
-        -- this panel will get checked for masking too, but it's wholely
-        -- inside the size selection panel, so it's ok
         widgets.Panel{
             frame={l=20, t=1, w=22, h=6},
             frame_style=gui.FRAME_MEDIUM,
@@ -58,17 +56,23 @@ function EmbarkAnywhereScreen:init()
             },
             visible=is_confirm_panel_visible,
         },
-        widgets.Panel{ -- size selection panel
-            frame={l=0, t=0, w=61, h=11},
-        },
-        widgets.Panel{ -- abort button
-            frame={r=41, b=1, w=10, h=3},
-        },
-        widgets.Panel{ -- show elevation button
-            frame={r=22, b=1, w=18, h=3},
-        },
-        widgets.Panel{ -- show cliffs button
-            frame={r=0, b=1, w=21, h=3},
+        widgets.Panel{
+            view_id='masks',
+            frame={t=0, b=0, l=0, r=0},
+            subviews={
+                widgets.Panel{ -- size selection panel
+                    frame={l=0, t=0, w=61, h=11},
+                },
+                widgets.Panel{ -- abort button
+                    frame={r=41, b=1, w=10, h=3},
+                },
+                widgets.Panel{ -- show elevation button
+                    frame={r=22, b=1, w=18, h=3},
+                },
+                widgets.Panel{ -- show cliffs button
+                    frame={r=0, b=1, w=21, h=3},
+                },
+            },
         },
     }
 end
@@ -91,10 +95,8 @@ local function force_embark(scr)
 end
 
 function EmbarkAnywhereScreen:clicked_on_panel_mask()
-    for _, sv in ipairs(self.subviews) do
-        if sv.view_id ~= 'main' then
-            if sv:getMousePos() then return true end
-        end
+    for _, sv in ipairs(self.subviews.masks.subviews) do
+        if sv:getMousePos() then return true end
     end
 end
 
@@ -114,6 +116,14 @@ end
 
 function EmbarkAnywhereScreen:onDismiss()
     view = nil
+end
+
+function EmbarkAnywhereScreen:onRenderFrame(dc, rect)
+    local scr = dfhack.gui.getDFViewscreen(true)
+    if not dfhack.gui.matchFocusString('choose_start_site', scr) then
+        self:dismiss()
+    end
+    EmbarkAnywhereScreen.super.onRenderFrame(self, dc, rect)
 end
 
 if not dfhack.gui.matchFocusString('choose_start_site') then
