@@ -1799,12 +1799,12 @@ DimensionsOverlay.ATTRS{
 local selection_rect = df.global.selection_rect
 
 local function is_choosing_area()
-    return selection_rect.start_z >= 0 and dfhack.gui.getMousePos(true)
+    return selection_rect.start_x >= 0 and dfhack.gui.getMousePos(true)
 end
 
 local function get_cur_area_dims()
     local pos1 = dfhack.gui.getMousePos(true)
-    if not pos1 or selection_rect.start_z < 0 then return 1, 1, 1 end
+    if not pos1 or selection_rect.start_x < 0 then return 1, 1, 1 end
 
     -- clamp to map edges (since you can start selection out of bounds)
     pos1 = xyz2pos(
@@ -1853,7 +1853,9 @@ end
 -- don't imply that stockpiles will be 3d
 local main_interface = df.global.game.main_interface
 local function check_stockpile_dims()
-    if main_interface.bottom_mode_selected == df.main_bottom_mode_type.STOCKPILE_PAINT then
+    if main_interface.bottom_mode_selected == df.main_bottom_mode_type.STOCKPILE_PAINT and
+        selection_rect.start_x > 0
+    then
         selection_rect.start_z = df.global.window_z
     end
 end

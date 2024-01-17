@@ -40,6 +40,7 @@ Template for new versions:
 
 ## Fixes
 - `source`: water and magma sources now persist with fort across saves and loads
+- `gui/design`: fix incorrect dimensions being shown when placing stockpiles, but a start coordinate hasn't been selected yet
 - `warn-stranded`: Automatically ignore citizens who are gathering plants or digging to avoid issues with gathering fruit via stepladders and weird issues with digging
 - `warn-stranded`: Update onZoom to use df's centering functionality
 - `ban-cooking`: fix banning creature alcohols resulting in error
