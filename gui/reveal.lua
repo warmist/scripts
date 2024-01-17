@@ -10,16 +10,16 @@ local widgets = require('gui.widgets')
 Reveal = defclass(Reveal, widgets.Window)
 Reveal.ATTRS {
     frame_title='Reveal',
-    frame={w=32, h=14, r=2, t=18},
+    frame={w=37, h=12, r=2, t=18},
     autoarrange_subviews=true,
     autoarrange_gap=1,
+    resizable=true,
     hell=DEFAULT_NIL,
 }
 
 function Reveal:init()
-    if self.hell then
-        self.frame.h = 15
-    end
+    self.graphics = dfhack.screen.inGraphicsMode()
+    self:set_frame()
 
     self:addviews{
         widgets.WrappedLabel{
@@ -35,6 +35,11 @@ function Reveal:init()
             text_pen=COLOR_RED,
             visible=self.hell,
         },
+        widgets.WrappedLabel{
+            text_to_wrap='In graphics mode, solid tiles that are not adjacent to open space are not rendered. Switch to ASCII mode to see them.',
+            text_pen=COLOR_BROWN,
+            visible=dfhack.screen.inGraphicsMode,
+        },
         widgets.ToggleHotkeyLabel{
             view_id='unreveal',
             key='CUSTOM_SHIFT_R',
@@ -44,8 +49,28 @@ function Reveal:init()
                 {label='No', value=false, pen=COLOR_RED},
             },
             enabled=not self.hell,
-       },
+        },
     }
+end
+
+function Reveal:set_frame()
+    self.frame.h = 12
+    if self.hell then
+        self.frame.h = self.frame.h + 1
+    end
+    if self.graphics then
+        self.frame.h = self.frame.h + 5
+    end
+end
+
+function Reveal:onRenderFrame(dc, rect)
+    local graphics = dfhack.screen.inGraphicsMode()
+    if graphics ~= self.graphics then
+        self.graphics = graphics
+        self:set_frame()
+        self:updateLayout()
+    end
+    Reveal.super.onRenderFrame(self, dc, rect)
 end
 
 --
