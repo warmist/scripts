@@ -35,6 +35,11 @@ function Reveal:init()
             text_pen=COLOR_RED,
             visible=self.hell,
         },
+        widgets.WrappedLabel{
+            text_to_wrap='In graphics mode, solid tiles that are not adjacent to open space are not rendered. Switch to ASCII mode to see them.',
+            text_pen=COLOR_BROWN,
+            visible=dfhack.screen.inGraphicsMode,
+        },
         widgets.ToggleHotkeyLabel{
             view_id='unreveal',
             key='CUSTOM_SHIFT_R',
@@ -44,11 +49,6 @@ function Reveal:init()
                 {label='No', value=false, pen=COLOR_RED},
             },
             enabled=not self.hell,
-        },
-        widgets.WrappedLabel{
-            text_to_wrap='In graphics mode, solid tiles that are not adjacent to open space are not rendered. Switch to ASCII mode to see them.',
-            text_pen=COLOR_BROWN,
-            visible=dfhack.screen.inGraphicsMode,
         },
     }
 end
