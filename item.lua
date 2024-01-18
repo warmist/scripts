@@ -236,6 +236,8 @@ function execute(action, conditions, options, return_items)
         end
 
         -- check conditions provided via options
+        -- note we use pairs instead of ipairs since the caller could have
+        -- added conditions with non-list keys
         for _, condition in pairs(conditions) do
             if not condition(item) then goto skipitem end
         end
