@@ -58,7 +58,7 @@ Options
     are never dumped or melted.
 
 ``--include-owned``
-    Include items owned by units (e.g., your dwarfs or visitors)
+    Include items owned by units (e.g., your dwarves or visitors)
 
 ``-i, --inside <burrow>``
     Only include items inside the given burrow.
@@ -192,7 +192,7 @@ the filter is described.
 * ``condition_stockpiled(tab, negate)``
     Corresponds to ``--stockpiled``.
 
-* ``condition_[forbid|melt|dump|hidden|owned](tab,negate)``
+* ``condition_[forbid|melt|dump|hidden|owned](tab, negate)``
     Selects items with the respective flag set to ``true`` (e.g.,
     ``condition_forbid`` checks for ``item.flags.forbid``).
 

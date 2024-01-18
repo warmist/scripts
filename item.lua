@@ -210,6 +210,7 @@ function execute(action, conditions, options)
         -- never act on items used for constructions/building materials and carried by hostiles
         -- also skip artifacts, unless explicitly told to include them
         if item.flags.construction or
+            item.flags.garbage_collect or
             item.flags.in_building or
             item.flags.hostile or
             (item.flags.artifact and not options.artifact) or
