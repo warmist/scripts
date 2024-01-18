@@ -33,6 +33,7 @@ Template for new versions:
 - `gui/teleport`: mouse-driven interface for selecting and teleporting units
 - `gui/biomes`: visualize and inspect biome regions on the map
 - `gui/embark-anywhere`: bypass those pesky warnings and embark anywhere you want to
+- `item`: perform bulk operations on groups of items.
 
 ## New Features
 - `uniform-unstick`: add overlay to the squad equipment screen to show a equipment conflict report and give you a one-click button to fix
