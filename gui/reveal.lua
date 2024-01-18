@@ -27,7 +27,6 @@ function Reveal:init()
         },
         widgets.WrappedLabel{
             text_to_wrap='Areas with event triggers are kept hidden to avoid spoilers.',
-            text_pen=COLOR_YELLOW,
             visible=not self.hell,
         },
         widgets.WrappedLabel{
