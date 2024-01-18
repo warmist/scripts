@@ -136,7 +136,7 @@ commandline interface with ``dfhack.run_script()`` or via the API functions
 defined in :source-scripts:`item.lua`, available from the return value of
 ``reqscript('item')``:
 
-* ``execute(action, conditions, options)``
+* ``execute(action, conditions, options [, return_items])``
 
 Performs ``action`` (``forbid``, ``melt``, etc.) on all items satisfying
 ``conditions`` (a table containing functions from item to boolean). ``options``
@@ -146,7 +146,7 @@ and ``owned`` which correspond to the (filter) options described above.
 The function ``execute`` performs no output, but returns three values:
 
 1. the number of matching items
-2. a table containing all matched items, if the action is ``count``
+2. a table containing all matched items, if ``return_items`` is provided and true.
 3. a table containing a mapping from numeric item types to their occurrence
    count, if ``options.bytype=true``
 

@@ -45,9 +45,9 @@ end
 --- @param negate { negate : boolean }|nil
 local function addPositiveOrNegative(tab, pred, negate)
     if negate and negate.negate == true then
-	table.insert(tab, function (item) return not pred(item) end)
+        table.insert(tab, function (item) return not pred(item) end)
     else
-	table.insert(tab, pred)
+        table.insert(tab, pred)
     end
 end
 
@@ -72,9 +72,9 @@ end
 function condition_type(tab, match, negate)
     local pred = nil
     if type(match) == "string" then
-	pred = function (item) return df.item_type[item:getType()] == string.upper(match) end
+        pred = function (item) return df.item_type[item:getType()] == string.upper(match) end
     elseif type(match) == "number" then
-	pred = function (item) return item:getType() == type end
+        pred = function (item) return item:getType() == type end
     else error("match argument must be string or number")
     end
     addPositiveOrNegative(tab, pred, negate)
@@ -115,12 +115,12 @@ end
 --- @param negate { negate : boolean }|nil
 function condition_matcat(tab, match, negate)
     if df.dfhack_material_category[match] ~= nil then
-	local pred =
+        local pred =
             function (item)
                 local matinfo = dfhack.matinfo.decode(item)
                 return matinfo:matches{[match]=true}
             end
-	addPositiveOrNegative(tab, pred, negate)
+        addPositiveOrNegative(tab, pred, negate)
     else
         qerror("invalid material category")
     end
@@ -200,8 +200,9 @@ end
 --- @param action "melt"|"unmelt"|"forbid"|"unforbid"|"dump"|"undump"|"count"|"hide"|"unhide"
 --- @param conditions conditions
 --- @param options { help : boolean, artifact : boolean, dryrun : boolean, bytype : boolean, owned : boolean }
+--- @param return_items boolean|nil
 --- @return number, item[], table<number,number>
-function execute(action, conditions, options)
+function execute(action, conditions, options, return_items)
     local count = 0
     local items = {}
     local types = {}
@@ -214,9 +215,9 @@ function execute(action, conditions, options)
             item.flags.in_building or
             item.flags.hostile or
             (item.flags.artifact and not options.artifact) or
-	    item.flags.on_fire or
-	    item.flags.trader or
-	    (item.flags.owned and not options.owned)
+            item.flags.on_fire or
+            item.flags.trader or
+            (item.flags.owned and not options.owned)
         then
             goto skipitem
         end
@@ -269,9 +270,10 @@ function execute(action, conditions, options)
             item.flags.hidden = true
         elseif action == "unhide" and not options.dryrun then
             item.flags.hidden = false
-	elseif action == "count" then
-	    table.insert(items,item)
         end
+
+        if return_items then table.insert(items, item) end
+
         :: skipitem ::
     end
 
@@ -284,11 +286,11 @@ end
 function executeWithPrinting (action, conditions, options)
     local count, _ , types = execute(action, conditions, options)
     if action == "count" then
-	print(count, 'items matched the filter options')
+        print(count, 'items matched the filter options')
     elseif options.dryrun then
-	print(count, 'items would be modified')
+        print(count, 'items would be modified')
     else
-	print(count, 'items were modified')
+        print(count, 'items were modified')
     end
     if options.bytype and count > 0 then
         local sorted = {}
@@ -297,7 +299,7 @@ function executeWithPrinting (action, conditions, options)
         end
         table.sort(sorted, function(a, b) return a.count > b.count end)
         print(("\n%-14s %5s\n"):format("TYPE", "COUNT"))
-        for _, t in pairs(sorted) do
+        for _, t in ipairs(sorted) do
             print(("%-14s %5s"):format(df.item_type[t.type], t.count))
         end
         print()
@@ -328,16 +330,16 @@ local conditions = {}
 local function flagsFilter(args, negate)
     local flags = argparse.stringList(args, "flag list")
     for _,flag in ipairs(flags) do
-	if     flag == 'forbid' then condition_forbid(conditions, negate)
-	elseif flag == 'forbidden' then condition_forbid(conditions, negate) -- be lenient
-	elseif flag == 'dump'   then condition_dump(conditions, negate)
-	elseif flag == 'hidden' then condition_hidden(conditions, negate)
-	elseif flag == 'melt'   then condition_melt(conditions, negate)
-	elseif flag == 'owned'  then
-	    options.owned = true
-	    condition_owned(conditions, negate)
-	else qerror('unkown flag "'..flag..'"')
-	end
+        if     flag == 'forbid' then condition_forbid(conditions, negate)
+        elseif flag == 'forbidden' then condition_forbid(conditions, negate) -- be lenient
+        elseif flag == 'dump'   then condition_dump(conditions, negate)
+        elseif flag == 'hidden' then condition_hidden(conditions, negate)
+        elseif flag == 'melt'   then condition_melt(conditions, negate)
+        elseif flag == 'owned'  then
+            options.owned = true
+            condition_owned(conditions, negate)
+        else qerror('unkown flag "'..flag..'"')
+        end
     end
 end
 
