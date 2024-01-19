@@ -162,7 +162,7 @@ BiomeVisualizerLegend.ATTRS {
     frame_title=TITLE,
     frame_inset=0,
     resizable=true,
-    resize_min={h=5, w = 14},
+    resize_min={w=25},
     frame = {
         w = 47,
         h = INITIAL_LIST_HEIGHT + 2 + INITIAL_INFO_HEIGHT,
@@ -195,8 +195,7 @@ end
 function BiomeVisualizerLegend:init()
     local list = widgets.List{
         view_id = 'list',
-        frame = { t = 0, b = INITIAL_INFO_HEIGHT + 1 },
-        frame_inset = 0,
+        frame = { t = 1, b = INITIAL_INFO_HEIGHT + 1 },
         icon_width = 1,
         text_pen = { fg = COLOR_GREY, bg = COLOR_BLACK }, -- this makes selection stand out more
         on_select = self:callback('onSelectEntry'),
@@ -210,7 +209,7 @@ function BiomeVisualizerLegend:init()
         subviews={
             widgets.Label{
                 view_id='label',
-                text_to_wrap='',
+                auto_height=false,
                 scroll_keys={},
             },
         },
@@ -275,19 +274,17 @@ function BiomeVisualizerLegend:UpdateChoices()
     self.list:setChoices(choices)
 end
 
-do -- implementation of onMouseHoverEntry(idx, option)
-    function BiomeVisualizerLegend:onRenderFrame(dc, rect)
-        BiomeVisualizerLegend.super.onRenderFrame(self, dc, rect)
+function BiomeVisualizerLegend:onRenderFrame(dc, rect)
+    BiomeVisualizerLegend.super.onRenderFrame(self, dc, rect)
 
-        local list = self.list
-        local currentHoverIx = list:getIdxUnderMouse()
-        local oldIx = self.HoverIndex
-        if currentHoverIx ~= oldIx then
-            self.HoverIndex = currentHoverIx
-            if self.onMouseHoverEntry then
-                local choices = list:getChoices()
-                self:onMouseHoverEntry(currentHoverIx, choices[currentHoverIx])
-            end
+    local list = self.list
+    local currentHoverIx = list:getIdxUnderMouse()
+    local oldIx = self.HoverIndex
+    if currentHoverIx ~= oldIx then
+        self.HoverIndex = currentHoverIx
+        if self.onMouseHoverEntry then
+            local choices = list:getChoices()
+            self:onMouseHoverEntry(currentHoverIx, choices[currentHoverIx])
         end
     end
 end
