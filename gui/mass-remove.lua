@@ -161,8 +161,8 @@ function MassRemove:init()
         widgets.CycleHotkeyLabel{
             view_id='constructions',
             label='Constructions:',
-            key='CUSTOM_C',
-            key_back='CUSTOM_SHIFT_C',
+            key='CUSTOM_V',
+            key_back='CUSTOM_SHIFT_V',
             option_gap=1,
             options={
                 {label='Leave alone', value=noop, pen=COLOR_BLUE},
@@ -175,7 +175,7 @@ function MassRemove:init()
         widgets.CycleHotkeyLabel{
             view_id='stockpiles',
             label='Stockpiles:',
-            key='CUSTOM_S',
+            key='CUSTOM_T',
             key_sep=':  ',
             option_gap=4,
             options={
@@ -187,7 +187,7 @@ function MassRemove:init()
         },
         widgets.CycleHotkeyLabel{
             label='Stockpiles:',
-            key='CUSTOM_S',
+            key='CUSTOM_T',
             key_sep=':  ',
             option_gap=4,
             options={{label='Leave alone', value=noop}},
@@ -219,7 +219,7 @@ function MassRemove:init()
         widgets.CycleHotkeyLabel{
             view_id='remove',
             label='Mode:',
-            key='CUSTOM_E',
+            key='CUSTOM_R',
             options={
                 {label='Remove or schedule for removal', value=true, pen=COLOR_RED},
                 {label='Cancel removal', value=false, pen=COLOR_GREEN},
