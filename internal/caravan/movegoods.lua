@@ -436,7 +436,9 @@ local function contains_non_liquid_powder(container)
     return false
 end
 
-function MoveGoods:cache_choices(group_items, inside_containers)
+function MoveGoods:cache_choices()
+    local group_items = self.subviews.group_items:getOptionValue()
+    local inside_containers = self.subviews.inside_containers:getOptionValue()
     local cache_idx = get_cache_index(group_items, inside_containers)
     if self.choices_cache[cache_idx] then return self.choices_cache[cache_idx] end
 
@@ -528,8 +530,7 @@ function MoveGoods:cache_choices(group_items, inside_containers)
 end
 
 function MoveGoods:get_choices()
-    local raw_choices = self:cache_choices(self.subviews.group_items:getOptionValue(),
-            self.subviews.inside_containers:getOptionValue())
+    local raw_choices = self:cache_choices()
     local choices = {}
     local include_forbidden = not self.subviews.hide_forbidden:getOptionValue()
     local banned = self.subviews.banned:getOptionValue()
@@ -673,6 +674,7 @@ function MoveGoodsModal:init()
     self.depot = self.depot or dfhack.gui.getSelectedBuilding(true)
     self:addviews{
         MoveGoods{
+            view_id='move_goods',
             pending_item_ids=self.pending_item_ids,
             depot=self.depot,
         },
@@ -684,7 +686,7 @@ function MoveGoodsModal:onDismiss()
     local depot = self.depot
     if not depot then return end
     local pending = self.pending_item_ids
-    for _, choice in ipairs(self.subviews.list:getChoices()) do
+    for _, choice in ipairs(self.subviews.move_goods:cache_choices()) do
         if not choice.data.dirty then goto continue end
         for item_id, item_data in pairs(choice.data.items) do
             local item = item_data.item
