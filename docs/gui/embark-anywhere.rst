@@ -22,4 +22,8 @@ Usage
     gui/embark-anywhere
 
 The command will only work when you are on the screen where you can choose your
-embark site.
+embark site. The DFHack logo is not displayed on that screen since its default
+position conflicts with the vanilla embark size selection panel. Remember that
+you can bring up DFHack's `context menu <hotkeys>` with
+:kbd:`Ctrl`:kbd:`Shift`:kbd:`C` or the
+`in-game command launcher <gui/launcher>` directly with the backtick key (\`).
