@@ -291,6 +291,19 @@ local function getWalkGroup(pos)
     return walkGroup ~= 0 and walkGroup or nil
 end
 
+local function hasAllowlistedJob(unit)
+    local job = unit.job.current_job
+    if not job then return false end
+    return job.job_type == df.job_type.GatherPlants or
+        df.job_type_class[df.job_type.attrs[job.job_type].type] == 'Digging'
+end
+
+local function hasAllowlistedPos(pos)
+    local bld = dfhack.buildings.findAtTile(pos)
+    return bld and bld:getType() == df.building_type.Hatch and
+        not bld.door_flags.closed
+end
+
 local function getStrandedUnits()
     local groupCount = 0
     local grouped = {}
@@ -320,10 +333,12 @@ local function getStrandedUnits()
                 or 0
         end
 
-        -- Ignore units who are gathering plants or digging to avoid errors with stepladders and weird digging things
-        if unitIgnored(unit) or (unit.job.current_job and
-                                    (unit.job.current_job.job_type == df.job_type.GatherPlants or
-                                        df.job_type_class[df.job_type.attrs[unit.job.current_job.job_type].type] == 'Digging')) then
+        -- Ignore units who are:
+        --   gathering plants (could be on stepladder)
+        --   digging (could be digging self out of hole)
+        --   standing on an open hatch (which is its own pathability group)
+        -- to avoid false positives
+        if unitIgnored(unit) or hasAllowlistedJob(unit) or hasAllowlistedPos(unitPos) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
             table.insert(ensure_key(grouped, walkGroup), unit)
