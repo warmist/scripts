@@ -906,7 +906,7 @@ local function export_more_legends_xml()
         file:write("\t\t<event>"..event.event.."</event>\n")
         file:write("\t\t<occasion_type>"..event.occasion_type.."</occasion_type>\n")
         file:write("\t\t<site>"..event.site.."</site>\n")
-        file:write("\t\t<unk_1>"..event.unk_1.."</unk_1>\n")
+        file:write("\t\t<reason>"..event.reason.."</reason>\n")
         file:write("\t</historical_event_relationship_supplement>\n")
     end
     end})
