@@ -1285,10 +1285,10 @@ function Design:onRenderFrame(dc, rect)
 
         self.prev_center = mouse_pos
     end
-	
-	-- Set main points
+
+    -- Set main points
     local points = copyall(self.marks)
-	
+
     if self.mirror_point then
         points = self:get_mirrored_points(points)
     end
