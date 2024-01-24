@@ -19,6 +19,10 @@ item for that bodypart (e.g. if you're still manufacturing them).
 
 Uniforms that have no issues are being properly worn will not be affected.
 
+When generating a report of conflicts, items that simply haven't been picked up
+yet or uniform components that haven't been assigned by DF are not considered
+conflicts and are not included in the report.
+
 Usage
 -----
 

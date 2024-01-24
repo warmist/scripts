@@ -163,10 +163,12 @@ local function process(unit, args, need_newline)
     local missing_ids = {} -- map of item ID to item object
     for u_id, item in pairs(assigned_items) do
         if not worn_items[u_id] then
-            need_newline = print_line(unit_name .. " is missing an assigned item, object #" .. u_id .. " '" ..
-                item_description(item) .. "'", need_newline)
+            if not silent then
+                need_newline = print_line(unit_name .. " is missing an assigned item, object #" .. u_id .. " '" ..
+                    item_description(item) .. "'", need_newline)
+            end
             if dfhack.items.getGeneralRef(item, df.general_ref_type.UNIT_HOLDER) then
-                print("  Another unit has a claim on object #" .. u_id .. " '" .. item_description(item) .. "'")
+                need_newline = print_line(unit_name .. " cannot equip item: another unit has a claim on object #" .. u_id .. " '" .. item_description(item) .. "'", need_newline)
                 if args.free then
                     print("  Removing from uniform")
                     assigned_items[u_id] = nil
@@ -220,8 +222,7 @@ local function process(unit, args, need_newline)
     for w_id, item in pairs(worn_items) do
         if assigned_items[w_id] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
             if uncovered[worn_parts[w_id]] then
-                need_newline = print_line("Unit " ..
-                    unit_name ..
+                need_newline = print_line(unit_name ..
                     " potentially has object #" ..
                     w_id .. " '" .. item_description(item) .. "' blocking a missing uniform item.", need_newline)
                 if args.drop then
