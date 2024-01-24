@@ -106,7 +106,10 @@ function EmbarkAnywhereScreen:onInput(keys)
         -- we have to make sure we're off the stack when returning to the title screen
         -- since the top viewscreen will get unceremoniously destroyed by DF
         self.defocused = false
-    elseif keys._MOUSE_L and scr.choosing_embark and not self:clicked_on_panel_mask() then
+    elseif keys._MOUSE_L and scr.choosing_embark and
+        not self.subviews.main:getMouseFramePos() and
+        not self:clicked_on_panel_mask()
+    then
         -- clicked on the map -- time to do our thing
         force_embark(scr)
     end
