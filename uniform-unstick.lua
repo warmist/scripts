@@ -311,27 +311,29 @@ function ReportScreen:init()
     self:addviews{ReportWindow{report=self.report}}
 end
 
+local MIN_WIDTH = 26
+
 EquipOverlay = defclass(EquipOverlay, overlay.OverlayWidget)
 EquipOverlay.ATTRS{
     desc='Adds a link to the equip screen to fix equipment conflicts.',
-    default_pos={x=-101,y=21},
+    default_pos={x=7,y=21},
     default_enabled=true,
     viewscreens='dwarfmode/SquadEquipment/Default',
-    frame={w=26, h=1},
+    frame={w=MIN_WIDTH, h=1},
 }
 
 function EquipOverlay:init()
     self:addviews{
         widgets.TextButton{
             view_id='button',
-            frame={t=0, l=0, r=0, h=1},
+            frame={t=0, w=MIN_WIDTH, r=0, h=1},
             label='Detect conflicts',
             key='CUSTOM_CTRL_T',
             on_activate=self:callback('run_report'),
         },
         widgets.TextButton{
             view_id='button_good',
-            frame={t=0, l=0, r=0, h=1},
+            frame={t=0, w=MIN_WIDTH, r=0, h=1},
             label='  No conflicts  ',
             text_pen=COLOR_GREEN,
             key='CUSTOM_CTRL_T',
@@ -358,6 +360,11 @@ function EquipOverlay:run_report()
     else
         ReportScreen{report=output}:show()
     end
+end
+
+function EquipOverlay:preUpdateLayout(parent_rect)
+    self.frame.w = math.max(0, parent_rect.width - 133) + MIN_WIDTH
+    print('width set to', self.frame.w)
 end
 
 OVERLAY_WIDGETS = {overlay=EquipOverlay}
