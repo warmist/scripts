@@ -87,18 +87,27 @@ local function bodyparts_that_can_wear(unit, item)
     return bodyparts
 end
 
-local function print_bad_labor(unit_name, labor_name)
-    print("WARNING: Unit " .. unit_name .. " has the " .. labor_name ..
-        " labor enabled, which conflicts with military uniforms.")
+-- returns new value of need_newline
+local function print_line(text, need_newline)
+    if need_newline then
+        print()
+    end
+    print(text)
+    return false
+end
+
+local function print_bad_labor(unit_name, labor_name, need_newline)
+    return print_line("WARNING: Unit " .. unit_name .. " has the " .. labor_name ..
+        " labor enabled, which conflicts with military uniforms.", need_newline)
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
-local function process(unit, args)
+local function process(unit, args, need_newline)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
     local unit_name = dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
 
     if not silent then
-        print("Processing unit " .. unit_name)
+        need_newline = print_line("Processing unit " .. unit_name, need_newline)
     end
 
     -- The return value
@@ -108,17 +117,17 @@ local function process(unit, args)
     local squad_position = get_squad_position(unit, unit_name)
     if not squad_position then
         if not silent then
-            print("Unit " .. unit_name .. " does not have a military uniform.")
+            need_newline = print_line(unit_name .. " does not have a military uniform.", need_newline)
         end
         return
     end
 
     if unit.status.labors.MINE then
-        print_bad_labor(unit_name, "mining")
+        need_newline = print_bad_labor(unit_name, "mining", need_newline)
     elseif unit.status.labors.CUTWOOD then
-        print_bad_labor(unit_name, "woodcutting")
+        need_newline = print_bad_labor(unit_name, "woodcutting", need_newline)
     elseif unit.status.labors.HUNT then
-        print_bad_labor(unit_name, "hunting")
+        need_newline = print_bad_labor(unit_name, "hunting", need_newline)
     end
 
     -- Find all worn items which may be at issue.
@@ -154,8 +163,8 @@ local function process(unit, args)
     local missing_ids = {} -- map of item ID to item object
     for u_id, item in pairs(assigned_items) do
         if not worn_items[u_id] then
-            print("Unit " .. unit_name .. " is missing an assigned item, object #" .. u_id .. " '" ..
-                item_description(item) .. "'")
+            need_newline = print_line(unit_name .. " is missing an assigned item, object #" .. u_id .. " '" ..
+                item_description(item) .. "'", need_newline)
             if dfhack.items.getGeneralRef(item, df.general_ref_type.UNIT_HOLDER) then
                 print("  Another unit has a claim on object #" .. u_id .. " '" .. item_description(item) .. "'")
                 if args.free then
@@ -211,10 +220,10 @@ local function process(unit, args)
     for w_id, item in pairs(worn_items) do
         if assigned_items[w_id] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
             if uncovered[worn_parts[w_id]] then
-                print("Unit " ..
+                need_newline = print_line("Unit " ..
                     unit_name ..
                     " potentially has object #" ..
-                    w_id .. " '" .. item_description(item) .. "' blocking a missing uniform item.")
+                    w_id .. " '" .. item_description(item) .. "' blocking a missing uniform item.", need_newline)
                 if args.drop then
                     to_drop[w_id] = item
                 end
@@ -253,8 +262,10 @@ local function main(args)
     end
 
     if args.all then
+        local need_newline = false
         for _, unit in ipairs(dfhack.units.getCitizens(false)) do
-            do_drop(process(unit, args))
+            do_drop(process(unit, args, need_newline))
+            need_newline = true
         end
     else
         local unit = dfhack.gui.getSelectedUnit()
