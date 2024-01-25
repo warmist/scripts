@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.11-r5
+
+## New Tools
 - `control-panel`: new commandline interface for control panel functions
 - `uniform-unstick`: (reinstated) force squad members to drop items that they picked up in the wrong order so they can get everything equipped properly
 - `gui/reveal`: temporarily unhide terrain and then automatically hide it again when you're ready to unpause
@@ -36,14 +48,13 @@ Template for new versions:
 - `item`: perform bulk operations on groups of items.
 
 ## New Features
-- `uniform-unstick`: add overlay to the squad equipment screen to show a equipment conflict report and give you a one-click button to fix
-- `gui/settings-manager`: save and load (optionally automatically) embark difficulty settings and standing orders
+- `uniform-unstick`: add overlay to the squad equipment screen to show a equipment conflict report and give you a one-click button to (attempt to) fix
+- `gui/settings-manager`: save and load embark difficulty settings and standing orders; options for auto-load on new embark
 
 ## Fixes
-- `source`: water and magma sources now persist with fort across saves and loads
-- `gui/design`: fix incorrect dimensions being shown when placing stockpiles, but a start coordinate hasn't been selected yet
+- `source`: water and magma sources and sinks now persist with fort across saves and loads
+- `gui/design`: fix incorrect dimensions being shown when you're placing a stockpile, but a start coordinate hasn't been selected yet
 - `warn-stranded`: don't warn for citizens who are only transiently stranded, like those on stepladders gathering plants or digging themselves out of a hole
-- `warn-stranded`: Update onZoom to use df's centering functionality
 - `ban-cooking`: fix banning creature alcohols resulting in error
 - `confirm`: properly detect clicks on the remove zone button even when the unit selection screen is also open (e.g. the vanilla assign animal to pasture panel)
 - `caravan`: ensure items are marked for trade when the move trade goods dialog is closed even when they were selected and then the list filters were changed such that the items were no longer actively shown
@@ -52,6 +63,7 @@ Template for new versions:
 - `empty-bin`: now correctly sends ammunition in carried quivers to the tile underneath the unit instead of teleporting them to an invalid (or possibly just far away) location
 
 ## Misc Improvements
+- `warn-stranded`: center the screen on the unit when you select one in the list
 - `gui/control-panel`: reduce frequency for `warn-stranded` check to once every 2 days
 - `gui/control-panel`: tools are now organized by type: automation, bugfix, and gameplay
 - `confirm`: updated confirmation dialogs to use clickable widgets and draggable windows
@@ -71,8 +83,6 @@ Template for new versions:
 - `gui/mass-remove`: can now cancel removal for buildings and constructions
 - `fix/stuck-instruments`: now handles instruments that are left in the "in job" state but that don't have any actual jobs associated with them
 - `gui/launcher`: make autocomplete case insensitive
-
-## Removed
 
 # 50.11-r4
 
