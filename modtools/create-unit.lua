@@ -517,10 +517,8 @@ function createFigure(unit,he_civ,he_group)
 
   df.global.world.history.figures:insert("#", hf)
 
-  hf.info = df.historical_figure_info:new()
-  hf.info.whereabouts = df.historical_figure_info.T_whereabouts:new()
-  hf.info.whereabouts.death_condition_parameter_1 = -1
-  hf.info.whereabouts.death_condition_parameter_2 = -1
+  hf.info = {new=true}
+  hf.info.whereabouts = {new=true}
   -- set values that seem related to state and do event
   --change_state(hf, dfg.ui.site_id, region_pos)
 
