@@ -18,6 +18,7 @@ Template for new versions:
 
 ## Fixes
 - `makeown`: fix error when adopting units that need a historical figure to be created
+- `item`: fix missing item categories when using ``--by-type``
 
 ## Misc Improvements
 
