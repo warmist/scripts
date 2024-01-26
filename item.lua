@@ -296,7 +296,7 @@ function executeWithPrinting (action, conditions, options)
     end
     if options.bytype and count > 0 then
         local sorted = {}
-        for tp, ct in ipairs(types) do
+        for tp, ct in pairs(types) do
             table.insert(sorted, { type = tp, count = ct })
         end
         table.sort(sorted, function(a, b) return a.count > b.count end)
