@@ -17,6 +17,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `makeown`: fix error when adopting units that need a historical figure to be created
 
 ## Misc Improvements
 
