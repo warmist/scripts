@@ -376,7 +376,6 @@ end
 
 function EquipOverlay:preUpdateLayout(parent_rect)
     self.frame.w = math.max(0, parent_rect.width - 133) + MIN_WIDTH
-    print('width set to', self.frame.w)
 end
 
 OVERLAY_WIDGETS = {overlay=EquipOverlay}
