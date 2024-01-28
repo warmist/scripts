@@ -821,7 +821,7 @@ function StatusOverlay:init()
 end
 
 function StatusOverlay:get_status_string()
-    local job = dfhack.gui.getSelectedJob()
+    local job = dfhack.gui.getSelectedJob(true)
     if job and job.flags.suspend then
         return "Suspended because: " .. Instance:suspensionDescription(job) .. "."
     end
@@ -829,7 +829,7 @@ function StatusOverlay:get_status_string()
 end
 
 function StatusOverlay:render(dc)
-    local job = dfhack.gui.getSelectedJob()
+    local job = dfhack.gui.getSelectedJob(true)
     if not job or job.job_type ~= df.job_type.ConstructBuilding or not isEnabled() or isBuildingPlanJob(job) then
         return
     end
@@ -862,7 +862,7 @@ function ToggleOverlay:init()
 end
 
 function ToggleOverlay:shouldRender()
-    local job = dfhack.gui.getSelectedJob()
+    local job = dfhack.gui.getSelectedJob(true)
     return job and job.job_type == df.job_type.ConstructBuilding and not isBuildingPlanJob(job)
 end
 
