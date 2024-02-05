@@ -1475,6 +1475,27 @@ function Design:onInput(keys)
             self.placing_mirror = false
             self.needs_update = true
         else
+            -- Clicking center point
+            if #self.marks > 0 then
+                local center = self.shape:get_center()
+                if pos == center and not self.prev_center then
+                    self.start_center = pos
+                    self.prev_center = pos
+                    return true
+                elseif self.prev_center then
+                    --If there was no movement presume user wanted to click the mark underneath instead and let the flow through.
+                    if pos == self.start_center then
+                        self.start_center = nil
+                        self.prev_center = nil
+                    else
+                    -- Since it moved let's just drop the shape here.
+                        self.start_center = nil
+                        self.prev_center = nil
+                        return true
+                    end
+                end
+            end
+
             if self.shape.basic_shape and #self.marks == self.shape.max_points then
                 -- Clicking a corner of a basic shape
                 local shape_top_left, shape_bot_right = self.shape:get_point_dims()
@@ -1510,20 +1531,6 @@ function Design:onInput(keys)
                 if pos == self.extra_points[i] then
                     self.placing_extra = { active = true, index = i }
                     self.needs_update = true
-                    return true
-                end
-            end
-
-            -- Clicking center point
-            if #self.marks > 0 then
-                local center = self.shape:get_center()
-                if pos == center and not self.prev_center then
-                    self.start_center = pos
-                    self.prev_center = pos
-                    return true
-                elseif self.prev_center then
-                    self.start_center = nil
-                    self.prev_center = nil
                     return true
                 end
             end
