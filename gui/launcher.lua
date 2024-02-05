@@ -3,7 +3,6 @@
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
-local textures = require('gui.textures')
 local helpdb = require('helpdb')
 local json = require('json')
 local utils = require('utils')

@@ -17,9 +17,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `makeown`: fix error when adopting units that need a historical figure to be created
-- `item`: fix missing item categories when using ``--by-type``
-- `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
+
 ## Misc Improvements
 
 ## Removed
@@ -33,10 +31,17 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
 
 ## Misc Improvements
 
 ## Removed
+
+# 50.11-r6
+
+## Fixes
+- `makeown`: fix error when adopting units that need a historical figure to be created
+- `item`: fix missing item categories when using ``--by-type``
 
 # 50.11-r5
 
