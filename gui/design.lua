@@ -1495,7 +1495,7 @@ function Design:onInput(keys)
                     end
                 end
             end
-            
+
             if self.shape.basic_shape and #self.marks == self.shape.max_points then
                 -- Clicking a corner of a basic shape
                 local shape_top_left, shape_bot_right = self.shape:get_point_dims()
