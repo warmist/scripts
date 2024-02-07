@@ -32,6 +32,7 @@ end
 local names = {}
 
 function scan_ranges(g_src)
+    local vtables = {}
     for _, range in ipairs(df_ranges) do
         if (not range.read) or range.write or range.execute then
             goto next_range
@@ -77,12 +78,17 @@ function scan_ranges(g_src)
                     vtable = vtable - range.base_addr
                     base_str = (" base='%s'"):format(base)
                 end
-                print(("<vtable-address name='%s' value='0x%x'%s/>"):format(demangled_name, vtable, base_str))
-                names[demangled_name] = true
+                vtables[demangled_name] = {value=vtable, base_str=base_str}
             end
             ::next_ptr::
         end
         ::next_range::
+    end
+    for name, data in pairs(vtables) do
+        if not names[name] then
+            print(("<vtable-address name='%s' value='0x%x'%s/>"):format(name, data.value, data.base_str))
+            names[name] = true
+        end
     end
 end
 
