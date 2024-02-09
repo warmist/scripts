@@ -36,6 +36,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `exportlegends`: increase precision of progress bar and stabilize formatting of the text
+- `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
 
 ## Removed
 

@@ -1,7 +1,7 @@
-local dlg = require 'gui.dialogs'
-local gui = require 'gui'
-local plugin = require 'plugins.autobutcher'
-local widgets = require 'gui.widgets'
+local dlg = require('gui.dialogs')
+local gui = require('gui')
+local plugin = require('plugins.autobutcher')
+local widgets = require('gui.widgets')
 
 local CH_UP = string.char(30)
 local CH_DN = string.char(31)
@@ -644,13 +644,22 @@ function WatchList:zeroOut()
 
     local count = 0
     if choice.race == 1 then
-        plugin.autobutcher_setDefaultTargetAll(count, count, count, count)
+        dlg.showYesNoPrompt(
+            'Are you sure?',
+            'Really set all targets for all races to 0?',
+            COLOR_YELLOW,
+            function()
+                plugin.autobutcher_setDefaultTargetAll(count, count, count, count)
+                self:refresh()
+            end
+        )
     elseif choice.race == 2 then
         plugin.autobutcher_setDefaultTargetNew(count, count, count, count)
+        self:refresh()
     else
         plugin.autobutcher_setWatchListRace(data.id, count, count, count, count, data.watched)
+        self:refresh()
     end
-    self:refresh()
 end
 
 function WatchList:onToggleWatching()
