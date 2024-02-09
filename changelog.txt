@@ -35,6 +35,7 @@ Template for new versions:
 - `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
 
 ## Misc Improvements
+- `exportlegends`: increase precision of progress bar and stabilize formatting of the text
 
 ## Removed
 
