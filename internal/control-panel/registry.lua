@@ -50,6 +50,10 @@ COMMANDS_BY_IDX = {
     {command='tailor', group='automation', mode='enable'},
 
     -- bugfix tools
+    {command='adamantine-cloth-wear', help_command='tweak', group='bugfix', mode='tweak', default=true,
+        desc='Prevents adamantine clothing from wearing out while being worn.'},
+    {command='craft-age-wear', help_command='tweak', group='bugfix', mode='tweak', default=true,
+        desc='Allows items crafted from organic materials to wear out over time.'},
     {command='fix/blood-del', group='bugfix', mode='run', default=true},
     {command='fix/dead-units', group='bugfix', mode='repeat', default=true,
         desc='Fix units still being assigned to burrows after death.',
@@ -65,6 +69,8 @@ COMMANDS_BY_IDX = {
         desc='Fix activity references on stuck instruments to make them usable again.',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
     {command='preserve-tombs', group='bugfix', mode='enable', default=true},
+    {command='reaction-gloves', help_command='tweak', group='bugfix', mode='tweak', default=true,
+        desc='Fixes reactions not producing gloves in sets with correct handedness.'},
 
     -- gameplay tools
     {command='combine', group='gameplay', mode='repeat',
@@ -73,7 +79,11 @@ COMMANDS_BY_IDX = {
     {command='drain-aquifer --top 2', group='gameplay', mode='run',
         desc='Ensure that your maps have no more than 2 layers of aquifer.'},
     {command='dwarfvet', group='gameplay', mode='enable'},
+    {command='eggs-fertile', help_command='tweak', group='gameplay', mode='tweak', default=true,
+        desc='Displays an indicator on fetile eggs.'},
     {command='emigration', group='gameplay', mode='enable'},
+    {command='fast-heat', help_command='tweak', group='gameplay', mode='tweak',
+        desc='Improves temperature update performance.'},
     {command='fastdwarf', group='gameplay', mode='enable'},
     {command='hermit', group='gameplay', mode='enable'},
     {command='hide-tutorials', group='gameplay', mode='system_enable'},
@@ -82,6 +92,8 @@ COMMANDS_BY_IDX = {
     {command='orders-reevaluate', help_command='orders', group='gameplay', mode='repeat',
         desc='Invalidates all work orders once a month, allowing conditions to be rechecked.',
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'orders', 'recheck', ']'}},
+    {command='partial-items', help_command='tweak', group='gameplay', mode='tweak', default=true,
+        desc='Displays percentages on partially-consumed items like hospital cloth.'},
     {command='starvingdead', group='gameplay', mode='enable'},
     {command='warn-starving', group='gameplay', mode='repeat', default=true,
         desc='Show a warning dialog when units are starving or dehydrated.',

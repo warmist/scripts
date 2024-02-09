@@ -12,7 +12,7 @@ local GLOBAL_KEY = 'control-panel'
 local function apply_system_config()
     local enabled_map = common.get_enabled_map()
     for _, data in ipairs(registry.COMMANDS_BY_IDX) do
-        if data.mode == 'system_enable' then
+        if data.mode == 'system_enable' or data.mode == 'tweak' then
             common.apply_command(data, enabled_map)
         end
     end
@@ -101,7 +101,7 @@ local function list_command_group(group, filter_strs, enabled_map)
             header = nil
         end
         local extra = ''
-        if data.mode == 'system_enable' then
+        if data.mode == 'system_enable' or data.mode == 'tweak' then
             extra = ' (global)'
         end
         print(('%d) %s%s'):format(idx, data.command, extra))

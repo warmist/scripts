@@ -5,6 +5,7 @@ local json = require('json')
 local migration = reqscript('internal/control-panel/migration')
 local registry = reqscript('internal/control-panel/registry')
 local repeatUtil = require('repeat-util')
+local tweak = require('plugins.tweak')
 local utils = require('utils')
 
 local CONFIG_FILE = 'dfhack-config/control-panel.json'
@@ -74,6 +75,10 @@ function get_enabled_map()
             enabled_map[name] = true
         end
     end
+    -- get tweak state
+    for name, enabled in pairs(tweak.tweak_get_status()) do
+        enabled_map[name] = enabled
+    end
     return enabled_map
 end
 
@@ -88,7 +93,7 @@ function command_passes_filters(data, target_group, filter_strs)
         return false
     end
     filter_strs = filter_strs or {}
-    local first_word = get_first_word(data.command)
+    local first_word = get_first_word(data.help_command or data.command)
     if dfhack.getHideArmokTools() and helpdb.is_entry(first_word)
         and helpdb.get_entry_tags(first_word).armok
     then
@@ -104,7 +109,7 @@ function get_description(data)
     if data.desc then
         return data.desc
     end
-    local first_word = get_first_word(data.command)
+    local first_word = get_first_word(data.help_command or data.command)
     return helpdb.is_entry(first_word) and helpdb.get_entry_short_help(first_word) or ''
 end
 
@@ -126,12 +131,14 @@ function apply_command(data, enabled_map, enabled)
         enabled = enabled or (enabled == nil and data.default)
         if not enabled then return end
     end
-    if data.mode == 'enable' or data.mode == 'system_enable' then
+    if data.mode == 'enable' or data.mode == 'system_enable' or data.mode == 'tweak' then
         if enabled_map[data.command] == nil then
             dfhack.printerr(('tool not enableable: "%s"'):format(data.command))
             return false
+        elseif data.mode == 'tweak' then
+            dfhack.run_command{'tweak', data.command, enabled and '' or 'disable'}
         else
-            dfhack.run_command({enabled and 'enable' or 'disable', data.command})
+            dfhack.run_command{enabled and 'enable' or 'disable', data.command}
         end
     elseif data.mode == 'repeat' then
         local munged_name = 'control-panel/' .. data.command
