@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `undump-buildings`: (reinstated) remove dump designation from in-use building materials
 
 ## New Features
 
