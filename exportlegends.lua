@@ -47,7 +47,7 @@ end
 progress_item = progress_item or ''
 step_size = step_size or 1
 step_percent = -1
-progress_percent = progress_percent or -1
+progress_percent = progress_percent or -1.00
 last_update_ms = 0
 
 -- should be frequent enough so that user can still effectively use
@@ -69,7 +69,7 @@ local function progress_ipairs(vector, desc, interval)
     local cb = ipairs(vector)
     return function(vector, k, ...)
         if k then
-            progress_percent = math.max(progress_percent, step_percent + ((k * step_size) // #vector))
+            progress_percent = math.max(progress_percent, step_percent + ((k * step_size * 100) // #vector) / 100)
             if #vector >= interval and (k % interval == 0 or k == #vector - 1) then
                 print(('        %s %i/%i (%0.f%%)'):format(desc, k, #vector, (k * 100) / #vector))
             end
@@ -984,7 +984,7 @@ local function export_more_legends_xml()
 
     step_size = math.max(1, 100 // #chunks)
     for k, chunk in ipairs(chunks) do
-        progress_percent = math.max(progress_percent, (100 * k) // #chunks)
+        progress_percent = math.max(progress_percent, ((10000 * k) // #chunks) / 100)
         step_percent = progress_percent
         write_chunk(chunk.name, chunk.fn)
     end
@@ -1012,7 +1012,7 @@ local function wrap_export()
     if progress_percent >= 0 then
         qerror('exportlegends already in progress')
     end
-    progress_percent = 0
+    progress_percent = 0.00
     step_size = 1
     progress_item = 'basic info'
     yield_if_timeout()
@@ -1020,7 +1020,7 @@ local function wrap_export()
     if not ok then
         dfhack.printerr(err)
     end
-    progress_percent = -1
+    progress_percent = -1.00
     step_size = 1
     progress_item = ''
 end
@@ -1049,7 +1049,7 @@ function LegendsOverlay:init()
             subviews={
                 widgets.ToggleHotkeyLabel{
                     view_id='do_export',
-                    frame={t=0, l=1, w=53},
+                    frame={t=0, l=1, r=1},
                     label='Also export DFHack extended legends data:',
                     key='CUSTOM_CTRL_D',
                     visible=function() return progress_percent < 0 end,
@@ -1058,10 +1058,10 @@ function LegendsOverlay:init()
                     frame={t=0, l=1},
                     text={
                         'Exporting ',
-                        {text=function() return progress_item end},
-                        ' (',
-                        {text=function() return progress_percent end, pen=COLOR_YELLOW},
-                        '% complete)'
+                        {width=27, text=function() return progress_item end},
+                        ' ',
+                        {text=function() return ('%.2f'):format(progress_percent) end, pen=COLOR_YELLOW},
+                        '% complete'
                     },
                     visible=function() return progress_percent >= 0 end,
                 },
