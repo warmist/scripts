@@ -144,7 +144,7 @@ end
 
 local function make_enabled_text(self, command, mode, gui_config)
     local label = command
-    if mode == 'system_enable' then
+    if mode == 'system_enable' or mode == 'tweak' then
         label = label .. ' (global)'
     end
 
@@ -183,7 +183,10 @@ local function get_enabled_choices(self)
     self.enabled_map = common.get_enabled_map()
     for _,data in ipairs(registry.COMMANDS_BY_IDX) do
         if data.mode == 'run' then goto continue end
-        if data.mode ~= 'system_enable' and not dfhack.world.isFortressMode() then
+        if data.mode ~= 'system_enable' and
+            data.mode ~= 'tweak' and
+            not dfhack.world.isFortressMode()
+        then
             goto continue
         end
         if not common.command_passes_filters(data, self.group) then goto continue end
@@ -239,7 +242,7 @@ end
 --
 
 local function make_autostart_text(label, mode, enabled)
-    if mode == 'system_enable' then
+    if mode == 'system_enable' or mode == 'tweak' then
         label = label .. ' (global)'
     end
     return {
