@@ -23,7 +23,7 @@ end
 
 local function load_liquid_source()
     repeatUtil.scheduleEvery(GLOBAL_KEY, 12, 'ticks', function()
-        if not next(g_sources_list) then
+        if #g_sources_list == 0 then
             repeatUtil.cancel(GLOBAL_KEY)
         else
             for _, v in ipairs(g_sources_list) do
@@ -52,8 +52,8 @@ local function load_liquid_source()
     end)
 end
 
-local function delete_source_at(key)
-    local v = g_sources_list[key]
+local function delete_source_at(idx)
+    local v = g_sources_list[idx]
 
     if v then
         local block = dfhack.maps.getTileBlock(v.pos)
@@ -62,7 +62,7 @@ local function delete_source_at(key)
             flags.flow_size = 0
             dfhack.maps.enableBlockUpdates(block, true)
         end
-        g_sources_list[key] = nil
+        table.remove(g_sources_list, idx)
     end
 end
 
@@ -72,6 +72,7 @@ local function add_liquid_source(pos, liquid, amount)
     for k, v in ipairs(g_sources_list) do
         if same_xyz(pos, v.pos) then
             delete_source_at(k)
+            break
         end
     end
 
@@ -86,13 +87,14 @@ local function delete_liquid_source(pos)
         if same_xyz(pos, v.pos) then
             print("Source Found")
             delete_source_at(k)
+            break
         end
     end
 end
 
 local function clear_liquid_sources()
-    for k, v in ipairs(g_sources_list) do
-        delete_source_at(k)
+    while #g_sources_list > 0 do
+        delete_source_at(#g_sources_list)
     end
 end
 
@@ -117,7 +119,7 @@ end
 function main(args)
     local command = args[1]
 
-    if command == 'list' then
+    if not command or command == 'list' then
         list_liquid_sources()
         return
     end
@@ -168,14 +170,20 @@ end
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc == SC_WORLD_UNLOADED then
-        clear_liquid_sources()
+        g_sources_list = {}
     end
 
     if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
     end
 
-    g_sources_list = dfhack.persistent.getSiteData(GLOBAL_KEY, {})
+    local data = dfhack.persistent.getSiteData(GLOBAL_KEY, {})
+    g_sources_list = {}
+
+    -- fix up potential errors in previous versions where the list could be non-contiguous
+    for _, v in pairs(data) do
+        table.insert(g_sources_list, v)
+    end
 
     load_liquid_source()
 end
