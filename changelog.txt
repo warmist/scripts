@@ -36,7 +36,7 @@ Template for new versions:
 - `source`: fix issue where removing sources would make some other sources inactive
 
 ## Misc Improvements
-- `exportlegends`: increase precision of progress bar and stabilize formatting of the text
+- `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage
 - `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
 
 ## Removed
