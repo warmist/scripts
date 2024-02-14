@@ -9,6 +9,7 @@ Petitions.ATTRS {
     frame_title='Petitions',
     frame={w=110, h=30},
     resizable=true,
+    resize_min={w=70, h=20},
 }
 
 function Petitions:init()
