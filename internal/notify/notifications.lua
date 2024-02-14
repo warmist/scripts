@@ -20,6 +20,7 @@ end
 local function for_agitated_creature(fn)
     for _, unit in ipairs(df.global.world.units.active) do
         if not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             unit.flags4.agitated_wilderness_creature
         then
@@ -31,6 +32,7 @@ end
 local function for_invader(fn)
     for _, unit in ipairs(df.global.world.units.active) do
         if not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             dfhack.units.isInvader(unit) and
             not dfhack.units.isHidden(unit)
