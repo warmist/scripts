@@ -28,6 +28,7 @@ Template for new versions:
 
 ## New Tools
 - `undump-buildings`: (reinstated) remove dump designation from in-use building materials
+- `gui/petitions`: (reinstated) show outstanding (or all historical) petition agreements for guildhalls and temples
 
 ## New Features
 
