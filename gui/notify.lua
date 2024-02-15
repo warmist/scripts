@@ -30,6 +30,9 @@ function NotifyOverlay:init()
                 widgets.List{
                     view_id='list',
                     frame={t=0, b=0, l=0, r=0},
+                    -- disable scrolling with the keyboard since some people
+                    -- have wasd mapped to the arrow keys
+                    scroll_keys={},
                     on_submit=function(_, choice)
                         choice.state = choice.data.on_click(choice.state)
                     end,
@@ -71,7 +74,7 @@ function NotifyOverlay:overlay_onupdate()
     local _, selected = list:getSelected()
     if selected then
         for i, v in ipairs(choices) do
-            if v.name == selected.name then
+            if v.data.name == selected.data.name then
                 idx = i
                 break
             end
