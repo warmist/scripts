@@ -9,7 +9,7 @@ Petitions.ATTRS {
     frame_title='Petitions',
     frame={w=110, h=30},
     resizable=true,
-    resize_min={w=70, h=20},
+    resize_min={w=70, h=15},
 }
 
 function Petitions:init()
@@ -28,7 +28,11 @@ function Petitions:init()
             on_change=function() self:refresh() end,
         },
     }
+
     self:refresh()
+    local list = self.subviews.list
+    self.frame.w = math.max(list:getContentWidth() + 6, self.resize_min.w)
+    self.frame.h = math.max(list:getContentHeight() + 6, self.resize_min.h)
 end
 
 local function get_choice_text(agr)
