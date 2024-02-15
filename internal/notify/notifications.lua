@@ -137,6 +137,7 @@ NOTIFICATIONS_BY_IDX = {
             local count = 0
             for _, mandate in ipairs(df.global.world.mandates) do
                 -- 5000 (~41 days) is the limit where the icon turns red in the UI
+                -- TODO: change this to 2500 when DF bug 12628 is fixed
                 if mandate.mode == df.mandate.T_mode.Make and
                     mandate.timeout_limit - mandate.timeout_counter < 5000
                 then
