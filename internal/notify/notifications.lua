@@ -1,5 +1,6 @@
 --@module = true
 
+local gui = require('gui')
 local json = require('json')
 local list_agreements = reqscript('list-agreements')
 
@@ -78,6 +79,7 @@ local function zoom_to_next(for_fn, state)
     end
 end
 
+-- the order of this list controls the order the notifications will appear in the overlay
 NOTIFICATIONS_BY_IDX = {
     {
         name='traders_ready',
@@ -126,6 +128,30 @@ NOTIFICATIONS_BY_IDX = {
                 dfhack.gui.revealInDwarfmodeMap(
                     xyz2pos(bld.centerx, bld.centery, bld.z), true, true)
             end
+        end,
+    },
+    {
+        name='mandates_expiring',
+        desc='Notifies when a production mandate is within 1 month of expiring.',
+        fn=function()
+            local count = 0
+            for _, mandate in ipairs(df.global.world.mandates) do
+                -- 5000 (~41 days) is the limit where the icon turns red in the UI
+                if mandate.mode == df.mandate.T_mode.Make and
+                    mandate.timeout_limit - mandate.timeout_counter < 5000
+                then
+                    count = count + 1
+                end
+            end
+            if count > 0 then
+                return ('%d production mandate%s near deadline'):format(
+                    count,
+                    count == 1 and '' or 's'
+                )
+            end
+        end,
+        on_click=function()
+            gui.simulateInput(dfhack.gui.getDFViewscreen(), 'D_NOBLES')
         end,
     },
     {
