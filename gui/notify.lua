@@ -95,26 +95,36 @@ OVERLAY_WIDGETS = {
 Notify = defclass(Notify, widgets.Window)
 Notify.ATTRS{
     frame_title='Notification settings',
-    frame={w=40, h=17},
+    frame={w=40, h=21},
 }
 
 function Notify:init()
     self:addviews{
-        widgets.List{
-            view_id='list',
-            frame={t=0, l=0, b=6},
-            on_submit=self:callback('toggle'),
-            on_select=function(_, choice)
-                self.subviews.desc.text_to_wrap = choice.desc
-                if self.frame_parent_rect then
-                    self:updateLayout()
-                end
-            end,
+        widgets.Panel{
+            frame={t=0, l=0, b=7},
+            frame_style=gui.FRAME_INTERIOR,
+            subviews={
+                widgets.List{
+                    view_id='list',
+                    on_submit=self:callback('toggle'),
+                    on_select=function(_, choice)
+                        self.subviews.desc.text_to_wrap = choice.desc
+                        if self.frame_parent_rect then
+                            self:updateLayout()
+                        end
+                    end,
+                },
+            },
         },
-        widgets.WrappedLabel{
-            view_id='desc',
-            frame={b=3, l=0, h=3},
-            auto_height=false,
+        widgets.Panel{
+            frame={b=2, l=0, h=5},
+            frame_style=gui.FRAME_INTERIOR,
+            subviews={
+                widgets.WrappedLabel{
+                    view_id='desc',
+                    auto_height=false,
+                },
+            },
         },
         widgets.HotkeyLabel{
             frame={b=0, l=0},
