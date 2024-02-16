@@ -126,11 +126,10 @@ local function getSexString(sex)
 end
 
 local function getUnitDescription(unit)
-    local desc = ('[%s] %s %s'):format(
+    return ('[%s] %s %s'):format(
         dfhack.units.getProfessionName(unit),
         dfhack.TranslateName(dfhack.units.getVisibleName(unit)),
         getSexString(unit.sex))
-    return dfhack.df2console(desc)
 end
 
 -- Use group data, index, and command arguments to generate a group
@@ -468,7 +467,7 @@ elseif positionals[1] == 'status' then
                 local text = getIgnoredPrefix(unit)
                 text = addId(text, unit)
 
-                print(text..getUnitDescription(unit)..groupDesignation)
+                print(text..dfhack.df2console(getUnitDescription(unit))..groupDesignation)
             end
         end
         return true
@@ -480,7 +479,7 @@ elseif positionals[1] == 'status' then
         for _, unit in ipairs(units) do
             local text = ''
             text = addId(text, unit)
-            print(text..getUnitDescription(unit)..' {'..walkGroup..'}')
+            print(text..dfhack.df2console(getUnitDescription(unit))..' {'..walkGroup..'}')
         end
     end
     if #strandedGroups == 0 then
