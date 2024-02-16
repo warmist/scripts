@@ -46,6 +46,8 @@ Template for new versions:
 - `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
 
 ## Removed
+- `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation
+- `gui/create-tree`: replaced by `gui/sandbox`
 
 # 50.11-r6
 
