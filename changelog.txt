@@ -31,6 +31,7 @@ Template for new versions:
 - `gui/petitions`: (reinstated) show outstanding (or all historical) petition agreements for guildhalls and temples
 - `gui/notify`: display important notifications that vanilla doesn't support yet and provide quick zoom links to notification targets. Initial supported notification types: trader finished unloading, agitated creatures on map, invaders on map, petitions for guildhalls/temples not yet satisfied, production mandate nearing expiration time
 - `list-waves`: (reinstated) show migration wave information
+- `make-legendary`: (reinstated) make a dwarf legendary in specified skills
 
 ## New Features
 
