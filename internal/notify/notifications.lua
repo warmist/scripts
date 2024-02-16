@@ -125,6 +125,17 @@ local function zoom_to_next(for_fn, state)
     end
 end
 
+local function get_stranded_message()
+    local count = #warn_stranded.getStrandedGroups()
+    if count > 0 then
+        return ('%d group%s of citizens %s stranded'):format(
+            count,
+            count == 1 and '' or 's',
+            count == 1 and 'is' or 'are'
+        )
+    end
+end
+
 -- the order of this list controls the order the notifications will appear in the overlay
 NOTIFICATIONS_BY_IDX = {
     {
@@ -233,16 +244,16 @@ NOTIFICATIONS_BY_IDX = {
         on_click=curry(zoom_to_next, for_invader),
     },
     {
-        name='warn_stranded',
-        desc='Notifies when units are stranded from the main group.',
-        fn=function() end,
-        on_click=function() dfhack.run_script('warn-stranded') end,
-    },
-    {
         name='warn_stealers',
         desc='Notifies when curious creatures enter the map that can steal your stuff.',
         fn=curry(count_units, for_stealer, 'item-stealing creature'),
         on_click=curry(zoom_to_next, for_stealer),
+    },
+    {
+        name='warn_stranded',
+        desc='Notifies when units are stranded from the main group.',
+        fn=get_stranded_message,
+        on_click=function() dfhack.run_script('warn-stranded') end,
     },
 }
 
