@@ -35,6 +35,7 @@ Template for new versions:
 
 ## Fixes
 - `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
+- `warn-stranded`: when there was at least one truly stuck unit and miners were actively mining, the miners were also confusingly shown in the stuck units list
 - `source`: fix issue where removing sources would make some other sources inactive
 
 ## Misc Improvements

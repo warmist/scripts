@@ -3,10 +3,9 @@
 -- GUI heavily based off of autobutcher
 --@module = true
 
-local gui = require 'gui'
-local widgets = require 'gui.widgets'
-local argparse = require 'argparse'
-local args = {...}
+local gui = require('gui')
+local widgets = require('gui.widgets')
+local argparse = require('argparse')
 
 local GLOBAL_KEY = 'warn-stranded_v2'
 
@@ -280,10 +279,6 @@ end
 --                         Core Logic
 -- ======================================================================
 
-local function compareGroups(group_one, group_two)
-    return #group_one['units'] < #group_two['units']
-end
-
 local function getWalkGroup(pos)
     local block = dfhack.maps.getTileBlock(pos)
     if not block then return end
@@ -316,12 +311,12 @@ local function getStrandedUnits()
     -- Pathability group calculation is from gui/pathable
     for _, unit in ipairs(citizens) do
         local unitPos = xyz2pos(dfhack.units.getPosition(unit))
-        local walkGroup = getWalkGroup(unitPos) or 0
+        local walkGroup = getWalkGroup(unitPos)
 
         -- if on an unpathable tile, use the walkGroup of an adjacent tile. this prevents
         -- warnings for units that are walking under falling water, which sometimes makes
         -- a tile unwalkable while the unit is standing on it
-        if walkGroup == 0 then
+        if not walkGroup then
             walkGroup = getWalkGroup(xyz2pos(unitPos.x-1, unitPos.y-1, unitPos.z))
                 or getWalkGroup(xyz2pos(unitPos.x, unitPos.y-1, unitPos.z))
                 or getWalkGroup(xyz2pos(unitPos.x+1, unitPos.y-1, unitPos.z))
@@ -333,21 +328,23 @@ local function getStrandedUnits()
                 or 0
         end
 
-        -- Ignore units who are:
+        -- Skip units who are:
         --   gathering plants (could be on stepladder)
         --   digging (could be digging self out of hole)
         --   standing on an open hatch (which is its own pathability group)
         -- to avoid false positives
-        if unitIgnored(unit) or hasAllowlistedJob(unit) or hasAllowlistedPos(unitPos) then
+        if hasAllowlistedJob(unit) or hasAllowlistedPos(unitPos) then
+            goto skip
+        end
+        if unitIgnored(unit) then
             table.insert(ensure_key(ignoredGroup, walkGroup), unit)
         else
-            table.insert(ensure_key(grouped, walkGroup), unit)
-
-            -- Count each new group
-            if #grouped[walkGroup] == 1 then
+            if not grouped[walkGroup] then
                 groupCount = groupCount + 1
             end
+            table.insert(ensure_key(grouped, walkGroup), unit)
         end
+        ::skip::
     end
 
     -- No one is stranded, so stop here
@@ -364,7 +361,7 @@ local function getStrandedUnits()
 
     -- This data structure is super easy to sort from biggest to smallest
     -- Our group number is just the array index and is sorted for us
-    table.sort(rawGroups, compareGroups)
+    table.sort(rawGroups, function(a, b) return #a['units'] < #b['units'] end)
 
     -- The biggest group is not stranded
     mainGroup = rawGroups[#rawGroups]['walkGroup']
@@ -490,7 +487,7 @@ end
 --                       Command Line Interface
 -- =========================================================================
 
-local positionals = argparse.processArgsGetopt(args, {})
+local positionals = argparse.processArgsGetopt({...}, {})
 local parameter = tonumber(positionals[2])
 
 if positionals[1] == 'clear' then
