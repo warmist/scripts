@@ -23,7 +23,7 @@ MoveGoods.ATTRS {
 }
 
 local STATUS_COL_WIDTH = 7
-local VALUE_COL_WIDTH = 6
+local VALUE_COL_WIDTH = 9
 local QTY_COL_WIDTH = 5
 
 local function sort_noop(a, b)
