@@ -45,6 +45,7 @@ Template for new versions:
 ## Misc Improvements
 - `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage
 - `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
+- `caravan`: move goods to trade depot dialog now allocates more space for the display of the value of very expensive items
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation
