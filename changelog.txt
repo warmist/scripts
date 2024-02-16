@@ -33,6 +33,7 @@ Template for new versions:
 - `list-waves`: (reinstated) show migration wave information
 - `make-legendary`: (reinstated) make a dwarf legendary in specified skills
 - `combat-harden`: (reinstated) set a dwarf's resistence to being affected by visible corpses
+- `add-thought`: (reinstated) add custom thoughts to a dwarf
 
 ## New Features
 
