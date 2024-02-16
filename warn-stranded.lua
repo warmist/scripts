@@ -1,11 +1,9 @@
 -- Detects and alerts when a citizen is stranded
--- Logic heavily based off of warn-starving
--- GUI heavily based off of autobutcher
 --@module = true
 
+local argparse = require('argparse')
 local gui = require('gui')
 local widgets = require('gui.widgets')
-local argparse = require('argparse')
 
 local GLOBAL_KEY = 'warn-stranded_v2'
 
@@ -17,21 +15,16 @@ ignoresCache = ignoresCache or {}
 
 -- Clear the ignore list
 local function clear()
-    for index, entry in pairs(ignoresCache) do
-        entry:delete()
-        ignoresCache[index] = nil
-    end
+    ignoresCache = {}
 end
 
 -- Taken from warn-starving
 local function getSexString(sex)
     local sym = df.pronoun_type.attrs[sex].symbol
-
     if sym then
-        return "("..sym..")"
-    else
-        return ""
+        return ('(%s)'):format(sym)
     end
+    return ''
 end
 
 -- Partially taken from warn-starving
@@ -265,7 +258,10 @@ function WarningWindow:onToggleGroup()
     self:initListChoices()
 end
 
-WarningScreen = defclass(WarningScreen, gui.ZScreenModal)
+WarningScreen = defclass(WarningScreen, gui.ZScreen)
+WarningScreen.ATTRS{
+    focus_path='warn-stranded',
+}
 
 function WarningScreen:init(info)
     self:addviews{WarningWindow{groups=info.groups}}
@@ -299,17 +295,16 @@ local function hasAllowlistedPos(pos)
         not bld.door_flags.closed
 end
 
-local function getStrandedUnits()
+function getStrandedUnits()
     local groupCount = 0
     local grouped = {}
-    local citizens = dfhack.units.getCitizens(true)
 
     -- Don't use ignored units to determine if there are any stranded units
     -- but keep them to display later
     local ignoredGroup = {}
 
     -- Pathability group calculation is from gui/pathable
-    for _, unit in ipairs(citizens) do
+    for _, unit in ipairs(dfhack.units.getCitizens(true)) do
         local unitPos = xyz2pos(dfhack.units.getPosition(unit))
         local walkGroup = getWalkGroup(unitPos)
 
@@ -367,45 +362,52 @@ local function getStrandedUnits()
     mainGroup = rawGroups[#rawGroups]['walkGroup']
     table.remove(rawGroups, #rawGroups)
 
-    -- Merge ignoredGroup with grouped
-    for index, units in pairs(ignoredGroup) do
+
+end
+
+function getStrandedUnitsWithIgnored()
+    local result, strandedGroups, mainGroup, ignoredGroups = getStrandedUnits()
+
+    if not result then return {} end
+
+    -- Merge ignoredGroups with strandedGroups
+    for walkGroup, units in pairs(ignoredGroups) do
         local groupIndex = nil
 
         -- Handle ignored units in mainGroup by shifting other groups down
         -- We need to list them so they can be toggled
-        if index == mainGroup then
-            table.insert(rawGroups, 1, { units = {}, walkGroup = mainGroup, mainGroup = true })
+        if walkGroup == mainGroup then
+            table.insert(strandedGroups, 1,
+                { units = {}, walkGroup = mainGroup, mainGroup = true })
             groupIndex = 1
         end
 
         -- Find matching group
-        for i, group in ipairs(rawGroups) do
-            if group.walkGroup == index then
+        for i, group in ipairs(ignoredGroups) do
+            if group.walkGroup == walkGroup then
                 groupIndex = i
             end
         end
 
         -- No matching group
-        if groupIndex == nil then
-            table.insert(rawGroups, { units = {}, walkGroup = index })
-            groupIndex = #rawGroups
+        if not groupIndex then
+            table.insert(strandedGroups, { units = {}, walkGroup = walkGroup })
+            groupIndex = #strandedGroups
         end
 
         -- Put all the units in the appropriate group
         for _, unit in ipairs(units) do
-            table.insert(rawGroups[groupIndex]['units'], unit)
+            table.insert(strandedGroups[groupIndex]['units'], unit)
         end
     end
 
     -- Key = group number (not pathability group number)
     -- Value = { units = <array of units>, walkGroup = <pathability group>, mainGroup = <is this ignored units from the main group?> }
-    return true, rawGroups
+    return strandedGroups
 end
 
 local function findCitizen(unitId)
-    local citizens = dfhack.units.getCitizens()
-
-    for _, citizen in ipairs(citizens) do
+    for _, citizen in ipairs(dfhack.units.getCitizens(true)) do
         if citizen.id == unitId then return citizen end
     end
 
@@ -458,15 +460,14 @@ local function unignoreGroup(groups, groupNumber)
 end
 
 function doCheck()
-    local result, strandedGroups = getStrandedUnits()
+    local strandedGroups = getStrandedUnitsWithIgnored()
 
-    if result then
+    if #strandedGroups > 0 then
         return WarningScreen{groups=strandedGroups}:show()
     end
 end
 
 -- Load ignores list on save game load
--- WARNING: This has to be above `dfhack_flags.module` or it will not work as intended on first game load
 dfhack.onStateChange[GLOBAL_KEY] = function(state_change)
     if state_change ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
         return
@@ -495,9 +496,9 @@ if positionals[1] == 'clear' then
     clear()
 
 elseif positionals[1] == 'status' then
-    local result, strandedGroups = getStrandedUnits()
+    local strandedGroups = getStrandedUnitsWithIgnored()
 
-    if result then
+    if #strandedGroups > 0 then
         for groupIndex, group in ipairs(strandedGroups) do
             local groupDesignation = getGroupDesignation(group, groupIndex, true)
 
@@ -514,25 +515,20 @@ elseif positionals[1] == 'status' then
         return true
     end
 
-
     print('No citizens are currently stranded.')
+    print()
+    print('Ignored citizens:')
 
-    -- We have some ignored citizens
-    if not (next(strandedGroups) == nil) then
-        print('\nIgnored citizens:')
+    for walkGroup, units in pairs(strandedGroups) do
+        for _, unit in ipairs(units) do
+            local text = ''
 
-        for walkGroup, units in pairs(strandedGroups) do
-            for _, unit in ipairs(units) do
-                local text = ''
+            text = addId(text, unit)
+            text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
 
-                text = addId(text, unit)
-                text = text..getUnitDescription(unit)..' {'..walkGroup..'}'
-
-                print(text)
-            end
+            print(text)
         end
     end
-
 elseif positionals[1] == 'ignore' then
     if not parameter then
         print('Must provide unit id to the ignore command.')

@@ -97,12 +97,6 @@ COMMANDS_BY_IDX = {
     {command='partial-items', help_command='tweak', group='gameplay', mode='tweak', default=true,
         desc='Displays percentages on partially-consumed items like hospital cloth.'},
     {command='starvingdead', group='gameplay', mode='enable'},
-    {command='warn-starving', group='gameplay', mode='repeat', default=true,
-        desc='Show a warning dialog when units are starving or dehydrated.',
-        params={'--time', '10', '--timeUnits', 'days', '--command', '[', 'warn-starving', ']'}},
-    {command='warn-stranded', group='gameplay', mode='repeat',
-        desc='Show a warning dialog when units are stranded from all others.',
-        params={'--time', '2', '--timeUnits', 'days', '--command', '[', 'warn-stranded', ']'}},
     {command='work-now', group='gameplay', mode='enable'},
 }
 

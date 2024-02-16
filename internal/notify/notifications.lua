@@ -3,6 +3,7 @@
 local gui = require('gui')
 local json = require('json')
 local list_agreements = reqscript('list-agreements')
+local warn_stranded = reqscript('warn-stranded')
 
 local CONFIG_FILE = 'dfhack-config/notify.json'
 
@@ -37,6 +38,51 @@ local function for_invader(fn)
             not unit.flags1.caged and
             dfhack.units.isInvader(unit) and
             not dfhack.units.isHidden(unit)
+        then
+            if fn(unit) then return end
+        end
+    end
+end
+
+local function is_in_dire_need(unit)
+    return unit.counters2.hunger_timer > 75000 or
+        unit.counters2.thirst_timer > 50000 or
+        unit.counters2.sleepiness_timer > 150000
+end
+
+local function for_starving(fn)
+    for _, unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
+            dfhack.units.isSane(unit) and
+            not dfhack.units.isFortControlled(unit) and
+            is_in_dire_need(unit)
+        then
+            if fn(unit) then return end
+        end
+    end
+end
+
+local races = df.global.world.raws.creatures.all
+
+local function is_stealer(unit)
+    local casteFlags = races[unit.race].caste[unit.caste].flags
+    if casteFlags.CURIOUS_BEAST_EATER or
+        casteFlags.CURIOUS_BEAST_GUZZLER or
+        casteFlags.CURIOUS_BEAST_ITEM
+    then
+        return true
+    end
+end
+
+local function for_stealer(fn)
+    for _, unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
+            not unit.flags1.caged and
+            not dfhack.units.isHidden(unit) and
+            not dfhack.units.isFortControlled(unit) and
+            is_stealer(unit)
         then
             if fn(unit) then return end
         end
@@ -169,6 +215,12 @@ NOTIFICATIONS_BY_IDX = {
         on_click=function() dfhack.run_script('gui/petitions') end,
     },
     {
+        name='warn_starving',
+        desc='Reports units that are dangerously hungry, thirsty, or drowsy.',
+        fn=curry(count_units, for_starving, 'starving, dehydrated, or drowsy unit'),
+        on_click=curry(zoom_to_next, for_starving),
+    },
+    {
         name='agitated_count',
         desc='Notifies when there are agitated animals on the map.',
         fn=curry(count_units, for_agitated_creature, 'agitated animal'),
@@ -179,6 +231,18 @@ NOTIFICATIONS_BY_IDX = {
         desc='Notifies when there are active invaders on the map.',
         fn=curry(count_units, for_invader, 'invader'),
         on_click=curry(zoom_to_next, for_invader),
+    },
+    {
+        name='warn_stranded',
+        desc='Notifies when units are stranded from the main group.',
+        fn=function() end,
+        on_click=function() dfhack.run_script('warn-stranded') end,
+    },
+    {
+        name='warn_stealers',
+        desc='Notifies when curious creatures enter the map that can steal your stuff.',
+        fn=curry(count_units, for_stealer, 'item-stealing creature'),
+        on_click=curry(zoom_to_next, for_stealer),
     },
 }
 
