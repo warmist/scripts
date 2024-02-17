@@ -164,7 +164,6 @@ NOTIFICATIONS_BY_IDX = {
                     if item and item.flags.trader and
                         not trader_goods_in_depot[item_id]
                     then
-                        print('trader item not found: ', item_id)
                         goto skip
                     end
                 end
