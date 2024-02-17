@@ -143,32 +143,22 @@ NOTIFICATIONS_BY_IDX = {
         desc='Notifies when traders are ready to trade at the depot.',
         fn=function()
             if #caravans == 0 then return end
-            local bld = get_active_depot()
-            if not bld then return end
-            local trader_goods_in_depot = {}
-            for _, contained_item in ipairs(bld.contained_items) do
-                local item = contained_item.item
-                if item.flags.trader then
-                    trader_goods_in_depot[item.id] = true
-                    for _, binned_item in ipairs(dfhack.items.getContainedItems(item)) do
-                        if binned_item.flags.trader then
-                            trader_goods_in_depot[binned_item.id] = true
-                        end
-                    end
-                end
-            end
             local num_ready = 0
             for _, car in ipairs(caravans) do
                 if car.trade_state ~= df.caravan_state.T_trade_state.AtDepot then
                     goto skip
                 end
-                for _, item_id in ipairs(car.goods) do
-                    local item = df.item.find(item_id)
-                    if item and item.flags.trader and
-                        not trader_goods_in_depot[item_id]
-                    then
-                        goto skip
+                local car_civ = car.entity
+                for _, unit in ipairs(df.global.world.units.active) do
+                    if unit.civ_id ~= car_civ or not dfhack.units.isMerchant(unit) then
+                        goto continue
                     end
+                    for _, inv_item in ipairs(unit.inventory) do
+                        if inv_item.item.flags.trader then
+                            goto skip
+                        end
+                    end
+                    ::continue::
                 end
                 num_ready = num_ready + 1
                 ::skip::

@@ -14,7 +14,7 @@ local LIST_MAX_HEIGHT = 5
 NotifyOverlay = defclass(NotifyOverlay, overlay.OverlayWidget)
 NotifyOverlay.ATTRS{
     desc='Shows list of active notifications.',
-    default_pos={x=1,y=-4},
+    default_pos={x=1,y=-8},
     default_enabled=true,
     viewscreens='dwarfmode/Default',
     frame={w=30, h=LIST_MAX_HEIGHT+2},
