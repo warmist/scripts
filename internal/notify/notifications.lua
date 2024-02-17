@@ -159,6 +159,9 @@ NOTIFICATIONS_BY_IDX = {
             end
             local num_ready = 0
             for _, car in ipairs(caravans) do
+                if car.trade_state ~= df.caravan_state.T_trade_state.AtDepot then
+                    goto skip
+                end
                 for _, item_id in ipairs(car.goods) do
                     local item = df.item.find(item_id)
                     if item and item.flags.trader and
@@ -192,10 +195,8 @@ NOTIFICATIONS_BY_IDX = {
         fn=function()
             local count = 0
             for _, mandate in ipairs(df.global.world.mandates) do
-                -- 5000 (~41 days) is the limit where the icon turns red in the UI
-                -- TODO: change this to 2500 when DF bug 12628 is fixed
                 if mandate.mode == df.mandate.T_mode.Make and
-                    mandate.timeout_limit - mandate.timeout_counter < 5000
+                    mandate.timeout_limit - mandate.timeout_counter < 2500
                 then
                     count = count + 1
                 end
