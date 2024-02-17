@@ -44,6 +44,20 @@ local function for_invader(fn)
     end
 end
 
+local function for_hostile(fn)
+    for _, unit in ipairs(df.global.world.units.active) do
+        if not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
+            not unit.flags1.caged and
+            not dfhack.units.isInvader(unit) and
+            dfhack.units.isDanger(unit) and
+            not dfhack.units.isHidden(unit)
+        then
+            if fn(unit) then return end
+        end
+    end
+end
+
 local function is_in_dire_need(unit)
     return unit.counters2.hunger_timer > 75000 or
         unit.counters2.thirst_timer > 50000 or
@@ -232,6 +246,12 @@ NOTIFICATIONS_BY_IDX = {
         desc='Notifies when there are active invaders on the map.',
         fn=curry(count_units, for_invader, 'invader'),
         on_click=curry(zoom_to_next, for_invader),
+    },
+    {
+        name='hostile_count',
+        desc='Notifies when there are non-invader hostiles (e.g. megabeasts) on the map.',
+        fn=curry(count_units, for_hostile, 'non-invader hostile'),
+        on_click=curry(zoom_to_next, for_hostile),
     },
     {
         name='warn_stealers',

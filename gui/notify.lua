@@ -95,7 +95,7 @@ OVERLAY_WIDGETS = {
 Notify = defclass(Notify, widgets.Window)
 Notify.ATTRS{
     frame_title='Notification settings',
-    frame={w=40, h=21},
+    frame={w=40, h=22},
 }
 
 function Notify:init()
