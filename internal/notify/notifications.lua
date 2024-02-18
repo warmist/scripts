@@ -69,7 +69,7 @@ local function for_starving(fn)
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             dfhack.units.isSane(unit) and
-            not dfhack.units.isFortControlled(unit) and
+            dfhack.units.isFortControlled(unit) and
             is_in_dire_need(unit)
         then
             if fn(unit) then return end
