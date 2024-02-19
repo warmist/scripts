@@ -51,7 +51,9 @@ local function for_hostile(fn)
             not unit.flags1.caged and
             not dfhack.units.isInvader(unit) and
             dfhack.units.isDanger(unit) and
-            not dfhack.units.isHidden(unit)
+            not dfhack.units.isFortControlled(unit) and
+            not dfhack.units.isHidden(unit) and
+            not unit.flags4.agitated_wilderness_creature
         then
             if fn(unit) then return end
         end
@@ -96,6 +98,7 @@ local function for_stealer(fn)
             not unit.flags1.caged and
             not dfhack.units.isHidden(unit) and
             not dfhack.units.isFortControlled(unit) and
+            not unit.flags4.agitated_wilderness_creature and
             is_stealer(unit)
         then
             if fn(unit) then return end
