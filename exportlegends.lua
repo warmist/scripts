@@ -82,7 +82,7 @@ end
 local function make_chunk(name, vector, fn)
     num_total = num_total + #vector
     return {
-        name='landmasses',
+        name=name,
         vector=vector,
         fn=fn,
     }
