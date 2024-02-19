@@ -79,6 +79,15 @@ local function for_starving(fn)
     end
 end
 
+local function for_moody(fn)
+    for _, unit in ipairs(dfhack.units.getCitizens(false)) do
+        local job = unit.job.current_job
+        if job and df.job_type_class[df.job_type.attrs[job.job_type].type] == 'StrangeMood' then
+            if fn(unit) then return end
+        end
+    end
+end
+
 local races = df.global.world.raws.creatures.all
 
 local function is_stealer(unit)
@@ -231,6 +240,35 @@ NOTIFICATIONS_BY_IDX = {
             end
         end,
         on_click=function() dfhack.run_script('gui/petitions') end,
+    },
+    {
+        name='moody_status',
+        desc='Describes the status of the current moody dwarf: gathering materials, working, or stuck',
+        fn=function()
+            local message
+            for_moody(function(unit)
+                local job = unit.job.current_job
+                local bld = dfhack.job.getHolder(job)
+                if not bld then
+                    if dfhack.buildings.findAtTile(unit.path.dest) then
+                        message = 'moody dwarf is claiming a workshop'
+                    else
+                        message = 'moody dwarf can\'t find needed workshop!'
+                    end
+                elseif job.flags.fetching or job.flags.bringing or
+                    unit.path.goal == df.unit_path_goal.None
+                then
+                    message = 'moody dwarf is gathering items'
+                elseif job.flags.working then
+                    message = 'moody dwarf is working'
+                else
+                    message = 'moody dwarf can\'t find needed item!'
+                end
+                return true
+            end)
+            return message
+        end,
+        on_click=curry(zoom_to_next, for_moody),
     },
     {
         name='warn_starving',
