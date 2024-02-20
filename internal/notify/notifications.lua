@@ -24,6 +24,7 @@ local function for_agitated_creature(fn)
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
+            not unit.flags1.chained and
             unit.flags4.agitated_wilderness_creature
         then
             if fn(unit) then return end
@@ -36,6 +37,7 @@ local function for_invader(fn)
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
+            not unit.flags1.chained and
             dfhack.units.isInvader(unit) and
             not dfhack.units.isHidden(unit)
         then
@@ -49,6 +51,7 @@ local function for_hostile(fn)
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
+            not unit.flags1.chained and
             not dfhack.units.isInvader(unit) and
             dfhack.units.isDanger(unit) and
             not dfhack.units.isFortControlled(unit) and
@@ -105,6 +108,7 @@ local function for_stealer(fn)
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
+            not unit.flags1.chained and
             not dfhack.units.isHidden(unit) and
             not dfhack.units.isFortControlled(unit) and
             not unit.flags4.agitated_wilderness_creature and
