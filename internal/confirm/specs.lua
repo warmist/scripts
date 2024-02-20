@@ -387,28 +387,29 @@ ConfirmSpec{
     message=function()
         return ('Are you sure you want to convict %s? This action is irreversible.'):format(selected_convict_name)
     end,
-    intercept_keys='_MOUSE_L',
-    intercept_frame={r=31, t=14, w=11, b=5},
+    intercept_keys={'_MOUSE_L', 'SELECT'},
     context='dwarfmode/Info/JUSTICE/Convicting',
-    predicate=function(_, mouse_offset)
-        local justice = mi.info.justice
-        local num_choices = #justice.conviction_list
-        if num_choices == 0 then return false end
-        local sw, sh = dfhack.screen.getWindowSize()
-        local y_offset = sw >= 155 and 0 or 4
-        local max_visible_buttons = (sh - (19 + y_offset)) // 3
-        -- adjust detection area depending on presence of scrollbar
-        if num_choices > max_visible_buttons and mouse_offset.x > 9 then
-            return false
-        elseif num_choices <= max_visible_buttons and mouse_offset.x <= 1 then
-            return false
+    predicate=function(keys)
+        local convict = dfhack.gui.getWidget(mi.info.justice, 'Tabs', 'Open cases', 'Right panel', 'Convict')
+        local scroll_rows = dfhack.gui.getWidget(convict, 'Unit List', 1)
+        local selected_pos
+        if keys.SELECT then
+            selected_pos = convict.cursor_idx
+        else
+            local visible_rows = scroll_rows.num_visible
+            if visible_rows == 0 then return false end
+            local scroll_pos = scroll_rows.scroll
+            local first_portrait_rect = dfhack.gui.getWidget(scroll_rows, scroll_pos, 0).rect
+            local last_name_rect = dfhack.gui.getWidget(scroll_rows, scroll_pos+visible_rows-1, 1).rect
+            local x, y = dfhack.screen.getMousePos()
+            if x < first_portrait_rect.x1 or x > last_name_rect.x2 or
+                y < first_portrait_rect.y1 or y >= first_portrait_rect.y1+3*visible_rows
+            then
+                return false
+            end
+            selected_pos = scroll_pos + (y - first_portrait_rect.y1) // 3
         end
-        local num_visible_buttons = math.min(num_choices, max_visible_buttons)
-        local selected_button_offset = (mouse_offset.y - y_offset) // 3
-        if selected_button_offset >= num_visible_buttons then
-            return false
-        end
-        local unit = justice.conviction_list[selected_button_offset + justice.scroll_position_conviction]
+        local unit = dfhack.gui.getWidget(scroll_rows, selected_pos, 0).u
         selected_convict_name = dfhack.TranslateName(dfhack.units.getVisibleName(unit))
         if selected_convict_name == '' then
             selected_convict_name = 'this creature'
