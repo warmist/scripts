@@ -47,6 +47,7 @@ Template for new versions:
 - `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage
 - `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
 - `caravan`: move goods to trade depot dialog now allocates more space for the display of the value of very expensive items
+- `extinguish`: allow selecting units/items/buildings in the UI to target them for extinguishing; keyboard cursor is only required for extinguishing map tiles that cannot be selected any other way
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation
