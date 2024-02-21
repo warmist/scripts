@@ -1,11 +1,7 @@
 -- Prints the sum of all citizens' needs.
 
 local fort_needs = {}
-for _, unit in pairs(df.global.world.units.all) do
-    if not dfhack.units.isCitizen(unit) or not dfhack.units.isAlive(unit) then
-        goto skipunit
-    end
-
+for _, unit in pairs(dfhack.units.getCitizens(true)) do
     local mind = unit.status.current_soul.personality.needs
     -- sum need_level and focus_level for each need
     for _,need in pairs(mind) do
@@ -14,8 +10,6 @@ for _, unit in pairs(df.global.world.units.all) do
         needs.cumulative_focus = (needs.cumulative_focus or 0) + need.focus_level
         needs.citizen_count = (needs.citizen_count or 0) + 1
     end
-
-    :: skipunit ::
 end
 
 local sorted_fort_needs = {}
