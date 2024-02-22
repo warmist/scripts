@@ -51,6 +51,7 @@ Template for new versions:
 - `extinguish`: allow selecting units/items/buildings in the UI to target them for extinguishing; keyboard cursor is only required for extinguishing map tiles that cannot be selected any other way
 - `item`: change syntax so descriptions can be searched for without indicating the ``--description`` option. e.g. it's now ``item count royal`` instead of ``item count --description royal``
 - `item`: add ``--verbose`` option to print each item as it is matched
+- `gui/mod-manager`: will automatically unmark the default mod profile from being the default if it fails to load (due to missing or incompatible mods)
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation

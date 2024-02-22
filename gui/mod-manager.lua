@@ -157,7 +157,7 @@ local function overwrite_preset(idx)
     presets_file:write()
 end
 
-local function load_preset(idx)
+local function load_preset(idx, unset_default_on_failure)
     if idx > #presets_file.data then
         return
     end
@@ -167,14 +167,39 @@ local function load_preset(idx)
     local failures = swap_modlist(viewscreen, modlist)
 
     if #failures > 0 then
-        local failures_str = ""
-        for _, v in ipairs(failures) do
-            failures_str = failures_str .. v .. "\n"
+        local text = {}
+        if unset_default_on_failure then
+            presets_file.data[idx].default = false
+            presets_file:write()
+
+            table.insert(text, {
+                text='Failed to load some mods from your default preset.',
+                pen=COLOR_LIGHTRED,
+            })
+            table.insert(text, NEWLINE)
+            table.insert(text, {
+                text='Preset is being unmarked as the default for safety.',
+                pen=COLOR_LIGHTRED,
+            })
+        else
+            table.insert(text, {
+                text='Failed to load some mods from the preset.',
+                pen=COLOR_LIGHTRED,
+            })
         end
-        dialogs.showMessage("Warning",
-            "Failed to load some mods. Please re-create your default preset.",
-            COLOR_LIGHTRED)
-    end
+        table.insert(text, NEWLINE)
+        table.insert(text, NEWLINE)
+        table.insert(text, 'Please re-create your preset with mods you currently have installed.')
+        table.insert(text, NEWLINE)
+        table.insert(text, 'Here are the mods that failed to load:')
+        table.insert(text, NEWLINE)
+        table.insert(text, NEWLINE)
+        for _, v in ipairs(failures) do
+            table.insert(text, ('- %s'):format(v))
+            table.insert(text, NEWLINE)
+        end
+        dialogs.showMessage("Warning", text)
+end
 end
 
 local function find_preset_by_name(name)
@@ -447,7 +472,7 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
             default_applied = true
             for i, v in ipairs(presets_file.data) do
                 if v.default then
-                    load_preset(i)
+                    load_preset(i, true)
 
                     notification_message = "*** Loaded mod list '" .. v.name .. "'!"
                     notification_overlay_end = dfhack.getTickCount() + 5000
