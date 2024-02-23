@@ -209,6 +209,7 @@ function execute(action, conditions, options, return_items)
     local count = 0
     local items = {}
     local types = {}
+    local descriptions = {}
 
     for _, item in pairs(df.global.world.items.other.IN_PLAY) do
         -- never act on items used for constructions/building materials and carried by hostiles
@@ -278,12 +279,22 @@ function execute(action, conditions, options, return_items)
         end
 
         if options.verbose then
-            print('matched:', caravan_common.get_item_description(item))
+            local desc = caravan_common.get_item_description(item)
+            descriptions[desc] = (descriptions[desc] or 0) + 1
         end
 
         if return_items then table.insert(items, item) end
 
         :: skipitem ::
+    end
+
+    local desc_list = {}
+    for desc in pairs(descriptions) do
+        table.insert(desc_list, desc)
+    end
+    table.sort(desc_list)
+    for _, desc in ipairs(desc_list) do
+        print(('%4d %s'):format(descriptions[desc], desc))
     end
 
     return count, items, types
