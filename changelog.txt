@@ -52,6 +52,8 @@ Template for new versions:
 - `item`: change syntax so descriptions can be searched for without indicating the ``--description`` option. e.g. it's now ``item count royal`` instead of ``item count --description royal``
 - `item`: add ``--verbose`` option to print each item as it is matched
 - `gui/mod-manager`: will automatically unmark the default mod profile from being the default if it fails to load (due to missing or incompatible mods)
+- `gui/quickfort`: can now dynamically adjust the dig priority of tiles designated by dig blueprints
+- `gui/quickfort`: can now opt to apply dig blueprints in marker mode
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation

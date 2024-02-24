@@ -238,7 +238,7 @@ end
 Quickfort = defclass(Quickfort, widgets.Window)
 Quickfort.ATTRS {
     frame_title='Quickfort',
-    frame={w=34, h=33, r=2, t=18},
+    frame={w=34, h=41, r=2, t=18},
     resizable=true,
     resize_min={h=26},
     autoarrange_subviews=true,
@@ -285,10 +285,28 @@ function Quickfort:init()
             active=function() return self.blueprint_name end,
             enabled=function() return self.blueprint_name end,
             on_activate=self:callback('toggle_lock_cursor')},
+        widgets.Divider{frame={h=1},
+            frame_style=gui.FRAME_THIN,
+            frame_style_l=false,
+            frame_style_r=false},
+        widgets.CycleHotkeyLabel{key='CUSTOM_SHIFT_P',
+            key_back='CUSTOM_P',
+            view_id='priority',
+            label='Baseline dig priority:',
+            options={1, 2, 3, 4, 5, 6, 7},
+            initial_option=4,
+            active=function() return self.blueprint_name and self.mode == 'dig' end,
+            enabled=function() return self.blueprint_name and self.mode == 'dig' end},
+        widgets.ToggleHotkeyLabel{key='CUSTOM_M',
+            view_id='marker',
+            label='Use marker mode:',
+            initial_option=false,
+            active=function() return self.blueprint_name and self.mode == 'dig' end,
+            enabled=function() return self.blueprint_name and self.mode == 'dig' end},
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
             widgets.CycleHotkeyLabel{key='CUSTOM_R',
                 view_id='repeat_cycle',
-                label='Repeat',
+                label='Repeat:',
                 active=function() return self.blueprint_name end,
                 enabled=function() return self.blueprint_name end,
                 options={{label='No', value=false},
@@ -321,7 +339,7 @@ function Quickfort:init()
         widgets.ResizingPanel{autoarrange_subviews=true, subviews={
             widgets.ToggleHotkeyLabel{key='CUSTOM_T',
                 view_id='transform',
-                label='Transform',
+                label='Transform:',
                 active=function() return self.blueprint_name end,
                 enabled=function() return self.blueprint_name end,
                 initial_option=transform,
@@ -346,6 +364,10 @@ function Quickfort:init()
                     text_to_wrap=function()
                             return #transformations == 0 and 'No transform'
                                 or table.concat(transformations, ', ') end}}}}},
+        widgets.Divider{frame={h=1},
+            frame_style=gui.FRAME_THIN,
+            frame_style_l=false,
+            frame_style_r=false},
         widgets.HotkeyLabel{key='CUSTOM_O', label='Generate manager orders',
             active=function() return self.blueprint_name end,
             enabled=function() return self.blueprint_name end,
@@ -526,13 +548,15 @@ function Quickfort:show_dialog(initial)
     self._dialog = file_dialog
 end
 
-function Quickfort:run_quickfort_command(command, dry_run, preview)
+function Quickfort:run_quickfort_command(command, marker, priority, dry_run, preview)
     local ctx = quickfort_command.init_ctx{
         command=command,
         blueprint_name=self.blueprint_name,
         cursor=self.saved_cursor,
         aliases=quickfort_list.get_aliases(self.blueprint_name),
         quiet=true,
+        marker=marker,
+        priority=priority,
         dry_run=dry_run,
         preview=preview,
     }
@@ -556,7 +580,7 @@ function Quickfort:run_quickfort_command(command, dry_run, preview)
 end
 
 function Quickfort:refresh_preview()
-    local ctx = self:run_quickfort_command('run', true, true)
+    local ctx = self:run_quickfort_command('run', false, 4, true, true)
     self.saved_preview = ctx.preview
 end
 
@@ -625,7 +649,9 @@ function Quickfort:do_command(command, dry_run, post_fn)
                 quickfort_parse.format_command(
                     command, self.blueprint_name, self.section_name, dry_run),
                 self.saved_cursor.x, self.saved_cursor.y, self.saved_cursor.z))
-    local ctx = self:run_quickfort_command(command, dry_run, false)
+    local marker = self.subviews.marker:getOptionValue()
+    local priority = self.subviews.priority:getOptionValue()
+    local ctx = self:run_quickfort_command(command, marker, priority, dry_run, false)
     quickfort_command.finish_commands(ctx)
     if command == 'run' then
         if #ctx.messages > 0 then

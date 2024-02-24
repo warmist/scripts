@@ -116,6 +116,14 @@ Command options
 ``-d``, ``--dry-run``
     Go through all the motions and print statistics on what would be done, but
     don't actually change any game state.
+``-m``, ``--marker``
+    Use marker mode for the ``#dig`` blueprint that you are applying.
+``-p``, ``--priority <num>``
+    Set the priority to the given number (1-7) for tiles designated by the
+    ``#dig`` blueprint that you are applying. That is, tiles that normally have
+    a priority of ``4`` will instead have the priority you specify. If the
+    blueprint uses other explicit priorities, they will be shifted up or down
+    accordingly.
 ``--preserve-engravings <quality>``
     Don't designate tiles for digging/carving if they have an engraving with at
     least the specified quality. Valid values for ``quality`` are: ``None``,
@@ -220,6 +228,12 @@ statistics structure is a map of stat ids to ``{label=string, value=number}``.
 ``aliases``
     A map of blueprint alias names to their expansions. If not specified,
     defaults to ``{}``.
+``marker``
+    A boolean indicating whether this ``dig`` mode blueprint should be applied
+    in marker mode. If not specified, defaults to ``false``.
+``priority``
+    An integer between ``1`` and ``7``, inclusive, indicating the base priority
+    for this ``dig`` blueprint. If not specified, defaults to ``4``.
 ``preserve_engravings``
     Don't designate tiles for digging or carving if they have an engraving with
     at least the specified quality. Value is a ``df.item_quality`` enum name or

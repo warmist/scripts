@@ -642,7 +642,7 @@ local function set_priority(digctx, priority)
     pbse.priority[digctx.pos.x % 16][digctx.pos.y % 16] = priority * 1000
 end
 
-local function dig_tile(digctx, db_entry)
+local function dig_tile(ctx, digctx, db_entry)
     local action_fn = db_entry.action(digctx)
     if not action_fn then return nil end
     return function()
@@ -656,12 +656,20 @@ local function dig_tile(digctx, db_entry)
             set_priority(digctx, 4)
         else
             if not db_entry.skip_marker_mode then
-                local marker_mode = db_entry.marker_mode or
+                local marker_mode = ctx.marker or db_entry.marker_mode or
                         quickfort_set.get_setting('force_marker_mode')
                 digctx.occupancy.dig_marked = marker_mode
             end
             if db_entry.use_priority then
-                set_priority(digctx, db_entry.priority)
+                local priority = db_entry.priority - 4 + ctx.priority
+                if priority > 7 then
+                    ctx.stats.dig_priority_overflow.value = ctx.stats.dig_priority_overflow.value + 1
+                    priority = 7
+                elseif priority < 1 then
+                    ctx.stats.dig_priority_underflow.value = ctx.stats.dig_priority_underflow.value + 1
+                    priority = 1
+                end
+                set_priority(digctx, priority)
             end
         end
     end
@@ -818,7 +826,7 @@ local function do_run_impl(zlevel, grid, ctx)
                             goto inner_continue
                         end
                     end
-                    local action_fn = dig_tile(digctx, db_entry)
+                    local action_fn = dig_tile(ctx, digctx, db_entry)
                     quickfort_preview.set_preview_tile(ctx, extent_pos,
                                                        action_fn ~= nil)
                     if not action_fn then
@@ -860,6 +868,10 @@ local function ensure_ctx_stats(ctx, prefix)
             {label='Tiles that could not be designated for digging', value=0}
     ctx.stats.dig_protected_engraving = ctx.stats.dig_protected_engraving or
             {label='Engravings protected from destruction', value=0}
+    ctx.stats.dig_priority_underflow = ctx.stats.dig_priority_underflow or
+            {label='Tiles whose priority had to be clamped to 1', value=0}
+    ctx.stats.dig_priority_overflow = ctx.stats.dig_priority_overflow or
+            {label='Tiles whose priority had to be clamped to 7', value=0}
 end
 
 function do_run(zlevel, grid, ctx)
