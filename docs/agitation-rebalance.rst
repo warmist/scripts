@@ -203,10 +203,13 @@ Features of the mod can be individually enabled or disabled. All features are
 enabled by default. Available features are:
 
 ``auto-preset``
-    Auto-load a preset based on which vanilla "Enemies" preset was selected:
+    Auto-load a preset based on which vanilla "Enemies" preset is active:
     - "Off" loads the "casual" preset
     - "Normal" loads the "lenient" preset
     - "Hard" loads the "strict" preset
+    This feature takes effect at the time when the mod is enabled, so if you
+    don't want your default vanilla settings changed, be sure to disable this
+    feature before enabling ``agitation-rebalance``.
 ``surface``
     Manage surface agitated wildlife frequency.
 ``cavern``
