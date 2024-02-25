@@ -165,6 +165,32 @@ that contribute to irritation, like fishing.
 After using one of these presets, remember you can always to go the vanilla
 difficulty settings and adjust them further to your liking.
 
+For reference, the vanilla "Off" enemies difficulty corresponds to:
+
+- Trees until first invasion: 100
+- Additional trees between invasions: 80
+- Additional trees per year: 5
+- Max invaders per cavern: 0
+
+the vanilla "Normal" enemies difficulty corresponds to:
+
+- Trees until first invasion: 100
+- Additional trees between invasions: 80
+- Additional trees per year: 5
+- Max invaders per cavern: 50
+
+and vanilla "Hard" enemies difficulty corresponds to:
+
+- Trees until first invasion: 100
+- Additional trees between invasions: 0
+- Additional trees per year: 1
+- Max invaders per cavern: 75
+
+If the ``auto-preset`` feature is enabled and the difficulty settings exactly
+match any of the vanilla enemies presets when the mod is enabled, a
+corresponding mod preset will be loaded. See the `Features`_ section below for
+details.
+
 Note that if you have `gui/settings-manager` auto-restoring your difficulty
 settings for new forts, you don't have to reload these presets yourself. Just
 be sure to save your settings on the DFHack-added panel on the DF difficulty
@@ -176,6 +202,11 @@ Features
 Features of the mod can be individually enabled or disabled. All features are
 enabled by default. Available features are:
 
+``auto-preset``
+    Auto-load a preset based on which vanilla "Enemies" preset was selected:
+    - "Off" loads the "casual" preset
+    - "Normal" loads the "lenient" preset
+    - "Hard" loads the "strict" preset
 ``surface``
     Manage surface agitated wildlife frequency.
 ``cavern``
