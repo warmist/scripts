@@ -118,6 +118,7 @@ local function for_nuisance(fn)
             not unit.flags1.chained and
             not dfhack.units.isHidden(unit) and
             not dfhack.units.isFortControlled(unit) and
+            not dfhack.units.isInvader(unit) and
             not unit.flags4.agitated_wilderness_creature and
             not is_likely_hostile(unit) and
             (is_stealer(unit) or dfhack.units.isMischievous(unit))
