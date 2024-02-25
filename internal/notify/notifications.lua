@@ -46,6 +46,13 @@ local function for_invader(fn)
     end
 end
 
+local function is_likely_hostile(unit)
+    return dfhack.units.isCrazed(unit) or
+        dfhack.units.isOpposedToLife(unit) or
+        dfhack.units.isSemiMegabeast(unit) or
+        dfhack.units.isGreatDanger(unit)
+end
+
 local function for_hostile(fn)
     for _, unit in ipairs(df.global.world.units.active) do
         if not dfhack.units.isDead(unit) and
@@ -53,10 +60,10 @@ local function for_hostile(fn)
             not unit.flags1.caged and
             not unit.flags1.chained and
             not dfhack.units.isInvader(unit) and
-            dfhack.units.isDanger(unit) and
             not dfhack.units.isFortControlled(unit) and
             not dfhack.units.isHidden(unit) and
-            not unit.flags4.agitated_wilderness_creature
+            not unit.flags4.agitated_wilderness_creature and
+            is_likely_hostile(unit)
         then
             if fn(unit) then return end
         end
@@ -103,7 +110,7 @@ local function is_stealer(unit)
     end
 end
 
-local function for_stealer(fn)
+local function for_nuisance(fn)
     for _, unit in ipairs(df.global.world.units.active) do
         if not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
@@ -112,7 +119,8 @@ local function for_stealer(fn)
             not dfhack.units.isHidden(unit) and
             not dfhack.units.isFortControlled(unit) and
             not unit.flags4.agitated_wilderness_creature and
-            is_stealer(unit)
+            not is_likely_hostile(unit) and
+            (is_stealer(unit) or dfhack.units.isMischievous(unit))
         then
             if fn(unit) then return end
         end
@@ -299,10 +307,10 @@ NOTIFICATIONS_BY_IDX = {
         on_click=curry(zoom_to_next, for_hostile),
     },
     {
-        name='warn_stealers',
-        desc='Notifies when curious creatures enter the map that can steal your stuff.',
-        fn=curry(count_units, for_stealer, 'item-stealing creature'),
-        on_click=curry(zoom_to_next, for_stealer),
+        name='warn_nuisance',
+        desc='Notifies when thieving or mischievous creatures are on the map.',
+        fn=curry(count_units, for_nuisance, 'thieving or mischievous creature'),
+        on_click=curry(zoom_to_next, for_nuisance),
     },
     {
         name='warn_stranded',
