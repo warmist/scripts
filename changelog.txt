@@ -43,7 +43,7 @@ Template for new versions:
 - `source`: fix issue where removing sources would make some other sources inactive
 - `caravan`: display book and scroll titles in the goods and trade dialogs instead of generic scroll descriptions
 - `item`: avoid error when scanning items that have no quality rating (like bars and other construction materials)
-- `gui/blueprint`: moving the map no longer changes the blueprint playback start position.
+- `gui/blueprint`: changed hotkey for setting blueprint origin tile so it doesn't conflict with default map movement keys
 
 ## Misc Improvements
 - `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage
