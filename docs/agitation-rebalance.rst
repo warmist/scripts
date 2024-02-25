@@ -117,7 +117,7 @@ get attacked again. If you cross a year boundary, then you will have additional
 leniency granted by the ``Wilderness irritation decay`` value (if it is set to
 a value greater than zero).
 
-For the caverns, we cannot reset the irritaion counters without also affecting
+For the caverns, we cannot reset the irritation counters without also affecting
 forgotten beast attacks, so we use a different method. Instead, when a cavern
 attack begins, we record the current irritation counter value. Any further
 attacks will be prevented until the counter increments past a higher threshold.
