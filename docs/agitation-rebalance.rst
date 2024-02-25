@@ -5,11 +5,18 @@ agitation-rebalance
     :summary: Rebalance agitation mechanics.
     :tags: fort gameplay
 
-This mod changes agitation attacks from a constant flood to a system that is
-responsive to your recent actions on the surface and in the caverns. You will
-only be attacked if you are actively irritating the natural environment. This
-mod can be enabled (and auto-started for new forts, if desired) on the
-"Gameplay" tab of `gui/control-panel`.
+The DF agitation (or "irritation") system gives you challenges to face when
+your dwarves impact the natural environment. It adds new depth to gameplay, but
+it can also quickly drag the game down, both with constant incursions of
+agitated animals and with FPS-killing massive buildups of hidden invaders in
+the caverns. This mod changes how the agitation system behaves to ensure the
+challenge remains fun and not overwhelming.
+
+In short, this mod changes agitation attacks from a constant flood to a system
+that is responsive to your recent actions on the surface and in the caverns.
+You will only be attacked if you are actively irritating the natural
+environment. This mod can be enabled (and auto-started for new forts, if
+desired) on the "Gameplay" tab of `gui/control-panel`.
 
 Usage
 -----
@@ -23,11 +30,11 @@ Usage
 
 When run without arguments or with the ``status`` argument, it will print out
 whether it is enabled and how many agitated creatures and (visible) cavern
-invaders are on the map (per cavern).
+invaders are on the map.
 
 The `Presets`_ allow you to quickly set the game irritation difficulty settings
 to tested, balanced values. You can adjust them further (or set your own values)
-in the DF difficulty settings screen. Note that ``agitation-rebalance preset``
+on the DF difficulty settings screen. Note that ``agitation-rebalance preset``
 can be used to set the difficulty settings even if the mod is not enabled.
 
 Finally, some features of the mod can be individually enabled or disabled. More
@@ -46,17 +53,10 @@ Examples
 How the DF agitation system works
 ---------------------------------
 
-The DF agitation (or "irritation") system gives you challenges to face when
-your dwarves impact the natural environment. It adds new depth to gameplay, but
-it can also quickly drag the game down, both with constant incursions of
-agitated animals and with FPS-killing massive buildups of hidden invaders in
-the caverns. This mod changes how the agitation system behaves to ensure the
-challenge remains fun and not overwhelming.
-
 For the surface wilderness, the DF agitation system works by maintaining a
 counter. Your dwarves increase the counter when they chop down trees or catch
 fish. Once it crosses a threshold, wildlife that enters the map will be
-agitated and will actively attack your units. Once a year, the counter is
+agitated and will aggressively attack your units. Once a year, the counter is
 decremented by a fixed amount. This means that once you cross the threshold
 that starts the agitation attacks, you will suffer near-constant retribution,
 at least until the next year.
@@ -106,7 +106,7 @@ When you get an agitation-triggered incursion on the surface, the surface
 irritation counter is immediately decremented below the
 ``Wilderness irritation minimum``. This means that the incursions act more like
 a warning shot than an open floodgate. You will not be attacked again unless
-you continue your activities on that layer so that the counter once again
+you continue your activities on the surface so that the counter once again
 exceeds the ``Wilderness sensitivity`` value. The further apart these settings
 are, the longer it will take to suffer a second attack. For reference, each
 tree chopped adds 100 to the counter, so a ``Wilderness irritation minimum``
@@ -122,13 +122,13 @@ forgotten beast attacks, so we use a different method. Instead, when a cavern
 attack begins, we record the current irritation counter value. Any further
 attacks will be prevented until the counter increments past a higher threshold.
 That threshold is equal to the saved irritation counter value plus the
-difference between the ``Wilderness sensitivity`` and ``Wilderness irritation
-minimum`` difficulty setting values. This makes cavern agitation behave
-similarly to surface agitation. The frequency of forgotten beast attacks is
-unchanged by this mod.
+difference between the ``Wilderness sensitivity`` and
+``Wilderness irritation minimum`` difficulty setting values. This makes cavern
+agitation behave similarly to surface agitation. The frequency of forgotten
+beast attacks is unchanged by this mod.
 
 Finally, if you have walled yourself off from the danger in the caverns, yet
-continue to agitate nature down there, this mod will ensure that the number of
+continue to irritate nature down there, this mod will ensure that the number of
 creatures that spawn never exceeds the value for
 ``Cavern dweller maximum attackers``. This prevents excessive FPS loss during
 gameplay and keeps the number of creatures milling around outside your gates to
@@ -139,9 +139,9 @@ Presets
 -------
 
 The tree counts in these presets are only estimates. There are other actions
-that contribute to agitation, like fishing.
+that contribute to irritation, like fishing.
 
-``off``
+``casual``
     - Trees until first invasion: 1000
     - Additional trees between invasions: 1000
     - Additional trees per year: 1000
@@ -163,7 +163,7 @@ that contribute to agitation, like fishing.
     - Max invaders per cavern: 500
 
 After using one of these presets, remember you can always to go the vanilla
-difficulty settings and adjust them to your liking.
+difficulty settings and adjust them further to your liking.
 
 Note that if you have `gui/settings-manager` auto-restoring your difficulty
 settings for new forts, you don't have to reload these presets yourself. Just
@@ -173,8 +173,8 @@ settings screen so they can be auto-restored later.
 Features
 --------
 
-Features of the mod can be individually enabled or disabled. Available features
-are:
+Features of the mod can be individually enabled or disabled. All features are
+enabled by default. Available features are:
 
 ``surface``
     Manage surface agitated wildlife frequency.
