@@ -21,6 +21,8 @@ NotifyOverlay.ATTRS{
 }
 
 function NotifyOverlay:init()
+    self.state = {}
+
     self:addviews{
         widgets.Panel{
             view_id='panel',
@@ -34,7 +36,8 @@ function NotifyOverlay:init()
                     -- have wasd mapped to the arrow keys
                     scroll_keys={},
                     on_submit=function(_, choice)
-                        choice.state = choice.data.on_click(choice.state)
+                        local prev_state = self.state[choice.data.name]
+                        self.state[choice.data.name] = choice.data.on_click(prev_state)
                     end,
                 },
             },
