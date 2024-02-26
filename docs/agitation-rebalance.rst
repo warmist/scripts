@@ -10,12 +10,14 @@ your dwarves impact the natural environment. It adds new depth to gameplay, but
 it can also quickly drag the game down, both with constant incursions of
 agitated animals and with FPS-killing massive buildups of hidden invaders in
 the caverns. This mod changes how the agitation system behaves to ensure the
-challenge remains fun and not overwhelming.
+challenge remains fun, commensurate with your dwarves' current activities, and
+not overwhelming.
 
 In short, this mod changes agitation attacks from a constant flood to a system
 that is responsive to your recent actions on the surface and in the caverns.
-You will only be attacked if you are actively irritating the natural
-environment. This mod can be enabled (and auto-started for new forts, if
+If you irritate the natural environment past a threshold, you will be attacked
+exactly once. You will not be attacked further unless you continue to
+antagonize nature. This mod can be enabled (and auto-started for new forts, if
 desired) on the "Gameplay" tab of `gui/control-panel`.
 
 Usage
@@ -29,8 +31,8 @@ Usage
     agitation-rebalance enable|disable <feature>
 
 When run without arguments or with the ``status`` argument, it will print out
-whether it is enabled and how many agitated creatures and (visible) cavern
-invaders are on the map.
+whether it is enabled, the current configuration, and how many agitated
+creatures and (visible) cavern invaders are on the map.
 
 The `Presets`_ allow you to quickly set the game irritation difficulty settings
 to tested, balanced values. You can adjust them further (or set your own values)
@@ -45,7 +47,8 @@ Examples
 
 ``agitation-rebalance preset lenient``
     Load the ``lenient`` preset, which allows for a fair amount of tree cutting
-    and other activity between attacks.
+    and other activity between attacks. This preset is loaded automatically if
+    you have the "Enemies" settings at their default "Normal" values.
 
 ``enable agitation-rebalance``
     Manually enable the mod (not needed if you are using `gui/control-panel`)
@@ -58,13 +61,14 @@ counter. Your dwarves increase the counter when they chop down trees or catch
 fish. Once it crosses a threshold, wildlife that enters the map will be
 agitated and will aggressively attack your units. Once a year, the counter is
 decremented by a fixed amount. This means that once you cross the threshold
-that starts the agitation attacks, you will suffer near-constant retribution,
-at least until the next year.
+that starts the agitation attacks, you will suffer near-constant retribution
+until you stop all tree cutting and fishing on the surface for years until the
+counter fall lows enough again.
 
 DF also maintains counters for each cavern layer, but instead of attacks
 starting when the counter crosses a threshold, larger values of the counter
-represent a larger *chance* of an invasion (checked once per season). This
-counter is also used to determine when forgotten beasts can start attacking. The
+represent a larger *chance* of an invasion (randomized and checked once per
+season). This counter also affects the chance of a forgotten beasts attack. The
 cavern irritation counter is increased for tree felling and fishing within the
 cavern's area. Moreover, doing anything that makes noise will increase the
 irritation level further. Responding to invaders in the caverns makes noise,

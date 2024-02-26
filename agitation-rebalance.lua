@@ -14,7 +14,7 @@ local function get_default_state()
             cavern=true,
             cap_invaders=true,
         },
-        threshold={},
+        thresholds={},
     }
 end
 
@@ -41,6 +41,8 @@ end
 local function get_cavern_layer(unit)
 end
 
+-- if we're at our max invader count, pre-emptively destroy pending invaders
+-- in units.all that aren't yet in units.active
 local function cull_cavern_invaders(cavern_layer)
     if not cavern_layer then return end
 end
@@ -60,8 +62,6 @@ local function check_new_unit(unit_id)
         return
     end
     local cavern_layer = get_cavern_layer(unit)
-    -- TODO: can we pre-emptively
-    reset_agitation(cavern_layer)
     cull_cavern_invaders(cavern_layer)
 end
 
