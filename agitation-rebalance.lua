@@ -34,6 +34,27 @@ local presets = {
     },
 }
 
+local vanilla_presets = {
+    casual={
+        wild_sens=10000,
+        wild_irritate_min=2000,
+        wild_irritate_decay=500,
+        cavern_dweller_max_attackers=0,
+    },
+    lenient={
+        wild_sens=10000,
+        wild_irritate_min=2000,
+        wild_irritate_decay=500,
+        cavern_dweller_max_attackers=50,
+    },
+    strict={
+        wild_sens=10000,
+        wild_irritate_min=0,
+        wild_irritate_decay=100,
+        cavern_dweller_max_attackers=75,
+    },
+}
+
 local function get_default_state()
     return {
         enabled=false,
@@ -171,11 +192,34 @@ local function check_new_unit(unit_id)
     end
 end
 
+local function do_preset(preset_name)
+    local preset = presets[preset_name]
+    if not preset then
+        qerror('preset not found: ' .. preset_name)
+    end
+    utils.assign(custom_difficulty, preset)
+    print('agitation-rebalance preset applied: ' .. preset_name)
+end
+
 local function do_enable()
     state.enabled = true
     delay_frame_counter = 0
     eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, 5)
     eventful.onUnitNewActive[GLOBAL_KEY] = check_new_unit
+    if not state.features.auto_preset then return end
+    for preset_name,vanilla_settings in pairs(vanilla_presets) do
+        local matched = true
+        for k,v in pairs(vanilla_settings) do
+            if custom_difficulty[k] ~= v then
+                matched = false
+                break
+            end
+        end
+        if matched then
+            do_preset(preset_name)
+            break
+        end
+    end
 end
 
 local function do_disable()
@@ -217,13 +261,7 @@ if dfhack_flags and dfhack_flags.enable then
         do_disable()
     end
 elseif command == 'preset' then
-    local preset_name = args[1]
-    local preset = presets[preset_name]
-    if not preset then
-        qerror('preset not found: ' .. preset_name)
-    end
-    utils.assign(custom_difficulty, preset)
-    print('preset applied: ' .. preset_name)
+    do_preset(args[1])
 elseif command == 'enable' then
     local feature = state.features[args[1]]
     if feature == nil then
