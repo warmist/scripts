@@ -92,7 +92,7 @@ local function get_embark_tile_idx(pos)
 end
 
 local function get_feature_data(unit)
-    local pos = dfhack.units.getPosition(unit)
+    local pos = xyz2pos(dfhack.units.getPosition(unit))
     for _, map_feature in ipairs(map_features) do
         if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
             goto continue
@@ -108,18 +108,13 @@ local function get_feature_data(unit)
 end
 
 local function get_invaders()
-    local invaders, unhidden_invaders = {}, {}
+    local invaders = {}
     for _, unit in ipairs(world.units.active) do
-        if not dfhack.units.isActive(unit) or not is_cavern_invader(unit) then
-            goto continue
+        if dfhack.units.isActive(unit) and is_cavern_invader(unit) then
+            table.insert(invaders, unit)
         end
-        table.insert(invaders, unit)
-        if not dfhack.units.isHidden(unit) then
-            table.insert(unhidden_invaders, unit)
-        end
-        ::continue::
     end
-    return invaders, unhidden_invaders
+    return invaders
 end
 
 -- if we're at our max invader count, pre-emptively destroy pending invaders
@@ -161,7 +156,7 @@ local function check_new_unit(unit_id)
         #get_invaders() > custom_difficulty.cavern_dweller_max_attackers
     then
         cull_pending_cavern_invaders()
-    else
+    elseif state.features.cavern then
         local cavern_layer, irritation = get_feature_data(unit)
         if not cavern_layer then return end
         local cavern = state.caverns[df.layer_type[cavern_layer]]
@@ -184,7 +179,7 @@ local function do_enable()
 end
 
 local function do_disable()
-    state.disabled = true
+    state.enabled = false
     eventful.onUnitNewActive[GLOBAL_KEY] = nil
 end
 
@@ -262,7 +257,12 @@ elseif not command or command == 'status' then
     print(('  Cavern dweller maximum attackers: %d'):format(
         custom_difficulty.cavern_dweller_max_attackers))
     print()
-    local _, unhidden_invaders = get_invaders()
+    local unhidden_invaders = {}
+    for _, unit in ipairs(get_invaders()) do
+        if not dfhack.units.isHidden(unit) then
+            table.insert(unhidden_invaders, unit)
+        end
+    end
     print('Current known cavern invaders: '..#unhidden_invaders)
     return
 else
