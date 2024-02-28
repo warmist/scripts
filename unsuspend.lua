@@ -3,7 +3,7 @@
 
 local guidm = require('gui.dwarfmode')
 local argparse = require('argparse')
-local suspendmanager = reqscript('suspendmanager')
+local suspendmanager = require('plugins.suspendmanager')
 
 local overlay = require('plugins.overlay')
 
@@ -192,26 +192,28 @@ argparse.processArgsGetopt({...}, {
 local skipped_counts = {}
 local unsuspended_count = 0
 
-local manager = suspendmanager.SuspendManager{preventBlocking=skipblocking}
-manager:refresh()
-suspendmanager.foreach_construction_job(function(job)
-    if not job.flags.suspend then return end
+suspendmanager.runOnce(not skipblocking)
 
-    local skip_reason=manager:shouldStaySuspended(job, skipblocking)
-    if skip_reason then
-        skipped_counts[skip_reason] = (skipped_counts[skip_reason] or 0) + 1
-        return
-    end
-    suspendmanager.unsuspend(job)
-    unsuspended_count = unsuspended_count + 1
-end)
+-- local manager = suspendmanager.SuspendManager{preventBlocking=skipblocking}
+-- manager:refresh()
+-- suspendmanager.foreach_construction_job(function(job)
+--     if not job.flags.suspend then return end
 
-if not quiet then
-    for reason,count in pairs(skipped_counts) do
-        print(string.format('Not unsuspending %d %s job(s)', count, suspendmanager.REASON_TEXT[reason]))
-    end
+--     local skip_reason=manager:shouldStaySuspended(job, skipblocking)
+--     if skip_reason then
+--         skipped_counts[skip_reason] = (skipped_counts[skip_reason] or 0) + 1
+--         return
+--     end
+--     suspendmanager.unsuspend(job)
+--     unsuspended_count = unsuspended_count + 1
+-- end)
 
-    if unsuspended_count > 0 then
-        print(string.format('Unsuspended %d job(s).', unsuspended_count))
-    end
-end
+-- if not quiet then
+--     for reason,count in pairs(skipped_counts) do
+--         print(string.format('Not unsuspending %d %s job(s)', count, suspendmanager.REASON_TEXT[reason]))
+--     end
+
+--     if unsuspended_count > 0 then
+--         print(string.format('Unsuspended %d job(s).', unsuspended_count))
+--     end
+-- end
