@@ -121,29 +121,30 @@ get attacked again. If you cross a year boundary, then you will have additional
 leniency granted by the ``Wilderness irritation decay`` value (if it is set to
 a value greater than zero).
 
-For the caverns, we cannot reset the irritation counters without also affecting
-forgotten beast attacks, so we use a different method. Instead, when a cavern
+For the caverns, the irritation counters behave differently, so we use a
+different method to modify the behavior of cavern invasions. When a cavern
 attack begins, we record the current irritation counter value. Any further
 attacks will be prevented until the counter increments past a higher threshold.
 That threshold is equal to the saved irritation counter value plus the
 difference between the ``Wilderness sensitivity`` and
 ``Wilderness irritation minimum`` difficulty setting values. This makes cavern
 agitation behave similarly to surface agitation. The frequency of forgotten
-beast attacks is unchanged by this mod.
+beast attacks, which is also affected by cavern irritation, is unchanged by
+this mod.
 
 Finally, if you have walled yourself off from the danger in the caverns, yet
 continue to irritate nature down there, this mod will ensure that the number of
-creatures that spawn never exceeds the value for
+active cavern invaders across all cavern levels never exeeds the value set for
 ``Cavern dweller maximum attackers``. This prevents excessive FPS loss during
 gameplay and keeps the number of creatures milling around outside your gates to
-a reasonable number. Note that the maximum is enforced **per cavern layer**,
-not cumulative across all cavern layers.
+a reasonable number.
 
 Presets
 -------
 
 The tree counts in these presets are only estimates. There are other actions
-that contribute to irritation, like fishing.
+that contribute to irritation, like fishing. :wiki:`Noise` also contributes to
+irritation in the caverns.
 
 ``casual``
     - Trees until first invasion: 1000
@@ -169,29 +170,8 @@ that contribute to irritation, like fishing.
 After using one of these presets, remember you can always to go the vanilla
 difficulty settings and adjust them further to your liking.
 
-For reference, the vanilla "Off" enemies difficulty corresponds to:
-
-- Trees until first invasion: 100
-- Additional trees between invasions: 80
-- Additional trees per year: 5
-- Max invaders per cavern: 0
-
-the vanilla "Normal" enemies difficulty corresponds to:
-
-- Trees until first invasion: 100
-- Additional trees between invasions: 80
-- Additional trees per year: 5
-- Max invaders per cavern: 50
-
-and vanilla "Hard" enemies difficulty corresponds to:
-
-- Trees until first invasion: 100
-- Additional trees between invasions: 0
-- Additional trees per year: 1
-- Max invaders per cavern: 75
-
 If the ``auto-preset`` feature is enabled and the difficulty settings exactly
-match any of the vanilla enemies presets when the mod is enabled, a
+match any of the vanilla "Enemies" presets when the mod is enabled, a
 corresponding mod preset will be loaded. See the `Features`_ section below for
 details.
 

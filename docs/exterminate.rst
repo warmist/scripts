@@ -54,6 +54,7 @@ Methods
 :vaporize: Make the unit disappear in a puff of smoke. Note that units killed
     this way will not leave a corpse behind, but any items they were carrying
     will still drop.
+:disintegrate: Vaporize the unit and destroy any items they were carrying.
 :drown: Drown the unit in water.
 :magma: Boil the unit in magma (not recommended for magma-safe creatures).
 :butcher: Will mark the units for butchering instead of killing them. This is

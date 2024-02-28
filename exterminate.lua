@@ -1,3 +1,5 @@
+--@module = true
+
 local argparse = require('argparse')
 
 local function spawnLiquid(position, liquid_level, liquid_type, update_liquids)
@@ -31,12 +33,13 @@ local function isUnitFriendly(unit)
         dfhack.units.isMerchant(unit)
 end
 
-local killMethod = {
+killMethod = {
     INSTANT = 0,
     BUTCHER = 1,
     MAGMA = 2,
     DROWN = 3,
     VAPORIZE = 4,
+    DISINTEGRATE = 5,
 }
 
 -- removes the unit from existence, leaving no corpse if the unit hasn't died
@@ -76,7 +79,16 @@ local function drownUnit(unit, liquid_type)
     createLiquid()
 end
 
-local function killUnit(unit, method)
+local function destroyInventory(unit)
+    for _, inv_item in ipairs(unit.inventory) do
+        local item = inv_item.item
+        item.flags.garbage_collect = true
+        item.flags.forbid = true
+        item.flags.hidden = true
+    end
+end
+
+function killUnit(unit, method)
     if method == killMethod.BUTCHER then
         butcherUnit(unit)
     elseif method == killMethod.MAGMA then
@@ -85,6 +97,9 @@ local function killUnit(unit, method)
         drownUnit(unit, df.tile_liquid.Water)
     elseif method == killMethod.VAPORIZE then
         vaporizeUnit(unit)
+    elseif method == killMethod.DISINTEGRATE then
+        vaporizeUnit(unit)
+        destroyInventory(unit)
     else
         destroyUnit(unit)
     end
@@ -119,6 +134,10 @@ local function getMapRaces(only_visible, include_friendly)
     end
 
     return map_races
+end
+
+if dfhack_flags.module then
+    return
 end
 
 local options, args = {
