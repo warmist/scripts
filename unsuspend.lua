@@ -189,31 +189,5 @@ argparse.processArgsGetopt({...}, {
     {'s', 'skipblocking', handler=function() skipblocking = true end},
 })
 
-local skipped_counts = {}
-local unsuspended_count = 0
+suspendmanager.runOnce(not skipblocking, quiet)
 
-suspendmanager.runOnce(not skipblocking)
-
--- local manager = suspendmanager.SuspendManager{preventBlocking=skipblocking}
--- manager:refresh()
--- suspendmanager.foreach_construction_job(function(job)
---     if not job.flags.suspend then return end
-
---     local skip_reason=manager:shouldStaySuspended(job, skipblocking)
---     if skip_reason then
---         skipped_counts[skip_reason] = (skipped_counts[skip_reason] or 0) + 1
---         return
---     end
---     suspendmanager.unsuspend(job)
---     unsuspended_count = unsuspended_count + 1
--- end)
-
--- if not quiet then
---     for reason,count in pairs(skipped_counts) do
---         print(string.format('Not unsuspending %d %s job(s)', count, suspendmanager.REASON_TEXT[reason]))
---     end
-
---     if unsuspended_count > 0 then
---         print(string.format('Unsuspended %d job(s).', unsuspended_count))
---     end
--- end
