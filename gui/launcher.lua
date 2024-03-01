@@ -490,7 +490,7 @@ end
 function MainPanel:onInput(keys)
     if MainPanel.super.onInput(self, keys) then
         return true
-    elseif keys.CUSTOM_CTRL_D then
+    elseif keys.CUSTOM_ALT_D then
         dev_mode = not dev_mode
         self.update_autocomplete(get_first_word(self.subviews.editfield.text))
         return true
