@@ -117,19 +117,6 @@ function ConfigPanel:on_select(_, choice)
     end
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 --
 -- Enabled subtab functions
 --
@@ -444,7 +431,7 @@ function CommandTab:refresh()
 end
 
 function CommandTab:on_submit()
-    _,choice = self.subviews.list:getSelected()
+    local _,choice = self.subviews.list:getSelected()
     if not choice then return end
     if subtab == Subtabs.enabled then
         enabled_on_submit(self, choice.data)
