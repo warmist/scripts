@@ -81,6 +81,7 @@ COMMANDS_BY_IDX = {
         desc='Fixes reactions not producing gloves in sets with correct handedness.'},
 
     -- gameplay tools
+    {command='agitation-rebalance', group='gameplay', mode='enable'},
     {command='combine', group='gameplay', mode='repeat',
         desc='Combine partial stacks in stockpiles into full stacks.',
         params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
