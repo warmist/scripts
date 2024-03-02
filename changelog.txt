@@ -47,6 +47,7 @@ Template for new versions:
 - `item`: avoid error when scanning items that have no quality rating (like bars and other construction materials)
 - `gui/blueprint`: changed hotkey for setting blueprint origin tile so it doesn't conflict with default map movement keys
 - `gui/launcher`: developer mode hotkey changed from Ctrl-D to Alt-D so as not to conflict with the hotkey for `gui/design`
+- `gui/control-panel`: fix error when toggling autostart settings
 
 ## Misc Improvements
 - `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage

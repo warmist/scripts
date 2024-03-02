@@ -279,15 +279,14 @@ local function autostart_onInput(self, keys)
     end
 end
 
-local function autostart_on_submit(self, data)
-    common.set_autostart(data, not choice.enabled)
+local function autostart_on_submit(choice)
+    common.set_autostart(choice.data, not choice.enabled)
     common.config:write()
 end
 
 local function autostart_restore_defaults(self)
     for _,data in ipairs(registry.COMMANDS_BY_IDX) do
         if not common.command_passes_filters(data, self.group) then goto continue end
-        print(data.command, data.default)
         common.set_autostart(data, data.default)
         ::continue::
     end
@@ -436,7 +435,7 @@ function CommandTab:on_submit()
     if subtab == Subtabs.enabled then
         enabled_on_submit(self, choice.data)
     else
-        autostart_on_submit(self, choice.data)
+        autostart_on_submit(choice)
     end
     self:refresh()
 end
