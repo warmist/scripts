@@ -101,7 +101,7 @@ local function is_cavern_invader(unit)
         return false
     end
     local invasion = df.invasion_info.find(unit.invasion_id)
-    return invasion and invasion.origin_master_army_controller_id ~= -1
+    return invasion and invasion.origin_master_army_controller_id == -1
 end
 
 local function get_embark_tile_idx(pos)
@@ -147,6 +147,7 @@ local function cull_pending_cavern_invaders()
     end
     for _, unit in ipairs(world.units.all) do
         if not active_units[unit.id] and is_cavern_invader(unit) then
+            print('killing offscreen cavern invader', unit.id, dfhack.units.getReadableName(unit))
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         end
     end
@@ -156,13 +157,18 @@ local function check_new_unit(unit_id)
     -- when re-enabling at game load, ignore the first batch of units so we
     -- don't consider existing agitated units or cavern invaders as "new"
     if not delay_frame_counter then
+        print('skipping existing unit')
         delay_frame_counter = world.frame_counter
         return
     elseif delay_frame_counter >= world.frame_counter then
+        print('skipping existing unit')
         return
     end
     local unit = df.unit.find(unit_id)
+    if not unit then return end
+    print('unit entered map:', unit.id, dfhack.units.getReadableName(unit))
     if state.features.surface and is_agitated(unit) then
+        print('adjusting surface irritation')
         reset_surface_agitation()
         return
     end
@@ -171,20 +177,28 @@ local function check_new_unit(unit_id)
         not dfhack.units.isActive(unit) or
         not is_cavern_invader(unit)
     then
+        print('not an active cavern invader')
         return
     end
     if state.features.cap_invaders and
         #get_invaders() > custom_difficulty.cavern_dweller_max_attackers
     then
+        print('active invaders above threshold')
         cull_pending_cavern_invaders()
     elseif state.features.cavern then
         local cavern_layer, irritation = get_feature_data(unit)
         if not cavern_layer then return end
+        print('detected invader in cavern layer ' .. df.layer_type[cavern_layer])
         local cavern = state.caverns[df.layer_type[cavern_layer]]
-        if cavern.invasion_id == unit.invasion_id then return end
+        if cavern.invasion_id == unit.invasion_id then
+            print('invader part of current invasion; allow entry')
+            return
+        end
         if irritation < cavern.threshold then
+            print('killing active cavern invader')
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         else
+            print('new cavern invasion detected:', unit.invasion_id)
             cavern.invasion_id = unit.invasion_id
             cavern.threshold = irritation + (custom_difficulty.wild_sens-custom_difficulty.wild_irritate_min)
             persist_state()
