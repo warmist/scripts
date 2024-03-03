@@ -40,6 +40,8 @@ COMMANDS_BY_IDX = {
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
     {command='gui/settings-manager load-standing-orders', group='automation', mode='run',
         desc='Go to the Standing Orders tab in the Labor screen to save your current settings.'},
+    {command='gui/settings-manager load-work-details', group='automation', mode='run',
+        desc='Go to the Work Details tab in the Labor screen to save your current definitions.'},
     {command='nestboxes', group='automation', mode='enable'},
     {command='orders-sort', help_command='orders', group='automation', mode='repeat',
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
