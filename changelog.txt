@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.11-r7
+
+## New Tools
 - `undump-buildings`: (reinstated) remove dump designation from in-use building materials
 - `gui/petitions`: (reinstated) show outstanding (or all historical) petition agreements for guildhalls and temples
 - `gui/notify`: display important notifications that vanilla doesn't support yet and provide quick zoom links to notification targets.
@@ -36,10 +48,8 @@ Template for new versions:
 - `add-thought`: (reinstated) add custom thoughts to a dwarf
 - `devel/input-monitor`: interactive UI for debugging input issues
 
-## New Features
-
 ## Fixes
-- `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
+- `gui/design`: clicking the center point when there is a design mark behind it will no longer simultaneously enter both mark dragging and center dragging modes. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
 - `fix/retrieve-units`: prevent pulling in duplicate units from offscreen
 - `warn-stranded`: when there was at least one truly stuck unit and miners were actively mining, the miners were also confusingly shown in the stuck units list
 - `source`: fix issue where removing sources would make some other sources inactive
