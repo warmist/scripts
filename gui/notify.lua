@@ -3,6 +3,7 @@
 local gui = require('gui')
 local notifications = reqscript('internal/notify/notifications')
 local overlay = require('plugins.overlay')
+local utils = require('utils')
 local widgets = require('gui.widgets')
 
 --
@@ -85,6 +86,25 @@ function NotifyOverlay:overlay_onupdate()
     end
     list:setChoices(choices, idx)
     self.visible = #choices > 0
+end
+
+local CONFLICTING_TOOLTIPS = utils.invert{
+    df.main_hover_instruction.InfoUnits,
+    df.main_hover_instruction.InfoJobs,
+    df.main_hover_instruction.InfoPlaces,
+    df.main_hover_instruction.InfoLabors,
+    df.main_hover_instruction.InfoWorkOrders,
+    df.main_hover_instruction.InfoNobles,
+    df.main_hover_instruction.InfoObjects,
+    df.main_hover_instruction.InfoJustice,
+}
+
+local mi = df.global.game.main_interface
+
+function NotifyOverlay:render(dc)
+    if not CONFLICTING_TOOLTIPS[mi.current_hover] then
+        NotifyOverlay.super.render(self, dc)
+    end
 end
 
 OVERLAY_WIDGETS = {
