@@ -47,6 +47,7 @@ Template for new versions:
 - `make-legendary`: (reinstated) make a dwarf legendary in specified skills
 - `combat-harden`: (reinstated) set a dwarf's resistence to being affected by visible corpses
 - `add-thought`: (reinstated) add custom thoughts to a dwarf
+- `devel/input-monitor`: interactive UI for debugging input issues
 
 ## Fixes
 - `gui/design`: clicking the center point when there is a design mark behind it will no longer simultaneously enter both mark dragging and center dragging modes. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
