@@ -67,10 +67,11 @@ setting the tag filter with :kbd:`Ctrl`:kbd:`W` or by clicking on the ``Tags``
 button. If the first word of what you've typed matches a valid command, then the
 autocomplete options switch to showing commands that have similar functionality
 to the one that you've typed. Click on an autocomplete list option to select it
-or cycle through them with :kbd:`Tab` and :kbd:`Shift`:kbd:`Tab`. You can run a
-command quickly without parameters by double-clicking on the tool name in the
-list. Holding down shift while you double-click allows you to run the command
-and close `gui/launcher` at the same time.
+or cycle through them with :kbd:`Shift`:kbd:`Left` and
+:kbd:`Shift`:kbd:`Right`. You can run a command quickly without parameters by
+double-clicking on the tool name in the list. Holding down shift while you
+double-click allows you to run the command and close `gui/launcher` at the same
+time.
 
 Context-sensitive help and command output
 -----------------------------------------
