@@ -47,10 +47,16 @@ local function get_default_tag_filter()
     return ret
 end
 
-tag_filter = tag_filter or get_default_tag_filter()
+_tag_filter = _tag_filter or nil
 local selecting_filters = false
 
+local function get_tag_filter()
+    _tag_filter = _tag_filter or get_default_tag_filter()
+    return _tag_filter
+end
+
 local function toggle_dev_mode()
+    local tag_filter = get_tag_filter()
     tag_filter.excludes.dev = dev_mode or nil
     tag_filter.excludes.unavailable = dev_mode or nil
     if not dev_mode then
@@ -72,12 +78,14 @@ local function matches(a, b)
 end
 
 local function is_default_filter()
+    local tag_filter = get_tag_filter()
     local default_filter = get_default_tag_filter()
     return matches(tag_filter.includes, default_filter.includes) and
         matches(tag_filter.excludes, default_filter.excludes)
 end
 
 local function get_filter_text()
+    local tag_filter = get_tag_filter()
     if not next(tag_filter.includes) and not next(tag_filter.excludes) then
         return 'Dev default'
     elseif is_default_filter() then
@@ -258,6 +266,7 @@ end
 function TagFilterPanel:on_submit()
     local _,choice = self.subviews.list:getSelected()
     if not choice then return end
+    local tag_filter = get_tag_filter()
     local tag = choice.tag
     if tag_filter.includes[tag] then
         tag_filter.includes[tag] = nil
@@ -275,6 +284,7 @@ end
 function TagFilterPanel:toggle_all()
     local choices = self.subviews.list:getVisibleChoices()
     if not choices or #choices == 0 then return end
+    local tag_filter = get_tag_filter()
     local canonical_tag = choices[1].tag
     if tag_filter.includes[canonical_tag] then
         for _,choice in ipairs(choices) do
@@ -301,6 +311,7 @@ end
 
 local function get_tag_text(tag)
     local status, pen = '', nil
+    local tag_filter = get_tag_filter()
     if tag_filter.includes[tag] then
         status, pen = '(included)', COLOR_GREEN
     elseif tag_filter.excludes[tag] then
@@ -372,7 +383,7 @@ function AutocompletePanel:init()
             label='Reset tag filter',
             disabled=is_default_filter,
             on_activate=function()
-                tag_filter = get_default_tag_filter()
+                _tag_filter = get_default_tag_filter()
                 if selecting_filters then
                     self.tag_filter_panel:refresh()
                 end
@@ -958,8 +969,10 @@ function LauncherUI:update_autocomplete(firstword)
             table.insert(ensure_key(excludes, 'tag'), tag)
         end
     else
+        includes = {includes}
+        local tag_filter = get_tag_filter()
         for tag in pairs(tag_filter.includes) do
-            table.insert(ensure_key(includes, 'tag'), tag)
+            table.insert(includes, {tag=tag})
         end
         for tag in pairs(tag_filter.excludes) do
             table.insert(ensure_key(excludes, 'tag'), tag)
