@@ -35,6 +35,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `gui/launcher`: add interface for browsing and filtering commands by tags
 
 ## Removed
 
@@ -71,7 +72,6 @@ Template for new versions:
 - `gui/mod-manager`: will automatically unmark the default mod profile from being the default if it fails to load (due to missing or incompatible mods)
 - `gui/quickfort`: can now dynamically adjust the dig priority of tiles designated by dig blueprints
 - `gui/quickfort`: can now opt to apply dig blueprints in marker mode
-- `gui/launcher`: add interface for browsing and filtering commands by tags
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation
