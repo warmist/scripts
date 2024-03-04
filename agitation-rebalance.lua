@@ -185,6 +185,8 @@ local function check_new_unit(unit_id)
     then
         print('active invaders above threshold')
         cull_pending_cavern_invaders()
+        print('killing active cavern invader')
+        exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
     elseif state.features.cavern then
         local cavern_layer, irritation = get_feature_data(unit)
         if not cavern_layer then return end
