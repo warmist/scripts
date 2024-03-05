@@ -194,6 +194,7 @@ end
 function Notify:toggle(_, choice)
     if not choice then return end
     notifications.config.data[choice.name].enabled = not choice.enabled
+    notifications.config:write()
     self:refresh()
 end
 
@@ -204,6 +205,7 @@ function Notify:toggle_all()
     for name in pairs(notifications.NOTIFICATIONS_BY_NAME) do
         notifications.config.data[name].enabled = target_state
     end
+    notifications.config:write()
     self:refresh()
 end
 
