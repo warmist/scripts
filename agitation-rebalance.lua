@@ -131,7 +131,7 @@ end
 local function get_invaders()
     local invaders = {}
     for _, unit in ipairs(world.units.active) do
-        if dfhack.units.isActive(unit) and is_cavern_invader(unit) then
+        if not dfhack.units.isKilled(unit) and is_cavern_invader(unit) then
             table.insert(invaders, unit)
         end
     end
@@ -174,10 +174,10 @@ local function check_new_unit(unit_id)
     end
     if not state.features.cavern and
         not state.features.cap_invaders or
-        not dfhack.units.isActive(unit) or
+        dfhack.units.isKilled(unit) or
         not is_cavern_invader(unit)
     then
-        print('not an active cavern invader')
+        print('not a cavern invader', not dfhack.units.isKilled(unit), is_cavern_invader(unit))
         return
     end
     if state.features.cap_invaders and
@@ -197,7 +197,7 @@ local function check_new_unit(unit_id)
             return
         end
         if irritation < cavern.threshold then
-            print('killing active cavern invader')
+            print('not ready for next attack; killing active cavern invader')
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         else
             print('new cavern invasion detected:', unit.invasion_id)
