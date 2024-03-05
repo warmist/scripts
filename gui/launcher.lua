@@ -345,6 +345,7 @@ end
 
 AutocompletePanel = defclass(AutocompletePanel, widgets.Panel)
 AutocompletePanel.ATTRS{
+    frame_background=gui.CLEAR_PEN,
     on_autocomplete=DEFAULT_NIL,
     tag_filter_panel=DEFAULT_NIL,
     on_double_click=DEFAULT_NIL,
@@ -459,8 +460,10 @@ function EditPanel:init()
     self:addviews{
         widgets.Label{
             view_id='prefix',
-            frame={l=0, t=0},
+            frame={l=0, t=0, r=0},
+            frame_background=gui.CLEAR_PEN,
             text='[DFHack]#',
+            auto_width=false,
             visible=self.prefix_visible},
         widgets.EditField{
             view_id='editfield',
@@ -480,6 +483,7 @@ function EditPanel:init()
             frame={l=1, t=3, w=10},
             key='SELECT',
             label='run',
+            disabled=self.prefix_visible,
             on_activate=function()
                 if dfhack.internal.getModifiers().shift then
                     self.on_submit2(self.subviews.editfield.text)
@@ -495,7 +499,8 @@ function EditPanel:init()
             on_activate=self.on_toggle_minimal},
         widgets.EditField{
             view_id='search',
-            frame={l=13, t=3, r=1},
+            frame={l=13, b=0, r=1},
+            frame_background=gui.CLEAR_PEN,
             key='CUSTOM_ALT_S',
             label_text='history search: ',
             disabled=function() return selecting_filters end,
@@ -508,7 +513,10 @@ function EditPanel:init()
                 end end,
             on_unfocus=function()
                 self.subviews.search:setText('')
-                self.subviews.editfield:setFocus(true) end,
+                self.subviews.editfield:setFocus(true)
+                self.subviews.search.visible = not self.prefix_visible()
+                gui.Screen.request_full_screen_refresh = true
+            end,
             on_submit=function()
                 self.on_submit(self.subviews.editfield.text) end,
             on_submit2=function()
@@ -567,6 +575,11 @@ function EditPanel:on_search_text(search_str, next_match)
 end
 
 function EditPanel:onInput(keys)
+    if self.prefix_visible() then
+        local search = self.subviews.search
+        search.visible = keys.CUSTOM_ALT_S or search.focus
+    end
+
     if EditPanel.super.onInput(self, keys) then return true end
 
     if keys.STANDARDSCROLL_UP then
@@ -583,12 +596,28 @@ function EditPanel:onInput(keys)
     end
 end
 
+function EditPanel:preUpdateLayout()
+    local search = self.subviews.search
+    local minimized = self.prefix_visible()
+    if minimized then
+        self.frame_background = nil
+        search.frame.l = 0
+        search.frame.r = 11
+    else
+        self.frame_background = gui.CLEAR_PEN
+        search.frame.l = 13
+        search.frame.r = 1
+    end
+    search.visible = not minimized or search.focus
+end
+
 ----------------------------------
 -- HelpPanel
 --
 
 HelpPanel = defclass(HelpPanel, widgets.Panel)
 HelpPanel.ATTRS{
+    frame_background=gui.CLEAR_PEN,
     autoarrange_subviews=true,
     autoarrange_gap=1,
     frame_inset={t=0, l=1, r=1, b=0},
@@ -725,10 +754,11 @@ end
 -- MainPanel
 --
 
-MainPanel = defclass(MainPanel, widgets.Window)
+MainPanel = defclass(MainPanel, widgets.Panel)
 MainPanel.ATTRS{
     frame_title=TITLE,
     frame_inset=0,
+    draggable=true,
     resizable=true,
     resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
@@ -812,7 +842,7 @@ function LauncherUI:init(args)
             new_frame.l = 0
             new_frame.r = frame_r
             new_frame.t = 0
-            new_frame.h = 1
+            new_frame.h = 2
         else
             new_frame = config.data
             if not next(new_frame) then
@@ -831,7 +861,7 @@ function LauncherUI:init(args)
         local edit_frame = self.subviews.edit.frame
         edit_frame.r = self.minimal and
                 0 or AUTOCOMPLETE_PANEL_WIDTH+2
-        edit_frame.h = self.minimal and 1 or EDIT_PANEL_HEIGHT
+        edit_frame.h = self.minimal and 2 or EDIT_PANEL_HEIGHT
 
         local editfield_frame = self.subviews.editfield.frame
         editfield_frame.t = self.minimal and 0 or 1
