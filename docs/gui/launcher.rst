@@ -108,4 +108,4 @@ Dev mode
 
 By default, commands intended for developers and modders are filtered out of the
 autocomplete list. This includes any tools tagged with ``unavailable``. You can
-toggle this filtering by hitting :kbd:`Alt`:kbd:`D` at any time.
+toggle this filtering by hitting :kbd:`Ctrl`:kbd:`D` at any time.
