@@ -170,8 +170,10 @@ if not positionals[1] then
     return
 end
 
-local count = 0
-if positionals[1]:lower() == 'undead' then
+local count, target = 0, 'creature(s)'
+local race_name = table.concat(positionals, ' ')
+if race_name:lower() == 'undead' then
+    target = 'undead'
     if not map_races.UNDEAD then
         qerror("No undead found on the map.")
     end
@@ -182,22 +184,37 @@ if positionals[1]:lower() == 'undead' then
         end
     end
 else
-    local selected_race, selected_caste = positionals[1], nil
+    local selected_race, selected_caste = race_name, nil
 
     if string.find(selected_race, ':') then
-        local tokens = positionals[1]:split(':')
+        local tokens = selected_race:split(':')
         selected_race, selected_caste = tokens[1], tokens[2]
     end
 
     if not map_races[selected_race] then
-        qerror("No creatures of this race on the map.")
+        local selected_race_upper = selected_race:upper()
+        local selected_race_under = selected_race_upper:gsub(' ', '_')
+        if map_races[selected_race_upper] then
+            selected_race = selected_race_upper
+        elseif map_races[selected_race_under] then
+            selected_race = selected_race_under
+        else
+            qerror("No creatures of this race on the map.")
+        end
     end
 
     local race_castes = getRaceCastes(map_races[selected_race].id)
 
     if selected_caste and not race_castes[selected_caste] then
-        qerror("Invalid caste.")
+        local selected_caste_upper = selected_caste:upper()
+        if race_castes[selected_caste_upper] then
+            selected_caste = selected_caste_upper
+        else
+            qerror("Invalid caste: " .. selected_caste)
+        end
     end
+
+    target = selected_race
 
     for _, unit in pairs(df.global.world.units.active) do
         if not checkUnit(unit) then
@@ -222,4 +239,4 @@ else
     end
 end
 
-print(([[Exterminated %d creatures.]]):format(count))
+print(([[Exterminated %d %s.]]):format(count, target))
