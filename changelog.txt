@@ -40,6 +40,7 @@ Template for new versions:
 - `gui/launcher`: add interface for browsing and filtering commands by tags
 - `gui/launcher`: add support for history search (Alt-s hotkey) when in minimal mode
 - `gui/launcher`: developer mode hotkey restored to Ctrl-D
+- `exterminate`: make race name matching case and space insensitive
 
 ## Removed
 
