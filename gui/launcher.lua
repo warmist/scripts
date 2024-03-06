@@ -367,9 +367,9 @@ function AutocompletePanel:init()
         },
         widgets.Label{
             frame={l=1, t=1},
-            text={{text='Shift+Left', pen=COLOR_LIGHTGREEN},
+            text={{text='Tab', pen=COLOR_LIGHTGREEN},
                   {text='/'},
-                  {text='Shift+Right', pen=COLOR_LIGHTGREEN}}
+                  {text='Shift+Tab', pen=COLOR_LIGHTGREEN}}
         },
         widgets.Label{
             frame={l=0, t=3},
@@ -783,9 +783,9 @@ function MainPanel:onInput(keys)
     elseif keys.CUSTOM_CTRL_D then
         toggle_dev_mode()
         self:refresh_autocomplete()
-    elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
+    elseif keys.CHANGETAB then
         self.subviews.autocomplete:advance(1)
-    elseif keys.KEYBOARD_CURSOR_LEFT_FAST then
+    elseif keys.SEC_CHANGETAB then
         self.subviews.autocomplete:advance(-1)
     else
         return false
