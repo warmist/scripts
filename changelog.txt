@@ -31,12 +31,18 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.12-r1
+
+## Fixes
 - `gui/notify`: persist notification settings when toggled in the UI
 
 ## Misc Improvements
 - `gui/launcher`: developer mode hotkey restored to Ctrl-D
-
-## Removed
 
 # 50.11-r7
 
