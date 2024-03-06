@@ -116,6 +116,6 @@ autocomplete list. This includes any tools tagged with ``unavailable``. If you
 have "mortal mode" enabled in the `gui/control-panel` preferences, any tools
 with the ``armok`` tag are filterd out as well.
 
-You can toggle this default filtering by hitting :kbd:`Alt`:kbd:`D` to switch
+You can toggle this default filtering by hitting :kbd:`Ctrl`:kbd:`D` to switch
 into "Dev mode" at any time. You can also adjust your command filters in the
 ``Tags`` filter list.

@@ -39,6 +39,7 @@ Template for new versions:
 ## Misc Improvements
 - `gui/launcher`: add interface for browsing and filtering commands by tags
 - `gui/launcher`: add support for history search (Alt-s hotkey) when in minimal mode
+- `gui/launcher`: developer mode hotkey restored to Ctrl-D
 
 ## Removed
 
@@ -62,7 +63,6 @@ Template for new versions:
 - `caravan`: display book and scroll titles in the goods and trade dialogs instead of generic scroll descriptions
 - `item`: avoid error when scanning items that have no quality rating (like bars and other construction materials)
 - `gui/blueprint`: changed hotkey for setting blueprint origin tile so it doesn't conflict with default map movement keys
-- `gui/launcher`: developer mode hotkey changed from Ctrl-D to Alt-D so as not to conflict with the hotkey for `gui/design`
 - `gui/control-panel`: fix error when toggling autostart settings
 
 ## Misc Improvements

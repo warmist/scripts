@@ -8,7 +8,7 @@ local json = require('json')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local AUTOCOMPLETE_PANEL_WIDTH = 27
+local AUTOCOMPLETE_PANEL_WIDTH = 28
 local EDIT_PANEL_HEIGHT = 4
 
 local HISTORY_SIZE = 5000
@@ -206,7 +206,7 @@ end
 
 TagFilterPanel = defclass(TagFilterPanel, widgets.Panel)
 TagFilterPanel.ATTRS{
-    frame={t=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, w=46, h=#helpdb.get_tags()+15},
+    frame={t=0, r=AUTOCOMPLETE_PANEL_WIDTH, w=46, h=#helpdb.get_tags()+15},
     frame_style=gui.FRAME_INTERIOR_MEDIUM,
     frame_background=gui.CLEAR_PEN,
 }
@@ -346,6 +346,7 @@ end
 AutocompletePanel = defclass(AutocompletePanel, widgets.Panel)
 AutocompletePanel.ATTRS{
     frame_background=gui.CLEAR_PEN,
+    frame_inset={l=1},
     on_autocomplete=DEFAULT_NIL,
     tag_filter_panel=DEFAULT_NIL,
     on_double_click=DEFAULT_NIL,
@@ -760,7 +761,7 @@ MainPanel.ATTRS{
     frame_inset=0,
     draggable=true,
     resizable=true,
-    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+49, h=EDIT_PANEL_HEIGHT+20},
+    resize_min={w=AUTOCOMPLETE_PANEL_WIDTH+48, h=EDIT_PANEL_HEIGHT+20},
     get_minimal=DEFAULT_NIL,
     update_autocomplete=DEFAULT_NIL,
     on_edit_input=DEFAULT_NIL,
@@ -779,7 +780,7 @@ function MainPanel:onInput(keys)
     if selecting_filters and (keys.LEAVESCREEN or keys._MOUSE_R) then
         selecting_filters = false
         self.subviews.search.on_unfocus()
-    elseif keys.CUSTOM_ALT_D then
+    elseif keys.CUSTOM_CTRL_D then
         toggle_dev_mode()
         self:refresh_autocomplete()
     elseif keys.KEYBOARD_CURSOR_RIGHT_FAST then
@@ -860,7 +861,7 @@ function LauncherUI:init(args)
 
         local edit_frame = self.subviews.edit.frame
         edit_frame.r = self.minimal and
-                0 or AUTOCOMPLETE_PANEL_WIDTH+2
+                0 or AUTOCOMPLETE_PANEL_WIDTH+1
         edit_frame.h = self.minimal and 2 or EDIT_PANEL_HEIGHT
 
         local editfield_frame = self.subviews.editfield.frame
@@ -898,17 +899,17 @@ function LauncherUI:init(args)
         },
         HelpPanel{
             view_id='help',
-            frame={t=EDIT_PANEL_HEIGHT+1, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1},
+            frame={t=EDIT_PANEL_HEIGHT+1, l=0, r=AUTOCOMPLETE_PANEL_WIDTH},
             visible=not_minimized,
         },
         widgets.Divider{
-            frame={t=0, b=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, w=1},
+            frame={t=0, b=0, r=AUTOCOMPLETE_PANEL_WIDTH, w=1},
             frame_style_t=false,
             frame_style_b=false,
             visible=not_minimized,
         },
         widgets.Divider{
-            frame={t=EDIT_PANEL_HEIGHT, l=0, r=AUTOCOMPLETE_PANEL_WIDTH+1, h=1},
+            frame={t=EDIT_PANEL_HEIGHT, l=0, r=AUTOCOMPLETE_PANEL_WIDTH, h=1},
             interior=true,
             frame_style_l=false,
             visible=not_minimized,
