@@ -33,13 +33,11 @@ Template for new versions:
 - `gui/settings-manager`: add import, export, and autoload for work details
 
 ## Fixes
-- `gui/notify`: persist notification settings when toggled in the UI
 - `gui/launcher`: fix history scanning (Up/Down arrow keys) being slow to respond when in minimal mode
 
 ## Misc Improvements
 - `gui/launcher`: add interface for browsing and filtering commands by tags
 - `gui/launcher`: add support for history search (Alt-s hotkey) when in minimal mode
-- `gui/launcher`: developer mode hotkey restored to Ctrl-D
 - `exterminate`: make race name matching case and space insensitive
 
 ## Removed
