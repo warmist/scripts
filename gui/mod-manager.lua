@@ -11,12 +11,14 @@ local utils = require('utils')
 local presets_file = json.open("dfhack-config/mod-manager.json")
 local GLOBAL_KEY = 'mod-manager'
 
-local function get_newregion_viewscreen()
+-- get_newregion_viewscreen and get_modlist_fields are declared as global functions
+-- so external tools can call them to get the DF mod list
+function get_newregion_viewscreen()
     local vs = dfhack.gui.getViewscreenByType(df.viewscreen_new_regionst, 0)
     return vs
 end
 
-local function get_modlist_fields(kind, viewscreen)
+function get_modlist_fields(kind, viewscreen)
     if kind == "available" then
         return {
             id = viewscreen.available_id,
