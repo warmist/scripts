@@ -56,14 +56,14 @@ Examples
 How the DF agitation system works
 ---------------------------------
 
-For the surface wilderness, the DF agitation system works by maintaining a
-counter. Your dwarves increase the counter when they chop down trees or catch
-fish. Once it crosses a threshold, wildlife that enters the map will be
-agitated and will aggressively attack your units. Once a year, the counter is
-decremented by a fixed amount. This means that once you cross the threshold
-that starts the agitation attacks, you will suffer near-constant retribution
-until you stop all tree cutting and fishing on the surface for years until the
-counter fall lows enough again.
+For the surface wilderness in savage biomes, the DF agitation system works by
+maintaining a counter. Your dwarves increase the counter when they chop down
+trees or catch fish. Once it crosses a threshold, wildlife that enters the map
+will be agitated and will aggressively attack your units. Once a year, the
+counter is decremented by a fixed amount. This means that once you cross the
+threshold that starts the agitation attacks, you will suffer near-constant
+retribution until you stop all tree cutting and fishing on the surface for
+years until the counter fall lows enough again.
 
 DF also maintains counters for each cavern layer, but instead of attacks
 starting when the counter crosses a threshold, larger values of the counter

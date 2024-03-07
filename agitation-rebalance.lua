@@ -143,6 +143,16 @@ local function get_invaders()
     return invaders
 end
 
+local function get_agitated_units()
+    local agitators = {}
+    for _, unit in ipairs(world.units.active) do
+        if is_unkilled(unit) and is_agitated(unit) then
+            table.insert(agitators, unit)
+        end
+    end
+    return agitators
+end
+
 -- if we're at our max invader count, pre-emptively destroy pending invaders
 local function cull_pending_cavern_invaders(start_unit, num_to_cull)
     local culling = false
@@ -330,7 +340,8 @@ elseif not command or command == 'status' then
             table.insert(unhidden_invaders, unit)
         end
     end
-    print('Current known cavern invaders: '..#unhidden_invaders)
+    print(('Current agitated wildlife:     %5d'):format(#get_agitated_units()))
+    print(('Current known cavern invaders: %5d'):format(#unhidden_invaders))
     return
 else
     print(dfhack.script_help())
