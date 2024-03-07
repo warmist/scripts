@@ -144,20 +144,6 @@ local function sort_by_ordered_asc(a, b)
     return a.ordered < b.ordered
 end
 
-function nextAutowatchState()
-    if plugin.autowatch_isEnabled() then
-        return 'Stop '
-    end
-    return 'Start'
-end
-
-function nextAutobutcherState()
-    if plugin.isEnabled() then
-        return 'Stop '
-    end
-    return 'Start'
-end
-
 function WatchList:init()
     if plugin.isEnabled() then
         -- ensure slaughter counts and autowatch are up to date
@@ -165,10 +151,10 @@ function WatchList:init()
     end
 
     local window = widgets.Window{
-        frame_title = 'Autobutcher Watchlist',
-        frame = { w=97, h=30 },
-        resizable = true,
-        subviews = {
+        frame_title='Autobutcher',
+        frame={w=97, h=30},
+        resizable=true,
+        subviews={
             widgets.CycleHotkeyLabel{
                 view_id='sort',
                 frame={l=0, t=0, w=31},
@@ -416,19 +402,29 @@ function WatchList:init()
                         auto_width=true,
                         on_activate=self:callback('onSetRow'),
                     },
-                    widgets.HotkeyLabel{
-                        frame={t=5, l=0},
+                    widgets.ToggleHotkeyLabel{
+                        view_id='enable_toggle',
+                        frame={t=5, l=0, w=26},
+                        label='Autobutcher is',
                         key='CUSTOM_SHIFT_A',
-                        label=function() return nextAutobutcherState() .. ' Autobutcher' end,
-                        auto_width=true,
-                        on_activate=self:callback('onToggleAutobutcher'),
+                        options={{value=true, label='Enabled', pen=COLOR_GREEN},
+                                 {value=false, label='Disabled', pen=COLOR_RED}},
+                        on_change=function(val)
+                            plugin.setEnabled(val)
+                            self:refresh()
+                        end,
                     },
-                    widgets.HotkeyLabel{
-                        frame={t=5, l=24},
+                    widgets.ToggleHotkeyLabel{
+                        view_id='autowatch_toggle',
+                        frame={t=5, l=43, w=24},
+                        label='Autowatch is',
                         key='CUSTOM_SHIFT_W',
-                        label=function() return nextAutowatchState() .. ' Autowatch' end,
-                        auto_width=true,
-                        on_activate=self:callback('onToggleAutowatch'),
+                        options={{value=true, label='Enabled', pen=COLOR_GREEN},
+                                 {value=false, label='Disabled', pen=COLOR_RED}},
+                        on_change=function(val)
+                            plugin.autowatch_setEnabled(val)
+                            self:refresh()
+                        end,
                     },
                 },
             },
@@ -437,6 +433,12 @@ function WatchList:init()
 
     self:addviews{window}
     self:refresh()
+end
+
+function WatchList:onRenderFrame(dc, rect)
+    self.subviews.enable_toggle:setOption(plugin.isEnabled())
+    self.subviews.autowatch_toggle:setOption(plugin.autowatch_isEnabled())
+    WatchList.super.onRenderFrame(self, dc, rect)
 end
 
 function stringify(number)
@@ -704,16 +706,6 @@ function WatchList:onButcherRace()
         return
     end
     plugin.autobutcher_butcherRace(choice.data.id)
-    self:refresh()
-end
-
-function WatchList:onToggleAutobutcher()
-    plugin.setEnabled(not plugin.isEnabled())
-    self:refresh()
-end
-
-function WatchList:onToggleAutowatch()
-    plugin.autowatch_setEnabled(not plugin.autowatch_isEnabled())
     self:refresh()
 end
 
