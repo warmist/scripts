@@ -3,7 +3,7 @@ instruments
 
 .. dfhack-tool::
     :summary: Show how to craft instruments.
-    :tags: fort productivity
+    :tags: fort inspection
 
 This tool provides information on how to craft the instruments used by the
 player civilization. For single-piece instruments, it shows the skill and
