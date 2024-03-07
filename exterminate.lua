@@ -79,12 +79,24 @@ local function drownUnit(unit, liquid_type)
     createLiquid()
 end
 
+local function destroyItem(item)
+    item.flags.garbage_collect = true
+    item.flags.forbid = true
+    item.flags.hidden = true
+end
+
+local function destroyContainedItems(container)
+    for _, item in ipairs(dfhack.items.getContainedItems(container)) do
+        destroyContainedItems(item)
+        destroyItem(item)
+    end
+end
+
 local function destroyInventory(unit)
     for _, inv_item in ipairs(unit.inventory) do
         local item = inv_item.item
-        item.flags.garbage_collect = true
-        item.flags.forbid = true
-        item.flags.hidden = true
+        destroyContainedItems(item)
+        destroyItem(item)
     end
 end
 

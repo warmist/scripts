@@ -128,10 +128,15 @@ local function get_feature_data(unit)
     end
 end
 
+local function is_unkilled(unit)
+    return not dfhack.units.isKilled(unit) and
+        unit.animal.vanish_countdown <= 0  -- not yet exterminated
+end
+
 local function get_invaders()
     local invaders = {}
     for _, unit in ipairs(world.units.active) do
-        if not dfhack.units.isKilled(unit) and is_cavern_invader(unit) then
+        if is_unkilled(unit) and is_cavern_invader(unit) then
             table.insert(invaders, unit)
         end
     end
@@ -139,15 +144,18 @@ local function get_invaders()
 end
 
 -- if we're at our max invader count, pre-emptively destroy pending invaders
--- in units.all that aren't yet in units.active
-local function cull_pending_cavern_invaders()
-    local active_units = {}
+local function cull_pending_cavern_invaders(start_unit, num_to_cull)
+    local culling = false
     for _, unit in ipairs(world.units.active) do
-        active_units[unit.id] = true
-    end
-    for _, unit in ipairs(world.units.all) do
-        if not active_units[unit.id] and is_cavern_invader(unit) then
-            print('killing offscreen cavern invader', unit.id, dfhack.units.getReadableName(unit))
+        if unit == start_unit then
+            culling = true
+        end
+        if num_to_cull then
+            if num_to_cull <= 0 then break end
+            num_to_cull = num_to_cull - 1
+        end
+        if culling and is_cavern_invader(unit) then
+            dfhack.printerr(('culling cavern invader %d (%s)'):format(unit.id, dfhack.units.getReadableName(unit)))
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         end
     end
@@ -157,50 +165,55 @@ local function check_new_unit(unit_id)
     -- when re-enabling at game load, ignore the first batch of units so we
     -- don't consider existing agitated units or cavern invaders as "new"
     if not delay_frame_counter then
-        print('skipping existing unit')
         delay_frame_counter = world.frame_counter
         return
     elseif delay_frame_counter >= world.frame_counter then
-        print('skipping existing unit')
         return
     end
     local unit = df.unit.find(unit_id)
-    if not unit then return end
-    print('unit entered map:', unit.id, dfhack.units.getReadableName(unit))
+    if not unit or not is_unkilled(unit) then return end
+    if is_agitated(unit) or is_cavern_invader(unit) then
+        dfhack.printerr(('unit %d (%s) entered map; agitated=%s, cavern=%s'):format(
+            unit.id, dfhack.units.getReadableName(unit),
+            is_agitated(unit), is_cavern_invader(unit)))
+    else
+        print(('unit %d (%s) entered map; agitated=%s, cavern=%s'):format(
+            unit.id, dfhack.units.getReadableName(unit),
+            is_agitated(unit), is_cavern_invader(unit)))
+    end
     if state.features.surface and is_agitated(unit) then
-        print('adjusting surface irritation')
+        dfhack.printerr('adjusting surface irritation')
         reset_surface_agitation()
         return
     end
     if not state.features.cavern and
         not state.features.cap_invaders or
-        dfhack.units.isKilled(unit) or
         not is_cavern_invader(unit)
     then
-        print('not a cavern invader', not dfhack.units.isKilled(unit), is_cavern_invader(unit))
         return
     end
-    if state.features.cap_invaders and
-        #get_invaders() > custom_difficulty.cavern_dweller_max_attackers
-    then
-        print('active invaders above threshold')
-        cull_pending_cavern_invaders()
-        print('killing active cavern invader')
-        exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
-    elseif state.features.cavern then
+    if state.features.cap_invaders then
+        local num_to_cull = custom_difficulty.cavern_dweller_max_attackers - #get_invaders()
+        if num_to_cull > 0 then
+            dfhack.printerr('active invaders above threshold')
+            cull_pending_cavern_invaders(unit, num_to_cull)
+            return
+        end
+    end
+    if state.features.cavern then
         local cavern_layer, irritation = get_feature_data(unit)
         if not cavern_layer then return end
-        print('detected invader in cavern layer ' .. df.layer_type[cavern_layer])
+        dfhack.printerr('detected invader in cavern layer ' .. df.layer_type[cavern_layer])
         local cavern = state.caverns[df.layer_type[cavern_layer]]
         if cavern.invasion_id == unit.invasion_id then
-            print('invader part of current invasion; allow entry')
+            dfhack.printerr('invader part of current invasion; allow entry')
             return
         end
         if irritation < cavern.threshold then
-            print('not ready for next attack; killing active cavern invader')
-            exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
+            dfhack.printerr('not ready for next attack; killing cavern invaders')
+            cull_pending_cavern_invaders(unit)
         else
-            print('new cavern invasion detected:', unit.invasion_id)
+            dfhack.printerr(('new cavern invasion detected: %d'):format(unit.invasion_id))
             cavern.invasion_id = unit.invasion_id
             cavern.threshold = irritation + (custom_difficulty.wild_sens-custom_difficulty.wild_irritate_min)
             persist_state()
