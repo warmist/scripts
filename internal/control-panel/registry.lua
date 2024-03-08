@@ -42,6 +42,8 @@ COMMANDS_BY_IDX = {
         desc='Go to the Standing Orders tab in the Labor screen to save your current settings.'},
     {command='gui/settings-manager load-work-details', group='automation', mode='run',
         desc='Go to the Work Details tab in the Labor screen to save your current definitions.'},
+    {command='logistics enable autoretrain', group='automation', mode='run',
+        desc='Automatically assign trainers to partially trained livestock so they don\'t revert to wild.'},
     {command='nestboxes', group='automation', mode='enable'},
     {command='orders-sort', help_command='orders', group='automation', mode='repeat',
         desc='Sort manager orders by repeat frequency so one-time orders can be completed.',
