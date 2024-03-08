@@ -91,8 +91,7 @@ end
 local function list_command_group(group, filter_strs, enabled_map)
     local header = ('Group: %s'):format(group)
     for idx, data in ipairs(registry.COMMANDS_BY_IDX) do
-        local first_word = common.get_first_word(data.command)
-        if not common.command_passes_filters(data, group, first_word, filter_strs) then
+        if not common.command_passes_filters(data, group, filter_strs) then
             goto continue
         end
         if header then
@@ -142,7 +141,7 @@ local function list_preferences(filter_strs)
 end
 
 local function do_list(filter_strs)
-    local enabled_map =common.get_enabled_map()
+    local enabled_map = common.get_enabled_map()
     list_command_group('automation', filter_strs, enabled_map)
     list_command_group('bugfix', filter_strs, enabled_map)
     list_command_group('gameplay', filter_strs, enabled_map)

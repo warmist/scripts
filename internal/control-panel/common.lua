@@ -99,10 +99,9 @@ function command_passes_filters(data, target_group, filter_strs)
     then
         return false
     end
-    if not utils.search_text(data.command, filter_strs) then
-        return false
-    end
-    return true
+    return data.help_command and
+        utils.search_text(data.help_command, filter_strs) or
+        utils.search_text(data.command, filter_strs)
 end
 
 function get_description(data)
