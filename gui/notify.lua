@@ -44,7 +44,7 @@ function NotifyOverlay:init()
             },
         },
         widgets.ConfigureButton{
-            frame={t=0, r=2},
+            frame={t=0, r=1},
             on_click=function() dfhack.run_script('gui/notify') end,
         }
     }
