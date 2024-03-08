@@ -133,7 +133,7 @@ local function is_unkilled(unit)
         unit.animal.vanish_countdown <= 0  -- not yet exterminated
 end
 
-local function get_invaders()
+function get_cavern_invaders()
     local invaders = {}
     for _, unit in ipairs(world.units.active) do
         if is_unkilled(unit) and is_cavern_invader(unit) then
@@ -203,7 +203,7 @@ local function check_new_unit(unit_id)
         return
     end
     if state.features.cap_invaders then
-        local num_to_cull = custom_difficulty.cavern_dweller_max_attackers - #get_invaders()
+        local num_to_cull = custom_difficulty.cavern_dweller_max_attackers - #get_cavern_invaders()
         if num_to_cull > 0 then
             dfhack.printerr('active invaders above threshold')
             cull_pending_cavern_invaders(unit, num_to_cull)
@@ -335,7 +335,7 @@ elseif not command or command == 'status' then
         custom_difficulty.cavern_dweller_max_attackers))
     print()
     local unhidden_invaders = {}
-    for _, unit in ipairs(get_invaders()) do
+    for _, unit in ipairs(get_cavern_invaders()) do
         if not dfhack.units.isHidden(unit) then
             table.insert(unhidden_invaders, unit)
         end
