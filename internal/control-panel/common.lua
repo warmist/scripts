@@ -135,7 +135,7 @@ function apply_command(data, enabled_map, enabled)
             dfhack.printerr(('tool not enableable: "%s"'):format(data.command))
             return false
         elseif data.mode == 'tweak' then
-            dfhack.run_command{'tweak', data.command, enabled and '' or 'disable'}
+            dfhack.run_command{'tweak', data.command, 'quiet', enabled and '' or 'disable'}
         else
             dfhack.run_command{enabled and 'enable' or 'disable', data.command}
         end
