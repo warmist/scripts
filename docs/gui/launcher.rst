@@ -95,8 +95,8 @@ external DFHack console (the one you can show with `show` on Windows) or the
 parent terminal on Unix-based systems if you need a longer history of the
 output.
 
-You can run the `clear` command or click the ``Clear output`` button to clear
-the output scrollback buffer.
+You can run the `clear <cls>` command or click the ``Clear output`` button to
+clear the output scrollback buffer.
 
 Command history
 ---------------
