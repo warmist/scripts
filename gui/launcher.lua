@@ -619,8 +619,6 @@ end
 HelpPanel = defclass(HelpPanel, widgets.Panel)
 HelpPanel.ATTRS{
     frame_background=gui.CLEAR_PEN,
-    autoarrange_subviews=true,
-    autoarrange_gap=1,
     frame_inset={t=0, l=1, r=1, b=0},
 }
 
@@ -653,9 +651,18 @@ function HelpPanel:init()
             on_select=function(idx) self.subviews.pages:setSelected(idx) end,
             get_cur_page=function() return self.subviews.pages:getSelected() end,
         },
+        widgets.HotkeyLabel{
+            frame={t=1, r=3},
+            label='Clear output',
+            text_pen=COLOR_YELLOW,
+            auto_width=true,
+            on_activate=function() self:add_output('', true) end,
+            visible=function() return self.subviews.pages:getSelected() == 2 end,
+            enabled=function() return #self.subviews.output_label.text_to_wrap > 0 end,
+        },
         widgets.Pages{
             view_id='pages',
-            frame={t=2, l=0, b=0, r=0},
+            frame={t=3, l=0, b=0, r=0},
             subviews={
                 widgets.WrappedLabel{
                     view_id='help_label',
@@ -688,14 +695,14 @@ local function HelpPanel_update_label(label, text)
     label:updateLayout() -- update the scroll arrows after rewrapping text
 end
 
-function HelpPanel:add_output(output)
+function HelpPanel:add_output(output, clear)
     self.subviews.pages:setSelected('output_label')
     local label = self.subviews.output_label
     local text_height = label:getTextHeight()
     label:scroll('end')
     local line_num = label.start_line_num
     local text = output
-    if label.text_to_wrap ~= '' then
+    if not clear and label.text_to_wrap ~= '' then
         text = label.text_to_wrap .. NEWLINE .. output
     end
     local text_len = #text
@@ -1047,43 +1054,55 @@ function LauncherUI:run_command(reappear, command)
     if #command == 0 then return end
     dfhack.addCommandToHistory(HISTORY_ID, HISTORY_FILE, command)
     record_command(command)
-    -- remember the previous parent screen address so we can detect changes
-    local _,prev_parent_addr = self._native.parent:sizeof()
-    -- propagate saved unpaused status to the new ZScreen
-    local saved_pause_state = df.global.pause_state
-    if not self.saved_pause_state then
-        df.global.pause_state = false
+    local output, clear
+    if command == 'clear' or command == 'cls' or
+        command:startswith('clear ') or command:startswith('cls ')
+    then
+        output = ''
+        clear = true
+    else
+        -- remember the previous parent screen address so we can detect changes
+        local _,prev_parent_addr = self._native.parent:sizeof()
+        -- propagate saved unpaused status to the new ZScreen
+        local saved_pause_state = df.global.pause_state
+        if not self.saved_pause_state then
+            df.global.pause_state = false
+        end
+        -- remove our viewscreen from the stack while we run the command. this
+        -- allows hotkey guards and tools that interact with the top viewscreen
+        -- without checking whether it is active to work reliably.
+        output = dfhack.screen.hideGuard(self, dfhack.run_command_silent,
+                                            command)
+        df.global.pause_state = saved_pause_state
+        if #output > 0 then
+            print('Output from command run from gui/launcher:')
+            print('> ' .. command)
+            print()
+            print(output)
+        end
+        -- if we displayed a different screen, don't come back up, even if reappear
+        -- is true, so the user can interact with the new screen.
+        local _,parent_addr = self._native.parent:sizeof()
+        if self.minimal or parent_addr ~= prev_parent_addr then
+            reappear = false
+        end
+        if #output == 0 then
+            output = 'Command finished successfully'
+        else
+            output = output:gsub('\t', ' ')
+        end
+        output = ('> %s\n\n%s'):format(command, output)
     end
-    -- remove our viewscreen from the stack while we run the command. this
-    -- allows hotkey guards and tools that interact with the top viewscreen
-    -- without checking whether it is active to work reliably.
-    local output = dfhack.screen.hideGuard(self, dfhack.run_command_silent,
-                                           command)
-    df.global.pause_state = saved_pause_state
-    if #output > 0 then
-        print('Output from command run from gui/launcher:')
-        print('> ' .. command)
-        print()
-        print(output)
-    end
-    -- if we displayed a different screen, don't come back up even if reappear
-    -- is true so the user can interact with the new screen.
-    local _,parent_addr = self._native.parent:sizeof()
-    if not reappear or self.minimal or parent_addr ~= prev_parent_addr then
+
+    self.subviews.edit:set_text('')
+    self.subviews.help:add_output(output, clear)
+
+    if not reappear then
         self:dismiss()
         if self.minimal and #output > 0 then
             dialogs.showMessage(TITLE, output)
         end
-        return
     end
-    -- reappear and show the command output
-    self.subviews.edit:set_text('')
-    if #output == 0 then
-        output = 'Command finished successfully'
-    else
-        output = output:gsub('\t', ' ')
-    end
-    self.subviews.help:add_output(('> %s\n\n%s'):format(command, output))
 end
 
 function LauncherUI:onDismiss()
