@@ -132,11 +132,10 @@ local function count_units(for_fn, which)
     local count = 0
     for_fn(function() count = count + 1 end)
     if count > 0 then
-        return ('%d %s%s %s on the map'):format(
+        return ('%d %s%s'):format(
             count,
             which,
-            count == 1 and '' or 's',
-            count == 1 and 'is' or 'are'
+            count == 1 and '' or 's'
         )
     end
 end
