@@ -107,8 +107,11 @@ function getStrandedGroups()
     table.sort(groupList, function(a, b) return #a['units'] < #b['units'] end)
 
     -- The largest group is not stranded by definition
-    local mainGroup = groupList[#groupList].walkGroup
-    table.remove(groupList, #groupList)
+    local mainGroup
+    if #groupList > 0 then
+        mainGroup = groupList[#groupList].walkGroup
+        table.remove(groupList, #groupList)
+    end
 
     return groupList, ignoredUnitsByWalkGroup, mainGroup
 end
