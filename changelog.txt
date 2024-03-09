@@ -40,6 +40,7 @@ Template for new versions:
 ## Misc Improvements
 - `gui/launcher`: add interface for browsing and filtering commands by tags
 - `gui/launcher`: add support for history search (Alt-s hotkey) when in minimal mode
+- `control-panel`: enable tweaks quietly on fort load so we don't spam the console
 - `devel/tile-browser`: simplify interface now that SDL automatically normalizes texture scale
 - `exterminate`: make race name matching case and space insensitive
 
