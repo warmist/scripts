@@ -96,7 +96,10 @@ local plotinfo = df.global.plotinfo
 local custom_difficulty = plotinfo.main.custom_difficulty
 
 local function reset_surface_agitation()
-    plotinfo.outdoor_irritation = custom_difficulty.wild_irritate_min
+    if plotinfo.outdoor_irritation > custom_difficulty.wild_irritate_min then
+        print('agitation-rebalance: adjusting surface irritation')
+        plotinfo.outdoor_irritation = custom_difficulty.wild_irritate_min
+    end
 end
 
 local function is_cavern_invader(unit)
@@ -168,7 +171,6 @@ local function cull_pending_cavern_invaders(start_unit, num_to_cull)
             num_to_cull = num_to_cull - 1
         end
         if culling and is_cavern_invader(unit) then
-            dfhack.printerr(('culling cavern invader %d (%s)'):format(unit.id, dfhack.units.getReadableName(unit)))
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         end
     end
@@ -185,17 +187,7 @@ local function check_new_unit(unit_id)
     end
     local unit = df.unit.find(unit_id)
     if not unit or not is_unkilled(unit) then return end
-    if is_agitated(unit) or is_cavern_invader(unit) then
-        dfhack.printerr(('unit %d (%s) entered map; agitated=%s, cavern=%s'):format(
-            unit.id, dfhack.units.getReadableName(unit),
-            is_agitated(unit), is_cavern_invader(unit)))
-    else
-        print(('unit %d (%s) entered map; agitated=%s, cavern=%s'):format(
-            unit.id, dfhack.units.getReadableName(unit),
-            is_agitated(unit), is_cavern_invader(unit)))
-    end
     if state.features.surface and is_agitated(unit) then
-        dfhack.printerr('adjusting surface irritation')
         reset_surface_agitation()
         return
     end
@@ -208,7 +200,7 @@ local function check_new_unit(unit_id)
     if state.features.cap_invaders then
         local num_to_cull = #get_cavern_invaders() - custom_difficulty.cavern_dweller_max_attackers
         if num_to_cull > 0 then
-            dfhack.printerr('active invaders above threshold')
+            print('agitation-rebalance: active invaders above threshold; culling excess')
             cull_pending_cavern_invaders(unit, num_to_cull)
             return
         end
@@ -216,17 +208,14 @@ local function check_new_unit(unit_id)
     if state.features.cavern then
         local cavern_layer, irritation = get_feature_data(unit)
         if not cavern_layer then return end
-        dfhack.printerr('detected invader in cavern layer ' .. df.layer_type[cavern_layer])
         local cavern = state.caverns[df.layer_type[cavern_layer]]
         if cavern.invasion_id == unit.invasion_id then
-            dfhack.printerr('invader part of current invasion; allow entry')
             return
         end
         if irritation < cavern.threshold then
-            dfhack.printerr('not ready for next attack; killing cavern invaders')
+            print('agitation-rebalance: redirecting premature cavern invasion')
             cull_pending_cavern_invaders(unit)
         else
-            dfhack.printerr(('new cavern invasion detected: %d'):format(unit.invasion_id))
             cavern.invasion_id = unit.invasion_id
             cavern.threshold = irritation + (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
             persist_state()
@@ -240,7 +229,7 @@ local function do_preset(preset_name)
         qerror('preset not found: ' .. preset_name)
     end
     utils.assign(custom_difficulty, preset)
-    print('agitation-rebalance preset applied: ' .. preset_name)
+    print('agitation-rebalance: preset applied: ' .. preset_name)
 end
 
 local function do_enable()
@@ -414,9 +403,10 @@ if dfhack_flags.module then
 end
 
 if not dfhack.world.isFortressMode() or not dfhack.isMapLoaded() then
-    dfhack.printerr(GLOBAL_KEY .. ' needs a loaded fortress map to work')
-    return
+    qerror('needs a loaded fortress map to work')
 end
+
+local WIDGET_NAME = dfhack.current_script_name() .. '.monitor'
 
 local function print_status()
     print(GLOBAL_KEY .. ' is ' .. (state.enabled and 'enabled' or 'not enabled'))
@@ -425,6 +415,8 @@ local function print_status()
     for k,v in pairs(state.features) do
         print(('  %15s: %s'):format(k, v))
     end
+    print(('  %15s: %s'):format('monitor',
+        overlay.get_state().config[WIDGET_NAME].enabled or 'false'))
     print()
     print('difficulty settings:')
     print(('     Wilderness irritation minimum: %d (about %d tree(s) until initial attacks are possible)'):format(
@@ -454,8 +446,7 @@ end
 
 local function enable_feature(which, enabled)
     if which == 'monitor' then
-        dfhack.run_command('overlay', enabled and 'enable' or 'disable',
-            dfhack.current_script_name() .. '.monitor')
+        dfhack.run_command('overlay', enabled and 'enable' or 'disable', WIDGET_NAME)
         return
     end
     local feature = state.features[which]
