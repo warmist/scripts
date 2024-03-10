@@ -3,53 +3,56 @@
 
 local eventful = require('plugins.eventful')
 local exterminate = reqscript('exterminate')
+local gui = require('gui')
+local overlay = require('plugins.overlay')
 local utils = require('utils')
+local widgets = require('gui.widgets')
 
 local GLOBAL_KEY = dfhack.current_script_name()
 
 local presets = {
     casual={
+        wild_irritate_min=100000,
         wild_sens=100000,
-        wild_irritate_min=0,
         wild_irritate_decay=100000,
         cavern_dweller_max_attackers=0,
     },
     lenient={
+        wild_irritate_min=10000,
         wild_sens=10000,
-        wild_irritate_min=7500,
         wild_irritate_decay=5000,
         cavern_dweller_max_attackers=20,
     },
     strict={
-        wild_sens=1000,
-        wild_irritate_min=500,
-        wild_irritate_decay=1000,
-        cavern_dweller_max_attackers=100,
+        wild_irritate_min=2500,
+        wild_sens=500,
+        wild_irritate_decay=10,
+        cavern_dweller_max_attackers=50,
     },
     insane={
-        wild_sens=500,
-        wild_irritate_min=400,
-        wild_irritate_decay=100,
-        cavern_dweller_max_attackers=500,
+        wild_irritate_min=600,
+        wild_sens=200,
+        wild_irritate_decay=200,
+        cavern_dweller_max_attackers=100,
     },
 }
 
 local vanilla_presets = {
     casual={
-        wild_sens=10000,
         wild_irritate_min=2000,
+        wild_sens=10000,
         wild_irritate_decay=500,
         cavern_dweller_max_attackers=0,
     },
     lenient={
-        wild_sens=10000,
         wild_irritate_min=2000,
+        wild_sens=10000,
         wild_irritate_decay=500,
         cavern_dweller_max_attackers=50,
     },
     strict={
-        wild_sens=10000,
         wild_irritate_min=0,
+        wild_sens=10000,
         wild_irritate_decay=100,
         cavern_dweller_max_attackers=75,
     },
@@ -203,7 +206,7 @@ local function check_new_unit(unit_id)
         return
     end
     if state.features.cap_invaders then
-        local num_to_cull = custom_difficulty.cavern_dweller_max_attackers - #get_cavern_invaders()
+        local num_to_cull = #get_cavern_invaders() - custom_difficulty.cavern_dweller_max_attackers
         if num_to_cull > 0 then
             dfhack.printerr('active invaders above threshold')
             cull_pending_cavern_invaders(unit, num_to_cull)
@@ -225,7 +228,7 @@ local function check_new_unit(unit_id)
         else
             dfhack.printerr(('new cavern invasion detected: %d'):format(unit.invasion_id))
             cavern.invasion_id = unit.invasion_id
-            cavern.threshold = irritation + (custom_difficulty.wild_sens-custom_difficulty.wild_irritate_min)
+            cavern.threshold = irritation + (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
             persist_state()
         end
     end
@@ -281,6 +284,129 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     end
 end
 
+-----------------------------------
+-- IrritationOverlay
+--
+
+IrritationOverlay = defclass(IrritationOverlay, overlay.OverlayWidget)
+IrritationOverlay.ATTRS{
+    desc='Monitors irritation and shows chances of invasion.',
+    default_pos={x=85,y=5},
+    viewscreens='dwarfmode/Default',
+    overlay_onupdate_max_freq_seconds=5,
+    frame={w=27, h=7},
+    frame_style=gui.FRAME_MEDIUM,
+    frame_background=gui.CLEAR_PEN,
+    draggable=true,
+}
+
+local function get_savagery()
+    local rgnX, rgnY = dfhack.maps.getTileBiomeRgn(0, 0, 0)
+    local biome = dfhack.maps.getRegionBiome(rgnX, rgnY)
+    return biome and biome.savagery or 0
+end
+
+-- returns chance for next wildlife group
+local function get_surface_attack_chance()
+    local adjusted_irritation = plotinfo.outdoor_irritation - custom_difficulty.wild_irritate_min
+    if adjusted_irritation <= 0 or get_savagery() <= 65 then return 0 end
+    return custom_difficulty.wild_sens <= 0 and 100 or
+        math.min(100, (adjusted_irritation*100)//custom_difficulty.wild_sens)
+end
+
+local function get_cavern_irritation(which)
+    for _,map_feature in ipairs(map_features) do
+        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
+            goto continue
+        end
+        if map_feature.start_depth == which then
+            return map_feature.feature.irritation_level
+        end
+        ::continue::
+    end
+end
+
+-- returns chance for next season
+local function get_cavern_attack_chance(which)
+    local irritation = get_cavern_irritation(which)
+    if not irritation then return 0 end
+    if state.enabled then
+        local cavern = state.caverns[df.layer_type[which]]
+        if cavern and irritation < cavern.threshold then
+            -- we are actively suppressing further invasions
+            return 0
+        end
+    end
+    local wealth_rating = plotinfo.tasks.wealth.total // custom_difficulty.forgotten_wealth_div
+    local irritation_min = custom_difficulty.forgotten_irritate_min
+    local adjusted_irritation = wealth_rating + irritation - irritation_min
+    if adjusted_irritation < 0 then return 0 end
+    return custom_difficulty.forgotten_sens <= 0 and 33 or
+        math.min(33, (adjusted_irritation*33)//custom_difficulty.forgotten_sens)
+end
+
+local function get_chance_color(chance_fn, chance_arg)
+    local chance = chance_fn(chance_arg)
+    if chance < 1 then
+        return COLOR_GREEN
+    elseif chance < 33 then
+        return COLOR_YELLOW
+    elseif chance < 51 then
+        return COLOR_LIGHTRED
+    end
+    return COLOR_RED
+end
+
+function IrritationOverlay:init()
+    self:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text='Chance of attack',
+        },
+        widgets.Label{
+            frame={t=1, l=0},
+            text={
+                'Surface: ',
+                {text=get_surface_attack_chance},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_surface_attack_chance),
+        },
+        widgets.Label{
+            frame={t=2, l=0},
+            text={
+                'Cavern1: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern1)},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern1),
+        },
+        widgets.Label{
+            frame={t=3, l=0},
+            text={
+                'Cavern2: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern2)},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern2),
+        },
+        widgets.Label{
+            frame={t=4, l=0},
+            text={
+                'Cavern3: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern3)},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),        },
+    }
+end
+
+OVERLAY_WIDGETS = {monitor=IrritationOverlay}
+
+-----------------------------------
+-- CLI
+--
+
 if dfhack_flags.module then
     return
 end
@@ -290,32 +416,7 @@ if not dfhack.world.isFortressMode() or not dfhack.isMapLoaded() then
     return
 end
 
-local args = {...}
-local command = table.remove(args, 1)
-
-if dfhack_flags and dfhack_flags.enable then
-    if dfhack_flags.enable_state then
-        do_enable()
-    else
-        do_disable()
-    end
-elseif command == 'preset' then
-    do_preset(args[1])
-elseif command == 'enable' then
-    local feature = state.features[args[1]]
-    if feature == nil then
-        qerror('feature not found: ' .. feature)
-    end
-    state.features[args[1]] = true
-    print('feature enabled: ' .. feature)
-elseif command == 'disable' then
-    local feature = state.features[args[1]]
-    if feature == nil then
-        qerror('feature not found: ' .. feature)
-    end
-    state.features[args[1]] = false
-    print('feature disabled: ' .. feature)
-elseif not command or command == 'status' then
+local function print_status()
     print(GLOBAL_KEY .. ' is ' .. (state.enabled and 'enabled' or 'not enabled'))
     print()
     print('features:')
@@ -324,14 +425,13 @@ elseif not command or command == 'status' then
     end
     print()
     print('difficulty settings:')
-    print(('            Wilderness sensitivity: %d (about %d tree(s) before initial attack)'):format(
-        custom_difficulty.wild_sens, custom_difficulty.wild_sens // 100))
-    print(('     Wilderness irritation minimum: %d (about %d tree(s) between attacks)'):format(
-        custom_difficulty.wild_irritate_min,
-        (custom_difficulty.wild_sens-custom_difficulty.wild_irritate_min) // 100))
+    print(('     Wilderness irritation minimum: %d (about %d tree(s) until initial attacks are possible)'):format(
+        custom_difficulty.wild_irritate_min, custom_difficulty.wild_irritate_min // 100))
+    print(('            Wilderness sensitivity: %d (each tree past the miniumum makes an attack %d%% more likely)'):format(
+        custom_difficulty.wild_sens, 10000 // custom_difficulty.wild_sens))
     print(('       Wilderness irritation decay: %d (about %d additional tree(s) allowed per year)'):format(
         custom_difficulty.wild_irritate_decay, custom_difficulty.wild_irritate_decay // 100))
-    print(('  Cavern dweller maximum attackers: %d'):format(
+    print(('  Cavern dweller maximum attackers: %d (maximum allowed across all caverns)'):format(
         custom_difficulty.cavern_dweller_max_attackers))
     print()
     local unhidden_invaders = {}
@@ -342,6 +442,41 @@ elseif not command or command == 'status' then
     end
     print(('Current agitated wildlife:     %5d'):format(#get_agitated_units()))
     print(('Current known cavern invaders: %5d'):format(#unhidden_invaders))
+    print()
+    print('Chances for an upcoming attack:')
+    print(('  Surface: %3d%%'):format(get_surface_attack_chance()))
+    print(('  Cavern1: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern1)))
+    print(('  Cavern2: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern2)))
+    print(('  Cavern3: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern3)))
+end
+
+local function enable_feature(which, enabled)
+    if which == 'monitor' then
+        dfhack.run_command('overlay', enabled and 'enable' or 'disable',
+            dfhack.current_script_name() .. '.monitor')
+        return
+    end
+    local feature = state.features[which]
+    if feature == nil then
+        qerror('feature not found: ' .. which)
+    end
+    state.features[which] = enabled
+    print(('feature %sabled: %s'):format(enabled and 'en' or 'dis', which))
+end
+
+local args = {...}
+local command = table.remove(args, 1)
+
+if dfhack_flags and dfhack_flags.enable then
+    if dfhack_flags.enable_state then do_enable()
+    else do_disable()
+    end
+elseif command == 'preset' then
+    do_preset(args[1])
+elseif command == 'enable' or command == 'disable' then
+    enable_feature(args[1], command == 'enable')
+elseif not command or command == 'status' then
+    print_status()
     return
 else
     print(dfhack.script_help())
