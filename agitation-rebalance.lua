@@ -291,13 +291,12 @@ end
 IrritationOverlay = defclass(IrritationOverlay, overlay.OverlayWidget)
 IrritationOverlay.ATTRS{
     desc='Monitors irritation and shows chances of invasion.',
-    default_pos={x=85,y=5},
+    default_pos={x=-32,y=5},
     viewscreens='dwarfmode/Default',
     overlay_onupdate_max_freq_seconds=5,
-    frame={w=27, h=7},
+    frame={w=16, h=7},
     frame_style=gui.FRAME_MEDIUM,
     frame_background=gui.CLEAR_PEN,
-    draggable=true,
 }
 
 local function get_savagery()
@@ -361,13 +360,13 @@ function IrritationOverlay:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text='Chance of attack',
+            text='Attack chance',
         },
         widgets.Label{
             frame={t=1, l=0},
             text={
-                'Surface: ',
-                {text=get_surface_attack_chance},
+                ' Surface: ',
+                {text=get_surface_attack_chance, width=3, rjustify=true},
                 '%',
             },
             text_pen=curry(get_chance_color, get_surface_attack_chance),
@@ -375,8 +374,8 @@ function IrritationOverlay:init()
         widgets.Label{
             frame={t=2, l=0},
             text={
-                'Cavern1: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern1)},
+                'Cavern 1: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern1), width=3, rjustify=true},
                 '%',
             },
             text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern1),
@@ -384,8 +383,8 @@ function IrritationOverlay:init()
         widgets.Label{
             frame={t=3, l=0},
             text={
-                'Cavern2: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern2)},
+                'Cavern 2: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern2), width=3, rjustify=true},
                 '%',
             },
             text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern2),
@@ -393,8 +392,8 @@ function IrritationOverlay:init()
         widgets.Label{
             frame={t=4, l=0},
             text={
-                'Cavern3: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern3)},
+                'Cavern 3: ',
+                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern3), width=3, rjustify=true},
                 '%',
             },
             text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),        },
