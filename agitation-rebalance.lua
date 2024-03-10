@@ -352,7 +352,7 @@ function IrritationOverlay:init()
     self:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text='Attack chance',
+            text='Attack chance:',
         },
         widgets.Label{
             frame={t=1, l=0},
