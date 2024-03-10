@@ -284,8 +284,6 @@ IrritationOverlay.ATTRS{
     viewscreens='dwarfmode/Default',
     overlay_onupdate_max_freq_seconds=5,
     frame={w=16, h=7},
-    frame_style=gui.FRAME_MEDIUM,
-    frame_background=gui.CLEAR_PEN,
 }
 
 local function get_savagery()
@@ -349,7 +347,11 @@ local function get_chance_color(chance_fn, chance_arg)
 end
 
 function IrritationOverlay:init()
-    self:addviews{
+    local panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+    }
+    panel:addviews{
         widgets.Label{
             frame={t=0, l=0},
             text='Attack chance:',
@@ -388,7 +390,12 @@ function IrritationOverlay:init()
                 {text=curry(get_cavern_attack_chance, df.layer_type.Cavern3), width=3, rjustify=true},
                 '%',
             },
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),        },
+            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),
+        },
+    }
+    self:addviews{
+        panel,
+        widgets.HelpButton{command='agitation-rebalance'}
     }
 end
 
