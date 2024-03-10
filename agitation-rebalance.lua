@@ -307,7 +307,11 @@ local function get_savagery()
     -- need to check at (or about) ground level since biome data may be missing or incorrect
     -- in the extreme top or bottom levels of the map
     local ground_level = (world.map.z_count-2) - world.worldgen.worldgen_parms.levels_above_ground
-    local rgnX, rgnY = dfhack.maps.getTileBiomeRgn(0, 0, ground_level)
+    local rgnX, rgnY
+    for z=ground_level,0,-1 do
+        rgnX, rgnY = dfhack.maps.getTileBiomeRgn(0, 0, z)
+        if rgnX then break end
+    end
     local biome = dfhack.maps.getRegionBiome(rgnX, rgnY)
     return biome and biome.savagery or 0
 end
