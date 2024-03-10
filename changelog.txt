@@ -27,11 +27,13 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `agitation-rebalance`: alter mechanics of irriation-related attacks so they are less constant and are more responsive to recent player bahavior
 - `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
 - `instruments`: provides information on how to craft the instruments used by the player civilization.
 
 ## New Features
 - `gui/settings-manager`: add import, export, and autoload for work details
+- `exterminate`: new "disintegrate" kill method that additionally destroys carried items
 
 ## Fixes
 - `gui/launcher`: fix history scanning (Up/Down arrow keys) being slow to respond when in minimal mode
