@@ -434,14 +434,14 @@ local function print_status()
             table.insert(unhidden_invaders, unit)
         end
     end
-    print(('Current agitated wildlife:     %5d'):format(#get_agitated_units()))
-    print(('Current known cavern invaders: %5d'):format(#unhidden_invaders))
+    print(('current agitated wildlife:     %5d'):format(#get_agitated_units()))
+    print(('current known cavern invaders: %5d'):format(#unhidden_invaders))
     print()
-    print('Chances for an upcoming attack:')
-    print(('  Surface: %3d%%'):format(get_surface_attack_chance()))
-    print(('  Cavern1: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern1)))
-    print(('  Cavern2: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern2)))
-    print(('  Cavern3: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern3)))
+    print('chances for an upcoming attack:')
+    print(('   Surface: %3d%%'):format(get_surface_attack_chance()))
+    print(('  Cavern 1: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern1)))
+    print(('  Cavern 2: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern2)))
+    print(('  Cavern 3: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern3)))
 end
 
 local function enable_feature(which, enabled)
