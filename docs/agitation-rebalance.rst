@@ -104,6 +104,12 @@ cavern layers do not decay over time, so once attacks begin, there will be a
 flat 33% chance of an additional attack every season, regardless of the
 presence of previous invaders.
 
+Irritation counters are saved with the cavern layer in the world region, which
+extends beyond the boundaries of your current fort. If you retire a fort and
+start another one nearby, the caverns will retain any irritation added by the
+first fort. This means that new forts may start with already-irritated caverns
+and meet with immediate resistence.
+
 The settings
 ~~~~~~~~~~~~
 
