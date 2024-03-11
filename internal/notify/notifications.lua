@@ -12,7 +12,8 @@ local caravans = df.global.plotinfo.caravans
 local function get_active_depot()
     for _, bld in ipairs(df.global.world.buildings.other.TRADE_DEPOT) do
         if bld:getBuildStage() == bld:getMaxBuildStage() and
-            (#bld.jobs == 0 or bld.jobs[0].job_type ~= df.job_type.DestroyBuilding)
+            (#bld.jobs == 0 or bld.jobs[0].job_type ~= df.job_type.DestroyBuilding) and
+            #bld.contained_items > 0 and not bld.contained_items[0].item.flags.forbid
         then
             return bld
         end
