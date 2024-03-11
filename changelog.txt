@@ -38,6 +38,7 @@ Template for new versions:
 ## Fixes
 - `gui/launcher`: fix history scanning (Up/Down arrow keys) being slow to respond when in minimal mode
 - `control-panel`: fix filtering not filtering when running the ``list`` command
+- `gui/notify`: don't zoom to forbidden depots for merchants ready to trade notification
 
 ## Misc Improvements
 - `gui/launcher`: add interface for browsing and filtering commands by tags
