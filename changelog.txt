@@ -49,6 +49,7 @@ Template for new versions:
 - `control-panel`: enable tweaks quietly on fort load so we don't spam the console
 - `devel/tile-browser`: simplify interface now that SDL automatically normalizes texture scale
 - `exterminate`: make race name matching case and space insensitive
+- `gui/gm-editor`: support opening engraved art for inspection
 
 ## Removed
 
