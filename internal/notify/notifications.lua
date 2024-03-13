@@ -7,10 +7,25 @@ local warn_stranded = reqscript('warn-stranded')
 
 local CONFIG_FILE = 'dfhack-config/notify.json'
 
+local buildings = df.global.world.buildings
 local caravans = df.global.plotinfo.caravans
+local units = df.global.world.units
+
+local function for_iter(vec, match_fn, action_fn, reverse)
+    local offset = type(vec) == 'table' and 1 or 0
+    local idx1 = reverse and #vec-1+offset or offset
+    local idx2 = reverse and offset or #vec-1+offset
+    local step = reverse and -1 or 1
+    for idx=idx1,idx2,step do
+        local elem = vec[idx]
+        if match_fn(elem) then
+            if action_fn(elem) then return end
+        end
+    end
+end
 
 local function get_active_depot()
-    for _, bld in ipairs(df.global.world.buildings.other.TRADE_DEPOT) do
+    for _, bld in ipairs(buildings.other.TRADE_DEPOT) do
         if bld:getBuildStage() == bld:getMaxBuildStage() and
             (#bld.jobs == 0 or bld.jobs[0].job_type ~= df.job_type.DestroyBuilding) and
             #bld.contained_items > 0 and not bld.contained_items[0].item.flags.forbid
@@ -20,31 +35,25 @@ local function get_active_depot()
     end
 end
 
-local function for_agitated_creature(fn)
-    for _, unit in ipairs(df.global.world.units.active) do
-        if not dfhack.units.isDead(unit) and
+local function for_agitated_creature(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             not unit.flags1.chained and
             unit.flags4.agitated_wilderness_creature
-        then
-            if fn(unit) then return end
-        end
-    end
+    end, fn, reverse)
 end
 
-local function for_invader(fn)
-    for _, unit in ipairs(df.global.world.units.active) do
-        if not dfhack.units.isDead(unit) and
+local function for_invader(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             not unit.flags1.chained and
             dfhack.units.isInvader(unit) and
             not dfhack.units.isHidden(unit)
-        then
-            if fn(unit) then return end
-        end
-    end
+    end, fn, reverse)
 end
 
 local function is_likely_hostile(unit)
@@ -54,9 +63,9 @@ local function is_likely_hostile(unit)
         dfhack.units.isGreatDanger(unit)
 end
 
-local function for_hostile(fn)
-    for _, unit in ipairs(df.global.world.units.active) do
-        if not dfhack.units.isDead(unit) and
+local function for_hostile(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             not unit.flags1.chained and
@@ -65,10 +74,7 @@ local function for_hostile(fn)
             not dfhack.units.isHidden(unit) and
             not unit.flags4.agitated_wilderness_creature and
             is_likely_hostile(unit)
-        then
-            if fn(unit) then return end
-        end
-    end
+    end, fn, reverse)
 end
 
 local function is_in_dire_need(unit)
@@ -77,26 +83,21 @@ local function is_in_dire_need(unit)
         unit.counters2.sleepiness_timer > 150000
 end
 
-local function for_starving(fn)
-    for _, unit in ipairs(df.global.world.units.active) do
-        if not dfhack.units.isDead(unit) and
+local function for_starving(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             dfhack.units.isSane(unit) and
             dfhack.units.isFortControlled(unit) and
             is_in_dire_need(unit)
-        then
-            if fn(unit) then return end
-        end
-    end
+    end, fn, reverse)
 end
 
-local function for_moody(fn)
-    for _, unit in ipairs(dfhack.units.getCitizens(false)) do
+local function for_moody(fn, reverse)
+    for_iter(dfhack.units.getCitizens(false), function(unit)
         local job = unit.job.current_job
-        if job and df.job_type_class[df.job_type.attrs[job.job_type].type] == 'StrangeMood' then
-            if fn(unit) then return end
-        end
-    end
+        return job and df.job_type_class[df.job_type.attrs[job.job_type].type] == 'StrangeMood'
+    end, fn, reverse)
 end
 
 local races = df.global.world.raws.creatures.all
@@ -111,9 +112,9 @@ local function is_stealer(unit)
     end
 end
 
-local function for_nuisance(fn)
-    for _, unit in ipairs(df.global.world.units.active) do
-        if not dfhack.units.isDead(unit) and
+local function for_nuisance(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
             dfhack.units.isActive(unit) and
             not unit.flags1.caged and
             not unit.flags1.chained and
@@ -123,10 +124,7 @@ local function for_nuisance(fn)
             not unit.flags4.agitated_wilderness_creature and
             not is_likely_hostile(unit) and
             (is_stealer(unit) or dfhack.units.isMischievous(unit))
-        then
-            if fn(unit) then return end
-        end
-    end
+    end, fn, reverse)
 end
 
 local function count_units(for_fn, which)
@@ -141,7 +139,7 @@ local function count_units(for_fn, which)
     end
 end
 
-local function zoom_to_next(for_fn, state)
+local function zoom_to_next(for_fn, state, reverse)
     local first_found, ret
     for_fn(function(unit)
         if not first_found then
@@ -155,7 +153,7 @@ local function zoom_to_next(for_fn, state)
         elseif unit.id == state then
             state = nil
         end
-    end)
+    end, reverse)
     if ret then return ret end
     if first_found then
         dfhack.gui.revealInDwarfmodeMap(
