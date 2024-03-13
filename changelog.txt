@@ -52,6 +52,8 @@ Template for new versions:
 - `exterminate`: make race name matching case and space insensitive
 - `gui/gm-editor`: support opening engraved art for inspection
 - `gui/notify`: Shift click or Shift Enter on a zoomable notification to zoom to previous target
+- `allneeds`: select a dwarf in the UI to see a summary of needs for just that dwarf
+- `allneeds`: provide options for sorting the cumulative needs by different criteria
 
 ## Removed
 
