@@ -13,10 +13,10 @@ the caverns. This mod changes how the agitation system behaves to ensure the
 challenge remains fun and scales appropriately according to your dwarves'
 current activities.
 
-In short, this mod changes agitation attacks from a constant flood to a system
-that is responsive to your recent actions on the surface and in the caverns.
-If you irritate the natural environment past a threshold, you will be attacked
-exactly once. You will not be attacked further unless you continue to
+In short, this mod changes irritation-based attacks from a constant flood to a
+system that is responsive to your recent actions on the surface and in the
+caverns. If you irritate the natural environment past a threshold, you will be
+attacked exactly once. You will not be attacked further unless you continue to
 antagonize nature. This mod can be enabled (and auto-started for new forts, if
 desired) on the "Gameplay" tab of `gui/control-panel`.
 
@@ -33,7 +33,7 @@ Usage
 When run without arguments (or with the ``status`` argument), it will print out
 whether it is enabled, the current configuration, how many agitated creatures
 and (visible) cavern invaders are on the map, and your current chances of
-suffering retaliation on the surface and each of the cavern layers.
+suffering retaliation on the surface and in each of the cavern layers.
 
 The `Presets`_ allow you to quickly set the game irritation-related difficulty
 settings to tested, balanced values. You can adjust them further (or set your
@@ -85,24 +85,25 @@ destroyed -- if they don't quickly destroy *you* -- and a new wave will spawn.
 The new wave will have a similar chance to the previous wave for becoming
 agitated. This means that once you cross the threshold that starts the
 agitation attacks, you may suffer near-constant retribution until you stop all
-tree cutting and fishing on the surface and hide for sufficient years until the
-counter falls low enough again.
+tree cutting and fishing on the surface and hide for sufficient time (years)
+until the counter falls low enough again.
 
 The caverns
 ~~~~~~~~~~~
 
-DF similarly maintains counters for each cavern layer, with the chance of
-cavern invasion checked once per season. This same counter also determines the
-chance of a forgotten beasts attack. The cavern irritation counter is increased
-for tree felling and fishing within the cavern's area. Moreover, doing anything
-that makes noise will increase the irritation level further. Responding to
-invaders in the caverns makes noise, which can lead to a cycle of invasions that
-never ends. If you wall off the caverns, invaders will continue to spawn and
-build up over time. Your FPS will be impacted by large numbers of units on the
-map, even if they are hidden in the caverns. The irritation counters for the
-cavern layers do not decay over time, so once attacks begin, there will be a
-flat 33% chance of an additional attack every season, regardless of the
-presence of previous invaders.
+DF similarly maintains counters for each cavern layer, with chances of cavern
+invasion and forgotten beast attack independently checked once per season. The
+cavern irritation counter is increased for tree felling and fishing within the
+cavern's area. Moreover, doing anything that makes noise will increase the
+irritation level further. Responding to invaders in the caverns makes noise,
+which can lead to a cycle of invasions that never ends. If you wall off the
+caverns, invaders will continue to spawn and build up over time. Your FPS will
+be impacted by large numbers of units on the map, even if they are hidden in
+the caverns. The irritation counters for the cavern layers do not decay over
+time, so once attacks begin, cavern invasions are likely to occur once a season
+thereafter, regardless of the continued presence of previous invaders. When the
+irritation counter is high, forgotten beasts will also start to attack
+regularly, though their chance of seasonal attack is capped at 33%.
 
 Irritation counters are saved with the cavern layer in the world region, which
 extends beyond the boundaries of your current fort. If you retire a fort and
@@ -131,25 +132,26 @@ customizable in the DF difficulty settings:
     the vanilla interface from its default value of 500 (if initialized by the
     "Normal" vanilla preset) or 100 (if initialized by the "Hard" vanilla
     preset).
-``Forgotten beast wealth divisor``
-    Your fortress wealth is divided by this number and the result is added to a
-    cavern's "natural" irritation to get the effective irritation that the
-    chance of invasion rolls against.
-``Forgotten beast irritation minimum``
-    While a cavern's effective irritation at this value or below, no cavern
-    invaders or forgotten beasts will invade that cavern.
-``Forgotten beast sensitivity``
-    After the cavern's effective irritation rises above the minimum, this value
-    represents the range over which the chance of cavern invasion and forgotten
-    beast attack increases from 0% to 100%.
 ``Cavern dweller maximum attackers``
     This controls the maximum number of cavern invaders that can spawn in a
-    single invasion. The number of invaders in the caverns can grow beyond this
+    single invasion. If ``agitation-rebalance`` is not managing the invader
+    population, the number of invaders in the caverns can grow beyond this
     number if the invaders from a previous invasion are still alive.
 ``Cavern dweller scale``
     Each time your civilization is attacked, the number of attackers in a
     single cavern invasion increases by this value. The total number of
     attackers is still capped by ``Cavern dweller maximum attackers``.
+``Forgotten beast wealth divisor``
+    Your fortress wealth is divided by this number and the result is added to a
+    cavern's "natural" irritation to get the effective irritation that a
+    forgotten beast rolls against for a chance to attack.
+``Forgotten beast irritation minimum``
+    While a cavern's effective irritation at this value or below, no forgotten
+    beasts will invade that cavern.
+``Forgotten beast sensitivity``
+    After the cavern's effective irritation rises above the minimum, this value
+    represents the range over which the chance of forgotten beast attack
+    increases from 0% to 100%.
 
 What does this mod do?
 ----------------------
@@ -157,14 +159,14 @@ What does this mod do?
 When enabled, this mod makes the following changes:
 
 When agitated wildlife enters the map on the surface, the surface irritation
-counter is set to the value for ``Wilderness irritation minimum``, effectively
-ensuring that the *next* group of widlife that enters the map will *not* be
-agitated. This means that the incursions act more like a warning shot than an
-open floodgate. You will not be attacked again unless you continue your
-activities on the surface that raise the chance of a subsequent attack.
+counter is set to the value for ``Wilderness irritation minimum``, ensuring
+that the *next* group of widlife that enters the map will *not* be agitated.
+This means that the incursions act more like a warning shot than an open
+floodgate. You will not be attacked again unless you continue your activities
+on the surface that raise the chance of a subsequent attack.
 
 The larger the value of ``Wilderness sensitivity``, the more you can irritate
-the surface until you suffer another incursion. For reference, each tree
+the surface before you suffer another incursion. For reference, each tree
 chopped adds 100 to the counter, so a ``Wilderness irritation minimum``
 value of 3500 and a ``Wilderness sensitivity`` value of 10000 will allow you to
 initially chop 35 trees before having any chance of being attacked by agitated
@@ -182,8 +184,9 @@ record the current irritation counter value. Any further attacks will be
 prevented until the counter increments past a higher threshold. That threshold
 is equal to the saved irritation counter value plus the average of the values
 for ``Wilderness irritation minimum`` and ``Wilderness sensitivity``. This
-makes cavern invasions behave similarly to surface agitation, but the intensity
-of forgotten beast attacks can still be controlled independently from this mod.
+makes cavern invasions behave similarly to surface agitation, but the
+parameters for forgotten beast attacks can still be controlled independently
+of this mod.
 
 Finally, if you have walled yourself off from the danger in the caverns, yet you
 continue to irritate nature down there, this mod will ensure that the number of
@@ -265,11 +268,7 @@ except for ``monitor`` are enabled by default. Available features are:
 Caveat
 ------
 
-After a cavern invasion, this mod throttles further immediate cavern invasions
-by gently redirecting cavern invaders towards oblivion as they enter the map.
-You may notice some billowing smoke near the edge of the map as the invaders
-are lovingly vaporized. If you happen to have one of your own citizens in the
-vicinity, they may notice the invaders before they are evicted, and you may get
-a spurious invasion announcement. If invasions for that cavern layer are still
-being throttled, however, they will be safely converted to dust in just a few
-ticks.
+If a cavern invasion causes the number of active attackers to exceed the
+maximum, this mod will gently redirect the excess cavern invaders towards
+oblivion as they enter the map. You may notice some billowing smoke near the
+edge of the map as the surplus invaders are lovingly vaporized.

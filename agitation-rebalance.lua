@@ -74,7 +74,8 @@ local function get_default_state()
         },
         stats={
             surface_irritation_resets=0,
-            invaders_culled=0,
+            invasions_diverted=0,
+            invaders_vaporized=0,
         },
     }
 end
@@ -187,7 +188,7 @@ local function cull_pending_cavern_invaders(start_unit, num_to_cull)
         end
         if culling and is_cavern_invader(unit) then
             exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
-            inc_stat('invaders_culled')
+            inc_stat('invaders_vaporized')
         end
     end
     persist_state()
@@ -240,6 +241,45 @@ local function check_new_unit(unit_id)
     end
 end
 
+local function get_map_feature(layer_id)
+    for _, map_feature in ipairs(map_features) do
+        if df.feature_init_subterranean_from_layerst:is_instance(map_feature) and
+            map_feature.layer == layer_id
+        then
+            return map_feature
+        end
+    end
+end
+
+local function throttle_invasions()
+    if not state.features.cavern then return end
+    for idx,ev in ipairs(df.global.timed_events) do
+        if ev.type ~= df.timed_event_type.FeatureAttack then goto continue end
+        local civ = ev.entity
+        if not civ then goto continue end
+        for _,pop_id in ipairs(civ.populations) do
+            local pop = df.entity_population.find(pop_id)
+            if not pop then goto next_pop end
+            local map_feature = get_map_feature(pop.layer_id)
+            if not map_feature then goto next_pop end
+            local cavern_layer = map_feature.start_depth
+            local cavern = state.caverns[df.layer_type[cavern_layer]]
+            if map_feature.feature.irritation_level < cavern.threshold then
+                print('agitation-rebalance: redirecting premature cavern invasion')
+                inc_stat('invasions_diverted')
+                persist_state()
+                df.global.timed_events:erase(idx)
+                ev:delete()
+                -- DF ensures that only one cavern invasion event exists at a time
+                -- so no need to check for more
+                return
+            end
+            ::next_pop::
+        end
+        ::continue::
+    end
+end
+
 local function do_preset(preset_name)
     local preset = presets[preset_name]
     if not preset then
@@ -247,6 +287,17 @@ local function do_preset(preset_name)
     end
     utils.assign(custom_difficulty, preset)
     print('agitation-rebalance: preset applied: ' .. preset_name)
+end
+
+local TICKS_PER_DAY = 1200
+local TICKS_PER_MONTH = 28 * TICKS_PER_DAY
+local TICKS_PER_SEASON = 3 * TICKS_PER_MONTH
+
+local function seasons_cleaning()
+    if not state.enabled then return end
+    throttle_invasions()
+    local ticks_until_next_season = TICKS_PER_SEASON - df.global.cur_season_tick + 1
+    dfhack.timeout(ticks_until_next_season, 'ticks', seasons_cleaning)
 end
 
 local function do_enable()
@@ -268,6 +319,7 @@ local function do_enable()
             break
         end
     end
+    seasons_cleaning()
 end
 
 local function do_disable()
@@ -300,7 +352,7 @@ IrritationOverlay.ATTRS{
     default_pos={x=-32,y=5},
     viewscreens='dwarfmode/Default',
     overlay_onupdate_max_freq_seconds=5,
-    frame={w=24, h=10},
+    frame={w=24, h=12},
 }
 
 local function get_savagery()
@@ -337,7 +389,7 @@ local function get_cavern_irritation(which)
 end
 
 -- returns chance for next season
-local function get_cavern_attack_chance(which)
+local function get_fb_attack_chance(which)
     local irritation = get_cavern_irritation(which)
     if not irritation then return 0 end
     if state.enabled then
@@ -353,6 +405,19 @@ local function get_cavern_attack_chance(which)
     if adjusted_irritation < 0 then return 0 end
     return custom_difficulty.forgotten_sens <= 0 and 33 or
         math.min(33, (adjusted_irritation*33)//custom_difficulty.forgotten_sens)
+end
+
+local function get_cavern_invasion_chance(which)
+    local irritation = get_cavern_irritation(which)
+    if not irritation then return 0 end
+    if state.enabled then
+        local cavern = state.caverns[df.layer_type[which]]
+        if cavern and irritation < cavern.threshold then
+            -- we are actively suppressing further invasions
+            return 0
+        end
+    end
+    return math.min(100, (irritation*100)//10000)
 end
 
 local function get_chance_color(chance_fn, chance_arg)
@@ -381,7 +446,7 @@ local function add_regular_widgets(panel)
     panel:addviews{
         widgets.Label{
             frame={t=0, l=0},
-            text='Attack chance:',
+            text='Dangometer:',
         },
         widgets.Label{
             frame={t=1, l=0},
@@ -395,29 +460,60 @@ local function add_regular_widgets(panel)
         widgets.Label{
             frame={t=2, l=0},
             text={
-                'Cavern 1: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern1), width=3, rjustify=true},
-                '%',
+                'Caverns:',
+                {gap=2, text='FBs:'},
             },
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern1),
         },
         widgets.Label{
             frame={t=3, l=0},
             text={
-                'Cavern 2: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern2), width=3, rjustify=true},
+                '1:',
+                {gap=2, text=curry(get_cavern_invasion_chance, df.layer_type.Cavern1), width=3, rjustify=true},
                 '%',
             },
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern2),
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern1),
+        },
+        widgets.Label{
+            frame={t=3, l=10},
+            text={
+                {text=curry(get_fb_attack_chance, df.layer_type.Cavern1), width=3, rjustify=true},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_fb_attack_chance, df.layer_type.Cavern1),
         },
         widgets.Label{
             frame={t=4, l=0},
             text={
-                'Cavern 3: ',
-                {text=curry(get_cavern_attack_chance, df.layer_type.Cavern3), width=3, rjustify=true},
+                '2:',
+                {gap=2, text=curry(get_cavern_invasion_chance, df.layer_type.Cavern2), width=3, rjustify=true},
                 '%',
             },
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern2),
+        },
+        widgets.Label{
+            frame={t=4, l=10},
+            text={
+                {text=curry(get_fb_attack_chance, df.layer_type.Cavern2), width=3, rjustify=true},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_fb_attack_chance, df.layer_type.Cavern2),
+        },
+        widgets.Label{
+            frame={t=5, l=0},
+            text={
+                '3:',
+                {gap=2, text=curry(get_cavern_invasion_chance, df.layer_type.Cavern3), width=3, rjustify=true},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern3),
+        },
+        widgets.Label{
+            frame={t=5, l=10},
+            text={
+                {text=curry(get_fb_attack_chance, df.layer_type.Cavern3), width=3, rjustify=true},
+                '%',
+            },
+            text_pen=curry(get_chance_color, get_fb_attack_chance, df.layer_type.Cavern3),
         },
     }
 end
@@ -432,7 +528,7 @@ function IrritationOverlay:init()
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
-        frame={t=0, r=0, w=16, h=7},
+        frame={t=0, r=0, w=16, h=8},
         visible=function() return not monitor_debug end,
     }
     add_regular_widgets(panel)
@@ -456,27 +552,27 @@ function IrritationOverlay:init()
             auto_width=true,
         },
         widgets.Label{
-            frame={t=2, r=0},
-            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern1) end, width=6, rjustify=true}},
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern1),
-            auto_width=true,
-        },
-        widgets.Label{
             frame={t=3, r=0},
-            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern2) end, width=6, rjustify=true}},
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern2),
+            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern1) end, width=6, rjustify=true}},
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern1),
             auto_width=true,
         },
         widgets.Label{
             frame={t=4, r=0},
-            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern3) end, width=6, rjustify=true}},
-            text_pen=curry(get_chance_color, get_cavern_attack_chance, df.layer_type.Cavern3),
+            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern2) end, width=6, rjustify=true}},
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern2),
             auto_width=true,
         },
         widgets.Label{
-            frame={t=5, l=0},
+            frame={t=5, r=0},
+            text={{text=function() return get_cavern_irritation(df.layer_type.Cavern3) end, width=6, rjustify=true}},
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern3),
+            auto_width=true,
+        },
+        widgets.Label{
+            frame={t=6, l=0},
             text={
-                'Cavern inv:',
+                'Active inv:',
                 {gap=1, text=function() return self.num_cavern_invaders end, width=4, rjustify=true},
                 '/',
                 {text=function() return custom_difficulty.cavern_dweller_max_attackers end},
@@ -484,17 +580,24 @@ function IrritationOverlay:init()
             text_pen=function() return get_invader_color(self.num_cavern_invaders) end,
         },
         widgets.Label{
-            frame={t=6, l=0},
+            frame={t=7, l=0},
             text={
                 ' Surface resets:',
                 {gap=1, text=function() return get_stat('surface_irritation_resets') end, width=5, rjustify=true},
             },
         },
         widgets.Label{
-            frame={t=7, l=0},
+            frame={t=8, l=0},
+            text={
+                'Invasions erased:',
+                {gap=1, text=function() return get_stat('invasions_diverted') end, width=4, rjustify=true},
+            },
+        },
+        widgets.Label{
+            frame={t=9, l=0},
             text={
                 'Invaders culled:',
-                {gap=1, text=function() return get_stat('invaders_culled') end, width=5, rjustify=true},
+                {gap=1, text=function() return get_stat('invaders_vaporized') end, width=5, rjustify=true},
             },
         },
     }
@@ -539,8 +642,8 @@ local function print_status()
     print('difficulty settings:')
     print(('     Wilderness irritation minimum: %d (about %d tree(s) until initial attacks are possible)'):format(
         custom_difficulty.wild_irritate_min, custom_difficulty.wild_irritate_min // 100))
-    print(('            Wilderness sensitivity: %d (each tree past the miniumum makes an attack %d%% more likely)'):format(
-        custom_difficulty.wild_sens, 10000 // custom_difficulty.wild_sens))
+    print(('            Wilderness sensitivity: %d (each tree past the miniumum makes an attack %.2f%% more likely)'):format(
+        custom_difficulty.wild_sens, 10000 / custom_difficulty.wild_sens))
     print(('       Wilderness irritation decay: %d (about %d additional tree(s) allowed per year)'):format(
         custom_difficulty.wild_irritate_decay, custom_difficulty.wild_irritate_decay // 100))
     print(('  Cavern dweller maximum attackers: %d (maximum allowed across all caverns)'):format(
@@ -552,16 +655,17 @@ local function print_status()
             table.insert(unhidden_invaders, unit)
         end
     end
-    print(('current agitated wildlife:       %5d'):format(#get_agitated_units()))
-    print(('current known cavern invaders:   %5d'):format(#unhidden_invaders))
-    print(('total surface irritation resets: %5d'):format(get_stat('surface_irritation_resets')))
-    print(('total excess invaders culled:    %5d'):format(get_stat('invaders_culled')))
+    print(('current agitated wildlife:     %5d'):format(#get_agitated_units()))
+    print(('current known cavern invaders: %5d'):format(#unhidden_invaders))
     print()
     print('chances for an upcoming attack:')
-    print(('   Surface: %3d%%'):format(get_surface_attack_chance()))
-    print(('  Cavern 1: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern1)))
-    print(('  Cavern 2: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern2)))
-    print(('  Cavern 3: %3d%%'):format(get_cavern_attack_chance(df.layer_type.Cavern3)))
+    print(('   Surface: %3d%% (per wildlife group)'):format(get_surface_attack_chance()))
+    print(('  Cavern 1: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern1)))
+    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern1)))
+    print(('  Cavern 2: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern2)))
+    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern2)))
+    print(('  Cavern 3: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern3)))
+    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern3)))
 end
 
 local function enable_feature(which, enabled)
