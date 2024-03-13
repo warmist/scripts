@@ -51,6 +51,7 @@ Template for new versions:
 - `devel/tile-browser`: simplify interface now that SDL automatically normalizes texture scale
 - `exterminate`: make race name matching case and space insensitive
 - `gui/gm-editor`: support opening engraved art for inspection
+- `gui/notify`: Shift click or Shift Enter on a zoomable notification to zoom to previous target
 
 ## Removed
 

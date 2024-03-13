@@ -38,7 +38,11 @@ function NotifyOverlay:init()
                     scroll_keys={},
                     on_submit=function(_, choice)
                         local prev_state = self.state[choice.data.name]
-                        self.state[choice.data.name] = choice.data.on_click(prev_state)
+                        self.state[choice.data.name] = choice.data.on_click(prev_state, false)
+                    end,
+                    on_submit2=function(_, choice)
+                        local prev_state = self.state[choice.data.name]
+                        self.state[choice.data.name] = choice.data.on_click(prev_state, true)
                     end,
                 },
             },
