@@ -54,6 +54,7 @@ Template for new versions:
 - `gui/notify`: Shift click or Shift Enter on a zoomable notification to zoom to previous target
 - `allneeds`: select a dwarf in the UI to see a summary of needs for just that dwarf
 - `allneeds`: provide options for sorting the cumulative needs by different criteria
+- `prioritize`: print out custom reaction and hauling jobs in the same format that is used for ``prioritize`` command arguments so the player can just copy and paste
 
 ## Removed
 
