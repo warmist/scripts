@@ -31,6 +31,7 @@ Template for new versions:
 - `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
 - `instruments`: provides information on how to craft the instruments used by the player civilization.
 - `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
+- `modtools/if-entity`: (reinstated) modder's resource for triggering scripted content depending on the race of the loaded fort
 
 ## New Features
 - `gui/settings-manager`: add import, export, and autoload for work details
