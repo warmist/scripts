@@ -30,5 +30,5 @@ Options
 Example
 -------
 
-``modtools/if-entity --id "FOREST" --cmd [ lua "print('Dirty hippies.')" ]``
+``modtools/if-entity --id FOREST --cmd [ lua "print('Dirty hippies.')" ]``
     Print a message if you load an elf fort, but not a dwarf, human, etc. fort.
