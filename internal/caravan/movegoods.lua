@@ -324,7 +324,6 @@ local function is_tradeable_item(item, depot)
         item.flags.spider_web or
         item.flags.construction or
         item.flags.encased or
-        item.flags.unk12 or
         item.flags.murder or
         item.flags.trader or
         item.flags.owned or

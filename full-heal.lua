@@ -227,7 +227,7 @@ function heal(unit,resurrect,keep_corpse)
         health.dressing_cntdn = 0
         health.suture_cntdn = 0
         health.crutch_cntdn = 0
-        health.unk_18_cntdn = 0
+        health.try_for_cast_cntdn = 0
     end
 
     local job = unit.job.current_job
