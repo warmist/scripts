@@ -181,7 +181,7 @@ function moveEmbarkStuff(selectedBlock, embarkTiles)
     if wagon.age == 0 then -- just in case there's an older wagon present for some reason
       local contained = wagon.contained_items
       for i = #contained-1, 0, -1 do
-        if contained[i].use_mode == 0 then -- actual contents (as opposed to building components)
+        if contained[i].use_mode == df.building_item_role_type.TEMP then -- actual contents (as opposed to building components)
           local item = contained[i].item
 --        dfhack.items.moveToGround() does not handle items within buildings, so do this manually:
           contained:erase(i)
