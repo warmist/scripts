@@ -68,9 +68,9 @@ local function get_default_state()
             cap_invaders=true,
         },
         caverns={
-            Cavern1={invasion_id=-1, threshold=0},
-            Cavern2={invasion_id=-1, threshold=0},
-            Cavern3={invasion_id=-1, threshold=0},
+            Cavern1={invasion_id=-1, baseline=0, threshold=0},
+            Cavern2={invasion_id=-1, baseline=0, threshold=0},
+            Cavern3={invasion_id=-1, baseline=0, threshold=0},
         },
         stats={
             surface_irritation_resets=0,
@@ -235,6 +235,7 @@ local function check_new_unit(unit_id)
             cull_pending_cavern_invaders(unit)
         else
             cavern.invasion_id = unit.invasion_id
+            cavern.baseline = irritation
             cavern.threshold = irritation + (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
             persist_state()
         end
@@ -417,8 +418,10 @@ local function get_cavern_invasion_chance(which, self)
             and (not self or self.num_cavern_invaders == 0)
         then
             -- we are actively suppressing further invasions and
-            -- there are no current cavern invaders
-            return 0
+            -- there are no current cavern invaders, so return a value that represents
+            -- how close we are to allowing invasions again
+            local baseline = cavern.baseline or 0
+            return ((irritation - baseline)*100)//(cavern.threshold - baseline)
         end
     end
     return math.min(100, (irritation*100)//10000)
@@ -659,7 +662,6 @@ end
 
 function IrritationOverlay:overlay_onupdate()
     self.num_cavern_invaders = #get_cavern_invaders()
-    print('num cavern invaders:', self.num_cavern_invaders)
 end
 
 OVERLAY_WIDGETS = {monitor=IrritationOverlay}
