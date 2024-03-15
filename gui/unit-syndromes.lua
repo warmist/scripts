@@ -481,7 +481,7 @@ function UnitSyndromes:showUnits(index, choice)
 end
 
 function UnitSyndromes:showUnitSyndromes(index, choice)
-    local unit = utils.binsearch(df.global.world.units.all, choice.unit_id, 'id')
+    local unit = df.unit.find(choice.unit_id)
     local unit_syndromes = getUnitSyndromes(unit)
     local choices = {}
 
