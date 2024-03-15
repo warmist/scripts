@@ -94,7 +94,7 @@ local function for_starving(fn, reverse)
 end
 
 local function for_moody(fn, reverse)
-    for_iter(dfhack.units.getCitizens(false), function(unit)
+    for_iter(dfhack.units.getCitizens(true), function(unit)
         local job = unit.job.current_job
         return job and df.job_type_class[df.job_type.attrs[job.job_type].type] == 'StrangeMood'
     end, fn, reverse)

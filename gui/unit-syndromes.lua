@@ -300,18 +300,6 @@ local function getUnitSyndromes(unit)
     return unit_syndromes
 end
 
-local function getCitizens()
-    local units = {}
-
-    for _, unit in pairs(df.global.world.units.active) do
-        if dfhack.units.isCitizen(unit) and dfhack.units.isDwarf(unit) then
-            table.insert(units, unit)
-        end
-    end
-
-    return units
-end
-
 local function getLivestock()
     local units = {}
 
@@ -382,7 +370,7 @@ function UnitSyndromes:init()
                     view_id = 'category',
                     frame = {t = 0, l = 0},
                     choices = {
-                        { text = "Dwarves", get_choices = getCitizens },
+                        { text = "Dwarves", get_choices = curry(dfhack.units.getCitizens, false, true) },
                         { text = "Livestock", get_choices = getLivestock },
                         { text = "Wild animals", get_choices = getWildAnimals },
                         { text = "Hostile", get_choices = getHostiles },
