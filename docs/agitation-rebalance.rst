@@ -261,7 +261,7 @@ except for ``monitor`` are enabled by default. Available features are:
     Display a panel on the main map showing your chances of invasion on the
     surface and in each of the cavern layers. The chance of agitated animals on
     the surface is per wildlife wave. The chance of cavern invasion is per
-    season. The chances shown on the overlay are accurate regardless of whether
+    season. The ratings shown on the overlay are accurate regardless of whether
     ``agitation-rebalance`` is enabled. The monitor overlay can also be enabled
     and disabled via `gui/control-panel`, or repositioned with `gui/overlay`.
 

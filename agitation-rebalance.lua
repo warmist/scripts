@@ -8,7 +8,7 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local GLOBAL_KEY = dfhack.current_script_name()
+local GLOBAL_KEY = 'agitation-rebalance'
 
 local presets = {
     casual={
@@ -251,12 +251,26 @@ local function get_map_feature(layer_id)
     end
 end
 
+local function delete_invasion(idx, ev)
+    print('agitation-rebalance: redirecting premature cavern invasion')
+    inc_stat('invasions_diverted')
+    persist_state()
+    df.global.timed_events:erase(idx)
+    ev:delete()
+end
+
+-- DF ensures that only one cavern invasion event exists at a time, so we only need to
+-- check for one
 local function throttle_invasions()
     if not state.features.cavern then return end
     for idx,ev in ipairs(df.global.timed_events) do
         if ev.type ~= df.timed_event_type.FeatureAttack then goto continue end
         local civ = ev.entity
         if not civ then goto continue end
+        if #get_cavern_invaders() >= custom_difficulty.cavern_dweller_max_attackers then
+            delete_invasion(idx, ev)
+            return
+        end
         for _,pop_id in ipairs(civ.populations) do
             local pop = df.entity_population.find(pop_id)
             if not pop then goto next_pop end
@@ -265,13 +279,7 @@ local function throttle_invasions()
             local cavern_layer = map_feature.start_depth
             local cavern = state.caverns[df.layer_type[cavern_layer]]
             if map_feature.feature.irritation_level < cavern.threshold then
-                print('agitation-rebalance: redirecting premature cavern invasion')
-                inc_stat('invasions_diverted')
-                persist_state()
-                df.global.timed_events:erase(idx)
-                ev:delete()
-                -- DF ensures that only one cavern invasion event exists at a time
-                -- so no need to check for more
+                delete_invasion(idx, ev)
                 return
             end
             ::next_pop::
@@ -392,13 +400,6 @@ end
 local function get_fb_attack_chance(which)
     local irritation = get_cavern_irritation(which)
     if not irritation then return 0 end
-    if state.enabled then
-        local cavern = state.caverns[df.layer_type[which]]
-        if cavern and irritation < cavern.threshold then
-            -- we are actively suppressing further invasions
-            return 0
-        end
-    end
     local wealth_rating = plotinfo.tasks.wealth.total // custom_difficulty.forgotten_wealth_div
     local irritation_min = custom_difficulty.forgotten_irritate_min
     local adjusted_irritation = wealth_rating + irritation - irritation_min
@@ -407,21 +408,24 @@ local function get_fb_attack_chance(which)
         math.min(33, (adjusted_irritation*33)//custom_difficulty.forgotten_sens)
 end
 
-local function get_cavern_invasion_chance(which)
+local function get_cavern_invasion_chance(which, self)
     local irritation = get_cavern_irritation(which)
     if not irritation then return 0 end
     if state.enabled then
         local cavern = state.caverns[df.layer_type[which]]
-        if cavern and irritation < cavern.threshold then
-            -- we are actively suppressing further invasions
+        if cavern and irritation < cavern.threshold
+            and (not self or self.num_cavern_invaders == 0)
+        then
+            -- we are actively suppressing further invasions and
+            -- there are no current cavern invaders
             return 0
         end
     end
     return math.min(100, (irritation*100)//10000)
 end
 
-local function get_chance_color(chance_fn, chance_arg)
-    local chance = chance_fn(chance_arg)
+local function get_chance_color(chance_fn, chance_arg, chance_arg2)
+    local chance = chance_fn(chance_arg, chance_arg2)
     if chance < 1 then
         return COLOR_GREEN
     elseif chance < 33 then
@@ -430,6 +434,18 @@ local function get_chance_color(chance_fn, chance_arg)
         return COLOR_LIGHTRED
     end
     return COLOR_RED
+end
+
+local function obfuscate_chance(chance_fn, chance_arg, chance_arg2)
+    local chance = chance_fn(chance_arg, chance_arg2)
+    if chance < 1 then
+        return 'None'
+    elseif chance < 33 then
+        return 'Low'
+    elseif chance < 51 then
+        return 'Med'
+    end
+    return 'High'
 end
 
 local function get_invader_color(num_cavern_invaders)
@@ -442,17 +458,74 @@ local function get_invader_color(num_cavern_invaders)
     end
 end
 
-local function add_regular_widgets(panel)
+-- set to true with :lua reqscript('agitation-rebalance').monitor_debug=true
+-- to see raw irritation values on the monitor panel
+monitor_debug = monitor_debug or false
+
+function IrritationOverlay:init()
+    self.num_cavern_invaders = 0
+
+    local panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        frame={t=0, r=0, w=16, h=7},
+        visible=function() return not monitor_debug end,
+    }
     panel:addviews{
         widgets.Label{
-            frame={t=0, l=0},
-            text='Dangometer:',
+            frame={t=0},
+            text='Irritation',
+            auto_width=true,
         },
         widgets.Label{
             frame={t=1, l=0},
             text={
-                ' Surface: ',
-                {text=get_surface_attack_chance, width=3, rjustify=true},
+                ' Surface:',
+                {gap=1, text=curry(obfuscate_chance, get_surface_attack_chance)},
+            },
+            text_pen=curry(get_chance_color, get_surface_attack_chance),
+        },
+        widgets.Label{
+            frame={t=2, l=0},
+            text={
+                'Cavern 1:',
+                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern1, self)},
+            },
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern1, self),
+        },
+        widgets.Label{
+            frame={t=3, l=0},
+            text={
+                'Cavern 2:',
+                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern2, self)},
+            },
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern2, self),
+        },
+        widgets.Label{
+            frame={t=4, l=0},
+            text={
+                'Cavern 3:',
+                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern3, self)},
+            },
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern3, self),
+        },
+    }
+
+    local debug_panel = widgets.Panel{
+        frame_style=gui.FRAME_MEDIUM,
+        frame_background=gui.CLEAR_PEN,
+        visible=function() return monitor_debug end,
+    }
+    debug_panel:addviews{
+        widgets.Label{
+            frame={t=0, l=0},
+            text='Attack chance',
+        },
+        widgets.Label{
+            frame={t=1, l=0},
+            text={
+                ' Surface:',
+                {gap=1, text=get_surface_attack_chance, width=3, rjustify=true},
                 '%',
             },
             text_pen=curry(get_chance_color, get_surface_attack_chance),
@@ -515,34 +588,9 @@ local function add_regular_widgets(panel)
             },
             text_pen=curry(get_chance_color, get_fb_attack_chance, df.layer_type.Cavern3),
         },
-    }
-end
-
--- set to true with :lua reqscript('agitation-rebalance').monitor_debug=true
--- to see raw irritation values on the monitor panel
-monitor_debug = monitor_debug or false
-
-function IrritationOverlay:init()
-    self.num_cavern_invaders = 0
-
-    local panel = widgets.Panel{
-        frame_style=gui.FRAME_MEDIUM,
-        frame_background=gui.CLEAR_PEN,
-        frame={t=0, r=0, w=16, h=8},
-        visible=function() return not monitor_debug end,
-    }
-    add_regular_widgets(panel)
-
-    local debug_panel = widgets.Panel{
-        frame_style=gui.FRAME_MEDIUM,
-        frame_background=gui.CLEAR_PEN,
-        visible=function() return monitor_debug end,
-    }
-    add_regular_widgets(debug_panel)
-    debug_panel:addviews{
         widgets.Label{
             frame={t=0, r=0},
-            text='Irrit:',
+            text='Irrit',
             auto_width=true,
         },
         widgets.Label{
@@ -572,7 +620,7 @@ function IrritationOverlay:init()
         widgets.Label{
             frame={t=6, l=0},
             text={
-                'Active inv:',
+                'Invaders:',
                 {gap=1, text=function() return self.num_cavern_invaders end, width=4, rjustify=true},
                 '/',
                 {text=function() return custom_difficulty.cavern_dweller_max_attackers end},
@@ -611,6 +659,7 @@ end
 
 function IrritationOverlay:overlay_onupdate()
     self.num_cavern_invaders = #get_cavern_invaders()
+    print('num cavern invaders:', self.num_cavern_invaders)
 end
 
 OVERLAY_WIDGETS = {monitor=IrritationOverlay}
