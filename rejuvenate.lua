@@ -33,11 +33,7 @@ function main(args)
     local current_year, newbirthyear
     local units = {} --as:df.unit[]
     if args.all then
-        for _, u in ipairs(df.global.world.units.all) do
-            if dfhack.units.isCitizen(u) then
-                table.insert(units, u)
-            end
-        end
+        units = dfhack.units.getCitizens()
     else
         table.insert(units, dfhack.gui.getSelectedUnit(true) or qerror("No unit under cursor! Aborting."))
     end

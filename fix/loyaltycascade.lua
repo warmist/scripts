@@ -73,7 +73,7 @@ local function fixUnit(unit)
     end
 
     if fixed and unit.enemy.enemy_status_slot ~= -1 then
-        local status_cache = unit.enemy.enemy_status_cache
+        local status_cache = df.global.world.enemy_status_cache
         local status_slot = unit.enemy.enemy_status_slot
 
         unit.enemy.enemy_status_slot = -1
@@ -89,8 +89,8 @@ local function fixUnit(unit)
 
         -- TODO: what if there were status slots taken above status_slot?
         -- does everything need to be moved down by one?
-        if cache.next_slot > status_slot then
-            cache.next_slot = status_slot
+        if status_cache.next_slot > status_slot then
+            status_cache.next_slot = status_slot
         end
     end
 
@@ -98,8 +98,8 @@ local function fixUnit(unit)
 end
 
 local count = 0
-for _, unit in pairs(df.global.world.units.all) do
-    if dfhack.units.isCitizen(unit) and fixUnit(unit) then
+for _, unit in pairs(dfhack.units.getCitizens()) do
+    if fixUnit(unit) then
         count = count + 1
     end
 end

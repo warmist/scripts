@@ -230,10 +230,8 @@ local function get_dump_pos(bld)
     if dump_pos then
         return dump_pos
     end
-    for _,unit in ipairs(df.global.world.units.active) do
-        if dfhack.units.isCitizen(unit) then
-            return unit.pos
-        end
+    for _,unit in ipairs(dfhack.units.getCitizens(true)) do
+        return unit.pos
     end
     -- fall back to position of first active unit
     return df.global.world.units.active[0].pos

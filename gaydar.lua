@@ -1,27 +1,5 @@
 -- Shows the sexual orientation of units
-local help = [====[
 
-gaydar
-======
-Shows the sexual orientation of units, useful for social engineering or checking
-the viability of livestock breeding programs.
-
-Targets:
-
-:-all:          shows orientation of every creature
-:-citizens:     shows only orientation of citizens in fort mode
-:-named:        shows orientation of all named units on map
-:(no target):   shows orientation of the unit under the cursor
-
-Orientation filters:
-
-:-notStraight:  only creatures who are not strictly straight
-:-gayOnly:      only creatures who are strictly gay
-:-biOnly:       only creatures who can get into romances with both sexes
-:-straightOnly: only creatures who are strictly straight
-:-asexualOnly:  only creatures who are strictly asexual
-
-]====]
 local utils = require('utils')
 
 local validArgs = utils.invert({
@@ -40,7 +18,7 @@ local validArgs = utils.invert({
 local args = utils.processArgs({...}, validArgs)
 
 if args.help then
-    print(help)
+    print(dfhack.script_help())
     return
 end
 
@@ -108,10 +86,8 @@ end
 local orientations={} --as:string[]
 
 if args.citizens then
- for k,v in ipairs(df.global.world.units.active) do
-  if dfhack.units.isCitizen(v) then
-   table.insert(orientations,nameOrSpeciesAndNumber(v) .. determineorientation(v))
-  end
+ for k,v in ipairs(dfhack.units.getCitizens()) do
+  table.insert(orientations,nameOrSpeciesAndNumber(v) .. determineorientation(v))
  end
 elseif args.all then
  for k,v in ipairs(df.global.world.units.active) do

@@ -24,7 +24,9 @@ local function is_good_unit(include, unit)
     then
         return false
     end
-    if dfhack.units.isCitizen(unit) then return include.citizens end
+    if dfhack.units.isCitizen(unit) or dfhack.units.isResident(unit) then
+        return include.citizens
+    end
     local dangerous = dfhack.units.isDanger(unit)
     if not dangerous then return include.friendly end
     return include.hostile
@@ -221,6 +223,7 @@ function Teleport:refresh_choices()
     for _, unit in ipairs(self.selected_units.list) do
         local suffix = ''
         if dfhack.units.isCitizen(unit) then suffix = ' (citizen)'
+        elseif dfhack.units.isResident(unit) then suffix = ' (resident)'
         elseif dfhack.units.isDanger(unit) then suffix = ' (hostile)'
         elseif dfhack.units.isMerchant(unit) or dfhack.units.isForest(unit) then
             suffix = ' (merchant)'
