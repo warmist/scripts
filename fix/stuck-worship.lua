@@ -79,7 +79,7 @@ local function get_prayer_targets(unit)
     end
 end
 
-for _,unit in ipairs(dfhack.units.getCitizens(true)) do
+for _,unit in ipairs(dfhack.units.getCitizens(false, true)) do
     local prayer_targets = get_prayer_targets(unit)
     if not unit.status.current_soul or not prayer_targets then
         goto next_unit

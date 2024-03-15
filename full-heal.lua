@@ -35,12 +35,6 @@ function isCitizen(unit)
     end
 end
 
-function isFortCivMember(unit)
-    if unit.civ_id == df.global.plotinfo.civ_id then
-        return true
-    end
-end
-
 function addResurrectionEvent(histFigID)
     local event = df.history_event_hist_figure_revivedst:new()
     event.histfig = histFigID
@@ -76,7 +70,7 @@ function heal(unit,resurrect,keep_corpse)
                 addResurrectionEvent(hf.id)
             end
 
-            if dfhack.world.isFortressMode() and isFortCivMember(unit) then
+            if dfhack.world.isFortressMode() and dfhack.units.isOwnCiv(unit) then
                 unit.flags2.resident = false -- appears to be set to true for dead citizens in a reclaimed fortress, which causes them to be marked as hostile when resurrected
 
                 local deadCitizens = df.global.plotinfo.main.dead_citizens
@@ -260,14 +254,15 @@ if args.all then
         heal(unit,args.r,args.keep_corpse)
     end
 elseif args.all_citizens then
+    -- can't use dfhack.units.getCitizens since we want dead ones too
     for _,unit in ipairs(df.global.world.units.active) do
-        if isCitizen(unit) then
+        if dfhack.units.isCitizen(unit) or dfhack.units.isResident(unit) then
             heal(unit,args.r,args.keep_corpse)
         end
     end
 elseif args.all_civ then
     for _,unit in ipairs(df.global.world.units.active) do
-        if isFortCivMember(unit) then
+        if dfhack.units.isOwnCiv(unit) then
             heal(unit,args.r,args.keep_corpse)
         end
     end

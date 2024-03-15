@@ -26,8 +26,8 @@ if units then
     print(('Summarizing needs for %s:'):format(dfhack.units.getReadableName(units)))
     units = {units}
 else
-    print('Summarizing needs for all (sane) citizens:')
-    units = dfhack.units.getCitizens(false)
+    print('Summarizing needs for all (sane) citizens and residents:')
+    units = dfhack.units.getCitizens()
 end
 print()
 

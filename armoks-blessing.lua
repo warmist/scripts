@@ -1,43 +1,8 @@
 -- Adjust all attributes of all dwarves to an ideal
 -- by vjek
---[====[
 
-armoks-blessing
-===============
-Runs the equivalent of `rejuvenate`, `elevate-physical`, `elevate-mental`, and
-`brainwash` on all dwarves currently on the map.  This is an extreme change,
-which sets every stat and trait to an ideal easy-to-satisfy preference.
+local utils = require('utils')
 
-Without providing arguments, only attributes, age, and personalities will be adjusted.
-Adding arguments allows for skills or classes to be adjusted to legendary (maximum).
-
-Arguments:
-
-- ``list``
-   Prints list of all skills
-
-- ``classes``
-   Prints list of all classes
-
-- ``all``
-   Set all skills, for all Dwarves, to legendary
-
-- ``<skill name>``
-   Set a specific skill, for all Dwarves, to legendary
-
-   example: ``armoks-blessing RANGED_COMBAT``
-
-   All Dwarves become a Legendary Archer
-
-- ``<class name>``
-   Set a specific class (group of skills), for all Dwarves, to legendary
-
-   example: ``armoks-blessing Medical``
-
-   All Dwarves will have all medical related skills set to legendary
-
-]====]
-local utils = require 'utils'
 function rejuvenate(unit)
     if unit==nil then
         print ("No unit available!  Aborting with extreme prejudice.")
@@ -278,20 +243,18 @@ function PrintSkillClassList()
 end
 -- ---------------------------------------------------------------------------
 function adjust_all_dwarves(skillname)
-    for _,v in ipairs(df.global.world.units.all) do
-        if v.race == df.global.plotinfo.race_id and v.status.current_soul then
-            print("Adjusting "..dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(v))))
-            brainwash_unit(v)
-            elevate_attributes(v)
-            rejuvenate(v)
-            if skillname then
-                if df.job_skill_class[skillname] then
-                    LegendaryByClass(skillname,v)
-                elseif skillname=="all" then
-                    BreathOfArmok(v)
-                else
-                    make_legendary(skillname,v)
-                end
+    for _,v in ipairs(dfhack.units.getCitizens()) do
+        print("Adjusting "..dfhack.df2console(dfhack.TranslateName(dfhack.units.getVisibleName(v))))
+        brainwash_unit(v)
+        elevate_attributes(v)
+        rejuvenate(v)
+        if skillname then
+            if df.job_skill_class[skillname] then
+                LegendaryByClass(skillname,v)
+            elseif skillname=="all" then
+                BreathOfArmok(v)
+            else
+                make_legendary(skillname,v)
             end
         end
     end

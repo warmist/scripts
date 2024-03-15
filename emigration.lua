@@ -159,7 +159,6 @@ function canLeave(unit)
            not unit.flags1.chained and
            dfhack.units.getNoblePositions(unit) == nil and
            unit.military.squad_id == -1 and
-           dfhack.units.isSane(unit) and
            not dfhack.units.isBaby(unit) and
            not dfhack.units.isChild(unit)
 end
