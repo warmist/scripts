@@ -188,17 +188,17 @@ function heal(unit,resurrect,keep_corpse)
 
     unit.status2.body_part_temperature:resize(0) -- attempting to rewrite temperature was causing body parts to melt for some reason; forcing repopulation in this manner appears to be safer
 
-    for i = 0,#unit.enemy.body_part_8a8-1,1 do
-        unit.enemy.body_part_8a8[i] = 1 -- not sure what this does, but values appear to change following injuries
+    for i = 0,#unit.enemy.body_part_useable-1,1 do
+        unit.enemy.body_part_useable[i] = 1 -- not sure what this does, but values appear to change following injuries
     end
-    for i = 0,#unit.enemy.body_part_8d8-1,1 do
-        unit.enemy.body_part_8d8[i] = 0 -- same as above
+    for i = 0,#unit.enemy.invorder_bp_start-1,1 do
+        unit.enemy.invorder_bp_start[i] = 0 -- same as above
     end
-    for i = 0,#unit.enemy.body_part_878-1,1 do
-        unit.enemy.body_part_878[i] = 3 -- as above
+    for i = 0,#unit.enemy.motor_nervenet-1,1 do
+        unit.enemy.motor_nervenet[i] = 3 -- as above
     end
-    for i = 0,#unit.enemy.body_part_888-1,1 do
-        unit.enemy.body_part_888[i] = 3 -- as above
+    for i = 0,#unit.enemy.sensory_nervenet-1,1 do
+        unit.enemy.sensory_nervenet[i] = 3 -- as above
     end
 
     local histFig = df.historical_figure.find(unit.hist_figure_id)
