@@ -216,7 +216,6 @@ function moveEmbarkStuff(selectedBlock, embarkTiles)
       and flags.on_ground
       and not flags.in_inventory
       and not flags.in_building
-      and not flags.in_chest
       and not flags.construction
       and not flags.spider_web
       and not flags.encased then

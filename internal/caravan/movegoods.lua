@@ -328,8 +328,7 @@ local function is_tradeable_item(item, depot)
         item.flags.trader or
         item.flags.owned or
         item.flags.garbage_collect or
-        item.flags.on_fire or
-        item.flags.in_chest
+        item.flags.on_fire
     then
         return false
     end
