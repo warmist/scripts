@@ -355,7 +355,7 @@ end
 local function do_enable()
     state.enabled = true
     new_unit_min_frame_counter = world.frame_counter + UNIT_EVENT_FREQ + 1
-    num_cavern_invaders_frame_counter = -1
+    num_cavern_invaders_frame_counter = -(UNIT_EVENT_FREQ+1)
     eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, UNIT_EVENT_FREQ)
     eventful.onUnitNewActive[GLOBAL_KEY] = check_new_unit
     if state.features.auto_preset then check_preset() end
@@ -376,6 +376,8 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
         return
     end
     state = dfhack.persistent.getSiteData(GLOBAL_KEY, get_default_state())
+    num_cavern_invaders = num_cavern_invaders or 0
+    num_cavern_invaders_frame_counter = -(UNIT_EVENT_FREQ+1)
     if state.enabled then
         do_enable()
     end
