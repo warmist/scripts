@@ -158,21 +158,12 @@ local function on_cavern_invader_over_max(unit)
     end
 end
 
-local function get_num_cavern_invaders(slack)
-    slack = slack or 0
-    if num_cavern_invaders_frame_counter + slack < world.frame_counter then
-        num_cavern_invaders = #get_cavern_invaders()
-        num_cavern_invaders_frame_counter = world.frame_counter
-    end
-    return num_cavern_invaders
-end
-
 local function is_cavern_invader(unit)
     local invasion = df.invasion_info.find(unit.invasion_id)
     return invasion and invasion.origin_master_army_controller_id == -1
 end
 
-function get_cavern_invaders()
+local function get_cavern_invaders()
     local invaders = {}
     for _, unit in ipairs(world.units.active) do
         if is_unkilled(unit) and is_cavern_invader(unit) then
@@ -180,6 +171,15 @@ function get_cavern_invaders()
         end
     end
     return invaders
+end
+
+local function get_num_cavern_invaders(slack)
+    slack = slack or 0
+    if num_cavern_invaders_frame_counter + slack < world.frame_counter then
+        num_cavern_invaders = #get_cavern_invaders()
+        num_cavern_invaders_frame_counter = world.frame_counter
+    end
+    return num_cavern_invaders
 end
 
 local function get_agitated_units()
