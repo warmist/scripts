@@ -102,6 +102,7 @@ elseif args.named then
  end
 else
  local unit=dfhack.gui.getSelectedUnit(true)
+ if not unit then qerror('Please select a unit in the UI') end
  local name,ok=nameOrSpeciesAndNumber(unit)
  dfprint(name..determineorientation(unit))
  return
