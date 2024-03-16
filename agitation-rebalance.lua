@@ -8,7 +8,8 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local GLOBAL_KEY = 'agitation-rebalance'
+local GLOBAL_KEY = 'agitation-rebalance-v2'
+local UNIT_EVENT_FREQ = 5
 
 local presets = {
     casual={
@@ -68,12 +69,12 @@ local function get_default_state()
             cap_invaders=true,
         },
         caverns={
-            Cavern1={invasion_id=-1, baseline=0, threshold=0},
-            Cavern2={invasion_id=-1, baseline=0, threshold=0},
-            Cavern3={invasion_id=-1, baseline=0, threshold=0},
+            last_invasion_id=-1,
+            baseline=0,
         },
         stats={
-            surface_irritation_resets=0,
+            surface_attacks=0,
+            cavern_attacks=0,
             invasions_diverted=0,
             invaders_vaporized=0,
         },
@@ -81,7 +82,9 @@ local function get_default_state()
 end
 
 state = state or get_default_state()
-delay_frame_counter = delay_frame_counter or 0
+new_unit_min_frame_counter = new_unit_min_frame_counter or -1
+num_cavern_invaders = num_cavern_invaders or 0
+num_cavern_invaders_frame_counter = num_cavern_invaders_frame_counter or -1
 
 function isEnabled()
     return state.enabled
@@ -109,50 +112,64 @@ local map_features = world.features.map_features
 local plotinfo = df.global.plotinfo
 local custom_difficulty = plotinfo.main.custom_difficulty
 
-local function reset_surface_agitation()
+local function on_surface_attack()
     if plotinfo.outdoor_irritation > custom_difficulty.wild_irritate_min then
-        print('agitation-rebalance: adjusting surface irritation')
         plotinfo.outdoor_irritation = custom_difficulty.wild_irritate_min
-        inc_stat('surface_irritation_resets')
+        inc_stat('surface_attacks')
         persist_state()
     end
 end
 
-local function is_cavern_invader(unit)
-    if unit.invasion_id == -1 then
-        return false
-    end
-    local invasion = df.invasion_info.find(unit.invasion_id)
-    return invasion and invasion.origin_master_army_controller_id == -1
+local function delete_invasion(idx, ev)
+    inc_stat('invasions_diverted')
+    persist_state()
+    df.global.timed_events:erase(idx)
+    ev:delete()
 end
 
-local function get_embark_tile_idx(pos)
-    local x = pos.x // 48
-    local y = pos.y // 48
-    local site = dfhack.world.getCurrentSite()
-    local rgn_height = site.rgn_max_y - site.rgn_min_y + 1
-    return y + x*rgn_height
-end
-
-local function get_feature_data(unit)
-    local pos = xyz2pos(dfhack.units.getPosition(unit))
+local function get_cumulative_irritation()
+    local irritation = 0
     for _, map_feature in ipairs(map_features) do
-        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
-            goto continue
+        if df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
+            irritation = irritation + map_feature.feature.irritation_level
         end
-        local idx = get_embark_tile_idx(pos)
-        if pos.z >= map_feature.feature.min_map_z[idx] and
-            pos.z <= map_feature.feature.max_map_z[idx]
-        then
-            return map_feature.start_depth, map_feature.feature.irritation_level
-        end
-        ::continue::
     end
+    return irritation
+end
+
+local function on_cavern_attack(invasion_id)
+    state.caverns.last_invasion_id = invasion_id
+    state.caverns.baseline = get_cumulative_irritation()
+    inc_stat('cavern_attacks')
+    persist_state()
 end
 
 local function is_unkilled(unit)
     return not dfhack.units.isKilled(unit) and
         unit.animal.vanish_countdown <= 0  -- not yet exterminated
+end
+
+local function on_cavern_invader_over_max(unit)
+    if is_unkilled(unit) then
+        exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
+        num_cavern_invaders = num_cavern_invaders - 1
+        inc_stat('invaders_vaporized')
+        persist_state()
+    end
+end
+
+local function get_num_cavern_invaders(slack)
+    slack = slack or 0
+    if num_cavern_invaders_frame_counter + slack < world.frame_counter then
+        num_cavern_invaders = #get_cavern_invaders()
+        num_cavern_invaders_frame_counter = world.frame_counter
+    end
+    return num_cavern_invaders
+end
+
+local function is_cavern_invader(unit)
+    local invasion = df.invasion_info.find(unit.invasion_id)
+    return invasion and invasion.origin_master_army_controller_id == -1
 end
 
 function get_cavern_invaders()
@@ -175,115 +192,103 @@ local function get_agitated_units()
     return agitators
 end
 
--- if we're at our max invader count, pre-emptively destroy pending invaders
-local function cull_pending_cavern_invaders(start_unit, num_to_cull)
-    local culling = false
-    for _, unit in ipairs(world.units.active) do
-        if unit == start_unit then
-            culling = true
-        end
-        if num_to_cull then
-            if num_to_cull <= 0 then break end
-            num_to_cull = num_to_cull - 1
-        end
-        if culling and is_cavern_invader(unit) then
-            exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
-            inc_stat('invaders_vaporized')
-        end
-    end
-    persist_state()
-end
-
 local function check_new_unit(unit_id)
-    -- when re-enabling at game load, ignore the first batch of units so we
-    -- don't consider existing agitated units or cavern invaders as "new"
-    if not delay_frame_counter then
-        delay_frame_counter = world.frame_counter
-        return
-    elseif delay_frame_counter >= world.frame_counter then
-        return
-    end
+    -- when just enabling, ignore the first batch of "new" units so we
+    -- don't react to existing agitated units or cavern invaders
+    if new_unit_min_frame_counter >= world.frame_counter then return end
     local unit = df.unit.find(unit_id)
     if not unit or not is_unkilled(unit) then return end
     if state.features.surface and is_agitated(unit) then
-        reset_surface_agitation()
+        on_surface_attack()
         return
     end
-    if not state.features.cavern and
-        not state.features.cap_invaders or
-        not is_cavern_invader(unit)
+    if not state.features.cap_invaders or not is_cavern_invader(unit) then
+        return
+    end
+    if state.caverns.invasion_id ~= unit.invasion_id then
+        on_cavern_attack(unit.invasion_id)
+    end
+    if state.features.cap_invaders and
+        get_num_cavern_invaders() > custom_difficulty.cavern_dweller_max_attackers
     then
+        on_cavern_invader_over_max(unit)
+    end
+end
+
+local function cull_invaders()
+    if not state.features.cap_invaders then return end
+    if get_num_cavern_invaders() <= custom_difficulty.cavern_dweller_max_attackers then
         return
     end
-    if state.features.cap_invaders then
-        local num_to_cull = #get_cavern_invaders() - custom_difficulty.cavern_dweller_max_attackers
-        if num_to_cull > 0 then
-            print('agitation-rebalance: active invaders above threshold; culling excess')
-            cull_pending_cavern_invaders(unit, num_to_cull)
-            return
+    for _,unit in ipairs(world.units.active) do
+        if is_cavern_invader(unit) then
+            on_cavern_invader_over_max(unit)
         end
-    end
-    if state.features.cavern then
-        local cavern_layer, irritation = get_feature_data(unit)
-        if not cavern_layer then return end
-        local cavern = state.caverns[df.layer_type[cavern_layer]]
-        if cavern.invasion_id == unit.invasion_id then
-            return
-        end
-        if irritation < cavern.threshold then
-            print('agitation-rebalance: redirecting premature cavern invasion')
-            cull_pending_cavern_invaders(unit)
-        else
-            cavern.invasion_id = unit.invasion_id
-            cavern.baseline = irritation
-            cavern.threshold = irritation + (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
-            persist_state()
+        if num_cavern_invaders <= custom_difficulty.cavern_dweller_max_attackers then
+            break
         end
     end
 end
 
-local function get_map_feature(layer_id)
-    for _, map_feature in ipairs(map_features) do
-        if df.feature_init_subterranean_from_layerst:is_instance(map_feature) and
-            map_feature.layer == layer_id
-        then
-            return map_feature
+local function get_cavern_irritation(which)
+    for _,map_feature in ipairs(map_features) do
+        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
+            goto continue
         end
+        if map_feature.start_depth == which then
+            return map_feature.feature.irritation_level
+        end
+        ::continue::
     end
 end
 
-local function delete_invasion(idx, ev)
-    print('agitation-rebalance: redirecting premature cavern invasion')
-    inc_stat('invasions_diverted')
-    persist_state()
-    df.global.timed_events:erase(idx)
-    ev:delete()
+local function get_cavern_attack_independent_natural_chance(which)
+    return math.min(1, (get_cavern_irritation(which) or 0) / 10000)
 end
 
--- DF ensures that only one cavern invasion event exists at a time, so we only need to
--- check for one
+local function get_cavern_attack_natural_chances()
+    local cavern_1_chance = get_cavern_attack_independent_natural_chance(df.layer_type.Cavern1)
+    local cavern_2_chance = get_cavern_attack_independent_natural_chance(df.layer_type.Cavern2)
+    local cavern_3_chance = get_cavern_attack_independent_natural_chance(df.layer_type.Cavern3)
+    return cavern_1_chance,
+        (1-cavern_1_chance) * cavern_2_chance,
+        (1-cavern_1_chance) * (1-cavern_2_chance) * cavern_3_chance
+end
+
+local function get_cavern_sens()
+    return (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
+end
+
+local function cavern_attack_passes_roll()
+    local irritation = get_cumulative_irritation() - state.caverns.baseline
+    local irr_max = get_cavern_sens()
+    if state.caverns.baseline == 0 then
+        -- normalize chances if irritation < 10000
+        local c1, c2, c3 = get_cavern_attack_natural_chances()
+        irr_max = math.floor(irr_max * (c1 + c2 + c3))
+    end
+    if irritation >= irr_max then return true end
+    return math.random(1, irr_max) > irritation
+end
+
 local function throttle_invasions()
     if not state.features.cavern then return end
     for idx,ev in ipairs(df.global.timed_events) do
         if ev.type ~= df.timed_event_type.FeatureAttack then goto continue end
         local civ = ev.entity
         if not civ then goto continue end
-        if #get_cavern_invaders() >= custom_difficulty.cavern_dweller_max_attackers then
+        if state.features.cap_invaders and
+            get_num_cavern_invaders() >= custom_difficulty.cavern_dweller_max_attackers
+        then
             delete_invasion(idx, ev)
-            return
-        end
-        for _,pop_id in ipairs(civ.populations) do
-            local pop = df.entity_population.find(pop_id)
-            if not pop then goto next_pop end
-            local map_feature = get_map_feature(pop.layer_id)
-            if not map_feature then goto next_pop end
-            local cavern_layer = map_feature.start_depth
-            local cavern = state.caverns[df.layer_type[cavern_layer]]
-            if map_feature.feature.irritation_level < cavern.threshold then
-                delete_invasion(idx, ev)
-                return
-            end
-            ::next_pop::
+            break
+        elseif not cavern_attack_passes_roll() then
+            delete_invasion(idx, ev)
+            break
+        else
+            -- DF ensures that only one cavern invasion event exists at a time, so
+            -- we only need to check for one
+            break
         end
         ::continue::
     end
@@ -304,17 +309,13 @@ local TICKS_PER_SEASON = 3 * TICKS_PER_MONTH
 
 local function seasons_cleaning()
     if not state.enabled then return end
+    cull_invaders()
     throttle_invasions()
     local ticks_until_next_season = TICKS_PER_SEASON - df.global.cur_season_tick + 1
     dfhack.timeout(ticks_until_next_season, 'ticks', seasons_cleaning)
 end
 
-local function do_enable()
-    state.enabled = true
-    delay_frame_counter = 0
-    eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, 5)
-    eventful.onUnitNewActive[GLOBAL_KEY] = check_new_unit
-    if not state.features.auto_preset then return end
+local function check_preset()
     for preset_name,vanilla_settings in pairs(vanilla_presets) do
         local matched = true
         for k,v in pairs(vanilla_settings) do
@@ -328,6 +329,15 @@ local function do_enable()
             break
         end
     end
+end
+
+local function do_enable()
+    state.enabled = true
+    new_unit_min_frame_counter = world.frame_counter + UNIT_EVENT_FREQ + 1
+    num_cavern_invaders_frame_counter = -1
+    eventful.enableEvent(eventful.eventType.UNIT_NEW_ACTIVE, UNIT_EVENT_FREQ)
+    eventful.onUnitNewActive[GLOBAL_KEY] = check_new_unit
+    if state.features.auto_preset then check_preset() end
     seasons_cleaning()
 end
 
@@ -347,7 +357,6 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     state = dfhack.persistent.getSiteData(GLOBAL_KEY, get_default_state())
     if state.enabled then
         do_enable()
-        delay_frame_counter = nil
     end
 end
 
@@ -361,7 +370,7 @@ IrritationOverlay.ATTRS{
     default_pos={x=-32,y=5},
     viewscreens='dwarfmode/Default',
     overlay_onupdate_max_freq_seconds=5,
-    frame={w=24, h=12},
+    frame={w=24, h=13},
 }
 
 local function get_savagery()
@@ -385,18 +394,6 @@ local function get_surface_attack_chance()
         math.min(100, (adjusted_irritation*100)//custom_difficulty.wild_sens)
 end
 
-local function get_cavern_irritation(which)
-    for _,map_feature in ipairs(map_features) do
-        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
-            goto continue
-        end
-        if map_feature.start_depth == which then
-            return map_feature.feature.irritation_level
-        end
-        ::continue::
-    end
-end
-
 -- returns chance for next season
 local function get_fb_attack_chance(which)
     local irritation = get_cavern_irritation(which)
@@ -409,26 +406,49 @@ local function get_fb_attack_chance(which)
         math.min(33, (adjusted_irritation*33)//custom_difficulty.forgotten_sens)
 end
 
-local function get_cavern_invasion_chance(which, self)
-    local irritation = get_cavern_irritation(which)
-    if not irritation then return 0 end
-    if state.enabled then
-        local cavern = state.caverns[df.layer_type[which]]
-        if cavern and irritation < cavern.threshold
-            and (not self or self.num_cavern_invaders == 0)
-        then
-            -- we are actively suppressing further invasions and
-            -- there are no current cavern invaders, so return a value that represents
-            -- how close we are to allowing invasions again
-            local baseline = cavern.baseline or 0
-            return ((irritation - baseline)*100)//(cavern.threshold - baseline)
-        end
+local function get_cavern_attack_natural_chance(which)
+    local c1, c2, c3 = get_cavern_attack_natural_chances()
+    if which == df.layer_type.Cavern1 then
+        return math.floor(c1 * 100)
+    elseif which == df.layer_type.Cavern2 then
+        return math.floor(c2 * 100)
+    elseif which == df.layer_type.Cavern3 then
+        return math.floor(c3 * 100)
+    else
+        return math.floor((c1+c2+c3) * 100)
     end
-    return math.min(100, (irritation*100)//10000)
 end
 
-local function get_chance_color(chance_fn, chance_arg, chance_arg2)
-    local chance = chance_fn(chance_arg, chance_arg2)
+local function get_cavern_invasion_chance(which)
+    if not state.enabled then
+        return get_cavern_attack_natural_chance(which)
+    end
+
+    -- don't divilge new lowered chances until the current crop of invaders is gone
+    local baseline = num_cavern_invaders == 0 and state.caverns.baseline or 0
+    local irritation = get_cumulative_irritation() - baseline
+    local irr_max = get_cavern_sens()
+    local c1, c2, c3 = get_cavern_attack_natural_chances()
+    local natural_chance = c1 + c2 + c3
+    if state.caverns.baseline == 0 then
+        -- normalize chances if we've never had an attack
+        irr_max = math.floor(irr_max * natural_chance)
+    end
+    local overall_chance = math.min(1, irritation * natural_chance / irr_max)
+
+    if which == df.layer_type.Cavern1 then
+        return math.floor(c1 * 100 * overall_chance)
+    elseif which == df.layer_type.Cavern2 then
+        return math.floor(c2 * 100 * overall_chance)
+    elseif which == df.layer_type.Cavern3 then
+        return math.floor(c3 * 100 * overall_chance)
+    else
+        return math.floor(natural_chance * 100 * overall_chance)
+    end
+end
+
+local function get_chance_color(chance_fn, chance_arg)
+    local chance = chance_fn(chance_arg)
     if chance < 1 then
         return COLOR_GREEN
     elseif chance < 33 then
@@ -439,8 +459,8 @@ local function get_chance_color(chance_fn, chance_arg, chance_arg2)
     return COLOR_RED
 end
 
-local function obfuscate_chance(chance_fn, chance_arg, chance_arg2)
-    local chance = chance_fn(chance_arg, chance_arg2)
+local function obfuscate_chance(chance_fn, chance_arg)
+    local chance = chance_fn(chance_arg)
     if chance < 1 then
         return 'None'
     elseif chance < 33 then
@@ -451,8 +471,8 @@ local function obfuscate_chance(chance_fn, chance_arg, chance_arg2)
     return 'High'
 end
 
-local function get_invader_color(num_cavern_invaders)
-    if not num_cavern_invaders or num_cavern_invaders <= 0 then
+local function get_invader_color()
+    if num_cavern_invaders <= 0 then
         return COLOR_GREEN
     elseif num_cavern_invaders < custom_difficulty.cavern_dweller_max_attackers then
         return COLOR_YELLOW
@@ -462,28 +482,26 @@ local function get_invader_color(num_cavern_invaders)
 end
 
 -- set to true with :lua reqscript('agitation-rebalance').monitor_debug=true
--- to see raw irritation values on the monitor panel
+-- to see more information on the monitor panel
 monitor_debug = monitor_debug or false
 
 function IrritationOverlay:init()
-    self.num_cavern_invaders = 0
-
     local panel = widgets.Panel{
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
-        frame={t=0, r=0, w=16, h=7},
+        frame={t=0, r=0, w=15, h=5},
         visible=function() return not monitor_debug end,
     }
     panel:addviews{
         widgets.Label{
             frame={t=0},
-            text='Irritation',
+            text='Irrit. Threat',
             auto_width=true,
         },
         widgets.Label{
             frame={t=1, l=0},
             text={
-                ' Surface:',
+                'Surface:',
                 {gap=1, text=curry(obfuscate_chance, get_surface_attack_chance)},
             },
             text_pen=curry(get_chance_color, get_surface_attack_chance),
@@ -491,26 +509,10 @@ function IrritationOverlay:init()
         widgets.Label{
             frame={t=2, l=0},
             text={
-                'Cavern 1:',
-                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern1, self)},
+                'Caverns:',
+                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance)},
             },
-            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern1, self),
-        },
-        widgets.Label{
-            frame={t=3, l=0},
-            text={
-                'Cavern 2:',
-                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern2, self)},
-            },
-            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern2, self),
-        },
-        widgets.Label{
-            frame={t=4, l=0},
-            text={
-                'Cavern 3:',
-                {gap=1, text=curry(obfuscate_chance, get_cavern_invasion_chance, df.layer_type.Cavern3, self)},
-            },
-            text_pen=curry(get_chance_color, get_cavern_invasion_chance, df.layer_type.Cavern3, self),
+            text_pen=curry(get_chance_color, get_cavern_invasion_chance),
         },
     }
 
@@ -624,28 +626,35 @@ function IrritationOverlay:init()
             frame={t=6, l=0},
             text={
                 'Invaders:',
-                {gap=1, text=function() return self.num_cavern_invaders end, width=4, rjustify=true},
+                {gap=1, text=function() return num_cavern_invaders end, width=4, rjustify=true},
                 '/',
                 {text=function() return custom_difficulty.cavern_dweller_max_attackers end},
             },
-            text_pen=function() return get_invader_color(self.num_cavern_invaders) end,
+            text_pen=function() return get_invader_color() end,
         },
         widgets.Label{
             frame={t=7, l=0},
             text={
-                ' Surface resets:',
-                {gap=1, text=function() return get_stat('surface_irritation_resets') end, width=5, rjustify=true},
+                'Surface attacks:',
+                {gap=1, text=function() return get_stat('surface_attacks') end, width=5, rjustify=true},
             },
         },
         widgets.Label{
             frame={t=8, l=0},
+            text={
+                ' Cavern attacks:',
+                {gap=1, text=function() return get_stat('cavern_attacks') end, width=5, rjustify=true},
+            },
+        },
+        widgets.Label{
+            frame={t=9, l=0},
             text={
                 'Invasions erased:',
                 {gap=1, text=function() return get_stat('invasions_diverted') end, width=4, rjustify=true},
             },
         },
         widgets.Label{
-            frame={t=9, l=0},
+            frame={t=10, l=0},
             text={
                 'Invaders culled:',
                 {gap=1, text=function() return get_stat('invaders_vaporized') end, width=5, rjustify=true},
@@ -661,7 +670,7 @@ function IrritationOverlay:init()
 end
 
 function IrritationOverlay:overlay_onupdate()
-    self.num_cavern_invaders = #get_cavern_invaders()
+    get_num_cavern_invaders(UNIT_EVENT_FREQ)
 end
 
 OVERLAY_WIDGETS = {monitor=IrritationOverlay}
@@ -709,14 +718,9 @@ local function print_status()
     print(('current agitated wildlife:     %5d'):format(#get_agitated_units()))
     print(('current known cavern invaders: %5d'):format(#unhidden_invaders))
     print()
-    print('chances for an upcoming attack:')
-    print(('   Surface: %3d%% (per wildlife group)'):format(get_surface_attack_chance()))
-    print(('  Cavern 1: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern1)))
-    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern1)))
-    print(('  Cavern 2: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern2)))
-    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern2)))
-    print(('  Cavern 3: %3d%% (invaders, per season)'):format(get_cavern_invasion_chance(df.layer_type.Cavern3)))
-    print(('            %3d%% (forgotten beasts, per season)'):format(get_fb_attack_chance(df.layer_type.Cavern3)))
+    print('current chances for an upcoming attack:')
+    print(('  Surface: %s'):format(obfuscate_chance(get_surface_attack_chance)))
+    print(('  Caverns: %s'):format(obfuscate_chance(get_cavern_invasion_chance)))
 end
 
 local function enable_feature(which, enabled)
