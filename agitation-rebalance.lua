@@ -137,8 +137,45 @@ local function get_cumulative_irritation()
     return irritation
 end
 
+local function get_cavern_irritation(which)
+    for _,map_feature in ipairs(map_features) do
+        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
+            goto continue
+        end
+        if map_feature.start_depth == which then
+            return map_feature.feature.irritation_level
+        end
+        ::continue::
+    end
+end
+
+-- returns the minimum irritation level that will max out chances of
+-- both cavern invasions and forgotten beasts
+local function get_normalized_irritation(which)
+    local irritation = get_cavern_irritation(which)
+    if not irritation then return 0 end
+    local wealth_rating = plotinfo.tasks.wealth.total // custom_difficulty.forgotten_wealth_div
+    local irritation_min = custom_difficulty.forgotten_irritate_min
+    return math.max(10000, irritation_min - wealth_rating + custom_difficulty.forgotten_sens)
+end
+
+local function get_cavern_sens()
+    return (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
+end
+
 local function on_cavern_attack(invasion_id)
     state.caverns.last_invasion_id = invasion_id
+    for _,map_feature in ipairs(map_features) do
+        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
+            goto continue
+        end
+        local normalized_irritation = get_normalized_irritation(map_feature.start_depth)
+        map_feature.feature.irritation_level = math.min(
+            map_feature.feature.irritation_level,
+            100000-get_cavern_sens(),  -- values above this are too close to max limit
+            normalized_irritation)     -- values above this are effectively the same
+        ::continue::
+    end
     state.caverns.baseline = get_cumulative_irritation()
     inc_stat('cavern_attacks')
     persist_state()
@@ -230,18 +267,6 @@ local function cull_invaders()
     end
 end
 
-local function get_cavern_irritation(which)
-    for _,map_feature in ipairs(map_features) do
-        if not df.feature_init_subterranean_from_layerst:is_instance(map_feature) then
-            goto continue
-        end
-        if map_feature.start_depth == which then
-            return map_feature.feature.irritation_level
-        end
-        ::continue::
-    end
-end
-
 local function get_cavern_attack_independent_natural_chance(which)
     return math.min(1, (get_cavern_irritation(which) or 0) / 10000)
 end
@@ -253,10 +278,6 @@ local function get_cavern_attack_natural_chances()
     return cavern_1_chance,
         (1-cavern_1_chance) * cavern_2_chance,
         (1-cavern_1_chance) * (1-cavern_2_chance) * cavern_3_chance
-end
-
-local function get_cavern_sens()
-    return (custom_difficulty.wild_irritate_min + custom_difficulty.wild_sens)//2
 end
 
 local function cavern_attack_passes_roll()
