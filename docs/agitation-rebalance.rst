@@ -106,7 +106,8 @@ chances are calculated separately for each cavern layer, only one attack may
 occur per season. The upper cavern layers get rolled first, so even if all
 layers have the same irritation level, invasions will tend to happen in the
 uppermost layer. There are no player-configurable settings to change the cavern
-invasion thresholds.
+invasion thresholds. Regardless of irritation level, cavern invasions do not
+spawn until the cavern layer is discovered by the current fort.
 
 The chance of forgotten beast attack in a particular layer is affected by the
 cavern layer's irritation level, but your fortress's wealth has a much greater
@@ -114,6 +115,8 @@ impact. Even with an irritation level of zero, a wealthy fortress will
 encourage forgotten beasts to attack at their maximum rate. The chance of
 forgotten beast attack is capped at 33% per layer, but unlike cavern invasions,
 you can have as many forgotten beast attacks in a season as you have layers.
+With high irritation and/or high fortress wealth, forgotten beasts can invade a
+cavern before you discover it.
 
 You can wall off the caverns to insulate your fort from the invasions, but
 invaders will continue to spawn and build up over time. Cavern invaders spawn
