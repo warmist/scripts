@@ -8,7 +8,7 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local GLOBAL_KEY = 'agitation-rebalance-v2'
+local GLOBAL_KEY = 'agitation-rebalance'
 local UNIT_EVENT_FREQ = 5
 
 local presets = {
@@ -70,7 +70,10 @@ local function get_default_state()
         },
         caverns={
             last_invasion_id=-1,
+            last_year_roll=-1,
+            last_season_roll=-1,
             baseline=0,
+            player_visible_baseline=0,
         },
         stats={
             surface_attacks=0,
@@ -215,6 +218,12 @@ local function get_num_cavern_invaders(slack)
     if num_cavern_invaders_frame_counter + slack < world.frame_counter then
         num_cavern_invaders = #get_cavern_invaders()
         num_cavern_invaders_frame_counter = world.frame_counter
+        if num_cavern_invaders == 0 and
+            state.caverns.baseline ~= state.caverns.player_visible_baseline
+        then
+            state.caverns.player_visible_baseline = state.caverns.baseline
+            persist_state()
+        end
     end
     return num_cavern_invaders
 end
@@ -242,7 +251,7 @@ local function check_new_unit(unit_id)
     if not state.features.cap_invaders or not is_cavern_invader(unit) then
         return
     end
-    if state.caverns.invasion_id ~= unit.invasion_id then
+    if state.caverns.last_invasion_id ~= unit.invasion_id then
         on_cavern_attack(unit.invasion_id)
     end
     if state.features.cap_invaders and
@@ -294,6 +303,13 @@ end
 
 local function throttle_invasions()
     if not state.features.cavern then return end
+    if state.caverns.last_year_roll == df.global.cur_year and
+        state.caverns.last_season_roll >= df.global.cur_season or
+        state.caverns.last_year_roll >= df.global.cur_year
+    then
+        -- only roll once per season
+        return
+    end
     for idx,ev in ipairs(df.global.timed_events) do
         if ev.type ~= df.timed_event_type.FeatureAttack then goto continue end
         local civ = ev.entity
@@ -313,6 +329,9 @@ local function throttle_invasions()
         end
         ::continue::
     end
+    state.caverns.last_year_roll = df.global.cur_year
+    state.caverns.last_season_roll = df.global.cur_season
+    persist_state()
 end
 
 local function do_preset(preset_name)
@@ -375,7 +394,8 @@ dfhack.onStateChange[GLOBAL_KEY] = function(sc)
     if sc ~= SC_MAP_LOADED or not dfhack.world.isFortressMode() then
         return
     end
-    state = dfhack.persistent.getSiteData(GLOBAL_KEY, get_default_state())
+    state = get_default_state()
+    utils.assign(state, dfhack.persistent.getSiteData(GLOBAL_KEY, state))
     num_cavern_invaders = num_cavern_invaders or 0
     num_cavern_invaders_frame_counter = -(UNIT_EVENT_FREQ+1)
     if state.enabled then
@@ -448,7 +468,8 @@ local function get_cavern_invasion_chance(which)
     end
 
     -- don't divilge new lowered chances until the current crop of invaders is gone
-    local baseline = num_cavern_invaders == 0 and state.caverns.baseline or 0
+    local baseline = num_cavern_invaders == 0 and
+        state.caverns.baseline or state.caverns.player_visible_baseline
     local irritation = get_cumulative_irritation() - baseline
     local irr_max = get_cavern_sens()
     local c1, c2, c3 = get_cavern_attack_natural_chances()
