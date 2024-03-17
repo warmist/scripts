@@ -28,6 +28,7 @@ Template for new versions:
 
 ## New Tools
 - `agitation-rebalance`: alter mechanics of irriation-related attacks so they are less constant and are more responsive to recent player bahavior
+- `fix/ownership`: fix instances of units claiming the same item or an item they don't own. helps stop "Store owned item" job loop for this case.
 - `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
 - `instruments`: provides information on how to craft the instruments used by the player civilization.
 - `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
