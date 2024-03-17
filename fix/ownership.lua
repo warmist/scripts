@@ -1,4 +1,3 @@
---@ enable = true
 --@ module = true
 
 --[====[
@@ -14,15 +13,10 @@ repeatedly trying to put an item in their cabinet and they cant causing them
 to keep picking it up and trying to put it in.
 
 Usage:
-enable fix/ownership
-disable fix/ownership
-fix/ownership now
+fix/ownership
+fix/ownership help
 
 --]====]
-
-local GLOBAL_KEY = 'fix-ownership'
-
-enabled = enabled or false
 
 -- Dwarf thinks they own the item but the item doesnt hold the proper
 -- ref that actually makes this true
@@ -45,59 +39,11 @@ local function owner_not_recognized()
     end
 end
 
-local function persist_state()
-    dfhack.persistent.saveSiteData(GLOBAL_KEY, {enabled=enabled})
-end
-
-local function event_loop()
-    if enabled then
-        owner_not_recognized()
-        dfhack.timeout(1, 'days', event_loop)
-    end
-end
-
-dfhack.onStateChange[GLOBAL_KEY] = function(sc)
-    if sc == SC_MAP_UNLOADED then
-        enabled = false
-        return
-    end
-
-    if sc ~= SC_MAP_LOADED or df.global.gamemode ~= df.game_mode.DWARF then
-        return
-    end
-
-    local persisted_data = dfhack.persistent.getSiteData(GLOBAL_KEY, {enabled=false})
-    enabled = persisted_data.enabled
-    event_loop()
-end
-
-if dfhack_flags.module then
-    return
-end
-
-if df.global.gamemode ~= df.game_mode.DWARF or not dfhack.isMapLoaded() then
-    dfhack.printerr('fix/ownership only works in fortress mode')
-    return
-end
-
 local args = {...}
-if dfhack_flags and dfhack_flags.enable then
-    args = {dfhack_flags.enable_state and 'enable' or 'disable'}
-end
 
-if args[1] == "enable" then
-    enabled = true
-elseif args[1] == "disable" then
-    enabled = false
-elseif args[1] == "now" then
-    owner_not_recognized()
-    print("Completed check")
-    return
-else
-    local enabled_str = enabled and "enabled" or "disabled"
-    print("fix/ownership is currently " .. enabled_str)
+if args[1] == "help" then
+    print(dfhack.script_help())
     return
 end
 
-event_loop()
-persist_state()
+owner_not_recognized()

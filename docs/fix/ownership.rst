@@ -15,11 +15,8 @@ This should help issues of dwarves getting stuck in a "Store owned item" job.
 Usage
 -----
 
-``enable fix/ownership``
-    Enable daily check of ownership.
+``fix/ownership``
+    Check ownership.
 
-``disable fix/protect-nicks``
-    Disable the daily check.
-
-``fix/protect-nicks now``
-    Immediately run check.
+``fix/ownership help``
+    Display help details.
