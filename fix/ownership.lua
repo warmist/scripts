@@ -1,23 +1,5 @@
 --@ module = true
 
---[====[
-
-fix/ownership
-=============
-
-Fixes instances of units claiming the same item
-
-Sometimes multiple units will claim the same item and this may lead to
-the constant looping of the "Store owned item" job. This may show as a unit
-repeatedly trying to put an item in their cabinet and they cant causing them
-to keep picking it up and trying to put it in.
-
-Usage:
-fix/ownership
-fix/ownership help
-
-]====]
-
 -- unit thinks they own the item but the item doesnt hold the proper
 -- ref that actually makes this true
 local function owner_not_recognized()
