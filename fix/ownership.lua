@@ -1,6 +1,6 @@
 --@ module = true
 
--- unit thinks they own the item but the item doesnt hold the proper
+-- unit thinks they own the item but the item doesn't hold the proper
 -- ref that actually makes this true
 local function owner_not_recognized()
     for _,unit in ipairs(dfhack.units.getCitizens()) do
