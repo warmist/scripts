@@ -14,7 +14,7 @@ local function owner_not_recognized()
                     if ref.unit_id == unit.id then goto continue end
                 end
             end
-            print('Erasing ' .. dfhack.TranslateName(unit.name) .. ' claim on item #' .. item.id)
+            print('Erasing ' .. dfhack.TranslateName(unit.name) .. ' invalid claim on item #' .. item.id)
             unit.owned_items:erase(index)
             ::continue::
         end
