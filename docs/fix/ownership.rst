@@ -15,8 +15,6 @@ This should help issues of units getting stuck in a "Store owned item" job.
 Usage
 -----
 
-``fix/ownership``
-    Check ownership.
+::
 
-``fix/ownership help``
-    Display help details.
+    fix/ownership
