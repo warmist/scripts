@@ -68,6 +68,7 @@ COMMANDS_BY_IDX = {
     {command='fix/general-strike', group='bugfix', mode='repeat', default=true,
         desc='Prevent dwarves from getting stuck and refusing to work.',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
+    {command='fix/ownership', group='bugfix', mode='enable', default=true},
     {command='fix/protect-nicks', group='bugfix', mode='enable', default=true},
     {command='fix/stuck-instruments', group='bugfix', mode='repeat', default=true,
         desc='Fix activity references on stuck instruments to make them usable again.',
