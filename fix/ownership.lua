@@ -1,5 +1,3 @@
---@ module = true
-
 -- unit thinks they own the item but the item doesn't hold the proper
 -- ref that actually makes this true
 local function owner_not_recognized()
