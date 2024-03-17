@@ -2,7 +2,7 @@ fix/ownership
 =============
 
 .. dfhack-tool::
-    :summary: Fixes instances of units claiming the same item or an item they don't own
+    :summary: Fixes instances of units claiming the same item or an item they don't own.
     :tags: fort bugfix units
 
 Due to a bug a unit can believe they own an item when they actually do not.
