@@ -69,7 +69,7 @@ COMMANDS_BY_IDX = {
         desc='Prevent dwarves from getting stuck and refusing to work.',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/general-strike', '-q', ']'}},
     {command='fix/ownership', group='bugfix', mode='repeat', default=true,
-        desc='Fixes instances of dwarves claiming the same item or an item they don\'t own',
+        desc='Fixes instances of units claiming the same item or an item they don\'t own',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/ownership', ']'}},
     {command='fix/protect-nicks', group='bugfix', mode='enable', default=true},
     {command='fix/stuck-instruments', group='bugfix', mode='repeat', default=true,

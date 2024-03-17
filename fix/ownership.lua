@@ -5,10 +5,10 @@
 fix/ownership
 =============
 
-Fixes instances of dwarves claiming the same item
+Fixes instances of units claiming the same item
 
-Sometimes multiple dwarves will claim the same item and this may lead to
-the constant looping of the "Store owned item" job. This may show as a dwarf
+Sometimes multiple units will claim the same item and this may lead to
+the constant looping of the "Store owned item" job. This may show as a unit
 repeatedly trying to put an item in their cabinet and they cant causing them
 to keep picking it up and trying to put it in.
 
@@ -18,7 +18,7 @@ fix/ownership help
 
 --]====]
 
--- Dwarf thinks they own the item but the item doesnt hold the proper
+-- unit thinks they own the item but the item doesnt hold the proper
 -- ref that actually makes this true
 local function owner_not_recognized()
     for _,unit in ipairs(dfhack.units.getCitizens()) do
