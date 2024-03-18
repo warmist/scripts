@@ -27,7 +27,7 @@ local presets = {
     strict={
         wild_irritate_min=2500,
         wild_sens=500,
-        wild_irritate_decay=10,
+        wild_irritate_decay=1000,
         cavern_dweller_max_attackers=50,
     },
     insane={
