@@ -812,7 +812,7 @@ function PreferencesTab:refresh()
         local text = make_preference_text(data.label, data.default, data.get_fn())
         table.insert(choices, {
             text=text,
-            search_key=text[#text],
+            search_key=data.label,
             data=data
         })
     end
