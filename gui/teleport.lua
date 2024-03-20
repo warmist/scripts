@@ -395,7 +395,7 @@ end
 
 TeleportScreen = defclass(TeleportScreen, gui.ZScreen)
 TeleportScreen.ATTRS {
-    focus_path='autodump',
+    focus_path='teleport',
     pass_movement_keys=true,
     pass_mouse_clicks=false,
     force_pause=true,
