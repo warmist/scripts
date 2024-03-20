@@ -162,9 +162,9 @@ ConfirmSpec{
 }
 
 ConfirmSpec{
-    id='trade-sieze',
-    title='Sieze merchant goods',
-    message='Are you sure you want size marked merchant goods? This will make the merchant unwilling to trade further and will damage relations with the merchant\'s civilization.',
+    id='trade-seize',
+    title='Seize merchant goods',
+    message='Are you sure you want seize marked merchant goods? This will make the merchant unwilling to trade further and will damage relations with the merchant\'s civilization.',
     intercept_keys='_MOUSE_L',
     intercept_frame={l=0, r=73, b=4, w=11, h=3},
     context='dwarfmode/Trade',
