@@ -30,11 +30,11 @@ Template for new versions:
 - `agitation-rebalance`: alter mechanics of irriation-related attacks so they are less constant and are more responsive to recent player bahavior
 - `fix/ownership`: fix instances of multiple citizens claiming the same items, resulting in "Store owned item" job loops
 - `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
-- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via control-panel prevents NOEXERT units from staying "Tired"
 - `instruments`: provides information on how to craft the instruments used by the player civilization
 - `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
 - `modtools/if-entity`: (reinstated) modder's resource for triggering scripted content depending on the race of the loaded fort
 - `devel/block-borders`: (reinstated) highlights boundaries of map blocks or embark tile blocks
+- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via control-panel prevents NOEXERT units from staying "Tired"
 
 ## New Features
 - `gui/settings-manager`: add import, export, and autoload for work details
