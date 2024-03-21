@@ -236,18 +236,24 @@ local function getEffectDescription(effect)
 end
 
 local function getSyndromeName(syndrome_raw)
-    local is_transformation = false
+    local is_transformation, display_name = false, nil
 
     for _, effect in pairs(syndrome_raw.ce) do
         if df.creature_interaction_effect_body_transformationst:is_instance(effect) then
             is_transformation = true
+        elseif df.creature_interaction_effect_display_namest:is_instance(effect) then
+            display_name = effect.name
         end
     end
 
+    display_name = display_name and (' %s'):format(display_name:gsub('^%l', string.upper)) or ''
+
     if syndrome_raw.syn_name ~= "" then
-        return syndrome_raw.syn_name:gsub("^%l", string.upper)
+        return syndrome_raw.syn_name:gsub("^%l", string.upper) .. display_name
     elseif is_transformation then
-        return "Body transformation"
+        return "Body transformation" .. display_name
+    elseif display_name ~= '' then
+        return display_name
     end
 
     return "Mystery"

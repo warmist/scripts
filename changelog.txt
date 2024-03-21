@@ -33,6 +33,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `gui/unit-syndromes`: make syndromes searchable by their display names (e.g.  "necromancer")
 
 ## Removed
 
