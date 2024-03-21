@@ -2,7 +2,7 @@ fix/noexert-exhaustion
 ======================
 
 .. dfhack-tool::
-    :summary: Sets Exhaustion of NOEXERT units to 0, curing 'Tired'
+    :summary: Prevents NOEXERT units from getting tired when training.
     :tags: fort bugfix units
 
 This tool zeroes the "exhaustion" counter of all NOEXERT units (e.g. Vampires, Necromancers, and Intelligent Undead),
