@@ -1,5 +1,5 @@
 fix/noexert-exhaustion
-===========================
+======================
 
 .. dfhack-tool::
     :summary: Sets Exhaustion of NOEXERT units to 0, curing 'Tired'
