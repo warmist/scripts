@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.12-r2
+
+## New Tools
 - `agitation-rebalance`: alter mechanics of irriation-related attacks so they are less constant and are more responsive to recent player bahavior
 - `fix/ownership`: fix instances of multiple citizens claiming the same items, resulting in "Store owned item" job loops
 - `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
@@ -34,7 +46,7 @@ Template for new versions:
 - `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
 - `modtools/if-entity`: (reinstated) modder's resource for triggering scripted content depending on the race of the loaded fort
 - `devel/block-borders`: (reinstated) highlights boundaries of map blocks or embark tile blocks
-- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via control-panel prevents NOEXERT units from staying "Tired"
+- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via `gui/control-panel` prevents NOEXERT units from getting stuck in a "Tired" state
 
 ## New Features
 - `gui/settings-manager`: add import, export, and autoload for work details
@@ -59,8 +71,6 @@ Template for new versions:
 - `allneeds`: select a dwarf in the UI to see a summary of needs for just that dwarf
 - `allneeds`: provide options for sorting the cumulative needs by different criteria
 - `prioritize`: print out custom reaction and hauling jobs in the same format that is used for ``prioritize`` command arguments so the player can just copy and paste
-
-## Removed
 
 # 50.12-r1
 
