@@ -5,7 +5,7 @@ fix/noexert-exhaustion
     :summary: Sets Exhaustion of NOEXERT units to 0, curing 'Tired'
     :tags: fort bugfix units
 
-Zeroes the Exhaustion counter of all NOEXERT units (including Vampires, Necromacers, and Intelligent Undead),
+This tool zeroes the "exhaustion" counter of all NOEXERT units (e.g. Vampires, Necromancers, and Intelligent Undead),
 fixing any that are stuck 'Tired' from an activity that doesn't respect NOEXERT. This is not a permanent fix -
 the issue will reoccur next time they partake in an activity that does not respect the NOEXERT tag.
 
