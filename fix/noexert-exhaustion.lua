@@ -17,7 +17,7 @@ function isNoExert(u)
 end
 
 function fixNoExertExhaustion()
-    for _, unit in ipairs(df.global.world.units.active) do
+    for _, unit in ipairs(dfhack.units.getCitizens()) do
         if(isNoExert(unit)) then
             unit.counters2.exhaustion = 0    -- 0 represents no Exhaustion. NOEXERT units should never have Exhaustion above 0.
         end
