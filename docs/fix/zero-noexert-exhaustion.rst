@@ -1,5 +1,5 @@
 fix/zero-noexert-exhaustion
-======================
+===========================
 
 .. dfhack-tool::
     :summary: Sets Exhaustion counter of NOEXERT units (notably Necromancers, Vampires, and Intelligent Undead) to 0, fixing any that are stuck 'Tired'.
