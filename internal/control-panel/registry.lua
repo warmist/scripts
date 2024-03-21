@@ -77,7 +77,7 @@ COMMANDS_BY_IDX = {
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
     {command='fix/stuck-worship', group='bugfix', mode='repeat', default=true,
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-worship', ']'}},
-    {command='fix/noexert-exhaustion', group='bugfix', mode='repeat', default=false,
+    {command='fix/noexert-exhaustion', group='bugfix', mode='repeat', default=true,
         desc='Prevent NOEXERT units from becoming Tired',
         params={'--time', '350', '--timeUnits', 'ticks', '--command', '[', 'fix/zero-noexert-exhaustion', ']'}},
     {command='flask-contents', help_command='tweak', group='bugfix', mode='tweak', default=true,
