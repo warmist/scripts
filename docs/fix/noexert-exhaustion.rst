@@ -1,4 +1,4 @@
-fix/zero-noexert-exhaustion
+fix/noexert-exhaustion
 ===========================
 
 .. dfhack-tool::
@@ -11,14 +11,14 @@ the issue will reoccur next time they partake in an activity that does not respe
 
 Running this regularly works around :bug:`8389`, which permanently debuffs NOEXERT units and prevents them from
 properly partaking in military training. It should be run if you notice Vampires, Necromancers, or Intelligent
-Undead become 'Tired'. Enabling this script via control-panel or gui/control-panel will run it often enough to
+Undead become 'Tired'. Enabling this script via `control-panel` or `gui/control-panel` will run it often enough to
 prevent NOEXERT units from becoming 'Tired'.
 
 Usage
 -----
 ::
 
-    fix/zero-noexert-exhaustion
+    fix/noexert-exhaustion
 
 Technical details
 -----------------
