@@ -1,6 +1,6 @@
 --checks all units for the NOEXERT tag, and sets their Exhaustion counter to zero
 --NOEXERT units (including Vampires, Necromancers, and Intelligent Undead) are unable to lower their Exhaustion, and are not supposed to gain Exhaustion.
---at least one activity (Individual Combat Drill) doesn't respect NOEXERT, and will leave NOEXERT units permanently Tired. This script will fix 'Tired' NOEXERT units. 
+--at least one activity (Individual Combat Drill) doesn't respect NOEXERT, and will leave NOEXERT units permanently Tired. This script will fix 'Tired' NOEXERT units.
 --Individual Combat Drill seems to add 50 Exhaustion approximately every 9 ticks. 'Tired' appears at 2000 Exhaustion, and dwarves switch to Individual Combat Drill/Resting at 3000 Exhaustion.
 --Running this script on repeat approximately at least every 350 ticks should prevent NOEXERT units from becoming Tired as a result of Individual Combat Drill.
 
