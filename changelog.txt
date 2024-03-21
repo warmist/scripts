@@ -34,6 +34,7 @@ Template for new versions:
 - `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
 - `modtools/if-entity`: (reinstated) modder's resource for triggering scripted content depending on the race of the loaded fort
 - `devel/block-borders`: (reinstated) highlights boundaries of map blocks or embark tile blocks
+- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via control-panel prevents NOEXERT units from staying "Tired"
 
 ## New Features
 - `gui/settings-manager`: add import, export, and autoload for work details
