@@ -6,7 +6,7 @@ fix/zero-noexert-exhaustion
     :tags: fort bugfix units
 
 Zeroes the Exhaustion counter of all NOEXERT units (including Vampires, Necromacers, and Intelligent Undead), 
-fixing any that are stuck 'Tired' from an activity that don't respect NOEXERT. This is not a permanent fix - 
+fixing any that are stuck 'Tired' from an activity that doesn't respect NOEXERT. This is not a permanent fix - 
 the issue will reoccur next time they partake in an activity that does not respect the NOEXERT tag.
 
 Running this regularly works around :bug:`8389`, which permanently debuffs NOEXERT units and prevents them from 
@@ -24,6 +24,6 @@ Technical details
 -----------------
 
 Units with the NOEXERT tag ignore most sources of physical exertion, and have no means to recover from it. 
-Individual Combat Training seems to add approximately 50 'Exhaustion' every 9 ticks, ignoring NOEXERT. 
-Units become Tired at 2000 Exhaustion, and stop training at 3000.
-Setting the Exhaustion counter of every NOEXERT-tagged unit to 0 every 350 ticks should prevent them from becoming Tired from Individual Combat Training.
+Individual Combat Drill seems to add approximately 50 'Exhaustion' every 9 ticks, ignoring NOEXERT. 
+Units become Tired at 2000 Exhaustion, and switch from Individual Combat Drill to Individual Combat Drill/Resting at 3000.
+Setting the Exhaustion counter of every NOEXERT-tagged unit to 0 every 350 ticks should prevent them from becoming Tired from Individual Combat Drill.
