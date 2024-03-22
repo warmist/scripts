@@ -78,7 +78,7 @@ COMMANDS_BY_IDX = {
     {command='fix/stuck-worship', group='bugfix', mode='repeat', default=true,
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-worship', ']'}},
     {command='fix/noexert-exhaustion', group='bugfix', mode='repeat', default=true,
-        params={'--time', '439', '--timeUnits', 'ticks', '--command', '[', 'fix/zero-noexert-exhaustion', ']'}},
+        params={'--time', '439', '--timeUnits', 'ticks', '--command', '[', 'fix/noexert-exhaustion', ']'}},
     {command='flask-contents', help_command='tweak', group='bugfix', mode='tweak', default=true,
         desc='Displays flask contents in the item name, similar to barrels and bins.'},
     {command='preserve-tombs', group='bugfix', mode='enable', default=true},

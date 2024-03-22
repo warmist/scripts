@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `fix/noexert-exhaustion`: fix typo in control panel registry entry which prevented the fix from being run when enabled
 
 ## Misc Improvements
 - `gui/unit-syndromes`: make syndromes searchable by their display names (e.g.  "necromancer")
