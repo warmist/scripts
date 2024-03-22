@@ -31,14 +31,20 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.12-r2.1
+
+## Fixes
 - `fix/noexert-exhaustion`: fix typo in control panel registry entry which prevented the fix from being run when enabled
 - `gui/suspendmanager`: fix script startup errors
 - `control-panel`: properly auto-enable newly added bugfixes
 
 ## Misc Improvements
 - `gui/unit-syndromes`: make syndromes searchable by their display names (e.g.  "necromancer")
-
-## Removed
 
 # 50.12-r2
 
