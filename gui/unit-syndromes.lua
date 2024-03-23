@@ -1,7 +1,6 @@
 -- GUI for exploring unit syndromes (and their effects).
 
 local gui = require('gui')
-local utils = require('utils')
 local widgets = require('gui.widgets')
 
 local function getEffectTarget(target)
@@ -236,24 +235,20 @@ local function getEffectDescription(effect)
 end
 
 local function getSyndromeName(syndrome_raw)
-    local is_transformation, display_name = false, nil
+    local is_transformation = false
 
     for _, effect in pairs(syndrome_raw.ce) do
         if df.creature_interaction_effect_body_transformationst:is_instance(effect) then
             is_transformation = true
         elseif df.creature_interaction_effect_display_namest:is_instance(effect) then
-            display_name = effect.name
+            return effect.name:gsub("^%l", string.upper)
         end
     end
 
-    display_name = display_name and (' %s'):format(display_name:gsub('^%l', string.upper)) or ''
-
     if syndrome_raw.syn_name ~= "" then
-        return syndrome_raw.syn_name:gsub("^%l", string.upper) .. display_name
+        return syndrome_raw.syn_name:gsub("^%l", string.upper)
     elseif is_transformation then
-        return "Body transformation" .. display_name
-    elseif display_name ~= '' then
-        return display_name
+        return "Body transformation"
     end
 
     return "Mystery"
@@ -288,7 +283,7 @@ local function getSyndromeDescription(syndrome_raw, syndrome)
         syndrome_duration = ("%s-%s"):format(syndrome_min_duration, syndrome_max_duration)
     end
 
-    return ("%-22s %s%s \n%s effects"):format(
+    return ("%-29s %s%s \n%s effects"):format(
         getSyndromeName(syndrome_raw),
         syndrome and ("%s of "):format(syndrome.ticks) or "",
         syndrome_duration,
@@ -361,7 +356,7 @@ UnitSyndromes.ATTRS {
     frame_title='Unit Syndromes',
     frame={w=50, h=30},
     resizable=true,
-    resize_min={w=43, h=20},
+    resize_min={h=20},
 }
 
 function UnitSyndromes:init()
@@ -376,7 +371,7 @@ function UnitSyndromes:init()
                     view_id = 'category',
                     frame = {t = 0, l = 0},
                     choices = {
-                        { text = "Dwarves", get_choices = curry(dfhack.units.getCitizens, false, true) },
+                        { text = "Citizens and Residents", get_choices = dfhack.units.getCitizens },
                         { text = "Livestock", get_choices = getLivestock },
                         { text = "Wild animals", get_choices = getWildAnimals },
                         { text = "Hostile", get_choices = getHostiles },
@@ -442,7 +437,7 @@ function UnitSyndromes:onInput(keys)
     return UnitSyndromes.super.onInput(self, keys)
 end
 
-function UnitSyndromes:showUnits(index, choice)
+function UnitSyndromes:showUnits(_, choice)
     local choices = {}
 
     if choice.text == "All syndromes" then
@@ -472,9 +467,8 @@ function UnitSyndromes:showUnits(index, choice)
 
         table.insert(choices, {
             unit_id = unit.id,
-            text = ("%s %s \n%s syndromes"):format(
-                string.upper(df.global.world.raws.creatures.all[unit.race].name[0]),
-                dfhack.TranslateName(unit.name),
+            text = ("%s\n%s syndrome(s)"):format(
+                dfhack.units.getReadableName(unit),
                 #unit_syndromes
             ),
         })
