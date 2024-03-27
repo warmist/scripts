@@ -29,6 +29,8 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `quickfort`: add options for applying blueprints with warm and/or damp dig markers
+- `gui/quickfort`: add options for applying blueprints with warm and/or damp dig markers
 
 ## Fixes
 

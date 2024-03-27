@@ -86,7 +86,7 @@ function init_ctx(params, prev_ctx)
         copyall(params.cursor),  -- copy since we modify this during processing
         params.aliases or {},
         params.quiet,
-        params.marker,
+        params.marker or {blueprint=false, warm=false, damp=false},
         params.priority or 4,
         params.dry_run,
         params.preview and
@@ -262,7 +262,7 @@ function do_command(args)
     end
     local cursor = guidm.getCursorPos()
     local quiet, verbose, dry_run, section_names = false, false, false, {''}
-    local marker, priority = false, 4
+    local marker, priority = {blueprint=false, warm=false, damp=false}, 4
     local preserve_engravings = df.item_quality.Masterful
     local modifiers = quickfort_parse.get_modifiers_defaults()
     local other_args = argparse.processArgsGetopt(args, {
@@ -273,7 +273,16 @@ function do_command(args)
                 preserve_engravings = quickfort_parse.parse_preserve_engravings(
                                                                 optarg) end},
             {'d', 'dry-run', handler=function() dry_run = true end},
-            {'m', 'marker', handler=function() marker = true end},
+            {'m', 'marker', hasArg=true, handler=function(optarg)
+                for _,m in ipairs(argparse.stringList(optarg)) do
+                    if m == 'blueprint' then marker.blueprint = true
+                    elseif m == 'warm' then marker.warm = true
+                    elseif m == 'damp' then marker.damp = true
+                    else
+                        qerror(('invalid marker type: "%s"'):format(m))
+                    end
+                end
+            end},
             {'n', 'name', hasArg=true,
              handler=function(optarg)
                 section_names = argparse.stringList(optarg) end},
