@@ -15,10 +15,12 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
 
 ## Fixes
 
 ## Misc Improvements
+- `gui/reveal`: show aquifers even when not in mining mode
 
 ## Removed
 
