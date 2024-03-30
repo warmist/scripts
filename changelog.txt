@@ -42,6 +42,7 @@ Template for new versions:
 - `gui/reveal`: show aquifers even when not in mining mode
 
 ## Removed
+- `drain-aquifer`: replaced by ``aquifer drain --all``; an alias now exists so ``drain-aquifer`` will automatically run the new command
 
 # 50.12-r2.1
 

@@ -87,11 +87,11 @@ COMMANDS_BY_IDX = {
 
     -- gameplay tools
     {command='agitation-rebalance', group='gameplay', mode='enable'},
+    {command='aquifer drain --all --skip-top 2', group='gameplay', mode='run',
+        desc='Ensure that your maps have no more than 2 layers of aquifer.'},
     {command='combine', group='gameplay', mode='repeat',
         desc='Combine partial stacks in stockpiles into full stacks.',
         params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
-    {command='drain-aquifer --top 2', group='gameplay', mode='run',
-        desc='Ensure that your maps have no more than 2 layers of aquifer.'},
     {command='dwarfvet', group='gameplay', mode='enable'},
     {command='eggs-fertile', help_command='tweak', group='gameplay', mode='tweak', default=true,
         desc='Displays an indicator on fetile eggs.'},
