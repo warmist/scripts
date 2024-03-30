@@ -15,12 +15,10 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
 
 ## Fixes
 
 ## Misc Improvements
-- `gui/reveal`: show aquifers even when not in mining mode
 
 ## Removed
 
@@ -34,11 +32,13 @@ Template for new versions:
 ## New Features
 - `quickfort`: add options for applying blueprints with warm and/or damp dig markers
 - `gui/quickfort`: add options for applying blueprints with warm and/or damp dig markers
+- `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
 
 ## Fixes
 - `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegate units because it was failing to find that unit's metadata)
 
 ## Misc Improvements
+- `gui/reveal`: show aquifers even when not in mining mode
 
 ## Removed
 
