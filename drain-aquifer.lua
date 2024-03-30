@@ -16,7 +16,7 @@ local function drain()
     elseif aqtype ~= nil then
       qerror("Invalid aquifer type "..aqtype)
     end
-    
+
     for _, block in ipairs(df.global.world.map.map_blocks) do
         local aquiferInBlock = false
 
@@ -25,9 +25,9 @@ local function drain()
         local oldTileCount = tile_count
         for i, row in ipairs(block.designation) do
             for j, tile in ipairs(row) do
-                if (aqTypeToDrain == 3 or 
+                if (aqTypeToDrain == 3 or
                   (block.occupancy[i][j].heavy_aquifer and aqTypeToDrain == 2) or
-                  (not block.occupancy[i][j].heavy_aquifer and aqTypeToDrain == 1)) and  
+                  (not block.occupancy[i][j].heavy_aquifer and aqTypeToDrain == 1)) and
                   tile.water_table then
                     tile.water_table = false
                     tile_count = tile_count + 1
