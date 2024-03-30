@@ -13,7 +13,6 @@ that repo.
 Template for new versions:
 
 ## New Tools
-- `gui/aquifer` - interactive aquifer visualization and editing
 
 ## New Features
 
@@ -28,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `gui/aquifer` - interactive aquifer visualization and editing
 - `open-legends`: (reinstated) open legends mode directly from a loaded fort
 
 ## New Features
