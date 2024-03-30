@@ -25,7 +25,7 @@ Examples
 ``drain-aquifer -d``
     Remove all aquifers on the current z-level and below.
 ``drain-aquifer -f light``
-    Remove all light aquifers on the map.
+    Remove all light aquifers on the map, leaving any heavy aquifers untouched.
 
 
 Options
