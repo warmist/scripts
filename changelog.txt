@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `gui/aquifer` - interactive aquifer visualization and editing
 - `open-legends`: (reinstated) open legends mode directly from a loaded fort
 
 ## New Features
