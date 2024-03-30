@@ -13,6 +13,7 @@ that repo.
 Template for new versions:
 
 ## New Tools
+- `gui/aquifer` - interactive aquifer visualization and editing
 
 ## New Features
 
