@@ -117,19 +117,6 @@ function ConfigPanel:on_select(_, choice)
     end
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 --
 -- Enabled subtab functions
 --
@@ -292,15 +279,14 @@ local function autostart_onInput(self, keys)
     end
 end
 
-local function autostart_on_submit(self, data)
-    common.set_autostart(data, not choice.enabled)
+local function autostart_on_submit(choice)
+    common.set_autostart(choice.data, not choice.enabled)
     common.config:write()
 end
 
 local function autostart_restore_defaults(self)
     for _,data in ipairs(registry.COMMANDS_BY_IDX) do
         if not common.command_passes_filters(data, self.group) then goto continue end
-        print(data.command, data.default)
         common.set_autostart(data, data.default)
         ::continue::
     end
@@ -444,12 +430,12 @@ function CommandTab:refresh()
 end
 
 function CommandTab:on_submit()
-    _,choice = self.subviews.list:getSelected()
+    local _,choice = self.subviews.list:getSelected()
     if not choice then return end
     if subtab == Subtabs.enabled then
         enabled_on_submit(self, choice.data)
     else
-        autostart_on_submit(self, choice.data)
+        autostart_on_submit(choice)
     end
     self:refresh()
 end
@@ -826,7 +812,7 @@ function PreferencesTab:refresh()
         local text = make_preference_text(data.label, data.default, data.get_fn())
         table.insert(choices, {
             text=text,
-            search_key=text[#text],
+            search_key=data.label,
             data=data
         })
     end

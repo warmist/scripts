@@ -242,7 +242,7 @@ function make_citizen(unit)
         nemesis.unit = unit
         nemesis.unit_id = unit.id
         nemesis.save_file_id = civent.save_file_id
-        nemesis.unk10, nemesis.unk11, nemesis.unk12 = -1, -1, -1
+        nemesis.activeplotindex, nemesis.travel_link_nemid, nemesis.ideal_item_container_id = -1, -1, -1
         --group_leader_id = -1
         nemesis.id = df.global.nemesis_next_id
         nemesis.member_idx = civent.next_member_idx

@@ -27,6 +27,79 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `gui/aquifer` - interactive aquifer visualization and editing
+- `open-legends`: (reinstated) open legends mode directly from a loaded fort
+
+## New Features
+- `quickfort`: add options for applying blueprints with warm and/or damp dig markers
+- `gui/quickfort`: add options for applying blueprints with warm and/or damp dig markers
+- `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
+
+## Fixes
+- `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegate units because it was failing to find that unit's metadata)
+
+## Misc Improvements
+- `gui/reveal`: show aquifers even when not in mining mode
+
+## Removed
+
+# 50.12-r2.1
+
+## Fixes
+- `fix/noexert-exhaustion`: fix typo in control panel registry entry which prevented the fix from being run when enabled
+- `gui/suspendmanager`: fix script startup errors
+- `control-panel`: properly auto-enable newly added bugfixes
+
+## Misc Improvements
+- `gui/unit-syndromes`: make syndromes searchable by their display names (e.g.  "necromancer")
+
+# 50.12-r2
+
+## New Tools
+- `agitation-rebalance`: alter mechanics of irriation-related attacks so they are less constant and are more responsive to recent player bahavior
+- `fix/ownership`: fix instances of multiple citizens claiming the same items, resulting in "Store owned item" job loops
+- `fix/stuck-worship`: fix prayer so units don't get stuck in uninterruptible "Worship!" states
+- `instruments`: provides information on how to craft the instruments used by the player civilization
+- `modtools/item-trigger`: (reinstated) modder's resource for triggering scripted content when specific items are used
+- `modtools/if-entity`: (reinstated) modder's resource for triggering scripted content depending on the race of the loaded fort
+- `devel/block-borders`: (reinstated) highlights boundaries of map blocks or embark tile blocks
+- `fix/noexert-exhaustion`: fix "Tired" NOEXERT units. Enabling via `gui/control-panel` prevents NOEXERT units from getting stuck in a "Tired" state
+
+## New Features
+- `gui/settings-manager`: add import, export, and autoload for work details
+- `exterminate`: new "disintegrate" kill method that additionally destroys carried items
+- `quickfort`: allow setting of workshop profile properties (e.g. labor, skill restrictions) from build blueprints
+
+## Fixes
+- `gui/launcher`: fix history scanning (Up/Down arrow keys) being slow to respond when in minimal mode
+- `control-panel`: fix filtering not filtering when running the ``list`` command
+- `gui/notify`: don't zoom to forbidden depots for merchants ready to trade notification
+- `catsplosion`: only cause pregnancies in adults
+
+## Misc Improvements
+- `gui/launcher`: add interface for browsing and filtering commands by tags
+- `gui/launcher`: add support for history search (Alt-s hotkey) when in minimal mode
+- `gui/launcher`: add support for the ``clear`` command and clearing the scrollback buffer
+- `control-panel`: enable tweaks quietly on fort load so we don't spam the console
+- `devel/tile-browser`: simplify interface now that SDL automatically normalizes texture scale
+- `exterminate`: make race name matching case and space insensitive
+- `gui/gm-editor`: support opening engraved art for inspection
+- `gui/notify`: Shift click or Shift Enter on a zoomable notification to zoom to previous target
+- `allneeds`: select a dwarf in the UI to see a summary of needs for just that dwarf
+- `allneeds`: provide options for sorting the cumulative needs by different criteria
+- `prioritize`: print out custom reaction and hauling jobs in the same format that is used for ``prioritize`` command arguments so the player can just copy and paste
+
+# 50.12-r1
+
+## Fixes
+- `gui/notify`: persist notification settings when toggled in the UI
+
+## Misc Improvements
+- `gui/launcher`: developer mode hotkey restored to Ctrl-D
+
+# 50.11-r7
+
+## New Tools
 - `undump-buildings`: (reinstated) remove dump designation from in-use building materials
 - `gui/petitions`: (reinstated) show outstanding (or all historical) petition agreements for guildhalls and temples
 - `gui/notify`: display important notifications that vanilla doesn't support yet and provide quick zoom links to notification targets.
@@ -34,21 +107,28 @@ Template for new versions:
 - `make-legendary`: (reinstated) make a dwarf legendary in specified skills
 - `combat-harden`: (reinstated) set a dwarf's resistence to being affected by visible corpses
 - `add-thought`: (reinstated) add custom thoughts to a dwarf
-
-## New Features
+- `devel/input-monitor`: interactive UI for debugging input issues
 
 ## Fixes
-- `gui/design`: fix clicking the center point when there is a mark behind it entering both mark dragging and center dragging at the same time. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
+- `gui/design`: clicking the center point when there is a design mark behind it will no longer simultaneously enter both mark dragging and center dragging modes. Now you can click once to move the shape, and click twice to move only the mark behind the center point.
+- `fix/retrieve-units`: prevent pulling in duplicate units from offscreen
 - `warn-stranded`: when there was at least one truly stuck unit and miners were actively mining, the miners were also confusingly shown in the stuck units list
 - `source`: fix issue where removing sources would make some other sources inactive
 - `caravan`: display book and scroll titles in the goods and trade dialogs instead of generic scroll descriptions
 - `item`: avoid error when scanning items that have no quality rating (like bars and other construction materials)
+- `gui/blueprint`: changed hotkey for setting blueprint origin tile so it doesn't conflict with default map movement keys
+- `gui/control-panel`: fix error when toggling autostart settings
 
 ## Misc Improvements
 - `exportlegends`: make progress increase smoothly over the entire export and increase precision of progress percentage
 - `gui/autobutcher`: ask for confirmation before zeroing out targets for all races
 - `caravan`: move goods to trade depot dialog now allocates more space for the display of the value of very expensive items
 - `extinguish`: allow selecting units/items/buildings in the UI to target them for extinguishing; keyboard cursor is only required for extinguishing map tiles that cannot be selected any other way
+- `item`: change syntax so descriptions can be searched for without indicating the ``--description`` option. e.g. it's now ``item count royal`` instead of ``item count --description royal``
+- `item`: add ``--verbose`` option to print each item as it is matched
+- `gui/mod-manager`: will automatically unmark the default mod profile from being the default if it fails to load (due to missing or incompatible mods)
+- `gui/quickfort`: can now dynamically adjust the dig priority of tiles designated by dig blueprints
+- `gui/quickfort`: can now opt to apply dig blueprints in marker mode
 
 ## Removed
 - `gui/manager-quantity`: the vanilla UI can now modify manager order quantities after creation

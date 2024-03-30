@@ -99,10 +99,9 @@ function command_passes_filters(data, target_group, filter_strs)
     then
         return false
     end
-    if not utils.search_text(data.command, filter_strs) then
-        return false
-    end
-    return true
+    return data.help_command and
+        utils.search_text(data.help_command, filter_strs) or
+        utils.search_text(data.command, filter_strs)
 end
 
 function get_description(data)
@@ -136,7 +135,7 @@ function apply_command(data, enabled_map, enabled)
             dfhack.printerr(('tool not enableable: "%s"'):format(data.command))
             return false
         elseif data.mode == 'tweak' then
-            dfhack.run_command{'tweak', data.command, enabled and '' or 'disable'}
+            dfhack.run_command{'tweak', data.command, 'quiet', enabled and '' or 'disable'}
         else
             dfhack.run_command{enabled and 'enable' or 'disable', data.command}
         end

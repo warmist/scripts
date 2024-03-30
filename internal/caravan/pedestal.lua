@@ -126,7 +126,7 @@ end
 local function get_pending_value(display_bld)
     local value = get_assigned_value(display_bld)
     for _, contained_item in ipairs(display_bld.contained_items) do
-        if contained_item.use_mode ~= 0 or
+        if contained_item.use_mode ~= df.building_item_role_type.TEMP or
             not contained_item.item.flags.in_building
         then
             goto continue
@@ -416,13 +416,11 @@ local function is_displayable_item(item)
         item.flags.spider_web or
         item.flags.construction or
         item.flags.encased or
-        item.flags.unk12 or
         item.flags.murder or
         item.flags.trader or
         item.flags.owned or
         item.flags.garbage_collect or
-        item.flags.on_fire or
-        item.flags.in_chest
+        item.flags.on_fire
     then
         return false
     end
@@ -444,7 +442,7 @@ local function is_displayable_item(item)
         local bld = dfhack.items.getHolderBuilding(item)
         if not bld then return false end
         for _, contained_item in ipairs(bld.contained_items) do
-            if contained_item.use_mode == 0 then return true end
+            if contained_item.use_mode == df.building_item_role_type.TEMP then return true end
             -- building construction materials
             if item == contained_item.item then return false end
         end
