@@ -25,6 +25,8 @@ show_library = show_library == nil and true or show_library
 show_hidden = show_hidden or false
 filter_text = filter_text or ''
 selected_id = selected_id or 1
+marker_expanded = marker_expanded or false
+markers = markers or {blueprint=false, warm=false, damp=false}
 repeat_dir = repeat_dir or false
 repetitions = repetitions or 1
 transform = transform or false
@@ -297,34 +299,43 @@ function Quickfort:init()
             initial_option=4,
             active=function() return self.blueprint_name and self.has_dig end,
             enabled=function() return self.blueprint_name and self.has_dig end},
-        widgets.ResizingPanel{autoarrange_subviews=true, subviews={
+        widgets.ResizingPanel{subviews={
             widgets.ToggleHotkeyLabel{key='CUSTOM_M',
+                frame={t=0, h=1},
                 view_id='marker',
                 label='Add marker:',
-                initial_option=false,
+                initial_option=marker_expanded,
                 active=function() return self.blueprint_name and self.has_dig end,
                 enabled=function() return self.blueprint_name and self.has_dig end,
-                on_change=function() self:updateLayout() end},
-            widgets.ResizingPanel{
+                on_change=function(val)
+                    marker_expanded = val
+                    self:updateLayout()
+                end,
+            },
+            widgets.Panel{
+                frame={t=0, h=4},
                 visible=function() return self.subviews.marker:getOptionValue() end,
                 subviews={
                     widgets.ToggleHotkeyLabel{key='CUSTOM_CTRL_B',
                         frame={t=1, l=0},
                         view_id='marker_blueprint',
                         label='Blueprint:',
-                        initial_option=false,
+                        initial_option=markers.blueprint,
+                        on_change=function(val) markers.blueprint = val end,
                     },
                     widgets.ToggleHotkeyLabel{key='CUSTOM_CTRL_D',
                         frame={t=2, l=0},
                         view_id='marker_damp',
                         label='Damp dig:',
-                        initial_option=false,
+                        initial_option=markers.damp,
+                        on_change=function(val) markers.damp = val end,
                     },
                     widgets.ToggleHotkeyLabel{key='CUSTOM_CTRL_W',
                         frame={t=3, l=0},
                         view_id='marker_warm',
                         label='Warm dig:',
-                        initial_option=false,
+                        initial_option=markers.warm,
+                        on_change=function(val) markers.warm = val end,
                     },
                 },
             },
@@ -676,11 +687,7 @@ function Quickfort:do_command(command, dry_run, post_fn)
                 quickfort_parse.format_command(
                     command, self.blueprint_name, self.section_name, dry_run),
                 self.saved_cursor.x, self.saved_cursor.y, self.saved_cursor.z))
-    local marker = {
-        blueprint=self.subviews.marker_blueprint:getOptionValue(),
-        warm=self.subviews.marker_warm:getOptionValue(),
-        damp=self.subviews.marker_damp:getOptionValue(),
-    }
+    local marker = marker_expanded and markers or {}
     local priority = self.subviews.priority:getOptionValue()
     local ctx = self:run_quickfort_command(command, marker, priority, dry_run, false)
     quickfort_command.finish_commands(ctx)
