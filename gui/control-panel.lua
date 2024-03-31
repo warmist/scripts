@@ -50,7 +50,7 @@ ConfigPanel.ATTRS{
 
 function ConfigPanel:init()
     local main_panel = widgets.Panel{
-        frame={t=0, b=7},
+        frame={t=0, b=9},
         autoarrange_subviews=true,
         autoarrange_gap=1,
         subviews={
@@ -81,11 +81,17 @@ function ConfigPanel:init()
 
     self:addviews{
         main_panel,
-        widgets.WrappedLabel{
-            view_id='desc',
-            frame={b=4, h=2},
-            auto_height=false,
-            text_to_wrap='', -- updated in on_select
+        widgets.Panel{
+            frame={b=4, h=4},
+            frame_style=gui.FRAME_INTERIOR,
+            subviews={
+                widgets.WrappedLabel{
+                    frame={l=0, h=2},
+                    view_id='desc',
+                    auto_height=false,
+                    text_to_wrap='', -- updated in on_select
+                },
+            },
         },
         footer,
     }
@@ -870,7 +876,7 @@ end
 ControlPanel = defclass(ControlPanel, widgets.Window)
 ControlPanel.ATTRS {
     frame_title='DFHack Control Panel',
-    frame={w=74, h=44},
+    frame={w=74, h=45},
     resizable=true,
     resize_min={h=39},
     autoarrange_subviews=true,
