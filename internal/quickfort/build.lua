@@ -38,7 +38,12 @@ local log = quickfort_common.log
 local function is_valid_tile_base(pos)
     local flags, occupancy = dfhack.maps.getTileFlags(pos)
     if not flags then return false end
-    return not flags.hidden and occupancy.building == 0
+    if (flags.liquid_type == true or flags.liquid_type == df.tile_liquid.Magma) and
+        flags.flow_size >= 1
+    then
+        return false
+    end
+    return not flags.hidden and flags.flow_size <= 1 and occupancy.building == 0
 end
 
 local function is_valid_tile_generic(pos)
