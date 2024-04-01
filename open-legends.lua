@@ -2,7 +2,10 @@
 
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local utils = require('utils')
 local widgets = require('gui.widgets')
+
+tainted = tainted or false
 
 -- --------------------------------
 -- LegendsManager
@@ -11,9 +14,25 @@ local widgets = require('gui.widgets')
 LegendsManager = defclass(LegendsManager, gui.Screen)
 LegendsManager.ATTRS {
     focus_path='open-legends',
+    no_autoquit=false,
 }
 
 function LegendsManager:init()
+    tainted = true
+
+    -- back up what we can to make a return to the previous mode possible
+    -- note that even with these precautions, data **is lost** when switching
+    -- to legends mode and back. testing shows that a savegame made directly
+    -- after returning from legends mode will be **smaller** than a savegame
+    -- made just before entering legends mode. We don't know exactly what is
+    -- missing, but it shows that jumping back and forth between modes is not
+    -- safe.
+    self.region_details_backup = {} --as:df.world_region_details[]
+    local vec = df.global.world.world_data.region_details
+    utils.assign(self.region_details_backup, vec)
+    vec:resize(0)
+
+    self.gametype_backup = df.global.gametype
     df.global.gametype = df.game_type.VIEW_LEGENDS
 
     local legends = df.viewscreen_legendsst:new()
@@ -34,18 +53,35 @@ end
 
 function LegendsManager:onInput(keys)
     if keys.LEAVESCREEN or (keys._MOUSE_L and self.subviews.done_mask:getMousePos()) then
-        dialogs.showMessage('Exiting to avoid save corruption',
-            'Dwarf Fortress may be in a non-playable state\nand will now exit to protect your savegame.',
-            COLOR_YELLOW,
-            self:callback('dismiss'))
-        return true
+        if self.no_autoquit then
+            self:dismiss()
+        else
+            dialogs.showMessage('Exiting to avoid save corruption',
+                'Dwarf Fortress is in a non-playable state\nand will now exit to protect your savegame.',
+                COLOR_YELLOW,
+                self:callback('dismiss'))
+        end
+    else
+        self:sendInputToParent(keys)
     end
-    self:sendInputToParent(keys)
     return true
 end
 
-function LegendsManager:onDismiss()
-    dfhack.run_command('die')
+function LegendsManager:onDestroy()
+    if not self.no_autoquit then
+        dfhack.run_command('die')
+    else
+        df.global.gametype = self.gametype_backup
+
+        local vec = df.global.world.world_data.region_details
+        vec:resize(0)
+        utils.assign(vec, self.region_details_backup)
+
+        dfhack.run_script('devel/pop-screen')
+
+        -- disable autosaves for the remainder of this session
+        df.global.d_init.autosave = df.d_init_autosave.NONE
+    end
 end
 
 -- --------------------------------
@@ -57,6 +93,7 @@ LegendsWarning.ATTRS {
     frame_title='Open Legends Mode',
     frame={w=50, h=21},
     autoarrange_subviews=true,
+    no_autoquit=false,
 }
 
 function LegendsWarning:init()
@@ -64,13 +101,31 @@ function LegendsWarning:init()
         widgets.Label{
             text={
                 'This script allows you to jump into legends', NEWLINE,
-                'mode from a loaded fort, but beware that this', NEWLINE,
+                'mode from a active game, but beware that this', NEWLINE,
                 'is a', {gap=1, text='ONE WAY TRIP', pen=COLOR_RED}, '.', NEWLINE,
                 NEWLINE,
                 'Returning to fort mode from legends mode', NEWLINE,
                 'would make the game unstable, so to protect', NEWLINE,
                 'your savegame, Dwarf Fortress will exit when', NEWLINE,
-                'you are done browsing.', NEWLINE,
+                'you are done browsing.',
+            },
+            visible=not self.no_autoquit,
+        },
+        widgets.Label{
+            text={
+                'You have opted for a ', {text='two-way ticket', pen=COLOR_RED} ,' to legends', NEWLINE,
+                'mode. Remember to ', {text='quit to desktop and restart', pen=COLOR_RED}, NEWLINE,
+                'DF when you\'re done to avoid save corruption.', NEWLINE,
+                NEWLINE,
+                'When you return to this game mode, automatic', NEWLINE,
+                'autosaves will be disabled until you restart', NEWLINE,
+                'DF to avoid accidentally overwriting good', NEWLINE,
+                'savegames.',
+            },
+            visible=self.no_autoquit,
+        },
+        widgets.Label{
+            text={
                 NEWLINE,
                 {text='This is your last chance to save your game.', pen=COLOR_LIGHTRED}, NEWLINE,
                 NEWLINE,
@@ -87,8 +142,7 @@ function LegendsWarning:init()
             text={
                 NEWLINE,
                 'or exit out of this dialog and create a named', NEWLINE,
-                'save of your choice.', NEWLINE,
-                NEWLINE,
+                'save of your choice.',
             },
         },
         widgets.HotkeyLabel{
@@ -97,7 +151,7 @@ function LegendsWarning:init()
             auto_width=true,
             on_activate=function()
                 self.parent_view:dismiss()
-                LegendsManager{}:show()
+                LegendsManager{no_autoquit=self.no_autoquit}:show()
             end,
         },
     }
@@ -106,10 +160,11 @@ end
 LegendsWarningScreen = defclass(LegendsWarningScreen, gui.ZScreenModal)
 LegendsWarningScreen.ATTRS {
     focus_path='open-legends/warning',
+    no_autoquit=false,
 }
 
 function LegendsWarningScreen:init()
-    self:addviews{LegendsWarning{}}
+    self:addviews{LegendsWarning{no_autoquit=self.no_autoquit}}
 end
 
 function LegendsWarningScreen:onDismiss()
@@ -120,4 +175,14 @@ if not dfhack.isWorldLoaded() then
     qerror('no world loaded')
 end
 
-view = view and view:raise() or LegendsWarningScreen{}:show()
+local function main(args)
+    local no_autoquit = args[1] == '--no-autoquit'
+
+    if tainted then
+        LegendsManager{no_autoquit=no_autoquit}:show()
+    else
+        view = view and view:raise() or LegendsWarningScreen{no_autoquit=no_autoquit}:show()
+    end
+end
+
+main{...}
