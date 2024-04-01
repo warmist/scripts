@@ -142,7 +142,8 @@ function LegendsWarning:init()
             text={
                 NEWLINE,
                 'or exit out of this dialog and create a named', NEWLINE,
-                'save of your choice.',
+                'save of your choice.', NEWLINE,
+                NEWLINE,
             },
         },
         widgets.HotkeyLabel{
