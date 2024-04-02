@@ -39,6 +39,6 @@ desktop and restart the game to be sure to avoid save corruption issues.
 Upon return to the playable game, autosaves will be disabled to avoid
 accidental overwriting of good savegames.
 
-If the ``--no-autoquit`` option is passed and the savegame is already "tainted"
-by previous trips into legends mode, the warning dialog prompting you to save
-your game will be skipped.
+If the ``--no-autoquit`` option has previously been passed and the savegame is
+already "tainted" by previous trips into legends mode, the warning dialog
+prompting you to save your game will be skipped.
