@@ -127,6 +127,22 @@ local function for_nuisance(fn, reverse)
     end, fn, reverse)
 end
 
+local function for_wildlife(fn, reverse)
+    for_iter(units.active, function(unit)
+        return not dfhack.units.isDead(unit) and
+            dfhack.units.isActive(unit) and
+            not unit.flags1.caged and
+            not unit.flags1.chained and
+            not dfhack.units.isHidden(unit) and
+            not dfhack.units.isFortControlled(unit) and
+            not dfhack.units.isInvader(unit) and
+            not unit.flags4.agitated_wilderness_creature and
+            not is_likely_hostile(unit) and
+            not is_stealer(unit) and
+            not dfhack.units.isMischievous(unit)
+    end, fn, reverse)
+end
+
 local function count_units(for_fn, which)
     local count = 0
     for_fn(function() count = count + 1 end)
@@ -137,6 +153,21 @@ local function count_units(for_fn, which)
             count == 1 and '' or 's'
         )
     end
+end
+
+local function summarize_units(for_fn, which)
+    local counts = {}
+    for_fn(function(unit)
+        local names = races[unit.race].caste[unit.caste].caste_name
+        local record = ensure_key(counts, names[0], {count=0, plural=names[1]})
+        record.count = record.count + 1
+    end)
+    if not next(counts) then return end
+    local strs = {}
+    for singular,record in pairs(counts) do
+        table.insert(strs, ('%d %s'):format(record.count, record.count > 1 and record.plural or singular))
+    end
+    return ('Wildlife: %s'):format(table.concat(strs, ', '))
 end
 
 local function zoom_to_next(for_fn, state, reverse)
@@ -178,6 +209,7 @@ NOTIFICATIONS_BY_IDX = {
     {
         name='traders_ready',
         desc='Notifies when traders are ready to trade at the depot.',
+        default=true,
         fn=function()
             if #caravans == 0 then return end
             local num_ready = 0
@@ -219,6 +251,7 @@ NOTIFICATIONS_BY_IDX = {
     {
         name='mandates_expiring',
         desc='Notifies when a production mandate is within 1 month of expiring.',
+        default=true,
         fn=function()
             local count = 0
             for _, mandate in ipairs(df.global.world.mandates) do
@@ -242,6 +275,7 @@ NOTIFICATIONS_BY_IDX = {
     {
         name='petitions_agreed',
         desc='Notifies when you have agreed to build (but have not yet built) a guildhall or temple.',
+        default=true,
         fn=function()
             local t_agr, g_agr = list_agreements.get_fort_agreements(true)
             local sum = #t_agr + #g_agr
@@ -255,6 +289,7 @@ NOTIFICATIONS_BY_IDX = {
     {
         name='moody_status',
         desc='Describes the status of the current moody dwarf: gathering materials, working, or stuck',
+        default=true,
         fn=function()
             local message
             for_moody(function(unit)
@@ -284,38 +319,51 @@ NOTIFICATIONS_BY_IDX = {
     {
         name='warn_starving',
         desc='Reports units that are dangerously hungry, thirsty, or drowsy.',
+        default=true,
         fn=curry(count_units, for_starving, 'starving, dehydrated, or drowsy unit'),
         on_click=curry(zoom_to_next, for_starving),
     },
     {
         name='agitated_count',
         desc='Notifies when there are agitated animals on the map.',
+        default=true,
         fn=curry(count_units, for_agitated_creature, 'agitated animal'),
         on_click=curry(zoom_to_next, for_agitated_creature),
     },
     {
         name='invader_count',
         desc='Notifies when there are active invaders on the map.',
+        default=true,
         fn=curry(count_units, for_invader, 'invader'),
         on_click=curry(zoom_to_next, for_invader),
     },
     {
         name='hostile_count',
         desc='Notifies when there are non-invader hostiles (e.g. megabeasts) on the map.',
+        default=true,
         fn=curry(count_units, for_hostile, 'non-invader hostile'),
         on_click=curry(zoom_to_next, for_hostile),
     },
     {
         name='warn_nuisance',
         desc='Notifies when thieving or mischievous creatures are on the map.',
+        default=true,
         fn=curry(count_units, for_nuisance, 'thieving or mischievous creature'),
         on_click=curry(zoom_to_next, for_nuisance),
     },
     {
         name='warn_stranded',
         desc='Notifies when units are stranded from the main group.',
+        default=true,
         fn=get_stranded_message,
         on_click=function() dfhack.run_script('warn-stranded') end,
+    },
+    {
+        name='wildlife',
+        desc='Gives a summary of visible wildlife on the map.',
+        default=false,
+        fn=curry(summarize_units, for_wildlife),
+        on_click=curry(zoom_to_next, for_wildlife),
     },
 }
 
@@ -338,7 +386,7 @@ local function get_config()
     end
     for k, v in pairs(NOTIFICATIONS_BY_NAME) do
         if not f.data[k] or f.data[k].version ~= v.version then
-            f.data[k] = {enabled=true, version=v.version}
+            f.data[k] = {enabled=v.default, version=v.version}
             updated = true
         end
     end

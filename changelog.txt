@@ -34,6 +34,7 @@ Template for new versions:
 - `quickfort`: add options for applying blueprints with warm and/or damp dig markers
 - `gui/quickfort`: add options for applying blueprints with warm and/or damp dig markers
 - `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
+- `gui/notify`: optional notification for general wildlife (not on by default)
 
 ## Fixes
 - `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegate units because it was failing to find that unit's metadata)
