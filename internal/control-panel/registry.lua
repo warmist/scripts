@@ -38,7 +38,7 @@ COMMANDS_BY_IDX = {
     {command='cleanowned', group='automation', mode='repeat',
         desc='Encourage dwarves to discard tattered clothing at the dump when there is new available clothing.',
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', ']'}},
-    {command='cleanowned nodump', group='automation', mode='repeat',
+    {command='cleanowned-nodump', group='automation', mode='repeat',
         desc='Encourage dwarves to drop tattered clothing on the floor when there is new available clothing.',
         params={'--time', '1', '--timeUnits', 'months', '--command', '[', 'cleanowned', 'X', 'nodump', ']'}},
     {command='gui/settings-manager load-standing-orders', group='automation', mode='run',
