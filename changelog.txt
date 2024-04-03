@@ -39,6 +39,7 @@ Template for new versions:
 ## Fixes
 - `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegate units because it was failing to find that unit's metadata)
 - `quickfort`: reject tiles for building that contain magma or deep water
+- `armoks-blessing`: fix error when making Normal class attributes legendary
 
 ## Misc Improvements
 - `gui/reveal`: show aquifers even when not in mining mode

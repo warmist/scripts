@@ -204,22 +204,26 @@ function BreathOfArmok(unit)
     print ("The breath of Armok has engulfed "..unit.name.first_name)
 end
 -- ---------------------------------------------------------------------------
-function LegendaryByClass(skilltype,v)
-    local unit=v
-    if unit==nil then
+local function get_skill_desc(skill_idx)
+    return df.job_skill.attrs[skill_idx].caption or df.job_skill[skill_idx] or ("(unnamed skill %d)"):format(skill_idx)
+end
+
+function LegendaryByClass(skilltype, unit)
+    if not unit then
         print ("No unit available!  Aborting with extreme prejudice.")
         return
     end
 
-    local i
-    local skillclass
     local count_max = count_this(df.job_skill)
     for i=0, count_max do
-        skillclass = df.job_skill_class[df.job_skill.attrs[i].type]
+        if df.job_skill[i]:startswith('UNUSED') then goto continue end
+        local skillclass = df.job_skill_class[df.job_skill.attrs[i].type]
         if skilltype == skillclass then
-            print ("Skill "..df.job_skill.attrs[i].caption.." is type: "..skillclass.." and is now Legendary for "..unit.name.first_name)
+            local skillname = get_skill_desc(i)
+            print ("Skill "..skillname.." is type: "..skillclass.." and is now Legendary for "..unit.name.first_name)
             utils.insert_or_update(unit.status.current_soul.skills, { new = true, id = i, rating = 20 }, 'id')
         end
+        ::continue::
     end
 end
 -- ---------------------------------------------------------------------------
@@ -227,7 +231,7 @@ function PrintSkillList()
     local count_max = count_this(df.job_skill)
     local i
     for i=0, count_max do
-        print("'"..df.job_skill.attrs[i].caption.."' "..df.job_skill[i].." Type: "..df.job_skill_class[df.job_skill.attrs[i].type])
+        print("'"..get_skill_desc(i).."' "..df.job_skill[i].." Type: "..df.job_skill_class[df.job_skill.attrs[i].type])
     end
     print ("Provide the UPPER CASE argument, for example: PROCESSPLANTS rather than Threshing")
 end
