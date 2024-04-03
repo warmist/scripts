@@ -130,6 +130,15 @@ function apply_command(data, enabled_map, enabled)
         enabled = enabled or (enabled == nil and data.default)
         if not enabled then return end
     end
+    if enabled then
+        for _, conflict in ipairs(data.conflicts or {}) do
+            local conflict_data = registry.COMMANDS_BY_NAME[conflict]
+            if conflict_data and enabled_map[conflict] then
+                enabled_map[conflict] = false
+                apply_command(conflict_data, enabled_map, false)
+            end
+        end
+    end
     if data.mode == 'enable' or data.mode == 'system_enable' or data.mode == 'tweak' then
         if enabled_map[data.command] == nil then
             dfhack.printerr(('tool not enableable: "%s"'):format(data.command))
