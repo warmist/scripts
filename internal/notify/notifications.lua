@@ -139,7 +139,9 @@ local function for_wildlife(fn, reverse)
             not unit.flags4.agitated_wilderness_creature and
             not is_likely_hostile(unit) and
             not is_stealer(unit) and
-            not dfhack.units.isMischievous(unit)
+            not dfhack.units.isMischievous(unit) and
+            not dfhack.units.isMerchant(unit) and
+            not dfhack.units.isForest(unit)
     end, fn, reverse)
 end
 
