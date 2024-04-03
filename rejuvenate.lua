@@ -30,7 +30,6 @@ function rejuvenate(unit, force, dry_run, age)
 end
 
 function main(args)
-    local current_year, newbirthyear
     local units = {} --as:df.unit[]
     if args.all then
         units = dfhack.units.getCitizens()
