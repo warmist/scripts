@@ -478,7 +478,7 @@ WorkDetailsOverlay = defclass(WorkDetailsOverlay, ImportExportAutoOverlay)
 WorkDetailsOverlay.ATTRS {
     desc='Adds buttons to the work details screen for saving and restoring settings.',
     default_pos={x=80, y=-5},
-    viewscreens='dwarfmode/Info/LABOR/WORK_DETAILS',
+    viewscreens='dwarfmode/Info/LABOR/WORK_DETAILS/Default',
     frame={w=35, h=5},
     save_label='Save work details',
     load_label='Load work details',
