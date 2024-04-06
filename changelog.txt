@@ -41,10 +41,12 @@ Template for new versions:
 - `quickfort`: reject tiles for building that contain magma or deep water
 - `armoks-blessing`: fix error when making class "Normal" attributes legendary
 - `emigration`: remove units from burrows when they emigrate
+- `agitation-rebalance`: fix calculated percent chance of cavern invasion
 
 ## Misc Improvements
 - `gui/reveal`: show aquifers even when not in mining mode
 - `gui/control-panel`: add alternate "nodump" version for `cleanowned` that does not cause citizens to toss their old clothes in the dump. this is useful for players who would rather sell old clothes than incinerate them
+- `agitation-rebalance`: when more than the maximum allowed cavern invaders are trying to enter the map, prefer keeping the animal people invaders instead of their war animals
 
 ## Removed
 - `drain-aquifer`: replaced by ``aquifer drain --all``; an alias now exists so ``drain-aquifer`` will automatically run the new command

@@ -123,13 +123,6 @@ local function on_surface_attack()
     end
 end
 
-local function delete_invasion(idx, ev)
-    inc_stat('invasions_diverted')
-    persist_state()
-    df.global.timed_events:erase(idx)
-    ev:delete()
-end
-
 local function get_cumulative_irritation()
     local irritation = 0
     for _, map_feature in ipairs(map_features) do
@@ -189,18 +182,31 @@ local function is_unkilled(unit)
         unit.animal.vanish_countdown <= 0  -- not yet exterminated
 end
 
-local function on_cavern_invader_over_max(unit)
-    if is_unkilled(unit) then
+local function is_cavern_invader(unit)
+    local invasion = df.invasion_info.find(unit.invasion_id)
+    return invasion and
+        invasion.origin_master_army_controller_id == -1 and
+        not unit.flags1.caged and
+        not dfhack.units.isTame(unit)
+end
+
+local function on_cavern_invader_over_max()
+    -- process units from the end of the active units first so we tend to
+    -- preserve animal person invaders over the war animals they bring
+    for i=#world.units.active-1,0,-1 do
+        local unit = world.units.active[i]
+        if not is_cavern_invader(unit) or not is_unkilled(unit) then
+            goto continue
+        end
         exterminate.killUnit(unit, exterminate.killMethod.DISINTEGRATE)
         num_cavern_invaders = num_cavern_invaders - 1
         inc_stat('invaders_vaporized')
-        persist_state()
+        if num_cavern_invaders <= custom_difficulty.cavern_dweller_max_attackers then
+            break
+        end
+        ::continue::
     end
-end
-
-local function is_cavern_invader(unit)
-    local invasion = df.invasion_info.find(unit.invasion_id)
-    return invasion and invasion.origin_master_army_controller_id == -1
+    persist_state()
 end
 
 local function get_cavern_invaders()
@@ -257,22 +263,14 @@ local function check_new_unit(unit_id)
     if state.features.cap_invaders and
         get_num_cavern_invaders() > custom_difficulty.cavern_dweller_max_attackers
     then
-        on_cavern_invader_over_max(unit)
+        on_cavern_invader_over_max()
     end
 end
 
 local function cull_invaders()
     if not state.features.cap_invaders then return end
-    if get_num_cavern_invaders() <= custom_difficulty.cavern_dweller_max_attackers then
-        return
-    end
-    for _,unit in ipairs(world.units.active) do
-        if is_cavern_invader(unit) then
-            on_cavern_invader_over_max(unit)
-        end
-        if num_cavern_invaders <= custom_difficulty.cavern_dweller_max_attackers then
-            break
-        end
+    if get_num_cavern_invaders() > custom_difficulty.cavern_dweller_max_attackers then
+        on_cavern_invader_over_max()
     end
 end
 
@@ -298,7 +296,7 @@ local function cavern_attack_passes_roll()
         irr_max = math.floor(irr_max * (c1 + c2 + c3))
     end
     if irritation >= irr_max then return true end
-    return math.random(1, irr_max) > irritation
+    return math.random(1, irr_max) <= irritation
 end
 
 local function throttle_invasions()
@@ -310,22 +308,17 @@ local function throttle_invasions()
         -- only roll once per season
         return
     end
-    for idx,ev in ipairs(df.global.timed_events) do
+    local over_cap = state.features.cap_invaders and
+        get_num_cavern_invaders() >= custom_difficulty.cavern_dweller_max_attackers
+    for idx=#df.global.timed_events-1,0,-1 do
+        local ev = df.global.timed_events[idx]
         if ev.type ~= df.timed_event_type.FeatureAttack then goto continue end
         local civ = ev.entity
         if not civ then goto continue end
-        if state.features.cap_invaders and
-            get_num_cavern_invaders() >= custom_difficulty.cavern_dweller_max_attackers
-        then
-            delete_invasion(idx, ev)
-            break
-        elseif not cavern_attack_passes_roll() then
-            delete_invasion(idx, ev)
-            break
-        else
-            -- DF ensures that only one cavern invasion event exists at a time, so
-            -- we only need to check for one
-            break
+        if over_cap or not cavern_attack_passes_roll() then
+            inc_stat('invasions_diverted')
+            df.global.timed_events:erase(idx)
+            ev:delete()
         end
         ::continue::
     end
