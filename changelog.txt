@@ -40,6 +40,7 @@ Template for new versions:
 - `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegade units because it was failing to find those units' metadata)
 - `quickfort`: reject tiles for building that contain magma or deep water
 - `armoks-blessing`: fix error when making class "Normal" attributes legendary
+- `emigration`: remove units from burrows when they emigrate
 
 ## Misc Improvements
 - `gui/reveal`: show aquifers even when not in mining mode
