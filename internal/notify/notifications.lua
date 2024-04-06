@@ -142,7 +142,8 @@ local function for_wildlife(fn, reverse)
             not dfhack.units.isMischievous(unit) and
             not dfhack.units.isMerchant(unit) and
             not dfhack.units.isForest(unit) and
-            not dfhack.units.isVisitor(unit)
+            not dfhack.units.isVisitor(unit) and
+            unit.animal.population.population_idx >= 0
     end, fn, reverse)
 end
 
