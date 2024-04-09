@@ -1080,16 +1080,21 @@ function LauncherUI:run_command(reappear, command)
             print()
             print(output)
         end
+        output = output:gsub('\t', ' ')
         -- if we displayed a different screen, don't come back up, even if reappear
         -- is true, so the user can interact with the new screen.
         local _,parent_addr = self._native.parent:sizeof()
         if self.minimal or parent_addr ~= prev_parent_addr then
             reappear = false
+            if self.minimal and #output > 0 then
+                dialogs.showMessage(TITLE, output)
+            end
         end
         if #output == 0 then
             output = 'Command finished successfully'
-        else
-            output = output:gsub('\t', ' ')
+        end
+        if not output:endswith('\n') then
+            output = output .. '\n'
         end
         output = ('> %s\n\n%s'):format(command, output)
     end
@@ -1099,9 +1104,6 @@ function LauncherUI:run_command(reappear, command)
 
     if not reappear then
         self:dismiss()
-        if self.minimal and #output > 0 then
-            dialogs.showMessage(TITLE, output)
-        end
     end
 end
 
