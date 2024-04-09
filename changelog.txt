@@ -42,6 +42,7 @@ Template for new versions:
 - `armoks-blessing`: fix error when making class "Normal" attributes legendary
 - `emigration`: remove units from burrows when they emigrate
 - `agitation-rebalance`: fix calculated percent chance of cavern invasion
+- `gui/launcher`: don't pop up a result dialog if a command run from minimal mode has no output
 
 ## Misc Improvements
 - `gui/reveal`: show aquifers even when not in mining mode
