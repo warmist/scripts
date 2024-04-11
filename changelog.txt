@@ -27,19 +27,31 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `gui/aquifer` - interactive aquifer visualization and editing
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 50.12-r3
+
+## New Tools
+- `gui/aquifer`: interactive aquifer visualization and editing
 - `open-legends`: (reinstated) open legends mode directly from a loaded fort
 
 ## New Features
-- `quickfort`: add options for applying blueprints with warm and/or damp dig markers
-- `gui/quickfort`: add options for applying blueprints with warm and/or damp dig markers
+- `quickfort`: add options for setting warm/damp dig markers when applying blueprints
+- `gui/quickfort`: add options for setting warm/damp dig markers when applying blueprints
 - `gui/reveal`: new "aquifer only" mode to only see hidden aquifers but not reveal any tiles
 - `gui/notify`: optional notification for general wildlife (not on by default)
 
 ## Fixes
-- `fix/loyaltycascade`: fix lookup of associated unit metadata when the metadata list is sparse (that is, the script was sometimes failing to fix the loyalties of renegade units because it was failing to find those units' metadata)
+- `fix/loyaltycascade`: fix edge case where loyalties of renegade units were not being fixed
 - `quickfort`: reject tiles for building that contain magma or deep water
-- `armoks-blessing`: fix error when making class "Normal" attributes legendary
+- `armoks-blessing`: fix error when making "Normal" attributes legendary
 - `emigration`: remove units from burrows when they emigrate
 - `agitation-rebalance`: fix calculated percent chance of cavern invasion
 - `gui/launcher`: don't pop up a result dialog if a command run from minimal mode has no output
