@@ -99,7 +99,7 @@ COMMANDS_BY_IDX = {
         params={'--time', '7', '--timeUnits', 'days', '--command', '[', 'combine', 'all', '-q', ']'}},
     {command='dwarfvet', group='gameplay', mode='enable'},
     {command='eggs-fertile', help_command='tweak', group='gameplay', mode='tweak', default=true,
-        desc='Displays an indicator on fetile eggs.'},
+        desc='Displays an indicator on fertile eggs.'},
     {command='emigration', group='gameplay', mode='enable'},
     {command='fast-heat', help_command='tweak', group='gameplay', mode='tweak',
         desc='Improves temperature update performance.'},
