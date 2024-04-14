@@ -16,7 +16,7 @@ COMMANDS_BY_IDX = {
     {command='autobutcher target 10 10 14 2 BIRD_CHICKEN', group='automation', mode='run',
         desc='Enable if you usually want to raise chickens.'},
     {command='autobutcher target 10 10 14 2 BIRD_PEAFOWL_BLUE', group='automation', mode='run',
-        desc='Enable if you usually want to raise chickens.'},   
+        desc='Enable if you usually want to raise peafowl.'},   
     {command='autochop', group='automation', mode='enable'},
     {command='autoclothing', group='automation', mode='enable'},
     {command='autofarm', group='automation', mode='enable'},
