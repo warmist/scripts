@@ -31,8 +31,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `open-legends`: don't interfere with the dragging of vanilla list scrollbars
 
 ## Misc Improvements
+- `open-legends`: allow player to cancel the "DF will now exit" dialog and continue browsing
 
 ## Removed
 
