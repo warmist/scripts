@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `open-legends`: don't interfere with the dragging of vanilla list scrollbars
 
 ## Misc Improvements
 
